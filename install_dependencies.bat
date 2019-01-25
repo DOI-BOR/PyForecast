@@ -4,27 +4,29 @@ ECHO.
 ECHO.
 ECHO Installing python libraries
 ECHO.
-pip install numpy
+pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org numpy
 ECHO O
-pip install scipy
+pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org scipy
 ECHO OO
-pip install requests
+pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org requests
 ECHO OOO
-pip install zeep
+pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org zeep
 ECHO OOOO
-pip install pandas
+pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org pandas
 ECHO OOOOO
-pip install sklearn
+pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org sklearn
 ECHO OOOOOO
-pip install matplotlib
+pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org matplotlib
 ECHO OOOOOOO
-pip install  -Iv PyQt5==5.9
+pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org -Iv PyQt5==5.9
 ECHO OOOOOOOO
-pip install datetime
+pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org datetime
 ECHO OOOOOOOOO
-pip install PyQt5-tools
+pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org PyQt5-tools
 ECHO OOOOOOOOOO
-pip install openpyxl
+pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org openpyxl
+ECHO OOOOOOOOOOO
+pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org configparser
 ECHO OOOOOOOOOOO
 ECHO.
 ECHO Press any key to exit
