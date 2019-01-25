@@ -50,6 +50,7 @@ from datetime import datetime
 from scipy import stats, integrate
 from dateutil import parser
 import multiprocessing as mp
+import configparser
 
 
 """
@@ -108,7 +109,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         This function removes any old csv files from the tempFiles directory
         """
         for file_ in os.listdir('Resources/tempFiles'):
-            if file_ == 'programTime.txt' or file_ == '__pycache__':
+            if file_ == 'programTime.txt' or file_ == '__pycache__' or 'pyforecast.cfg':
                 continue
             filename = os.path.abspath('Resources/tempFiles/' + file_)
             os.remove(filename)
@@ -119,7 +120,14 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         """
         with open('Resources/tempFiles/programTime.txt','w') as writeFile:
             writeFile.write(date)
-        
+
+        # This function sets the date in the software. It stores the time in a config file called 'Resources/tempFiles/pyforecast.cfg'
+        config = configparser.ConfigParser()
+        config.read('Resources/tempFiles/pyforecast.cfg')
+        config['DEFAULT']['ProgramTime'] = date
+        with open('Resources/tempFiles/pyforecast.cfg', 'w') as configfile:
+            config.write(configfile)
+
         return
 
     
