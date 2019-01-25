@@ -312,7 +312,7 @@ class PlotCanvas_2Plot(FigureCanvas):
 class NavigationToolbar(NavigationToolbar2QT):
 
     # We don't need all the buttons, so we specify the tools we need
-    toolitems = [t for t in NavigationToolbar2QT.toolitems if t[0] in ( 'Pan', 'Zoom', 'Save')]
+    toolitems = [t for t in NavigationToolbar2QT.toolitems if t[0] in ( 'Home', 'Pan', 'Zoom', 'Save')]
 
 class toggleButton(QtWidgets.QPushButton):
 
