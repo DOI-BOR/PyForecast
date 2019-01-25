@@ -104,6 +104,20 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
 
         return
 
+    def readConfig(self, configKey):
+        config = configparser.ConfigParser()
+        config.read('Resources/tempFiles/pyforecast.cfg')
+        return config['DEFAULT'][configKey]
+
+    def writeConfig(self, configKey, configVal):
+        config = configparser.ConfigParser()
+        config.read('Resources/tempFiles/pyforecast.cfg')
+        config['DEFAULT'][configKey] = configVal
+        with open('Resources/tempFiles/pyforecast.cfg', 'w') as configfile:
+            config.write(configfile)
+
+        return
+
     def purgeOldFiles(self):
         """
         This function removes any old csv files from the tempFiles directory
@@ -122,11 +136,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             writeFile.write(date)
 
         # This function sets the date in the software. It stores the time in a config file called 'Resources/tempFiles/pyforecast.cfg'
-        config = configparser.ConfigParser()
-        config.read('Resources/tempFiles/pyforecast.cfg')
-        config['DEFAULT']['ProgramTime'] = date
-        with open('Resources/tempFiles/pyforecast.cfg', 'w') as configfile:
-            config.write(configfile)
+        self.writeConfig('programtime',date)
 
         return
 
@@ -327,7 +337,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
                 return True
             except ValueError:
                 return False
-        self.setCustomDatetimeDialogText, ok = QtWidgets.QInputDialog.getText(self, 'Set Custom Date for PyForecast', 'Set Date (YYYY-MM-DD)')
+        self.setCustomDatetimeDialogText, ok = QtWidgets.QInputDialog.getText(self, 'Set Custom Date for PyForecast', 'Set Date (YYYY-MM-DD)',text=self.readConfig('programtime'))
         if ok and is_date(self.setCustomDatetimeDialogText):
             self.setDate(self.setCustomDatetimeDialogText)
         return
