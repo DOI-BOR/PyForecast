@@ -104,18 +104,17 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
 
         return
 
-    def readConfig(self, configKey):
+    def readConfig(self, configKey, configGroup='DEFAULT'):
         config = configparser.ConfigParser()
         config.read('Resources/tempFiles/pyforecast.cfg')
-        return config['DEFAULT'][configKey]
+        return config[configGroup][configKey]
 
-    def writeConfig(self, configKey, configVal):
+    def writeConfig(self, configKey, configVal, configGroup='DEFAULT'):
         config = configparser.ConfigParser()
         config.read('Resources/tempFiles/pyforecast.cfg')
-        config['DEFAULT'][configKey] = configVal
+        config[configGroup][configKey] = configVal
         with open('Resources/tempFiles/pyforecast.cfg', 'w') as configfile:
             config.write(configfile)
-
         return
 
     def purgeOldFiles(self):
@@ -123,19 +122,15 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         This function removes any old csv files from the tempFiles directory
         """
         for file_ in os.listdir('Resources/tempFiles'):
-            if file_ == 'programTime.txt' or file_ == '__pycache__' or 'pyforecast.cfg':
+            if file_ == '__pycache__' or 'pyforecast.cfg':
                 continue
             filename = os.path.abspath('Resources/tempFiles/' + file_)
             os.remove(filename)
 
     def setDate(self, date):
         """
-        This function sets the date in the software. It stores the time in a file called 'Resources/tempFiles/programTime.txt'
+        This function sets the date in the software. It stores the time in a config file called 'Resources/tempFiles/pyforecast.cfg'
         """
-        with open('Resources/tempFiles/programTime.txt','w') as writeFile:
-            writeFile.write(date)
-
-        # This function sets the date in the software. It stores the time in a config file called 'Resources/tempFiles/pyforecast.cfg'
         self.writeConfig('programtime',date)
 
         return

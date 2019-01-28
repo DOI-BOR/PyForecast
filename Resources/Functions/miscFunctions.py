@@ -7,6 +7,7 @@
 
 from Resources.Functions.lists import HUCList
 from datetime import datetime
+import configparser
 
 def isValidHUC(hucString):
     """
@@ -67,15 +68,26 @@ def monthLookup(month):
     }
     return monthDict[month]
 
+def readConfig(configKey, configGroup='DEFAULT'):
+    config = configparser.ConfigParser()
+    config.read('Resources/tempFiles/pyforecast.cfg')
+    return config[configGroup][configKey]
+
+def writeConfig(configKey, configVal, configGroup='DEFAULT'):
+    config = configparser.ConfigParser()
+    config.read('Resources/tempFiles/pyforecast.cfg')
+    config[configGroup][configKey] = configVal
+    with open('Resources/tempFiles/pyforecast.cfg', 'w') as configfile:
+        config.write(configfile)
+    return
+
 def current_date():
     """
     This function reads the Resources/tempFiles/programTime.txt file
     and returns the current date as a datetime object of that date
     """
+    time=readConfig('programtime')
 
-    with open('Resources/tempFiles/programTime.txt','r') as readfile:
-        time = readfile.read()
-    
     date = datetime.strptime(time, '%Y-%m-%d')
     if date >= datetime.now():
         date = datetime.now()
