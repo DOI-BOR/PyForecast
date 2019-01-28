@@ -101,6 +101,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         self.connectEventsDensityTab()
 
         self.threadPool = QtCore.QThreadPool()
+        self.writeConfig('savefilename','')
 
         return
 
@@ -187,6 +188,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         self.docAction.triggered.connect(self.openDocs)
         self.versionAction.triggered.connect(self.openVersion)
         self.saveAction.triggered.connect(self.saveFile)
+        self.saveAsAction.triggered.connect(self.saveFileAs)
         self.openAction.triggered.connect(self.openFile)
         self.addLoaderAction.triggered.connect(self.addLoader)
         self.newAction.triggered.connect(self.newForecast)
@@ -227,20 +229,26 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         return
 
 
+    def saveFileAs(self):
+        self.saveFile(True)
+        return
 
-    def saveFile(self):
+    def saveFile(self, saveNew=False):
         """
         Function to save the 2 main dictionaries into a pickled .fcst file. Additionally sets the 
         file name in the window title.
         """    
+        filename = self.readConfig('savefilename')
 
-        filename = QtWidgets.QFileDialog.getSaveFileName(self, 'Save File As', 'unititled.fcst','*.fcst')[0]
-        
-        if filename == '':
-            return
-        
-        if '.' not in filename:
-            filename = filename + '.fcst'
+        if filename == '' or saveNew:
+            filename = QtWidgets.QFileDialog.getSaveFileName(self, 'Save File As', 'unititled.fcst','*.fcst')[0]
+            self.writeConfig('savefilename',filename)
+
+            if filename == '':
+                return
+
+            if '.' not in filename:
+                filename = filename + '.fcst'
 
         pkl = {
             "datasetDirectory":self.datasetDirectory,
@@ -265,6 +273,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         try:
            
             filename = QtWidgets.QFileDialog.getOpenFileName(self, 'Open File','*.fcst')[0]
+            self.writeConfig('savefilename',filename)
 
             if filename == '':
                 return  
