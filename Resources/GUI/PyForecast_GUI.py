@@ -1108,7 +1108,6 @@ class DataOptionsPane(QtWidgets.QWidget):
 
     # Initialize a custom QWidget
     def __init__(self, parent=None):
-
         QtWidgets.QWidget.__init__(self)
         self.setupUI()
     
@@ -1133,19 +1132,41 @@ class DataOptionsPane(QtWidgets.QWidget):
         self.optionsGrid.setColumnStretch(1, 0)
         self.optionsGrid.setColumnStretch(2, 1)
         self.optionsGrid.setColumnStretch(3, 1)
+        self.optionsGrid.setColumnStretch(4, 1)
         
         # POR option
         self.porLabel = QtWidgets.QLabel("POR")
         self.porInfo = QtWidgets.QLabel() 
         self.porInfo.setPixmap(QtGui.QPixmap(os.path.abspath("Resources/Fonts_Icons_Images/infoHover.png")).scaled(30,30, QtCore.Qt.KeepAspectRatio))
         self.porInfo.setScaledContents(True)
-        self.porInfo.setToolTip('<html><head/><body><p>PyForecast will attempt to download daily station data up to the POR specified here.</p></body></html>')
+        self.porInfo.setToolTip('<html><head/><body><p>PyForecast will attempt to download daily station data from today to X years from today based on the POR specified here.</p></body></html>')
+        self.porYes = QtWidgets.QCheckBox("POR")
+        self.porYes.setChecked(True)
+        self.porYes.stateChanged.connect(lambda: self.porToggle())
+        self.porNo = QtWidgets.QCheckBox("T1T2")
+        self.porNo.setChecked(False)
+        self.porNo.stateChanged.connect(lambda: self.porToggle())
+        self.porGroup = QtWidgets.QButtonGroup(self)
+        self.porGroup.addButton(self.porYes)
+        self.porGroup.addButton(self.porNo)
         self.porInput = QtWidgets.QLineEdit()
-        self.porInput.setPlaceholderText("POR in years:")
+        self.porInput.setPlaceholderText("POR in years")
         self.porInput.setValidator(onlyInt)
+        self.porT1 = QtWidgets.QLineEdit()
+        self.porT1.setPlaceholderText("Start Year")
+        self.porT1.setValidator(onlyInt)
+        self.porT1.setVisible(False)
+        self.porT2 = QtWidgets.QLineEdit()
+        self.porT2.setPlaceholderText("End Year")
+        self.porT2.setValidator(onlyInt)
+        self.porT2.setVisible(False)
         self.optionsGrid.addWidget(self.porLabel, 0, 0, 1, 1)
         self.optionsGrid.addWidget(self.porInfo, 0, 1, 1, 1)
-        self.optionsGrid.addWidget(self.porInput, 0, 2, 1, 2)
+        self.optionsGrid.addWidget(self.porYes, 0, 2, 1, 1)
+        self.optionsGrid.addWidget(self.porNo, 0, 3, 1, 1)
+        self.optionsGrid.addWidget(self.porInput, 1, 2, 1, 2)
+        self.optionsGrid.addWidget(self.porT1, 1, 0, 1, 1)
+        self.optionsGrid.addWidget(self.porT2, 1, 2, 1, 2)
 
         # IMPUTE SWE option
         # self.sweImputeLabel = QtWidgets.QLabel("Impute SNOTEL")
@@ -1244,6 +1265,18 @@ class DataOptionsPane(QtWidgets.QWidget):
         self.layout.addWidget(self.header1)
         self.layout.addLayout(self.optionsGrid)
         self.setLayout(self.layout)
+
+
+    def porToggle(self):
+        if self.porYes.isChecked():
+            self.porInput.setVisible(True)
+            self.porT1.setVisible(False)
+            self.porT2.setVisible(False)
+        else:
+            self.porInput.setVisible(False)
+            self.porT1.setVisible(True)
+            self.porT2.setVisible(True)
+        return
 
 """
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
