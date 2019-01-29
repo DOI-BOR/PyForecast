@@ -55,6 +55,8 @@
     <Compile Include="Resources\WebResources\WebPageTest.py" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="FolderProfile.pubxml" />
+    <Content Include="libman.json" />
     <Content Include="obj\Debug\PyForecast.pyproj.FileListAbsolute.txt" />
     <Content Include="Resources\Documentation\Pictures\bbrForecastOptionsDemo.gif" />
     <Content Include="Resources\Documentation\Pictures\bigHoleDataTab.PNG" />
