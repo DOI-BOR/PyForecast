@@ -34,7 +34,7 @@ from PyQt5 import QtGui, QtCore, QtWidgets
 
 # Import other scripts 
 from Resources.GIS import CLIMATE_DIVISIONS
-from Resources.Functions.miscFunctions import isValidHUC, monthLookup, current_date
+from Resources.Functions.miscFunctions import isValidHUC, monthLookup, current_date, readConfig, writeConfig
 from Resources.Functions import DataDownloadV4, ProcessDataV2, RestServiceV2, encryptions, importSpread, FeatureSelectionV3, kernelDensity
 
 # Import additional libraries
@@ -101,21 +101,8 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         self.connectEventsDensityTab()
 
         self.threadPool = QtCore.QThreadPool()
-        self.writeConfig('savefilename','')
+        writeConfig('savefilename','')
 
-        return
-
-    def readConfig(self, configKey, configGroup='DEFAULT'):
-        config = configparser.ConfigParser()
-        config.read('Resources/tempFiles/pyforecast.cfg')
-        return config[configGroup][configKey]
-
-    def writeConfig(self, configKey, configVal, configGroup='DEFAULT'):
-        config = configparser.ConfigParser()
-        config.read('Resources/tempFiles/pyforecast.cfg')
-        config[configGroup][configKey] = configVal
-        with open('Resources/tempFiles/pyforecast.cfg', 'w') as configfile:
-            config.write(configfile)
         return
 
     def purgeOldFiles(self):
@@ -132,7 +119,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         """
         This function sets the date in the software. It stores the time in a config file called 'Resources/tempFiles/pyforecast.cfg'
         """
-        self.writeConfig('programtime',date)
+        writeConfig('programtime',date)
 
         return
 
@@ -341,7 +328,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
                 return True
             except ValueError:
                 return False
-        self.setCustomDatetimeDialogText, ok = QtWidgets.QInputDialog.getText(self, 'Set Custom Date for PyForecast', 'Set Date (YYYY-MM-DD)',text=self.readConfig('programtime'))
+        self.setCustomDatetimeDialogText, ok = QtWidgets.QInputDialog.getText(self, 'Set Custom Date for PyForecast', 'Set Date (YYYY-MM-DD)',text=readConfig('programtime'))
         if ok and is_date(self.setCustomDatetimeDialogText):
             self.setDate(self.setCustomDatetimeDialogText)
         return
