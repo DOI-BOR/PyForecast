@@ -861,7 +861,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         duplicateDataset = False
         #Add validation code to see if dataset already exists in datasetDirectory
 
-        for dCounter in range(1, len(self.datasetDirectory['datasets'])):
+        for dCounter in range(0, len(self.datasetDirectory['datasets'])):
             if self.datasetDirectory['datasets'][dCounter]["TYPE"] == stationType and self.datasetDirectory['datasets'][dCounter]["ID"] == stationNumber and self.datasetDirectory['datasets'][dCounter]["Name"] == stationName and self.datasetDirectory['datasets'][dCounter]["Parameter"] == stationParam and self.datasetDirectory['datasets'][dCounter]["Units"] == stationUnits:
                 duplicateDataset = True
                 break
