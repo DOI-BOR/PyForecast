@@ -1,7 +1,7 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/n5jktmnm4jqr37nm?svg=true)](https://ci.appveyor.com/project/usbr/pyforecast)
 
 # PyForecast Forecasting Software
-PyForecast is a statistical modeling tool useful in predicting season inflows and streamflows. The tool collects meterological and hydrologic datasets, analyzes hundreds to thousands of predictor subsets, and returns well-performing statistical regressions between predictors and streamflows. 
+PyForecast is a statistical modeling tool useful in predicting season inflows and streamflows. The tool collects meterological and hydrologic datasets, analyzes hundreds to thousands of predictor subsets, and returns well-performing statistical regressions between predictors and streamflows. Check out the [Wiki](https://github.com/usbr/PyForecast/wiki) for background information and a brief walkthrough for how to use the software.
 
 ## Requirements
 * Python 3.X with the following libraries installed
@@ -16,6 +16,7 @@ PyForecast is a statistical modeling tool useful in predicting season inflows an
     * datetime
     * openpyxl
     * xlrd
+    * configparser
 
 These packages can be installed automatically to your default python distribution by running the 'install_dependencies.bat' script. 
 
