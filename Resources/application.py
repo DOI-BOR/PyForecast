@@ -1200,7 +1200,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             return
         dialog = MissingNoGUI.missingDialog(data)
 
-        return        
+        return
 
     def downloadData(self, update):
         """
@@ -1225,7 +1225,10 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             return
 
         try:
-            por = int(self.dataTab.dataOptions.porInput.text()) 
+            if self.dataTab.dataOptions.porYes.isChecked():
+                por = int(self.dataTab.dataOptions.porInput.text())
+            else:
+                por = int(self.dataTab.dataOptions.porT2.text()) - int(self.dataTab.dataOptions.porT1.text())
             test = math.sqrt(por) 
         except:
             if update == "True":
@@ -1236,7 +1239,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         
         DICT = {
             "STATIONS": self.datasetDirectory,
-            "POR": self.dataTab.dataOptions.porInput.text(),
+            "POR": por,
             "UPDATE": update,
             "FILL": fill}
 
