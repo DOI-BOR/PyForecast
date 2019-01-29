@@ -1235,6 +1235,8 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             if self.dataTab.dataOptions.porYes.isChecked():
                 por = int(self.dataTab.dataOptions.porInput.text())
             else:
+                if int(self.dataTab.dataOptions.porT1.text()) <= 1901:
+                    test = math.sqrt("a")
                 por = int(self.dataTab.dataOptions.porT2.text()) - int(self.dataTab.dataOptions.porT1.text())
             test = math.sqrt(por) 
         except:
