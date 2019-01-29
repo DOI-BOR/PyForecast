@@ -1,3 +1,5 @@
+[![Build status](https://ci.appveyor.com/api/projects/status/n5jktmnm4jqr37nm?svg=true)](https://ci.appveyor.com/project/usbr/pyforecast)
+
 # PyForecast Forecasting Software
 PyForecast is a statistical modeling tool useful in predicting season inflows and streamflows. The tool collects meterological and hydrologic datasets, analyzes hundreds to thousands of predictor subsets, and returns well-performing statistical regressions between predictors and streamflows. 
 
