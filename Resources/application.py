@@ -854,6 +854,27 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
 
         return
 
+    def appendDatasetDictionaryItem(self, dataID, stationType, stationNumber, stationName, stationParam, stationUnits, resamplingMethod, decodeOptions):
+        """
+        This function adds an entry to the datasetDictionary and adds it to the Station Tab table
+        """
+        duplicateDataset = False
+        #Add validation code to see if dataset already exists in datasetDirectory
+
+        for dCounter in range(1, len(self.datasetDirectory['datasets'])):
+            if self.datasetDirectory['datasets'][dCounter]["TYPE"] == stationType and self.datasetDirectory['datasets'][dCounter]["ID"] == stationNumber and self.datasetDirectory['datasets'][dCounter]["Name"] == stationName and self.datasetDirectory['datasets'][dCounter]["Parameter"] == stationParam and self.datasetDirectory['datasets'][dCounter]["Units"] == stationUnits:
+                duplicateDataset = True
+                break
+           
+        if not duplicateDataset:
+            self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":stationUnits,"Resampling":resamplingMethod,"Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
+            self.stationsTab.stationInfoPane.stationTable.addRow([dataID, stationType, stationNumber, stationName, stationParam])
+        else:
+            button = QtWidgets.QMessageBox.question(self, 'Error','Dataset has already been selected...'.format(traceback.format_exc()), QtWidgets.QMessageBox.Ok)
+            if button == QtWidgets.QMessageBox.Ok:
+                return
+
+        return
 
     def addToStationsList(self, stationString = ""):
         """
@@ -888,17 +909,16 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             stationNumber = instructionList[2]
             stationParam = instructionList[4]
             
-            if stationType == 'USGS':
-                
+            if stationType == 'USGS':                
                 decodeOptions = {"dataLoader":"USGS_NWIS"}
                 dataID = encryptions.generateStationID(stationType, stationName, stationParam, decodeOptions['dataLoader'])
-                self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":"CFS","Resampling":"Mean", "Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
+                units = "CFS"
+                resample = "Mean"
+                #self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":"CFS","Resampling":"Mean", "Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
 
             elif stationType == 'SNOTEL':
-
                 decodeOptions = {"dataLoader":"NRCS_WCC"}
                 dataID = encryptions.generateStationID(stationType, stationName, stationParam, decodeOptions['dataLoader'])
-
                 if stationParam == 'SWE':
                     resample = 'Sample'
                     units = 'inches'
@@ -908,29 +928,29 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
                 else:
                     resample = 'Accumulation'
                     units = 'inches'
-
-                self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":units,"Resampling":resample,"Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
+                #self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":units,"Resampling":resample,"Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
 
             elif stationType == 'SNOWCOURSE':
-
                 decodeOptions = {"dataLoader":"NRCS_WCC"}
                 dataID = encryptions.generateStationID(stationType, stationName, stationParam, decodeOptions['dataLoader'])
-                self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":"inches","Resampling":"Sample","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
+                units = "inches"
+                resample = "Sample"
+                #self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":"inches","Resampling":"Sample","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
 
             elif stationType == 'USBR':
-
                 region = instructionList[5]
                 pcode = instructionList[6]
-
                 decodeOptions = {"dataLoader":"USBR", "Region":region,"PCODE":pcode}
                 dataID = encryptions.generateStationID(stationType, stationName, stationParam, decodeOptions['dataLoader'])
-                self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":"CFS","Resampling":"Mean","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
+                units = "CFS"
+                resample = "Mean"
+                #self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":"CFS","Resampling":"Mean","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
 
             else:
                 return
             
-            self.stationsTab.stationInfoPane.stationTable.addRow([dataID, stationType, stationNumber, stationName, stationParam])
-        
+            self.appendDatasetDictionaryItem(dataID, stationType, stationNumber, stationName, stationParam, units, resample, decodeOptions)
+
         elif instructionList[0] == 'nrcc':
 
             stationNumber = self.stationsTab.stationInfoPane.nrccInput.text()
