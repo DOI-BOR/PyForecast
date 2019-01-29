@@ -59,6 +59,20 @@ onlyInt = QtGui.QIntValidator()
 #//     requiring us to extend those classes to include things like context menus,
 #//     javascript webmaps, and matplotlib plots.
 
+# Define a custom QComboBox that reroutes mouse wheel events
+# https://stackoverflow.com/questions/3241830/qt-how-to-disable-mouse-scrolling-of-qcombobox/11866474#11866474
+class CustomQComboBox(QtWidgets.QComboBox):
+    def __init__(self, scrollWidget=None, *args, **kwargs):
+        super(CustomQComboBox, self).__init__(*args, **kwargs)  
+        self.scrollWidget=scrollWidget
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+
+    def wheelEvent(self, *args, **kwargs):
+        if self.hasFocus():
+            return QtWidgets.QComboBox.wheelEvent(self, *args, **kwargs)
+        else:
+            return self.scrollWidget.wheelEvent(*args, **kwargs)
+    
 
 """
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -987,6 +1001,8 @@ class StationInfoPane(QtWidgets.QWidget):
 
         # Create a layout for the widget
         self.layout = QtWidgets.QVBoxLayout()
+        self.scrollArea =  QtWidgets.QScrollArea(self)
+        self.formScroll = QtWidgets.QFrame(self.scrollArea)
 
         # Add a header and description 
         self.stationHeader = QtWidgets.QTextEdit()
@@ -1045,7 +1061,7 @@ class StationInfoPane(QtWidgets.QWidget):
         self.pdsiInfoButton.setPixmap(QtGui.QPixmap(os.path.abspath("Resources/Fonts_Icons_Images/infoHover.png")).scaled(30,30, QtCore.Qt.KeepAspectRatio))
         self.pdsiInfoButton.setScaledContents(True)
         self.pdsiInfoButton.setToolTip('<html><head/><body><p>Palmer Drought Severity Index by Climate Division</p></body></html>')
-        self.pdsiInput = QtWidgets.QComboBox()
+        self.pdsiInput = CustomQComboBox(self.formScroll)
         self.pdsiInput.addItems(list(CLIMATE_DIVISIONS.divisions.keys()))
         self.pdsiButton = QtWidgets.QPushButton('Add')
         self.otherDataLayout.addWidget(self.pdsiLabel, 3, 0, 1, 1)
@@ -1060,7 +1076,7 @@ class StationInfoPane(QtWidgets.QWidget):
         self.ensoInfoButton = QtWidgets.QLabel()
         self.ensoInfoButton.setPixmap(QtGui.QPixmap(os.path.abspath("Resources/Fonts_Icons_Images/infoHover.png")).scaled(30,30, QtCore.Qt.KeepAspectRatio))
         self.ensoInfoButton.setToolTip('<html><head/><body><p>Various climate indices.</br></br> See www.cpc.ncep.noaa.gov for more information.</p></body></html>')
-        self.ensoInput = QtWidgets.QComboBox()
+        self.ensoInput = CustomQComboBox(self.formScroll)
         self.ensoInput.addItem('Nino3.4 SST')
         self.ensoInput.addItem('Nino3.4 SST Anomaly')
         self.ensoInput.addItem('PNA Teleconnection')
@@ -1108,7 +1124,6 @@ class DataOptionsPane(QtWidgets.QWidget):
 
     # Initialize a custom QWidget
     def __init__(self, parent=None):
-
         QtWidgets.QWidget.__init__(self)
         self.setupUI()
     
@@ -1133,19 +1148,42 @@ class DataOptionsPane(QtWidgets.QWidget):
         self.optionsGrid.setColumnStretch(1, 0)
         self.optionsGrid.setColumnStretch(2, 1)
         self.optionsGrid.setColumnStretch(3, 1)
+        self.optionsGrid.setColumnStretch(4, 1)
         
         # POR option
         self.porLabel = QtWidgets.QLabel("POR")
         self.porInfo = QtWidgets.QLabel() 
         self.porInfo.setPixmap(QtGui.QPixmap(os.path.abspath("Resources/Fonts_Icons_Images/infoHover.png")).scaled(30,30, QtCore.Qt.KeepAspectRatio))
         self.porInfo.setScaledContents(True)
-        self.porInfo.setToolTip('<html><head/><body><p>PyForecast will attempt to download daily station data up to the POR specified here.</p></body></html>')
+        self.porInfo.setToolTip('<html><head/><body><p>PyForecast will attempt to download daily station data based on the POR or the start year specified here.</p></body></html>')
+        self.porYes = QtWidgets.QCheckBox("POR")
+        self.porYes.setChecked(True)
+        self.porYes.stateChanged.connect(lambda: self.porToggle())
+        self.porNo = QtWidgets.QCheckBox("Years")
+        self.porNo.setChecked(False)
+        self.porNo.stateChanged.connect(lambda: self.porToggle())
+        self.porGroup = QtWidgets.QButtonGroup(self)
+        self.porGroup.addButton(self.porYes)
+        self.porGroup.addButton(self.porNo)
         self.porInput = QtWidgets.QLineEdit()
-        self.porInput.setPlaceholderText("POR in years:")
+        self.porInput.setText("30")
         self.porInput.setValidator(onlyInt)
+        self.porT1 = QtWidgets.QLineEdit()
+        self.porT1.setText(str(datetime.today().year - 30))
+        self.porT1.setValidator(onlyInt)
+        self.porT1.setVisible(False)
+        self.porT2 = QtWidgets.QLineEdit()
+        self.porT2.setText(str(datetime.today().year))
+        self.porT2.setValidator(onlyInt)
+        self.porT2.setDisabled(True)
+        self.porT2.setVisible(False)
         self.optionsGrid.addWidget(self.porLabel, 0, 0, 1, 1)
         self.optionsGrid.addWidget(self.porInfo, 0, 1, 1, 1)
-        self.optionsGrid.addWidget(self.porInput, 0, 2, 1, 2)
+        self.optionsGrid.addWidget(self.porYes, 0, 2, 1, 1)
+        self.optionsGrid.addWidget(self.porNo, 0, 3, 1, 1)
+        self.optionsGrid.addWidget(self.porInput, 1, 2, 1, 2)
+        self.optionsGrid.addWidget(self.porT1, 1, 2, 1, 1)
+        self.optionsGrid.addWidget(self.porT2, 1, 3, 1, 1)
 
         # IMPUTE SWE option
         # self.sweImputeLabel = QtWidgets.QLabel("Impute SNOTEL")
@@ -1245,12 +1283,24 @@ class DataOptionsPane(QtWidgets.QWidget):
         self.layout.addLayout(self.optionsGrid)
         self.setLayout(self.layout)
 
+
+    def porToggle(self):
+        if self.porYes.isChecked():
+            self.porInput.setVisible(True)
+            self.porT1.setVisible(False)
+            self.porT2.setVisible(False)
+        else:
+            self.porInput.setVisible(False)
+            self.porT1.setVisible(True)
+            self.porT2.setVisible(True)
+        return
+
 """
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 |||||||||||||||||||||||||||||||||||||||||  FORECAST OPTIONS TAB  ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 """
-    
+
 # Define a custom widget to display options for the data tab
 class FcstOptionsPane(QtWidgets.QWidget):
 
@@ -1278,6 +1328,8 @@ class FcstOptionsPane(QtWidgets.QWidget):
 
         # Build the left side of the options pane
         self.gridLayout1 = QtWidgets.QGridLayout()
+        self.scrollArea =  QtWidgets.QScrollArea(self)
+        self.formScroll = QtWidgets.QFrame(self.scrollArea)
         self.periodLabel = QtWidgets.QLabel("Forecast Period")
         self.periodInfo = QtWidgets.QLabel() 
         self.periodInfo.setPixmap(QtGui.QPixmap(os.path.abspath("Resources/Fonts_Icons_Images/infoHover.png")).scaled(30,30, QtCore.Qt.KeepAspectRatio))
@@ -1287,11 +1339,11 @@ class FcstOptionsPane(QtWidgets.QWidget):
         hlayout.addWidget(self.periodLabel)
         hlayout.addSpacerItem(QtWidgets.QSpacerItem(400,40,QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum))
         self.gridLayout1.addLayout(hlayout, 0, 0, 1, 4)
-        self.periodStartInput = QtWidgets.QComboBox()
-        self.periodStartInput.addItems(['January','February','March','April','May','June','July','August','September','October','November','December'])
+        self.periodStartInput = CustomQComboBox(self.formScroll)
+        self.periodStartInput.addItems(['TEST','January','February','March','April','May','June','July','August','September','October','November','December'])
         self.periodStartInput.setCurrentIndex(3)
         self.gridLayout1.addWidget(self.periodStartInput, 1, 0, 1, 2)
-        self.periodEndInput = QtWidgets.QComboBox()
+        self.periodEndInput = CustomQComboBox(self.formScroll)
         self.periodEndInput.addItems(['January','February','March','April','May','June','July','August','September','October','November','December'])
         self.periodEndInput.setCurrentIndex(6)
         self.gridLayout1.addWidget(self.periodEndInput, 1, 2, 1, 2)
@@ -1304,7 +1356,7 @@ class FcstOptionsPane(QtWidgets.QWidget):
         hlayout.addWidget(self.freqLabel)
         hlayout.addSpacerItem(QtWidgets.QSpacerItem(400,40,QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum))
         self.gridLayout1.addLayout(hlayout, 2, 0, 1, 4)
-        self.freqInput = QtWidgets.QComboBox()
+        self.freqInput = CustomQComboBox(self.formScroll)
         self.freqInput.addItems(["Monthly", "Bi-Monthly"])
         self.gridLayout1.addWidget(self.freqInput, 3, 0, 1, 4)
         self.eqStartLabel = QtWidgets.QLabel("Forecasts start on:")
@@ -1316,14 +1368,14 @@ class FcstOptionsPane(QtWidgets.QWidget):
         hlayout.addWidget(self.eqStartLabel)
         hlayout.addSpacerItem(QtWidgets.QSpacerItem(400,40,QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum))
         self.gridLayout1.addLayout(hlayout, 4, 0, 1, 4)
-        self.eqStartInput = QtWidgets.QComboBox()
+        self.eqStartInput = CustomQComboBox(self.formScroll)
         self.eqStartInput.addItems(['January','February','March','April','May','June','July','August','September','October','November','December'])
         self.gridLayout1.addWidget(self.eqStartInput, 5, 0, 1, 4)
         self.wateryearStartInfo = QtWidgets.QLabel()
         self.wateryearStartInfo.setPixmap(QtGui.QPixmap(os.path.abspath("Resources/Fonts_Icons_Images/infoHover.png")).scaled(30,30, QtCore.Qt.KeepAspectRatio))
         self.wateryearStartInfo.setToolTip('<html><head/><body><p>Specify the first month of your water year</p></body></html>')
         self.wateryearStartLabel = QtWidgets.QLabel("Wateryear starts on:")
-        self.wateryearStartInput = QtWidgets.QComboBox()
+        self.wateryearStartInput = CustomQComboBox(self.formScroll)
         self.wateryearStartInput.addItems(['January','February','March','April','May','June','July','August','September','October','November','December'])
         self.wateryearStartInput.setCurrentIndex(9)
         hlayout = QtWidgets.QHBoxLayout()
@@ -1341,7 +1393,7 @@ class FcstOptionsPane(QtWidgets.QWidget):
         hlayout.addWidget(self.targetLabel)
         hlayout.addSpacerItem(QtWidgets.QSpacerItem(400,40,QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum))
         self.gridLayout1.addLayout(hlayout, 8, 0, 1, 4)
-        self.targetInput = QtWidgets.QComboBox()
+        self.targetInput = CustomQComboBox(self.formScroll)
         self.gridLayout1.addWidget(self.targetInput, 9, 0, 1, 4)
         self.precipLabel = QtWidgets.QLabel("Accumulate Precipitation")
         self.precipInfo = QtWidgets.QLabel() 
@@ -1362,7 +1414,7 @@ class FcstOptionsPane(QtWidgets.QWidget):
         hlayout.addWidget(self.precipInputNo)
         self.gridLayout1.addLayout(hlayout, 10, 0, 1, 4)
         self.accumLabel = QtWidgets.QLabel("Accumulate From:")
-        self.accumStart = QtWidgets.QComboBox()
+        self.accumStart = CustomQComboBox(self.formScroll)
         self.accumStart.addItems(['October','November','December','January','February','March','April','May','June','July','August','September'])
         hlayout = QtWidgets.QHBoxLayout()
         hlayout.addWidget(self.accumLabel)
@@ -1566,6 +1618,8 @@ class StandardRegressionTab(QtWidgets.QWidget):
         # Set the tab layout
         self.layout = QtWidgets.QVBoxLayout()
         self.layout2 = QtWidgets.QVBoxLayout()
+        self.scrollArea =  QtWidgets.QScrollArea(self)
+        self.formScroll = QtWidgets.QFrame(self.scrollArea)
 
         # Add widgets to the layout
         self.eqSelectLabel = QtWidgets.QLabel("Select Equation")
@@ -1577,7 +1631,7 @@ class StandardRegressionTab(QtWidgets.QWidget):
         hlayout.addWidget(self.eqSelectLabel)
         hlayout.addSpacerItem(QtWidgets.QSpacerItem(400,40,QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum))
         self.layout.addLayout(hlayout)
-        self.eqSelect = QtWidgets.QComboBox()
+        self.eqSelect = CustomQComboBox(self.formScroll)
         self.eqSelect.addItems([])
         self.layout.addWidget(self.eqSelect)
         self.featSelMethodLabel = QtWidgets.QLabel("Feature Selection Method")
@@ -1589,7 +1643,7 @@ class StandardRegressionTab(QtWidgets.QWidget):
         hlayout.addWidget(self.featSelMethodLabel)
         hlayout.addSpacerItem(QtWidgets.QSpacerItem(400,40,QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum))
         self.layout.addLayout(hlayout)
-        self.featSelInput = QtWidgets.QComboBox()
+        self.featSelInput = CustomQComboBox(self.formScroll)
         self.featSelInput.addItems(["Sequential Floating Forward Selection", "Sequential Floating Backwards Selection"])#["Forward Selection","Backward Selection",["Sequential Floating Forward Selection"],"Floating Backward"])
         self.layout.addWidget(self.featSelInput)
         self.numModelsLabel = QtWidgets.QLabel("Number of Models")
@@ -1614,7 +1668,7 @@ class StandardRegressionTab(QtWidgets.QWidget):
         hlayout.addWidget(self.crossValLabel)
         hlayout.addSpacerItem(QtWidgets.QSpacerItem(400,40,QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum))
         self.layout.addLayout(hlayout)
-        self.crossValInput = QtWidgets.QComboBox()
+        self.crossValInput = CustomQComboBox(self.formScroll)
         self.crossValInput.addItems(["Leave One Out","K-Fold (5 folds)","K-Fold (10 folds)"])
         self.layout.addWidget(self.crossValInput)
         self.scoreLabel = QtWidgets.QLabel("Model Scoring Method")
@@ -1626,7 +1680,7 @@ class StandardRegressionTab(QtWidgets.QWidget):
         hlayout.addWidget(self.scoreLabel)
         hlayout.addSpacerItem(QtWidgets.QSpacerItem(400,40,QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum))
         self.layout.addLayout(hlayout)
-        self.scoreInput = QtWidgets.QComboBox()
+        self.scoreInput = CustomQComboBox(self.formScroll)
         self.scoreInput.addItems(["Cross Validated Adjusted R2","Root Mean Squared Prediction Error","Cross Validated Nash-Sutcliffe"])
         self.layout.addWidget(self.scoreInput)
 
@@ -1639,7 +1693,7 @@ class StandardRegressionTab(QtWidgets.QWidget):
         hlayout.addWidget(self.distLabel)
         hlayout.addSpacerItem(QtWidgets.QSpacerItem(400,40,QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum))
         self.layout.addLayout(hlayout)
-        self.distInput = QtWidgets.QComboBox()
+        self.distInput = CustomQComboBox(self.formScroll)
         self.distInput.addItems(["Normal"])#, "Lognormal"])
         self.layout.addWidget(self.distInput)
 
@@ -1690,6 +1744,8 @@ class ANNRegressionTab(QtWidgets.QWidget):
 
         # Set the tab layout
         self.layout = QtWidgets.QVBoxLayout()
+        self.scrollArea =  QtWidgets.QScrollArea(self)
+        self.formScroll = QtWidgets.QFrame(self.scrollArea)
 
         # Add the options
         self.bigLabel = QtWidgets.QLabel("COMING SOON........")
@@ -1703,7 +1759,7 @@ class ANNRegressionTab(QtWidgets.QWidget):
         hlayout.addWidget(self.structureLabel)
         hlayout.addSpacerItem(QtWidgets.QSpacerItem(400,40,QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum))
         self.layout.addLayout(hlayout)
-        self.structureInput = QtWidgets.QComboBox()
+        self.structureInput = CustomQComboBox(self.formScroll)
         self.structureInput.addItems(["1 Hidden Layer","2 Hidden Layers","3 Hidden Layers"])
         self.layout.addWidget(self.structureInput)
 
@@ -1757,6 +1813,8 @@ class GPRegressionTab(QtWidgets.QWidget):
         self.bigLabel = QtWidgets.QLabel('COMING SOON...')
         self.layout.addWidget(self.bigLabel)
         self.setLayout(self.layout)
+        self.scrollArea =  QtWidgets.QScrollArea(self)
+        self.formScroll = QtWidgets.QFrame(self.scrollArea)
 
 # Set up the regression selection pane
 class RegressionSelectionPane(QtWidgets.QWidget):
@@ -1918,6 +1976,7 @@ class UI_MainWindow(object):
         self.fileMenu = self.menu.addMenu("File")
         self.newAction = QtWidgets.QAction('New Forecast', MainWindow)
         self.saveAction = QtWidgets.QAction('Save Forecast', MainWindow)
+        self.saveAsAction = QtWidgets.QAction('Save Forecast As...', MainWindow)
         self.openAction = QtWidgets.QAction('Open Forecast', MainWindow)
         self.addLoaderAction = QtWidgets.QAction("Edit Dataloaders",MainWindow)
         self.setCustomDatetimeAction = QtWidgets.QAction('Set custom datetime', MainWindow)
@@ -1928,6 +1987,7 @@ class UI_MainWindow(object):
         self.exitAction = QtWidgets.QAction('Exit PyForecast', MainWindow)
         self.fileMenu.addAction(self.newAction)
         self.fileMenu.addAction(self.saveAction)
+        self.fileMenu.addAction(self.saveAsAction)
         self.fileMenu.addAction(self.openAction)
         self.fileMenu.addSeparator()
         self.fileMenu.addAction(self.addLoaderAction)

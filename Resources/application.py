@@ -34,7 +34,7 @@ from PyQt5 import QtGui, QtCore, QtWidgets
 
 # Import other scripts 
 from Resources.GIS import CLIMATE_DIVISIONS
-from Resources.Functions.miscFunctions import isValidHUC, monthLookup, current_date
+from Resources.Functions.miscFunctions import isValidHUC, monthLookup, current_date, readConfig, writeConfig
 from Resources.Functions import DataDownloadV4, ProcessDataV2, RestServiceV2, encryptions, importSpread, FeatureSelectionV3, kernelDensity
 
 # Import additional libraries
@@ -50,6 +50,7 @@ from datetime import datetime
 from scipy import stats, integrate
 from dateutil import parser
 import multiprocessing as mp
+import configparser
 
 
 """
@@ -100,6 +101,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         self.connectEventsDensityTab()
 
         self.threadPool = QtCore.QThreadPool()
+        writeConfig('savefilename','')
 
         return
 
@@ -108,18 +110,17 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         This function removes any old csv files from the tempFiles directory
         """
         for file_ in os.listdir('Resources/tempFiles'):
-            if file_ == 'programTime.txt' or file_ == '__pycache__':
+            if file_ == '__pycache__' or 'pyforecast.cfg':
                 continue
             filename = os.path.abspath('Resources/tempFiles/' + file_)
             os.remove(filename)
 
     def setDate(self, date):
         """
-        This function sets the date in the software. It stores the time in a file called 'Resources/tempFiles/programTime.txt'
+        This function sets the date in the software. It stores the time in a config file called 'Resources/tempFiles/pyforecast.cfg'
         """
-        with open('Resources/tempFiles/programTime.txt','w') as writeFile:
-            writeFile.write(date)
-        
+        writeConfig('programtime',date)
+
         return
 
     
@@ -174,6 +175,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         self.docAction.triggered.connect(self.openDocs)
         self.versionAction.triggered.connect(self.openVersion)
         self.saveAction.triggered.connect(self.saveFile)
+        self.saveAsAction.triggered.connect(self.saveFileAs)
         self.openAction.triggered.connect(self.openFile)
         self.addLoaderAction.triggered.connect(self.addLoader)
         self.newAction.triggered.connect(self.newForecast)
@@ -214,20 +216,26 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         return
 
 
+    def saveFileAs(self):
+        self.saveFile(True)
+        return
 
-    def saveFile(self):
+    def saveFile(self, saveNew=False):
         """
         Function to save the 2 main dictionaries into a pickled .fcst file. Additionally sets the 
         file name in the window title.
         """    
+        filename = self.readConfig('savefilename')
 
-        filename = QtWidgets.QFileDialog.getSaveFileName(self, 'Save File As', 'unititled.fcst','*.fcst')[0]
-        
-        if filename == '':
-            return
-        
-        if '.' not in filename:
-            filename = filename + '.fcst'
+        if filename == '' or saveNew:
+            filename = QtWidgets.QFileDialog.getSaveFileName(self, 'Save File As', 'unititled.fcst','*.fcst')[0]
+            self.writeConfig('savefilename',filename)
+
+            if filename == '':
+                return
+
+            if '.' not in filename:
+                filename = filename + '.fcst'
 
         pkl = {
             "datasetDirectory":self.datasetDirectory,
@@ -252,6 +260,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         try:
            
             filename = QtWidgets.QFileDialog.getOpenFileName(self, 'Open File','*.fcst')[0]
+            self.writeConfig('savefilename',filename)
 
             if filename == '':
                 return  
@@ -319,7 +328,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
                 return True
             except ValueError:
                 return False
-        self.setCustomDatetimeDialogText, ok = QtWidgets.QInputDialog.getText(self, 'Set Custom Date for PyForecast', 'Set Date (YYYY-MM-DD)')
+        self.setCustomDatetimeDialogText, ok = QtWidgets.QInputDialog.getText(self, 'Set Custom Date for PyForecast', 'Set Date (YYYY-MM-DD)',text=readConfig('programtime'))
         if ok and is_date(self.setCustomDatetimeDialogText):
             self.setDate(self.setCustomDatetimeDialogText)
         return
@@ -832,6 +841,27 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
 
         return
 
+    def appendDatasetDictionaryItem(self, dataID, stationType, stationNumber, stationName, stationParam, stationUnits, resamplingMethod, decodeOptions):
+        """
+        This function adds an entry to the datasetDictionary and adds it to the Station Tab table
+        """
+        duplicateDataset = False
+        #Add validation code to see if dataset already exists in datasetDirectory
+
+        for dCounter in range(0, len(self.datasetDirectory['datasets'])):
+            if self.datasetDirectory['datasets'][dCounter]["TYPE"] == stationType and self.datasetDirectory['datasets'][dCounter]["ID"] == stationNumber and self.datasetDirectory['datasets'][dCounter]["Name"] == stationName and self.datasetDirectory['datasets'][dCounter]["Parameter"] == stationParam and self.datasetDirectory['datasets'][dCounter]["Units"] == stationUnits:
+                duplicateDataset = True
+                break
+           
+        if not duplicateDataset:
+            self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":stationUnits,"Resampling":resamplingMethod,"Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
+            self.stationsTab.stationInfoPane.stationTable.addRow([dataID, stationType, stationNumber, stationName, stationParam])
+        else:
+            button = QtWidgets.QMessageBox.question(self, 'Error','Dataset has already been selected...'.format(traceback.format_exc()), QtWidgets.QMessageBox.Ok)
+            if button == QtWidgets.QMessageBox.Ok:
+                return
+
+        return
 
     def addToStationsList(self, stationString = ""):
         """
@@ -866,17 +896,16 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             stationNumber = instructionList[2]
             stationParam = instructionList[4]
             
-            if stationType == 'USGS':
-                
+            if stationType == 'USGS':                
                 decodeOptions = {"dataLoader":"USGS_NWIS"}
                 dataID = encryptions.generateStationID(stationType, stationName, stationParam, decodeOptions['dataLoader'])
-                self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":"CFS","Resampling":"Mean", "Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
+                units = "CFS"
+                resample = "Mean"
+                #self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":"CFS","Resampling":"Mean", "Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
 
             elif stationType == 'SNOTEL':
-
                 decodeOptions = {"dataLoader":"NRCS_WCC"}
                 dataID = encryptions.generateStationID(stationType, stationName, stationParam, decodeOptions['dataLoader'])
-
                 if stationParam == 'SWE':
                     resample = 'Sample'
                     units = 'inches'
@@ -886,29 +915,29 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
                 else:
                     resample = 'Accumulation'
                     units = 'inches'
-
-                self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":units,"Resampling":resample,"Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
+                #self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":units,"Resampling":resample,"Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
 
             elif stationType == 'SNOWCOURSE':
-
                 decodeOptions = {"dataLoader":"NRCS_WCC"}
                 dataID = encryptions.generateStationID(stationType, stationName, stationParam, decodeOptions['dataLoader'])
-                self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":"inches","Resampling":"Sample","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
+                units = "inches"
+                resample = "Sample"
+                #self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":"inches","Resampling":"Sample","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
 
             elif stationType == 'USBR':
-
                 region = instructionList[5]
                 pcode = instructionList[6]
-
                 decodeOptions = {"dataLoader":"USBR", "Region":region,"PCODE":pcode}
                 dataID = encryptions.generateStationID(stationType, stationName, stationParam, decodeOptions['dataLoader'])
-                self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":"CFS","Resampling":"Mean","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
+                units = "CFS"
+                resample = "Mean"
+                #self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":"CFS","Resampling":"Mean","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
 
             else:
                 return
             
-            self.stationsTab.stationInfoPane.stationTable.addRow([dataID, stationType, stationNumber, stationName, stationParam])
-        
+            self.appendDatasetDictionaryItem(dataID, stationType, stationNumber, stationName, stationParam, units, resample, decodeOptions)
+
         elif instructionList[0] == 'nrcc':
 
             stationNumber = self.stationsTab.stationInfoPane.nrccInput.text()
@@ -1178,7 +1207,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             return
         dialog = MissingNoGUI.missingDialog(data)
 
-        return        
+        return
 
     def downloadData(self, update):
         """
@@ -1203,7 +1232,12 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             return
 
         try:
-            por = int(self.dataTab.dataOptions.porInput.text()) 
+            if self.dataTab.dataOptions.porYes.isChecked():
+                por = int(self.dataTab.dataOptions.porInput.text())
+            else:
+                if int(self.dataTab.dataOptions.porT1.text()) <= 1901:
+                    test = math.sqrt("a")
+                por = int(self.dataTab.dataOptions.porT2.text()) - int(self.dataTab.dataOptions.porT1.text())
             test = math.sqrt(por) 
         except:
             if update == "True":
@@ -1214,7 +1248,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         
         DICT = {
             "STATIONS": self.datasetDirectory,
-            "POR": self.dataTab.dataOptions.porInput.text(),
+            "POR": por,
             "UPDATE": update,
             "FILL": fill}
 
