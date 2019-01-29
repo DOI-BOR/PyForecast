@@ -28,6 +28,8 @@ pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org openpy
 ECHO OOOOOOOOOOO
 pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org configparser
 ECHO OOOOOOOOOOO
+pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org xlrd
+ECHO OOOOOOOOOOOO
 ECHO.
 ECHO Press any key to exit
 PAUSE
