@@ -1,0 +1,144 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{c605e43a-1a81-41a5-a132-cb8ab2abcc9d}</ProjectGuid>
+    <ProjectHome />
+    <StartupFile>PyForecast.pyw</StartupFile>
+    <SearchPath />
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <ProjectTypeGuids>{789894c7-04a9-4a11-a6b5-3f4435165112};{1b580a1a-fdb3-4b32-83e1-6407eb2722e6};{349c5851-65df-11da-9384-00065b846f21};{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
+    <LaunchProvider>Web launcher</LaunchProvider>
+    <InterpreterId />
+    <WebBrowserUrl>http://localhost</WebBrowserUrl>
+    <PythonWsgiHandler>{StartupModule}.wsgi_app</PythonWsgiHandler>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
+  <PropertyGroup>
+    <VisualStudioVersion Condition=" '$(VisualStudioVersion)' == '' ">10.0</VisualStudioVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="bin\wfastcgi.py" />
+    <Compile Include="PyForecast.pyw" />
+    <Compile Include="Resources\application.py" />
+    <Compile Include="Resources\DataLoaders\Custom\BOYR_ADJUSTED_INFLOWS.py" />
+    <Compile Include="Resources\DataLoaders\Custom\Example.py" />
+    <Compile Include="Resources\DataLoaders\Custom\HDB_API.py" />
+    <Compile Include="Resources\DataLoaders\Custom\WYSEO_Loader.py" />
+    <Compile Include="Resources\DataLoaders\Default\CPC_CLIMATE.py" />
+    <Compile Include="Resources\DataLoaders\Default\NRCS_WCC.py" />
+    <Compile Include="Resources\DataLoaders\Default\PDSI_LOADER.py" />
+    <Compile Include="Resources\DataLoaders\Default\PRISM_NRCC_RCC_ACIS.py" />
+    <Compile Include="Resources\DataLoaders\Default\USBR.py" />
+    <Compile Include="Resources\DataLoaders\Default\USGS_NWIS.py" />
+    <Compile Include="Resources\Documentation\PyForecastDataStructReference.py" />
+    <Compile Include="Resources\Functions\DataDownloadV4.py" />
+    <Compile Include="Resources\Functions\encryptions.py" />
+    <Compile Include="Resources\Functions\FeatureSelectionV3.py" />
+    <Compile Include="Resources\Functions\importSpread.py" />
+    <Compile Include="Resources\Functions\kernelDensity.py" />
+    <Compile Include="Resources\Functions\lists.py" />
+    <Compile Include="Resources\Functions\Metrics.py" />
+    <Compile Include="Resources\Functions\miscFunctions.py" />
+    <Compile Include="Resources\Functions\ProcessDataV2.py" />
+    <Compile Include="Resources\Functions\RestServiceV2.py" />
+    <Compile Include="Resources\Functions\SyntaxHighlighter\syntaxHighlighter.py" />
+    <Compile Include="Resources\GIS\CLIMATE_DIVISIONS.py" />
+    <Compile Include="Resources\GUI\DocumentationGUI.py" />
+    <Compile Include="Resources\GUI\editDataLoaders.py" />
+    <Compile Include="Resources\GUI\MissingNoGUI.py" />
+    <Compile Include="Resources\GUI\PyForecast_GUI.py" />
+    <Compile Include="Resources\GUI\RegressionStatsGUI.py" />
+    <Compile Include="Resources\WebResources\WebPageTest.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="obj\Debug\PyForecast.pyproj.FileListAbsolute.txt" />
+    <Content Include="Resources\Documentation\Pictures\bbrForecastOptionsDemo.gif" />
+    <Content Include="Resources\Documentation\Pictures\bigHoleDataTab.PNG" />
+    <Content Include="Resources\Documentation\Pictures\bigHoleForecastOptionsTab.PNG" />
+    <Content Include="Resources\Documentation\Pictures\bigHoleStationsTab.PNG" />
+    <Content Include="Resources\Documentation\Pictures\dataSplits.PNG" />
+    <Content Include="Resources\Documentation\Pictures\DataTabOverview.png" />
+    <Content Include="Resources\Documentation\Pictures\exampleData.png" />
+    <Content Include="Resources\Documentation\Pictures\exampleImportSpread.png" />
+    <Content Include="Resources\Documentation\Pictures\firstForwardStep.PNG" />
+    <Content Include="Resources\Documentation\Pictures\ForecastOptionsTabOverview.PNG" />
+    <Content Include="Resources\Documentation\Pictures\gibrMLR.PNG" />
+    <Content Include="Resources\Documentation\Pictures\gibSummTab.PNG" />
+    <Content Include="Resources\Documentation\Pictures\Header.PNG" />
+    <Content Include="Resources\Documentation\Pictures\modelView.PNG" />
+    <Content Include="Resources\Documentation\Pictures\moveBack.PNG" />
+    <Content Include="Resources\Documentation\Pictures\pcaMath.PNG" />
+    <Content Include="Resources\Documentation\Pictures\PCA_1.PNG" />
+    <Content Include="Resources\Documentation\Pictures\predicted.PNG" />
+    <Content Include="Resources\Documentation\Pictures\secondForwardStep.PNG" />
+    <Content Include="Resources\Documentation\Pictures\StationsTabOverview.png" />
+    <Content Include="Resources\Documentation\UserManual.html" />
+    <Content Include="Resources\Documentation\versionInfo.txt" />
+    <Content Include="Resources\Fonts_Icons_Images\branch-closed.png" />
+    <Content Include="Resources\Fonts_Icons_Images\branch-open.png" />
+    <Content Include="Resources\Fonts_Icons_Images\checked.png" />
+    <Content Include="Resources\Fonts_Icons_Images\icon.ico" />
+    <Content Include="Resources\Fonts_Icons_Images\infoHover.png" />
+    <Content Include="Resources\Fonts_Icons_Images\splash.png" />
+    <Content Include="Resources\Fonts_Icons_Images\unchecked.png" />
+    <Content Include="Resources\WebResources\SoilSites.js" />
+    <Content Include="Resources\WebResources\WebMap.css" />
+    <Content Include="Resources\WebResources\WebMap.html" />
+    <Content Include="Resources\WebResources\WebMap.js" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="bin" />
+    <Folder Include="obj\" />
+    <Folder Include="obj\Debug" />
+    <Folder Include="Resources" />
+    <Folder Include="Resources\DataLoaders\" />
+    <Folder Include="Resources\DataLoaders\Custom" />
+    <Folder Include="Resources\DataLoaders\Default" />
+    <Folder Include="Resources\Documentation" />
+    <Folder Include="Resources\Documentation\Pictures" />
+    <Folder Include="Resources\Fonts_Icons_Images" />
+    <Folder Include="Resources\Functions" />
+    <Folder Include="Resources\Functions\SyntaxHighlighter" />
+    <Folder Include="Resources\GIS" />
+    <Folder Include="Resources\GUI" />
+    <Folder Include="Resources\WebResources" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.Web.targets" />
+  <ProjectExtensions>
+    <VisualStudio>
+      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
+        <WebProjectProperties>
+          <AutoAssignPort>True</AutoAssignPort>
+          <UseCustomServer>True</UseCustomServer>
+          <CustomServerUrl>http://localhost</CustomServerUrl>
+          <SaveServerSettingsInUserFile>False</SaveServerSettingsInUserFile>
+        </WebProjectProperties>
+      </FlavorProperties>
+      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}" User="">
+        <WebProjectProperties>
+          <StartPageUrl>
+          </StartPageUrl>
+          <StartAction>CurrentPage</StartAction>
+          <AspNetDebugging>True</AspNetDebugging>
+          <SilverlightDebugging>False</SilverlightDebugging>
+          <NativeDebugging>False</NativeDebugging>
+          <SQLDebugging>False</SQLDebugging>
+          <ExternalProgram>
+          </ExternalProgram>
+          <StartExternalURL>
+          </StartExternalURL>
+          <StartCmdLineArguments>
+          </StartCmdLineArguments>
+          <StartWorkingDirectory>
+          </StartWorkingDirectory>
+          <EnableENC>False</EnableENC>
+          <AlwaysStartWebServerOnDebug>False</AlwaysStartWebServerOnDebug>
+        </WebProjectProperties>
+      </FlavorProperties>
+    </VisualStudio>
+  </ProjectExtensions>
+</Project>
