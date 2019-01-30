@@ -225,11 +225,11 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         Function to save the 2 main dictionaries into a pickled .fcst file. Additionally sets the 
         file name in the window title.
         """    
-        filename = self.readConfig('savefilename')
+        filename = readConfig('savefilename')
 
         if filename == '' or saveNew:
             filename = QtWidgets.QFileDialog.getSaveFileName(self, 'Save File As', 'unititled.fcst','*.fcst')[0]
-            self.writeConfig('savefilename',filename)
+            writeConfig('savefilename',filename)
 
             if filename == '':
                 return
@@ -260,7 +260,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         try:
            
             filename = QtWidgets.QFileDialog.getOpenFileName(self, 'Open File','*.fcst')[0]
-            self.writeConfig('savefilename',filename)
+            writeConfig('savefilename',filename)
 
             if filename == '':
                 return  
