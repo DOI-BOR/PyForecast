@@ -121,7 +121,14 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         """
         This function sets the date in the software. It stores the time in a config file called 'Resources/tempFiles/pyforecast.cfg'
         """
+        
         writeConfig('programtime',date)
+        
+        # Need to change the dates in porT1 and porT2
+        yearT2 = pd.to_datetime(date).year
+        yearT1 = (pd.to_datetime(date) - pd.DateOffset(years=30)).year
+        self.dataTab.dataOptions.porT1.setText(str(yearT1))
+        self.dataTab.dataOptions.porT2.setText(str(yearT2))
 
         return
 
