@@ -113,8 +113,10 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             if file_ == '__pycache__' or 'pyforecast.cfg':
                 continue
             filename = os.path.abspath('Resources/tempFiles/' + file_)
-            os.remove(filename)
-
+            try:
+                os.remove(filename)
+            except:
+                pass
     def setDate(self, date):
         """
         This function sets the date in the software. It stores the time in a config file called 'Resources/tempFiles/pyforecast.cfg'
