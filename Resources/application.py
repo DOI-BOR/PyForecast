@@ -2212,6 +2212,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         self.tabWidget.currentChanged.connect(self.populateDensityEquations)
         self.densityAnalysisTab.densityPane.forecastEquationSelect.currentIndexChanged.connect(self.loadNewDensityList)
         self.densityAnalysisTab.densityPane.runButton.clicked.connect(self.runAnalysis)
+        self.densityAnalysisTab.densityPane.showExceedanceButton.clicked.connect(self.createExceedanceTable)
         
         pass
 
@@ -2316,13 +2317,14 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         self.densityAnalysisTab.plots.axes1.annotate('Bandwidth: {0}'.format(np.round(bandwidth, 1)), (0.12, 0.85), xycoords='figure fraction')
 
         self.densityAnalysisTab.plots.axes1.fill_between(x, 0, kdens, facecolor=(1,0,0,0.3), edgecolor=(1,0,0,1), linewidth=2, zorder=2)
-        cumulativeSum = [np.trapz(kdens[0:i+1], x[0:i+1]) for i in range(len(kdens))]
+        self.cumulativeSum = [np.trapz(kdens[0:i+1], x[0:i+1]) for i in range(len(kdens))]
        
-        self.densityAnalysisTab.plots.axes2.fill_between(x, 0, cumulativeSum, facecolor=(1,0,0,0.3), edgecolor=(1,0,0,1), linewidth=2, zorder=2)
+        self.densityAnalysisTab.plots.axes2.fill_between(x, 0, self.cumulativeSum, facecolor=(1,0,0,0.3), edgecolor=(1,0,0,1), linewidth=2, zorder=2)
         self.densityAnalysisTab.plots.axes1.set_xlim(minFcst - rang/2, maxFcst + rang/2)
         self.densityAnalysisTab.plots.axes2.set_xlim(minFcst - rang/2, maxFcst + rang/2)
         
-        intervals = [self.findIntervalValue(x, cumulativeSum, i) for i in [0.1, 0.3, 0.5, 0.7, 0.9]]
+        intervals = [self.findIntervalValue(x, self.cumulativeSum, i) for i in [0.1, 0.3, 0.5, 0.7, 0.9]]
+        self.xVals = [i for i in x]
         self.densityAnalysisTab.pct10Edit.setText(str(intervals[0]))
         self.densityAnalysisTab.pct30Edit.setText(str(intervals[1]))
         self.densityAnalysisTab.pct50Edit.setText(str(intervals[2]))
@@ -2348,6 +2350,35 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         x = lowX + (interval - lowY)*(highX - lowX)/(highY - lowY)
         return np.round(x, 1)
 
+    def createExceedanceTable(self):
+        """
+        Creates an exceedance table that can be copied to excel
+        """
+        try:
+            xVals = self.xVals
+            yVals = self.cumulativeSum
+        except:
+            return
+        intervals = np.arange(0.01, 1, 0.01)
+        non_exceedances = []
+        for interval in intervals:
+            non_exceedances.append(self.findIntervalValue(xVals, yVals, interval))
+        
+        data = pd.DataFrame()
+        data['Non-exceedance Interval'] = [str(interval)[0:4] for interval in intervals]
+        data['Value'] = non_exceedances
+        self.widg_ = QtWidgets.QDialog()
+        self.table_ = RegressionStatsGUI.CustomTableView(self, menuFunctions=['COPY'], readOnly=False)
+        #for row in data.iterrows():
+        #    self.table_.addRow([row[1][0], row[1][1]])
+        #self.table_.setHorizontalHeaderLabels(list(data.columns))
+        self.table_.createTableFromDataFrame(data)
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(self.table_)
+        self.widg_.setLayout(layout)
+        self.wind_ = self.widg_.show()
+
+        return
 
 
         

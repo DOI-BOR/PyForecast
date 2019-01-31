@@ -703,7 +703,8 @@ class CustomTableView(QtWidgets.QTableWidget):
 
         # add the items from the list
         for i, listItem in enumerate(list_):
-            item = QtWidgets.QTableWidgetItem(listItem)
+            print(list_)
+            item = QtWidgets.QTableWidgetItem(str(listItem))
 
             self.setItem(
                 currentRow, i, item
@@ -1939,10 +1940,11 @@ class DensityPane(QtWidgets.QWidget):
 
         # Define the output options
 
-        self.saveButton = QtWidgets.QPushButton("Save Forecast")
+        self.showExceedanceButton = QtWidgets.QPushButton("Exceedance Table")
         self.clearPlotButton = QtWidgets.QPushButton("Clear Plots")
+        self.clearPlotButton.setEnabled(False)
         hlayout = QtWidgets.QHBoxLayout()
-        hlayout.addWidget(self.saveButton)
+        hlayout.addWidget(self.showExceedanceButton)
         hlayout.addWidget(self.clearPlotButton)
         self.layout.addLayout(hlayout)
 
