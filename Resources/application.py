@@ -103,6 +103,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         self.threadPool = QtCore.QThreadPool()
         writeConfig('savefilename','')
 
+
         return
 
     def purgeOldFiles(self):
@@ -117,6 +118,8 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
                 os.remove(filename)
             except:
                 pass
+
+
     def setDate(self, date):
         """
         This function sets the date in the software. It stores the time in a config file called 'Resources/tempFiles/pyforecast.cfg'
@@ -258,7 +261,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
 
         return
 
-  
+
     def openFile(self):
         """
         Function to read a pickled .fcst file and extract the 2 main dictionaries. Then, uses the 2 dictionaries

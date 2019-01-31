@@ -2008,9 +2008,12 @@ class UI_MainWindow(object):
         # Create a File Menu and add the File menu buttons
         self.fileMenu = self.menu.addMenu("File")
         self.newAction = QtWidgets.QAction('New Forecast', MainWindow)
+        self.newAction.setShortcut("Ctrl+N")
         self.saveAction = QtWidgets.QAction('Save Forecast', MainWindow)
+        self.saveAction.setShortcut("Ctrl+S")
         self.saveAsAction = QtWidgets.QAction('Save Forecast As...', MainWindow)
         self.openAction = QtWidgets.QAction('Open Forecast', MainWindow)
+        self.openAction.setShortcut("Ctrl+O")
         self.addLoaderAction = QtWidgets.QAction("Edit Dataloaders",MainWindow)
         self.setCustomDatetimeAction = QtWidgets.QAction('Set custom datetime', MainWindow)
         #self.blueThemeAction = QtWidgets.QAction("Blue / Gray")
@@ -2032,7 +2035,6 @@ class UI_MainWindow(object):
         self.fileMenu.addAction(self.setCustomDatetimeAction)
         self.fileMenu.addSeparator()
         self.fileMenu.addAction(self.exitAction)
-
         # Create an About Menu and add the About menu buttons
         self.aboutMenu = self.menu.addMenu("About")
         self.docAction = QtWidgets.QAction('Documentation', MainWindow)
