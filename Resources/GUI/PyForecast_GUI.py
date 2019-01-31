@@ -390,6 +390,7 @@ class SummTreeView(QtWidgets.QWidget):
 class CustomTreeView(QtWidgets.QTreeView):
 
     deletedItem = QtCore.pyqtSignal(list)
+    forcedItem = QtCore.pyqtSignal(list)
     droppedPredictor = QtCore.pyqtSignal(list)
     # Initialize a QTreeView and start with a blank tree
     def __init__(self, parent=None, dragFrom = False, dropTo = False, menuFunctions=['']):
@@ -421,6 +422,11 @@ class CustomTreeView(QtWidgets.QTreeView):
             self.delAction = QtWidgets.QAction("Delete")
             self.addAction(self.delAction)
             self.delAction.triggered.connect(self.deleteRow)
+
+        if 'FORCE' in menuFunctions:
+            self.forceAction = QtWidgets.QAction("Force")
+            self.addAction(self.forceAction)
+            self.forceAction.triggered.connect(self.forceRow)
         
         if "SENDDENS" in menuFunctions:
             self.sendAction = QtWidgets.QAction("Send to Density Tab")
@@ -500,6 +506,23 @@ class CustomTreeView(QtWidgets.QTreeView):
             return
 
 
+    def forceRow(self):
+        print('forceRow')
+        currentIndex = self.currentIndex()
+        item = self.model.itemFromIndex(currentIndex)
+        parent = item.parent().parent()
+        text = item.text()
+        try:
+            text = text.split(':')[0].strip(' ')
+            test = int(text)
+            if len(text) == 5:
+                #self.model.removeRow(currentIndex.row(), currentIndex.parent())
+                self.forcedItem.emit([text, parent.text()])
+        except Exception as e:
+            print(e)
+            return
+
+
     def addToTree(self, dict_, levels_in_max = None, exclude_keys=[]):
         self.model = QtGui.QStandardItemModel()
         self.addDictToModel(self.model, dict_, initial = True, levels_in_max = levels_in_max, levels_in = 1, exclude_keys = exclude_keys)
@@ -566,6 +589,7 @@ class CustomTreeView(QtWidgets.QTreeView):
 class CustomTableView(QtWidgets.QTableWidget):
 
     deletedRowEmission = QtCore.pyqtSignal(list)
+    forcedRowEmission = QtCore.pyqtSignal(list)
     deletedColumnEmission = QtCore.pyqtSignal(str)
 
     def __init__(self, parent=None, rowLock = False, colLock = False, cols = 0, rows = 0, headers = [''], menuFunctions = [''], readOnly = True, dragFrom=False):
@@ -1500,7 +1524,7 @@ class FcstOptionsTrees(QtWidgets.QWidget):
         hlayout.addWidget(self.tree2Label)
         hlayout.addSpacerItem(QtWidgets.QSpacerItem(400,40,QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum))
         self.tree2Layout.addLayout(hlayout)
-        self.tree2 = CustomTreeView(self, dragFrom=True, dropTo=True, menuFunctions=['DELETE'])
+        self.tree2 = CustomTreeView(self, dragFrom=True, dropTo=True, menuFunctions=['DELETE','FORCE'])
         self.tree2.setFrameStyle(QtWidgets.QFrame.NoFrame)
         self.tree2Layout.addWidget(self.tree2)
 

@@ -49,6 +49,9 @@ self.forecastDict = {
             "PredictorPool" : {
                 "prdIDs" : [101, 104, 133, 152, ..., 211]
             },
+            "ForcedPredictors" : {
+                "prdIDs" : [101]
+            },
             "Predictand" : {
                 "Name"  : "Porcupine Reservoir Inflow April-July",
                 "Unit" : "KAF",

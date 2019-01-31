@@ -1366,6 +1366,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         self.fcstOptionsTab.plotsPane.prdIDSignal.connect(self.addTofcstOptionsPlot)
         self.fcstOptionsTab.dualTreeView.tree2.droppedPredictor.connect(self.addPredictorToEquation)
         self.fcstOptionsTab.dualTreeView.tree2.deletedItem.connect(self.deletePredictor)
+        self.fcstOptionsTab.dualTreeView.tree2.forcedItem.connect(self.forcePredictor)
         self.fcstOptionsTab.dualTreeView.tree1.openExcelAction.triggered.connect(self.exportDataFromForecastOptionsTab)
 
         return
@@ -1422,6 +1423,22 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         self.forecastDict['EquationPools'][equation]['PredictorPool'].pop(prdID)
         self.displayForecastDict(self.forecastDict, onlyEquations=True)
         
+        return
+
+    @QtCore.pyqtSlot(list)
+    def forcePredictor(self, list_):
+        """
+        Function to delete a predictor from the PredictorPool section of a forecast equation. The function pops
+        the prdID from the specified equation and re-draws the forecast dictionary.
+        
+        input: list_ = [prdID, equation]
+
+        """
+        prdID = list_[0]
+        equation = list_[1]
+        self.forecastDict['EquationPools'][equation]['ForcedPredictors'].append(prdID)
+        self.displayForecastDict(self.forecastDict, onlyEquations=True)
+
         return
 
 
