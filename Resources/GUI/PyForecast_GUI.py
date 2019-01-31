@@ -424,7 +424,7 @@ class CustomTreeView(QtWidgets.QTreeView):
             self.delAction.triggered.connect(self.deleteRow)
 
         if 'FORCE' in menuFunctions:
-            self.forceAction = QtWidgets.QAction("Force")
+            self.forceAction = QtWidgets.QAction("(Un)Force")
             self.addAction(self.forceAction)
             self.forceAction.triggered.connect(self.forceRow)
         
@@ -516,7 +516,6 @@ class CustomTreeView(QtWidgets.QTreeView):
             text = text.split(':')[0].strip(' ')
             test = int(text)
             if len(text) == 5:
-                #self.model.removeRow(currentIndex.row(), currentIndex.parent())
                 self.forcedItem.emit([text, parent.text()])
         except Exception as e:
             print(e)
@@ -528,7 +527,7 @@ class CustomTreeView(QtWidgets.QTreeView):
         self.addDictToModel(self.model, dict_, initial = True, levels_in_max = levels_in_max, levels_in = 1, exclude_keys = exclude_keys)
         self.setModel(self.model) 
 
-    def addDictToModel(self, model, dict_, initial=True, levels_in_max = None, levels_in = 1, exclude_keys = []):
+    def addDictToModel(self, model, dict_, initial=True, levels_in_max = None, levels_in = 1, exclude_keys = [], forcedPredIds = []):
        
         # Check for recursion
         if initial == True:
@@ -553,7 +552,11 @@ class CustomTreeView(QtWidgets.QTreeView):
                     item = QtGui.QStandardItem(str(key))
                     parentItem.appendRow(item)
                     if levels_in <= levels_in_max:
-                        self.addDictToModel(item, values, initial=False, levels_in_max=levels_in_max, levels_in=levels_in+1,exclude_keys = exclude_keys)
+
+                        if key == 'PredictorPool':
+                            self.addDictToModel(item, values, initial=False, levels_in_max=levels_in_max, levels_in=levels_in + 1, exclude_keys=exclude_keys, forcedPredIds = dict_['ForcedPredictors'])
+                        else:
+                            self.addDictToModel(item, values, initial=False, levels_in_max=levels_in_max, levels_in=levels_in+1,exclude_keys = exclude_keys)
 
                 elif isinstance(values, list):
                     item = QtGui.QStandardItem(str(key))
@@ -563,7 +566,11 @@ class CustomTreeView(QtWidgets.QTreeView):
                 else:
                     if isinstance(key, datetime):
                         key = datetime.strftime(key, '%Y')
-                    item = QtGui.QStandardItem(str(key) + ': ' + str(values))
+                    if key in forcedPredIds:
+                        item = QtGui.QStandardItem(str(key) + ': ' + u'\u24BB' + str(values))
+                    else:
+                        item = QtGui.QStandardItem(str(key) + ': ' + str(values))
+
                     parentItem.appendRow(item)
         except:
             print('\nERROR:')
@@ -1364,7 +1371,7 @@ class FcstOptionsPane(QtWidgets.QWidget):
         hlayout.addSpacerItem(QtWidgets.QSpacerItem(400,40,QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum))
         self.gridLayout1.addLayout(hlayout, 0, 0, 1, 4)
         self.periodStartInput = CustomQComboBox(self.formScroll)
-        self.periodStartInput.addItems(['TEST','January','February','March','April','May','June','July','August','September','October','November','December'])
+        self.periodStartInput.addItems(['January','February','March','April','May','June','July','August','September','October','November','December'])
         self.periodStartInput.setCurrentIndex(3)
         self.gridLayout1.addWidget(self.periodStartInput, 1, 0, 1, 2)
         self.periodEndInput = CustomQComboBox(self.formScroll)

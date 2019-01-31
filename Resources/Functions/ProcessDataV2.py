@@ -69,7 +69,7 @@ class alternateThreadWorker(QtCore.QRunnable):
                 monthInv = remapMonth(month, inv=True, wateryearStart= self.forecastDict['Options']['wateryearStart']) # Convert the remapped month back to a real one
                 monthInv = "0" + str(monthInv) # Zero-pad the monthe (i.e. change "2" to "02")
                 monthInv = datetime.strftime(datetime.strptime(monthInv[-2:] + '011901', '%m%d%Y'), '%B')  + ' 01st' # Generate a string in the format "January 1st"
-                self.forecastDict['EquationPools'][monthInv] = {"PredictorPool":{}, "ForcedPredictors":{}, "Predictand":{}, "ForecastEquations":{}}
+                self.forecastDict['EquationPools'][monthInv] = {"PredictorPool":{}, "Predictand":{}, "ForecastEquations":{}, "ForcedPredictors":[]}
                
         else:
             for month in range(remapMonth(self.forecastDict['Options']['fcstStart'], wateryearStart= self.forecastDict['Options']['wateryearStart']), remapMonth(self.forecastDict['Options']['fcstPeriodEnd'], wateryearStart= self.forecastDict['Options']['wateryearStart'])+1):
@@ -77,8 +77,8 @@ class alternateThreadWorker(QtCore.QRunnable):
                 monthInv = "0" + str(monthInv) # Zero-pad the monthe (i.e. change "2" to "02")
                 monthInv1 = datetime.strftime(datetime.strptime(monthInv[-2:] + '011901', '%m%d%Y'), '%B') + ' 01st' # Generate a string in the format "January 1st"
                 monthInv2 = datetime.strftime(datetime.strptime(monthInv[-2:] + '011901', '%m%d%Y'), '%B') + ' 15th' # Generate a string in the format "January 15th"
-                self.forecastDict['EquationPools'][monthInv1] = {"PredictorPool":{}, "ForcedPredictors":{}, "Predictand":{}, "ForecastEquations":{}}
-                self.forecastDict['EquationPools'][monthInv2] = {"PredictorPool":{}, "ForcedPredictors":{}, "Predictand":{}, "ForecastEquations":{}}
+                self.forecastDict['EquationPools'][monthInv1] = {"PredictorPool":{}, "Predictand":{}, "ForecastEquations":{}, "ForcedPredictors":[]}
+                self.forecastDict['EquationPools'][monthInv2] = {"PredictorPool":{}, "Predictand":{}, "ForecastEquations":{}, "ForcedPredictors":[]}
 
         # Now we have our equationpools dict set up with one key per forecast equation in the form:
         # {"January 1st": {"Predictand":"", "Predictors":"",...}, "January 15th": {"Predictand":"", "Predictors":""},...}   

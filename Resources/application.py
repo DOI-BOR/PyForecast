@@ -1437,16 +1437,29 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
     @QtCore.pyqtSlot(list)
     def forcePredictor(self, list_):
         """
-        Function to delete a predictor from the PredictorPool section of a forecast equation. The function pops
-        the prdID from the specified equation and re-draws the forecast dictionary.
+        Function to add a selected predictor (prdID) to a selected equation. This function is called when a predictor
+        is dragged into an equaton. The program reads the prdID, and the drop-location equation and appends the prdID into 
+        the forecast equation predictors.
         
         input: list_ = [prdID, equation]
-
+        
         """
         prdID = list_[0]
         equation = list_[1]
-        self.forecastDict['EquationPools'][equation]['ForcedPredictors'].append(prdID)
-        self.displayForecastDict(self.forecastDict, onlyEquations=True)
+        #for predictor in self.forecastDict['PredictorPool']:
+        #    for interval in self.forecastDict['PredictorPool'][predictor]:
+        #        if self.forecastDict['PredictorPool'][predictor][interval]['prdID'] == prdID:
+        if prdID in self.forecastDict['EquationPools'][equation]['ForcedPredictors']:
+            self.forecastDict['EquationPools'][equation]['ForcedPredictors'].remove(prdID)
+        else:
+            self.forecastDict['EquationPools'][equation]['ForcedPredictors'].append(prdID)
+        self.displayForecastDict(self.forecastDict, onlyEquations = True)
+        item = self.fcstOptionsTab.dualTreeView.tree2.model.findItems(equation)[0]
+        predictorPoolChild = item.child(0,0)
+        index = self.fcstOptionsTab.dualTreeView.tree2.model.indexFromItem(predictorPoolChild)
+        index2 = self.fcstOptionsTab.dualTreeView.tree2.model.indexFromItem(item)
+        self.fcstOptionsTab.dualTreeView.tree2.setExpanded(index2, True)
+        self.fcstOptionsTab.dualTreeView.tree2.setExpanded(index, True)
 
         return
 
@@ -1626,9 +1639,9 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
 
         self.forecastDict = dict_
         if onlyEquations:
-            self.fcstOptionsTab.dualTreeView.tree2.addToTree(self.forecastDict['EquationPools'], levels_in_max=10, exclude_keys=['ForecastEquations'])
+            self.fcstOptionsTab.dualTreeView.tree2.addToTree(self.forecastDict['EquationPools'], levels_in_max=10, exclude_keys=['ForecastEquations','ForcedPredictors'])
         else:
-            self.fcstOptionsTab.dualTreeView.tree2.addToTree(self.forecastDict['EquationPools'], levels_in_max=10, exclude_keys=['ForecastEquations'])
+            self.fcstOptionsTab.dualTreeView.tree2.addToTree(self.forecastDict['EquationPools'], levels_in_max=10, exclude_keys=['ForecastEquations','ForcedPredictors'])
             self.fcstOptionsTab.dualTreeView.tree1.addToTree(self.forecastDict['PredictorPool'], levels_in_max=10)
         self.fcstOptionsTab.optionsPane.applyButton.setEnabled(True)
         self.fcstOptionsTab.optionsPane.updateButton.setEnabled(True)
