@@ -113,13 +113,22 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             if file_ == '__pycache__' or 'pyforecast.cfg':
                 continue
             filename = os.path.abspath('Resources/tempFiles/' + file_)
-            os.remove(filename)
-
+            try:
+                os.remove(filename)
+            except:
+                pass
     def setDate(self, date):
         """
         This function sets the date in the software. It stores the time in a config file called 'Resources/tempFiles/pyforecast.cfg'
         """
+        
         writeConfig('programtime',date)
+        
+        # Need to change the dates in porT1 and porT2
+        yearT2 = pd.to_datetime(date).year
+        yearT1 = (pd.to_datetime(date) - pd.DateOffset(years=30)).year
+        self.dataTab.dataOptions.porT1.setText(str(yearT1))
+        self.dataTab.dataOptions.porT2.setText(str(yearT2))
 
         return
 
@@ -225,11 +234,11 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         Function to save the 2 main dictionaries into a pickled .fcst file. Additionally sets the 
         file name in the window title.
         """    
-        filename = self.readConfig('savefilename')
+        filename = readConfig('savefilename')
 
         if filename == '' or saveNew:
             filename = QtWidgets.QFileDialog.getSaveFileName(self, 'Save File As', 'unititled.fcst','*.fcst')[0]
-            self.writeConfig('savefilename',filename)
+            writeConfig('savefilename',filename)
 
             if filename == '':
                 return
@@ -260,7 +269,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         try:
            
             filename = QtWidgets.QFileDialog.getOpenFileName(self, 'Open File','*.fcst')[0]
-            self.writeConfig('savefilename',filename)
+            writeConfig('savefilename',filename)
 
             if filename == '':
                 return  
