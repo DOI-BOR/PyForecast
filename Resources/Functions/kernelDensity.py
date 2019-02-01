@@ -21,10 +21,10 @@ def performKernelDensity(meanList, scaleList, bandwidth, x):
     x = x[:,np.newaxis]
 
     """
-    Set up the random samples. Draw 100 random samples from each forecast
+    Set up the random samples. Draw 10000 random samples from each forecast
     """
     samples = np.concatenate(
-        tuple([np.random.normal(meanList[i], scaleList[i], 1000) for i in range(len(meanList))]))[:,np.newaxis]
+        tuple([np.random.normal(meanList[i], scaleList[i], 10000) for i in range(len(meanList))]))[:,np.newaxis]
     #samples = None
     print('num nans ', np.sum(np.isnan(samples)))
     """
