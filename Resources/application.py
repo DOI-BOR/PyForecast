@@ -804,19 +804,15 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         PYID. It then locates the dataset in the dataset directory and deletes said dataset.
         """
         dataID = items[0].text()
-        print(items[0].text())
-        print('attempting to delete {0}'.format(dataID))
         
         index = -1
         for i, station in enumerate(self.datasetDirectory['datasets']):
             print(station)
             if station['PYID'] == dataID:
-                print('found')
                 index = i
         
         self.datasetDirectory['datasets'].pop(index)
-        print('new directory')
-        print(self.datasetDirectory)
+
 
         return
 
