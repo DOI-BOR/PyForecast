@@ -45,12 +45,15 @@ class OptionsTable(QtWidgets.QTableWidget):
         # Get the options
         optionsList = list(dataloaderOptionsFunction()[0])
         self.description = dataloaderOptionsFunction()[1]
-        
+
+ #       desc = self.description()
+#        desc.setSectionResizeMode(0,QtWidgets.QHeaderView.Stretch)
         # Load the options into the table
         for i, option in enumerate(optionsList):
-
+            test=dataloaderOptionsFunction()[0][option]
             self.insertRow(i)
             self.setItem(i, 0, QtWidgets.QTableWidgetItem(option))
+            self.setItem(i, 1, QtWidgets.QTableWidgetItem(dataloaderOptionsFunction()[0][option]))
 
         # Stretch last section
         header = self.horizontalHeader()
@@ -116,9 +119,9 @@ class RESTDialog1(QtWidgets.QDialog):
         hlayout.addWidget(self.resampleChooser)
         mainLayout.addLayout(hlayout)
 
-        decriptionTitle = QtWidgets.QLabel("Loader Description")
+        decriptionTitle = QtWidgets.QLabel("Loader Description:")
         self.description = QtWidgets.QPlainTextEdit()
-        self.description.setMaximumHeight(50)
+        self.description.setMaximumHeight(75)
         self.description.setReadOnly(True)
         mainLayout.addWidget(decriptionTitle)
         mainLayout.addWidget(self.description)
