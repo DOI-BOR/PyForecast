@@ -12,11 +12,11 @@ from datetime import datetime
 
 def dataLoaderInfo():
 	optionsDict={
-		"Param1":"",
+		"Param1":"BOYR IN",
 		"Param1Operator":"+",
-		"Param2":"",
-		"Param2Operator":"+",
-		"Param3":"",
+		"Param2":"BLR QD",
+		"Param2Operator":"-",
+		"Param3":"BLR IN",
 		"Param3Operator":"+"}
 	description = "Downloads GP hydromet data as (operator1)param1 + (operator2)param2 + (operator3)param3, where operator is either + or -"
 	return optionsDict, description

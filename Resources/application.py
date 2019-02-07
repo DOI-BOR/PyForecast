@@ -806,14 +806,16 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         item on the station tab table and chooses delete, this function reads the item's text and identifies the
         PYID. It then locates the dataset in the dataset directory and deletes said dataset.
         """
-        dataID = items[0]
+        dataID = items[0].text()
         
         index = -1
         for i, station in enumerate(self.datasetDirectory['datasets']):
+            print(station)
             if station['PYID'] == dataID:
                 index = i
         
         self.datasetDirectory['datasets'].pop(index)
+
 
         return
 

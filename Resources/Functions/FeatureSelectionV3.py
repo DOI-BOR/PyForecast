@@ -776,7 +776,11 @@ def MultipleRegression(xData, yData, crossVal, perfMetric, pool):
 
     metric_dict =  Metrics.computeMetrics(cv_predictand_star, predictandStar, predictand, p)
 
-    cov = (metric_dict['Root Mean Squared Error']**2) * np.linalg.inv(np.dot(np.transpose(xData), xData))
+    try:
+        cov = (metric_dict['Root Mean Squared Error']**2) * np.linalg.inv(np.dot(np.transpose(xData), xData))
+    except:
+        all_significant = False
+        return metric_dict, predictandStar, coef.flatten(), intercept.flatten(), cv_predictand_star, all_significant
     se = [np.sqrt(cov[i][i]) for i in range(len(coef))]
     t_ = [coef[i]/se[i] for i in range(len(se))]
     tVal = t.ppf(1-0.05, len(predictandStar) - (p+1))
