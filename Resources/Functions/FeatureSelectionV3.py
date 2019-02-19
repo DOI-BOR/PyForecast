@@ -336,28 +336,32 @@ predictors to try and remove: {2}
         else:
             self.cv = model_selection.KFold(n_splits=10)
 
+        """ Get minimum number of models to run """
+        """self.numModels = min((2 ** len(self.equationDict['PredictorPool'])) - 1, self.numModels)"""
+
         """ Initialize a list of dictionarys to store model information """
         self.searchDictList = [{
-                "fcstID"        : "",
-                "Type"          : "Linear - {0}".format(self.objFunction),
-                "Coef"          : [],
-                "prdIDs"         : [],
-                "Intercept"     : [],
-                "PrincCompData" :   {},
-                "Distribution"  :   self.dist,
-                "Metrics"       : {
-                    "Cross Validated Adjusted R2"            :-1e4,
-                    "Root Mean Squared Prediction Error"          :1e5,
-                    "Cross Validated Nash-Sutcliffe" :-1e4,
-                    "Adjusted R2" : -1e4,
-                    "Root Mean Squared Error" : 1e5,
-                    "Nash-Sutcliffe": -1e4 ,
-                    "Sample Variance": 1e5},
-                "CrossValidation"   :self.crossVal,
-                "Forecasted"        :"",
-                "CV_Forecasted"     :"",
-                "Years Used"        :[],
-                "FeatSelectionProgress" : "Running"} for n in range(self.numModels)]
+                "fcstID"            : "",
+                "Type"              : "Linear - {0}".format(self.objFunction),
+                "Coef"              : [],
+                "prdIDs"            : [],
+                "Intercept"         : [],
+                "PrincCompData"     : {},
+                "Distribution"      : self.dist,
+                "Metrics"           : {
+                    "Cross Validated Adjusted R2"           : float("-inf"),
+                    "Root Mean Squared Prediction Error"    : float("inf"),
+                    "Cross Validated Nash-Sutcliffe"        : float("-inf"),
+                    "Adjusted R2"                           : float("-inf"),
+                    "Root Mean Squared Error"               : float("inf"),
+                    "Nash-Sutcliffe"                        : float("-inf"),
+                    "Sample Variance"                       : float("inf")},
+                "CrossValidation"                           : self.crossVal,
+                "Forecasted"                                : "",
+                "CV_Forecasted"     : "",
+                "Years Used"        : [],
+                "FeatSelectionProgress" : "Running"
+        } for n in range(self.numModels)]
         
         """ Get the predictand Data"""    
         self.predictandData = pd.DataFrame().from_dict(self.equationDict['Predictand']['Data'], orient='columns')
@@ -538,15 +542,15 @@ predictors to try and remove: {2}
                     self.searchDictList[i]['FeatSelectionProgress'] = 'Completed'
                     modelsCompleted = modelsCompleted + 1
                     self.signals.updateProgBar.emit(int(100*modelsCompleted/self.numModels))
-            
-                
-        
-        for i in range(len(self.searchDictList)):
+
+
+        for i in reversed(range(len(self.searchDictList))):
             if self.searchDictList[i]['prdIDs'] == []:
-                fcstID = 'EMPTY'
+                del self.searchDictList[i]
             else:
                 fcstID = encryptions.generateFcstID(self.searchDictList[i]['Type'], self.searchDictList[i]['prdIDs'])
-            self.searchDictList[i]['fcstID'] = fcstID
+                self.searchDictList[i]['fcstID'] = fcstID
+
 
         pool.close()
         pool.join()
