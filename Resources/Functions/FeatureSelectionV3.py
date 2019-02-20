@@ -25,6 +25,7 @@ from Resources.Functions import encryptions
 from itertools import repeat, combinations
 from PyQt5.QtCore import pyqtSignal, QObject, QRunnable
 import warnings
+from Resources.Functions.miscFunctions import readConfig
 
 class alternateThreadWorkerSignals(QObject):
     """
@@ -362,8 +363,8 @@ predictors to try and remove: {2}
                 "Years Used"        : [],
                 "FeatSelectionProgress" : "Running"
         } for n in range(self.numModels)]
-        
-        """ Get the predictand Data"""    
+
+        """ Get the predictand Data"""
         self.predictandData = pd.DataFrame().from_dict(self.equationDict['Predictand']['Data'], orient='columns')
         self.predictandData.columns = ['Predictand']
         if self.dist != 'Normal':
@@ -387,11 +388,11 @@ predictors to try and remove: {2}
         modelsCompleted = 0
 
         """ Array to store current models """
-        currentModels = [[] for i in range(self.numModels)] 
+        currentModels = [[] for i in range(self.numModels)]
 
         """ Set up a multiprocessing pool """
         pool = ThreadPool(processes=CPUCount()-1)
-        
+
         while iterCounter <= len(self.predictorDataNames):
 
             iterCounter = iterCounter + 1
@@ -402,23 +403,23 @@ predictors to try and remove: {2}
 
                 """ Check to see if this model has completed yet"""
                 if self.searchDictList[i]['FeatSelectionProgress'] == 'Completed':
-                    continue 
-                
+                    continue
+
                 """ Set some variables for this iteration """
                 modelChanged = False
-                currentPredictorSet = self.searchDictList[i]['prdIDs'] 
+                currentPredictorSet = self.searchDictList[i]['prdIDs']
                 remainingPredictors = [prd for prd in self.predictorDataNames if prd not in currentPredictorSet]
 
                 """ Set up a pool of processes (to be run on multiple cores if there are lots of predictors) to test each predictor addition """
 
-                results = list(map(testPredictorSet, [list(l) for l in zip( repeat(currentPredictorSet), 
-                                                                            remainingPredictors, 
-                                                                            repeat('Add'), 
-                                                                            repeat(currentModels), 
-                                                                            repeat(self.cv), 
-                                                                            repeat(self.perfMetric), 
-                                                                            repeat(self.predictorData), 
-                                                                            repeat(self.predictandData), 
+                results = list(map(testPredictorSet, [list(l) for l in zip( repeat(currentPredictorSet),
+                                                                            remainingPredictors,
+                                                                            repeat('Add'),
+                                                                            repeat(currentModels),
+                                                                            repeat(self.cv),
+                                                                            repeat(self.perfMetric),
+                                                                            repeat(self.predictorData),
+                                                                            repeat(self.predictandData),
                                                                             repeat(self.ObjFunctionRun),
                                                                             repeat(pool))]))
 
@@ -427,7 +428,7 @@ predictors to try and remove: {2}
 
                     if result[0]['prdID'] == ['000']:
                         continue
-                    
+
                     if result[0]['prdID'] == ['-1000']:
                             modelsAnalyzed = modelsAnalyzed + 1
                             self.signals.updateRunLabel.emit("Models Analyzed: {0}".format(modelsAnalyzed))
@@ -449,22 +450,22 @@ predictors to try and remove: {2}
                     modelsAnalyzed = modelsAnalyzed + 1
                     self.signals.updateRunLabel.emit("Models Analyzed: {0}".format(modelsAnalyzed))
 
-            
+
 
                 """ If we didn't add a predictor, attempt to skip a step and try adding 2 predictors """
                 if modelChanged == False:
                     remainingPredictors = list(combinations(remainingPredictors, 2))
-                    
-                    results = list(map(testPredictorSet, [list(l) for l in zip( repeat(currentPredictorSet), 
-                                                                                remainingPredictors, 
-                                                                                repeat('Add'), 
-                                                                                repeat(currentModels), 
-                                                                                repeat(self.cv), 
-                                                                                repeat(self.perfMetric), 
-                                                                                repeat(self.predictorData), 
-                                                                                repeat(self.predictandData), 
-                                                                                repeat(self.ObjFunctionRun), 
-                                                                                repeat(pool))]))                    
+
+                    results = list(map(testPredictorSet, [list(l) for l in zip( repeat(currentPredictorSet),
+                                                                                remainingPredictors,
+                                                                                repeat('Add'),
+                                                                                repeat(currentModels),
+                                                                                repeat(self.cv),
+                                                                                repeat(self.perfMetric),
+                                                                                repeat(self.predictorData),
+                                                                                repeat(self.predictandData),
+                                                                                repeat(self.ObjFunctionRun),
+                                                                                repeat(pool))]))
 
                     for result in results:
 
@@ -491,24 +492,24 @@ predictors to try and remove: {2}
 
                         modelsAnalyzed = modelsAnalyzed + 1
                         self.signals.updateRunLabel.emit("Models Analyzed: {0}".format(modelsAnalyzed))
-                    
+
                 """ Set up a pool of processes to test each predictor removal """
                 """ But don't try and remove the predictor we just added! """
-                currentPredictorSet = self.searchDictList[i]['prdIDs'] 
+                currentPredictorSet = self.searchDictList[i]['prdIDs']
                 if modelChanged:
                     predictorsToBeRemoved = list(set(currentPredictorSet) - set(predictorAdded))
                 else:
                     predictorsToBeRemoved = currentPredictorSet
 
-                results = list(map(testPredictorSet, [list(l) for l in zip( repeat(currentPredictorSet), 
-                                                                            predictorsToBeRemoved, 
-                                                                            repeat('Remove'), 
-                                                                            repeat(currentModels), 
-                                                                            repeat(self.cv), 
-                                                                            repeat(self.perfMetric), 
-                                                                            repeat(self.predictorData), 
-                                                                            repeat(self.predictandData), 
-                                                                            repeat(self.ObjFunctionRun), 
+                results = list(map(testPredictorSet, [list(l) for l in zip( repeat(currentPredictorSet),
+                                                                            predictorsToBeRemoved,
+                                                                            repeat('Remove'),
+                                                                            repeat(currentModels),
+                                                                            repeat(self.cv),
+                                                                            repeat(self.perfMetric),
+                                                                            repeat(self.predictorData),
+                                                                            repeat(self.predictandData),
+                                                                            repeat(self.ObjFunctionRun),
                                                                             repeat(pool))]))
 
                 """ Determine if any of the removals increased model performance """
@@ -516,7 +517,7 @@ predictors to try and remove: {2}
 
                     if result[0]['prdID'] == ['000']:
                         continue
-                    
+
                     if result[0]['prdID'] == ['-1000']:
                         modelsAnalyzed = modelsAnalyzed + 1
                         self.signals.updateRunLabel.emit("Models Analyzed: {0}".format(modelsAnalyzed))
@@ -533,7 +534,7 @@ predictors to try and remove: {2}
                         self.searchDictList[i]['Years Used'] = result[6]
                         currentModels[i] = result[0]['prdID']
                         modelChanged = True
-                    
+
                     modelsAnalyzed = modelsAnalyzed + 1
                     self.signals.updateRunLabel.emit("Models Analyzed: {0}".format(modelsAnalyzed))
 
@@ -600,13 +601,13 @@ def testPredictorSet(list_, SFBS=False, first_iteration=False):
     """ Check to make sure that the predictor combo doesn't already exist """
     if testPredictors in currentModels:
         return [{'prdID':['000']}, \
-        {"Cross Validated Adjusted R2":-2e4, 
-        "Root Mean Squared Prediction Error":2e5,
-        "Cross Validated Nash-Sutcliffe":-2e4,
-        "Adjusted R2" : -2e4,
-        "Root Mean Squared Error" : 2e5,
-        "Nash-Sutcliffe": -2e4,
-        "Sample Variance": 2e5 }, \
+        {"Cross Validated Adjusted R2":float("-inf"),
+        "Root Mean Squared Prediction Error":float("inf"),
+        "Cross Validated Nash-Sutcliffe":float("-inf"),
+        "Adjusted R2" : float("-inf"),
+        "Root Mean Squared Error" : float("inf"),
+        "Nash-Sutcliffe": float("-inf"),
+        "Sample Variance": float("-inf") }, \
         {"Forecasted":None, "CV_Forecasted":None},None, None]
 
     if ObjFunctionRun != ZScoreRegression:
@@ -624,24 +625,24 @@ def testPredictorSet(list_, SFBS=False, first_iteration=False):
 
     if testPredictorsData.empty:
         return [{'prdID':['000']}, \
-        {"Cross Validated Adjusted R2":-2e4, 
-        "Root Mean Squared Prediction Error":2e5,
-        "Cross Validated Nash-Sutcliffe":-2e4,
-        "Adjusted R2" : -2e4,
-        "Root Mean Squared Error" : 2e5,
-        "Nash-Sutcliffe": -2e4,
-        "Sample Variance": 2e5 }, \
+        {"Cross Validated Adjusted R2":float("-inf"),
+        "Root Mean Squared Prediction Error":float("inf"),
+        "Cross Validated Nash-Sutcliffe":float("-inf"),
+        "Adjusted R2" : float("-inf"),
+        "Root Mean Squared Error" : float("inf"),
+        "Nash-Sutcliffe": float("-inf"),
+        "Sample Variance": float("-inf") }, \
         {"Forecasted":None, "CV_Forecasted":None},None, None]
     
     if testPredictorsData.shape[1] == 1 and (ObjFunctionRun == PrincipalComponentsRegression or ObjFunctionRun == ZScoreRegression):
         return [{'prdID':['000']}, \
-        {"Cross Validated Adjusted R2":-2e4, 
-        "Root Mean Squared Prediction Error":2e5,
-        "Cross Validated Nash-Sutcliffe":-2e4,
-        "Adjusted R2" : -2e4,
-        "Root Mean Squared Error" : 2e5,
-        "Nash-Sutcliffe": -2e4,
-        "Sample Variance": 2e5 }, \
+        {"Cross Validated Adjusted R2":float("-inf"),
+        "Root Mean Squared Prediction Error":float("inf"),
+        "Cross Validated Nash-Sutcliffe":float("-inf"),
+        "Adjusted R2" : float("-inf"),
+        "Root Mean Squared Error" : float("inf"),
+        "Nash-Sutcliffe": float("-inf"),
+        "Sample Variance": float("-inf") }, \
         {"Forecasted":None, "CV_Forecasted":None},None, None]
 
 
@@ -658,13 +659,13 @@ def testPredictorSet(list_, SFBS=False, first_iteration=False):
             metrics, forecasted, coefs, intercept, princCompData, CV_Forecasted, all_significant = ObjFunctionRun(testPredictorsData, predictandData, cv, perfMetric, pool)
         except:
             return [{'prdID':['-1000']}, \
-                {"Cross Validated Adjusted R2":-2e4, 
-                "Root Mean Squared Prediction Error":2e5,
-                "Cross Validated Nash-Sutcliffe":-2e4,
-                "Adjusted R2" : -2e4,
-                "Root Mean Squared Error" : 2e5,
-                "Nash-Sutcliffe": -2e4,
-                "Sample Variance" : 2e5 }, \
+                {"Cross Validated Adjusted R2":float("-inf"),
+                "Root Mean Squared Prediction Error":float("inf"),
+                "Cross Validated Nash-Sutcliffe":float("-inf"),
+                "Adjusted R2" : float("-inf"),
+                "Root Mean Squared Error" : float("inf"),
+                "Nash-Sutcliffe": float("-inf"),
+                "Sample Variance" : float("inf") }, \
                 {"Forecasted":None, "CV_Forecasted":None},None, None]
     else:
         metrics, forecasted, coefs, intercept, princCompData, CV_Forecasted, all_significant = ObjFunctionRun(testPredictorsData, predictandData, cv, perfMetric, pool)
@@ -672,37 +673,37 @@ def testPredictorSet(list_, SFBS=False, first_iteration=False):
 
     if not all_significant:
         return [{'prdID':['-1000']}, \
-                {"Cross Validated Adjusted R2":-2e4, 
-                "Root Mean Squared Prediction Error":2e5,
-                "Cross Validated Nash-Sutcliffe":-2e4,
-                "Adjusted R2" : -2e4,
-                "Root Mean Squared Error" : 2e5,
-                "Nash-Sutcliffe": -2e4,
-                "Sample Variance" : 2e5 }, \
+                {"Cross Validated Adjusted R2":float("-inf"),
+                "Root Mean Squared Prediction Error":float("inf"),
+                "Cross Validated Nash-Sutcliffe":float("-inf"),
+                "Adjusted R2" : float("-inf"),
+                "Root Mean Squared Error" : float("inf"),
+                "Nash-Sutcliffe": float("-inf"),
+                "Sample Variance" : float("inf") }, \
                 {"Forecasted":None, "CV_Forecasted":None},None, None]
 
     for i, prd in enumerate(testPredictors):
         if np.round(coefs[i],3) == 0.0:
             return [{'prdID':['000']}, \
-                {"Cross Validated Adjusted R2":-2e4, 
-                "Root Mean Squared Prediction Error":2e5,
-                "Cross Validated Nash-Sutcliffe":-2e4,
-                "Adjusted R2" : -2e4,
-                "Root Mean Squared Error" : 2e5,
-                "Nash-Sutcliffe": -2e4,
-                "Sample Variance" : 2e5 }, \
+                {"Cross Validated Adjusted R2":float("-inf"),
+                "Root Mean Squared Prediction Error":float("inf"),
+                "Cross Validated Nash-Sutcliffe":float("-inf"),
+                "Adjusted R2" : float("-inf"),
+                "Root Mean Squared Error" : float("inf"),
+                "Nash-Sutcliffe": float("-inf"),
+                "Sample Variance" : float("inf") }, \
                 {"Forecasted":None, "CV_Forecasted":None},None, None]
         
         # DO NOT ALLOW NEGATIVE COEFFICIENTS FOR SNOTEL SWE PREDICTORS
         if int(prd) >= 9000 and np.round(coefs[i], 3) <= 0:
             return [{'prdID':['000']}, \
-                {"Cross Validated Adjusted R2":-2e4, 
-                "Root Mean Squared Prediction Error":2e5,
-                "Cross Validated Nash-Sutcliffe":-2e4,
-                "Adjusted R2" : -2e4,
-                "Root Mean Squared Error" : 2e5,
-                "Nash-Sutcliffe": -2e4,
-                "Sample Variance" : 2e5 }, \
+                {"Cross Validated Adjusted R2":float("-inf"),
+                "Root Mean Squared Prediction Error":float("inf"),
+                "Cross Validated Nash-Sutcliffe":float("-inf"),
+                "Adjusted R2" : float("-inf"),
+                "Root Mean Squared Error" : float("inf"),
+                "Nash-Sutcliffe": float("-inf"),
+                "Sample Variance" : float("inf") }, \
                 {"Forecasted":None, "CV_Forecasted":None}, None, None]
     
 
@@ -788,8 +789,12 @@ def MultipleRegression(xData, yData, crossVal, perfMetric, pool):
     se = [np.sqrt(cov[i][i]) for i in range(len(coef))]
     t_ = [coef[i]/se[i] for i in range(len(se))]
     tVal = t.ppf(1-0.05, len(predictandStar) - (p+1))
+
     if True in [tt > -1*tVal and tt < tVal for tt in t_]:
         all_significant = False
+
+    if readConfig('allsignificantoverride',) == 'True':
+        all_significant = True
 
     return metric_dict, predictandStar, coef.flatten(), intercept.flatten(), cv_predictand_star, all_significant
 
@@ -858,6 +863,9 @@ def PrincipalComponentsRegression(xData, yData, crossVal, perfMetric, pool):
             coef = coef + regrWeight * evecs[prd, j] / xStd[prd]
             intercept = intercept - regrWeight * evecs[prd,j] * xMean[prd] / xStd[prd]
         coefs.append(coef)
+
+    if readConfig('allsignificantoverride',) == 'True':
+        all_significant = True
 
     return bestMetric, bestStarData, coefs, intercept, {'PC':principalComps, 'numPCs':len(bestCoefs), 'eigenVecs':evecs, 'eigenVals':evals, 'PCCoefs':bestCoefs, 'PCInt':bestIntercept, 'xMean':xMean, 'xStd':xStd}, bestCvStarData, all_significant
 
@@ -933,6 +941,9 @@ def ZScoreRegression(xData, yData, crossVal, perfMetric, pool):
             coef = -1*coef
         intercept = intercept - coef*xMean[prd]
         coefs.append(coef)
+
+    if readConfig('allsignificantoverride',) == 'True':
+        all_significant = True
 
     return metrics, predictandStar, coefs, intercept, {"Composite Set":C, "R2-List":r2List, "Z": xData, "CCoef":zCoefs, "CInt":zIntercept, 'xMean':xMean, 'xStd':xStd}, cv_predictandStar, all_significant
 
