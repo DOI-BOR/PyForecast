@@ -17,6 +17,7 @@ app = QtWidgets.QApplication(sys.argv)
 
 class pyforecastTest(unittest.TestCase):
 
+
     def setUp(self):
         self.form = application.mainWindow(datetime.strftime(datetime.now(), '%Y-%m-%d'))
 
