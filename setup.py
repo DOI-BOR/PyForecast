@@ -1,14 +1,19 @@
 import sys
 from cx_Freeze import setup, Executable
 
+# exclude unneeded packages. More could be added. Has to be changed for
+# other programs.
+build_exe_options = {"excludes": ["scipy.spatial.cKDTree"],
+                     "includes": ["matplotlib","numpy","scipy","sklearn","requests","zeep","pandas","PyQt5","datetime","configparser"],
+                     "include_files": ["Resources"],
+                     "optimize": 2,
+                     }
+
 setup(
     name = "PyForecast" ,
     version = "1.0" ,
     description = "PyForecast Software Application" ,
-    options = {"build_exe": {
-        #'packages': ["atomicwrites","attr","backports","dateutil","et_xmlfile","jinja2","lxml","markupsafe","matplotlib","more_itertools","numpy","openpyxl","pandas","pkg_resources","pluggy","py","PyQt5","pytz","scipy","setuptools","sqlalchemy","xlrd"],
-        'include_files': ['Resources'],
-        #'include_msvcr': True
-    }},
-    executables = [Executable("Resources/application.py", base="Win32GUI")]
+    options = {"build_exe": build_exe_options},
+    #executables = [Executable("Resources/application.py")]#, base="Win32GUI")]
+    executables = [Executable("PyForecast.py", base="Win32GUI")]
 )
