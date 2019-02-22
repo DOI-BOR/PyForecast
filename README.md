@@ -1,7 +1,7 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/n5jktmnm4jqr37nm?svg=true)](https://ci.appveyor.com/project/usbr/pyforecast)
 
 # PyForecast Forecasting Software
-PyForecast is a statistical modeling tool useful in predicting monthly and seasonal inflows and streamflows. The tool collects meterological and hydrologic datasets, analyzes hundreds to thousands of predictor subsets, and returns statistical regressions between predictors and streamflows. Check out the [Wiki](https://github.com/usbr/PyForecast/wiki) for background information and a brief walkthrough for how to use the software.
+PyForecast is a statistical modeling tool useful in predicting monthly and seasonal inflows and streamflows. The tool collects meterological and hydrologic datasets, analyzes hundreds to thousands of predictor subsets, and returns statistical regressions between predictors and streamflows. Check out the [Wiki](https://github.com/usbr/PyForecast/wiki) for background information and a brief walkthrough for how to use the software. Beta testing is underway, you may download an installer at [this link](https://github.com/usbr/PyForecast/releases/tag/beta) to install PyForecast on your machine.
 
 ## Requirements
 * Python 3.X with the following libraries installed
@@ -21,4 +21,4 @@ PyForecast is a statistical modeling tool useful in predicting monthly and seaso
 These packages can be installed automatically to your default python distribution by running the 'install_dependencies.bat' script. 
 
 ## Use
-Run the software by running the 'run_PyForecast.bat' batch script. This will open the software along with a console window that will log any error messages. Users may also download the source code and compiling the program via a Python IDE with PyForecast.pyw or via Visual Studio with PyForecast.pyproj
+Run the software by running the 'run_PyForecast.bat' batch script. This will open the software along with a console window that will log any error messages. Users may also download the source code and run the program via a Python IDE with PyForecast.pyw, via Visual Studio with PyForecast.pyproj, or by installing the program using the latest release at [this link](https://github.com/usbr/PyForecast/releases).
