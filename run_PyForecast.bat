@@ -1,3 +1,3 @@
 @echo off
-python PyForecast.pyw
+python PyForecast.py
 pause
