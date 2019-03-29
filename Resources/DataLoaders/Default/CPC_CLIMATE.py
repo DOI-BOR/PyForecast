@@ -91,6 +91,7 @@ def dataLoader(stationDict, startDate, endDate):
         dataMonth = dataMonth.resample('D').mean()
         dataMonth = dataMonth.fillna(method='ffill')
         dataMonth = dataMonth[dataMonth.index >= startDate]
+        dataMonth = dataMonth[dataMonth.index <= endDate]
         df = pd.DataFrame(index = pd.date_range(startDate, endDate))
         df = pd.concat([df, dataMonth], axis = 1)
         return df

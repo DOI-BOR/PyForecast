@@ -206,11 +206,3 @@ class RESTDialog1(QtWidgets.QDialog):
         except Exception as e:
             print(e)
             return 'Fail'
-
-
-
-
-
-
-
-    

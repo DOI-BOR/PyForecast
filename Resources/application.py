@@ -963,8 +963,8 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
 
             dataIDT = encryptions.generateStationID('NRCC', stationNumber, 'Temp', decodeOptions['dataLoader'])
             dataIDP = encryptions.generateStationID('NRCC', stationNumber, 'Precip', decodeOptions['dataLoader'])
-            nameP = "{0} Precipitation".format(stationNumber)
-            nameT = "{0} Temperature".format(stationNumber)
+            nameP = "{0} NRCC Precipitation".format(stationNumber)
+            nameT = "{0} NRCC Temperature".format(stationNumber)
 
             self.datasetDirectory['datasets'].append({"PYID": dataIDT, "TYPE":'NRCC',"ID":stationNumber,"Name":nameT,"Parameter":"Temperature","Units":"degF","Resampling":"Mean","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
             self.datasetDirectory['datasets'].append({"PYID": dataIDP, "TYPE":'NRCC',"ID":stationNumber,"Name":nameP,"Parameter":"Precipitation","Units":"inches","Resampling":"Accumulation","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
