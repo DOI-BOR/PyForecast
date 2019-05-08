@@ -935,7 +935,8 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
                 decodeOptions = {"dataLoader":"NRCS_WCC"}
                 dataID = encryptions.generateStationID(stationType, stationName, stationParam, decodeOptions['dataLoader'])
                 units = "inches"
-                resample = "Sample"
+                #resample = "Sample"
+                resample = "NearestNeighbor"
                 #self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":"inches","Resampling":"Sample","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
 
             elif stationType == 'USBR':

@@ -202,13 +202,14 @@ class alternateThreadWorker(QtCore.QRunnable):
                     unit = predictor['Units'] + ' Avg'
                     self.forecastDict['PredictorPool'][name][key]['Unit'] = unit
 
+
             elif predictor['Resampling'] == 'Sample':
 
                 intervals = self.predictorDicts(sample=True)
                 self.forecastDict['PredictorPool'][name] = intervals
 
                 for key in intervals:
-                    
+
                     month = monthLookup(key[:-3])
                     day = int(key[-2:])
                     dataMask = (predictorData.index.month == month) & (predictorData.index.day == day)
@@ -221,6 +222,44 @@ class alternateThreadWorker(QtCore.QRunnable):
                     #     data.index = data.index + pd.DateOffset(years=1)
 
                     # Add a predictor ID
+                    if predictor['Parameter'] == 'SWE':
+                        swe_prdID = str(int(swe_prdID) + 1).zfill(5)
+                        self.forecastDict['PredictorPool'][name][key]['prdID'] = swe_prdID
+                        prdID = swe_prdID
+                    else:
+                        reg_prdID = str(int(reg_prdID) + 1).zfill(5)
+                        self.forecastDict['PredictorPool'][name][key]['prdID'] = reg_prdID
+                        prdID = reg_prdID
+
+                    data = data.round(3)
+                    data.columns = [prdID]
+                    self.forecastDict['PredictorPool'][name][key]['Data'] = data.to_dict(orient='dict')
+
+                    # Add a unit description
+                    unit = predictor['Units']
+                    self.forecastDict['PredictorPool'][name][key]['Unit'] = unit
+
+
+            elif predictor['Resampling'] == 'NearestNeighbor':
+
+                intervals = self.predictorDicts(sample=True)
+                self.forecastDict['PredictorPool'][name] = intervals
+
+                for key in intervals:
+
+                    month = monthLookup(key[:-3])
+                    day = int(key[-2:])
+                    # fill data with nearest neighbor looking out 5 timesteps
+                    predictorData2 = predictorData.interpolate(method='nearest',limit=5,limit_direction='both')
+                    dataMask = (predictorData2.index.month == month) & (predictorData2.index.day == day)
+                    data = predictorData2.loc[dataMask]
+                    data = data.resample('AS').mean()
+                    # Compensate for water years
+                    if month >= monthLookup(self.forecastDict['Options']['wateryearStart']):
+                        data.index = data.index + pd.DateOffset(years=1)
+                    # if month == 10 or month == 11 or month == 12:
+                    #     data.index = data.index + pd.DateOffset(years=1)
+
                     # Add a predictor ID
                     if predictor['Parameter'] == 'SWE':
                         swe_prdID = str(int(swe_prdID) + 1).zfill(5)
@@ -231,12 +270,9 @@ class alternateThreadWorker(QtCore.QRunnable):
                         self.forecastDict['PredictorPool'][name][key]['prdID'] = reg_prdID
                         prdID = reg_prdID
 
-
                     data = data.round(3)
                     data.columns = [prdID]
                     self.forecastDict['PredictorPool'][name][key]['Data'] = data.to_dict(orient='dict')
-
-                    
 
                     # Add a unit description
                     unit = predictor['Units']
