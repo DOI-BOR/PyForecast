@@ -948,6 +948,20 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
                 resample = "Mean"
                 #self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":"CFS","Resampling":"Mean","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
 
+            elif stationType == 'AGMET':
+                region = instructionList[5]
+                pcode = instructionList[6]
+                decodeOptions = {"dataLoader":"USBR", "Region":region,"PCODE":pcode}
+                dataID = encryptions.generateStationID(stationType, stationName, stationParam, decodeOptions['dataLoader'])
+                if pcode == 'PP':
+                    resample = "Sum"
+                    units = "Inches"
+                else:
+                    resample = "Mean"
+                    units = "DegF"
+
+                #self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":"CFS","Resampling":"Mean","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
+
             else:
                 return
             

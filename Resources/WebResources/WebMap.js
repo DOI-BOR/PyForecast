@@ -348,11 +348,11 @@ function buttonPress() {
     } else if (type == 'AGMET') {
         var num = infoList[1];
         var name = infoList[2];
-        var param = infoList[3];
+        //var type = infoList[3];
         var region = infoList[4];
         var pcode = infoList[5];
-        var param = document.getElementById('paramAGMET').value;
-        console.log('StationSelect|'+name+'|'+num+'|'+type+'|'+param+'|'+region+'|'+param);
+        var param = document.getElementById('paramAgmet').value;
+        console.log('StationSelect|'+name+'|'+num+'|'+type+'|Weather|'+region+'|'+param);
     } else {
         var num = infoList[1];
         var name = infoList[2];
