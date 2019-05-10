@@ -9,7 +9,7 @@
 #define MyAppPublisher "USBR"
 #define MyAppURL "https://github.com/usbr/PyForecast"
 #define MyAppExeName "PyForecast.exe"
-#define bin "build\exe.win32-3.6\"
+#define bin "dist\pyforecast\"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application.
@@ -29,6 +29,7 @@ OutputBaseFilename=Install_PyForecast
 SetupIconFile={#bin}Resources\Fonts_Icons_Images\icon.ico
 Compression=lzma
 SolidCompression=yes
+PrivilegesRequired=lowest
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -37,19 +38,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "{#bin}PyForecast.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#bin}imageformats\*"; DestDir: "{app}\imageformats"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "{#bin}lib\*"; DestDir: "{app}\lib"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "{#bin}mpl-data\*"; DestDir: "{app}\mpl-data"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "{#bin}platforms\*"; DestDir: "{app}\platforms"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "{#bin}Resources\*"; DestDir: "{app}\Resources"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "{#bin}api-ms-win-crt-heap-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#bin}api-ms-win-crt-locale-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#bin}api-ms-win-crt-math-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#bin}api-ms-win-crt-runtime-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#bin}api-ms-win-crt-stdio-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#bin}python36.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#bin}sqlite3.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#bin}*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
