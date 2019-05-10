@@ -44,6 +44,7 @@ var SNOTEL = new Object();
 var SNOWCOURSE = new Object();
 var USBR_POLY = new Object();
 var USBR_POINTS = new Object();
+var USBR_AGMET = new Object();
 
 loadJSON('../../Resources/GIS/WATERSHEDS/HUC8_WGS84.json', function(response) {
     // Parse data into object
@@ -64,6 +65,10 @@ loadJSON('../../Resources/GIS/NRCS_SITES/SNOWCOURSE.json', function(response) {
 loadJSON('../../Resources/GIS/RECLAMATION_SITES/RESERVOIRS2.json', function(response) {
     // Parse data into object
     window.USBR_POINTS = JSON.parse(response);
+});
+loadJSON('../../Resources/GIS/RECLAMATION_SITES/AGRIMET.json', function(response) {
+    // Parse data into object
+    window.USBR_AGMET = JSON.parse(response);
 });
 
 
@@ -110,11 +115,11 @@ var SNOWCOURSELayer = L.geoJSON( window.SNOWCOURSE, {
             fillOpacity: 1
             })
         }
-    }).addTo(map);  
+    }).addTo(map);
 
 // Add the USBR sites
-var USBR_POINTSLayer = L.geoJSON( window.USBR_POINTS, {
-    
+var USBR_POINTS_RESLayer = L.geoJSON( window.USBR_POINTS, {
+
     pointToLayer: function (feature, latlng) {
         return L.circleMarker(latlng, {
             pane: "PointsPane",
@@ -125,7 +130,22 @@ var USBR_POINTSLayer = L.geoJSON( window.USBR_POINTS, {
             fillOpacity: 1
             })
         }
-    }).addTo(map);  
+    }).addTo(map);
+
+// Add the USBR AGRIMET sites
+var USBR_POINTS_AGMETLayer = L.geoJSON( window.USBR_AGMET, {
+
+    pointToLayer: function (feature, latlng) {
+        return L.circleMarker(latlng, {
+            pane: "PointsPane",
+            fillColor: "#CB9F5B",
+            color: "#000000",
+            radius: 7,
+            weight:1,
+            fillOpacity: 1
+            })
+        }
+    }).addTo(map);
 
 // Add the popups for the USGS sites
 USGSLayer.on("click",function(e) {
@@ -196,21 +216,47 @@ SNOWCOURSELayer.on("click",function(e) {
 });
 
 // Add the popups for the USBR sites
-USBR_POINTSLayer.on("click",function(e) {
+USBR_POINTS_RESLayer.on("click",function(e) {
     var id = e.layer.feature.properties.USBR_ID;
     var name = e.layer.feature.properties.NAME;
     var elev = e.layer.feature.properties.MeanElevation;
     var huc = e.layer.feature.properties.HUC_CODE;
     var region = e.layer.feature.properties.REGION;
     var pcode = e.layer.feature.properties.PCODE;
-    var popHTML = "<strong>USBR Reservoir Site</strong>" + 
+    var popHTML = "<strong>USBR Reservoir Site</strong>" +
                   "<p>ID: " + id +
                   "</br>Name: " + name +
                   "</br>Elevation: " + Math.round(elev) +
                   "</br>HUC: " + huc +
                   "</br>Region: " + region +
-                  '</p><button type="button" onclick="buttonPress()">Add Site</button>' + 
+                  '</p><button type="button" onclick="buttonPress()">Add Site</button>' +
                   '<p hidden id="info" style="margin:0">USBR|'+id+'|'+name+'|Inflow|' + region + '|' + pcode + '</p>';
+    var pop = L.popup().setLatLng(e.latlng).setContent(popHTML).addTo(map)
+
+});
+
+// Add the popups for the USBR AGRIMET sites
+USBR_POINTS_AGMETLayer.on("click",function(e) {
+    var id = e.layer.feature.properties.USBR_ID;
+    var name = e.layer.feature.properties.NAME;
+    var elev = e.layer.feature.properties.MeanElevation;
+    var huc = e.layer.feature.properties.HUC_CODE;
+    var region = e.layer.feature.properties.REGION;
+    var pcode = e.layer.feature.properties.HASPRECIP;
+    if (pcode == "TRUE") {
+        option3 = '<option value="PP">Precipitation (in)</option>'
+    } else {
+        option3 = "";
+    };
+    var popHTML = "<strong>USBR Agrimet Site</strong>" +
+                  "<p>ID: " + id +
+                  "</br>Name: " + name +
+                  "</br>Elevation: " + Math.round(elev) +
+                  //"</br>HUC: " + huc +
+                  //"</br>Region: " + region +
+                  '</p><select id="paramAgmet"><option value="MN">Min Temp (degF)</option><option value="MM">Avg Temp (degF)</option><option value="MN">Max Temp (degF)</option>' + option3 + '</select>' +
+                  '<button type="button" onclick="buttonPress()">Add Site</button>' +
+                  '<p hidden id="info" style="margin:0">AGMET|'+id+'|'+name+'|Weather|' + region + '|' + pcode + '</p>';
     var pop = L.popup().setLatLng(e.latlng).setContent(popHTML).addTo(map)
 
 });
@@ -260,7 +306,8 @@ var dataLayers = {
     "Streamgages":USGSLayer,
     "SNOTEL Sites":SNOTELLayer,
     "Snow Course" :SNOWCOURSELayer,
-    "Reservoirs":USBR_POINTSLayer
+    "Reservoirs":USBR_POINTS_RESLayer,
+    "Agrimet":USBR_POINTS_AGMETLayer
 }
 
 // Add a basemap and layer selector
@@ -298,6 +345,14 @@ function buttonPress() {
         var region = infoList[4];
         var pcode = infoList[5];
         console.log('StationSelect|'+name+'|'+num+'|'+type+'|'+param+'|'+region+'|'+pcode);
+    } else if (type == 'AGMET') {
+        var num = infoList[1];
+        var name = infoList[2];
+        var param = infoList[3];
+        var region = infoList[4];
+        var pcode = infoList[5];
+        var param = document.getElementById('paramAGMET').value;
+        console.log('StationSelect|'+name+'|'+num+'|'+type+'|'+param+'|'+region+'|'+param);
     } else {
         var num = infoList[1];
         var name = infoList[2];

@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{c605e43a-1a81-41a5-a132-cb8ab2abcc9d}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>PyForecast.pyw</StartupFile>
+    <StartupFile>PyForecast.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
@@ -22,6 +22,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="bin\wfastcgi.py" />
+    <Compile Include="PyForecast.py" />
     <Compile Include="PyForecast.pyw" />
     <Compile Include="Resources\application.py" />
     <Compile Include="Resources\DataLoaders\Custom\BOYR_ADJUSTED_INFLOWS.py" />

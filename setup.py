@@ -3,7 +3,7 @@ from cx_Freeze import setup, Executable
 
 # exclude unneeded packages. More could be added. Has to be changed for
 # other programs.
-build_exe_options = {"excludes": ["scipy.spatial.cKDTree"],
+build_exe_options = {"excludes": [],
                      "includes": ["matplotlib","numpy","scipy","sklearn","requests","zeep","pandas","PyQt5","datetime","configparser"],
                      "include_files": ["Resources"],
                      "optimize": 2,
