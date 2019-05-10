@@ -254,7 +254,7 @@ USBR_POINTS_AGMETLayer.on("click",function(e) {
                   "</br>Elevation: " + Math.round(elev) +
                   //"</br>HUC: " + huc +
                   //"</br>Region: " + region +
-                  '</p><select id="paramAgmet"><option value="MN">Min Temp (degF)</option><option value="MM">Avg Temp (degF)</option><option value="MN">Max Temp (degF)</option>' + option3 + '</select>' +
+                  '</p><select id="paramAgmet"><option value="MN">Minimum Temperatures (degF)</option><option value="MM">Average Temperatures (degF)</option><option value="MN">Maximum Temperatures (degF)</option>' + option3 + '</select>' +
                   '<button type="button" onclick="buttonPress()">Add Site</button>' +
                   '<p hidden id="info" style="margin:0">AGMET|'+id+'|'+name+'|Weather|' + region + '|' + pcode + '</p>';
     var pop = L.popup().setLatLng(e.latlng).setContent(popHTML).addTo(map)
@@ -297,17 +297,24 @@ function clickHUC(e) {
     var coordinates = getCenter(e.target.feature);
     var name = e.target.feature.properties.NAME;
     var num = e.target.feature.properties.HUC8;
-    var popHTML = "<strong>HUC8: " + num + "</strong><p>Name: " + name + "</p>"
+    var popHTML = "<strong>Hydrologic Unit</strong>"+
+                  "<p>Name: " + name +
+                  "</br>HUC8: " + num +
+                  "</p>Select dataset to add: </br>" +
+                  '<select id="paramHUC"><option value="nrcc">NRCC Temperatures and Precipitation</option><option value="prism">PRISM Temperatures and Precipitation</option></select>' +
+                  '<button type="button" onclick="buttonPress()">Add Site</button>' +
+                  '<p hidden id="info" style="margin:0">HUC|'+num+'|'+name+'</p>';
+
     var pop = L.popup().setLatLng(coordinates).setContent(popHTML).addTo(map);
 };
 
 var dataLayers = {
     "Watersheds":HUCLayer,
-    "Streamgages":USGSLayer,
-    "SNOTEL Sites":SNOTELLayer,
-    "Snow Course" :SNOWCOURSELayer,
-    "Reservoirs":USBR_POINTS_RESLayer,
-    "Agrimet":USBR_POINTS_AGMETLayer
+    "USGS Streamgages":USGSLayer,
+    "NRCS SNOTEL Sites":SNOTELLayer,
+    "NRCS Snow Course" :SNOWCOURSELayer,
+    "USBR Natural Flow":USBR_POINTS_RESLayer,
+    "USBR Agrimet":USBR_POINTS_AGMETLayer
 }
 
 // Add a basemap and layer selector
@@ -353,6 +360,11 @@ function buttonPress() {
         var pcode = infoList[5];
         var param = document.getElementById('paramAgmet').value;
         console.log('StationSelect|'+name+'|'+num+'|'+type+'|Weather|'+region+'|'+param);
+    } else if (type == 'HUC') {
+        var num = infoList[1];
+        var name = infoList[2];
+        var param = document.getElementById('paramHUC').value;
+        console.log(param+'|'+num+'|'+name);
     } else {
         var num = infoList[1];
         var name = infoList[2];

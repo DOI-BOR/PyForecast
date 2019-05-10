@@ -2582,6 +2582,30 @@
         "HUC_CODE": "17070306",
         "MeanElevation": 3526
       }
+    },
+    {
+      "type": "Feature",
+      "id": 113,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.009512,
+          14.4179006
+          ]
+      },
+      "properties": {
+        "OBJECTID": 113,
+		"ID": null,
+		"USBR_ID": "jrocha",
+		"NAME": "Jon Rocha's childhood home",
+		"REGION": "PN",
+		"HASPRECIP": "FALSE",
+		"LAT": 14.4179006,
+		"LONG": 121.009512,
+		"HUC_CODE": "",
+		"MeanElevation": 3.14159265358979323846
+      }
     }
+
   ]
 }

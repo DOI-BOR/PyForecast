@@ -969,7 +969,10 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
 
         elif instructionList[0] == 'nrcc':
 
-            stationNumber = self.stationsTab.stationInfoPane.nrccInput.text()
+            if instructionList.__len__() == 1:
+                stationNumber = self.stationsTab.stationInfoPane.nrccInput.text()
+            else:
+                stationNumber = instructionList[1]
 
             # Check to ensure the HUC is valid
             if not isValidHUC(stationNumber):
@@ -993,7 +996,10 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
 
         elif instructionList[0] == 'prism':
 
-            stationNumber = self.stationsTab.stationInfoPane.prismInput.text()
+            if instructionList.__len__() == 1:
+                stationNumber = self.stationsTab.stationInfoPane.prismInput.text()
+            else:
+                stationNumber = instructionList[1]
 
             # Check to ensure the HUC is valid
             if not isValidHUC(stationNumber):
