@@ -71,8 +71,10 @@ class alternateThreadWorker(QRunnable):
         """
         if self.featScheme == 'Sequential Floating Forward Selection':
             self.SFFS()
-        else:
+        elif self.featScheme == 'Sequential Floating Backwards Selection':
             self.SFBS()
+        else:
+            self.BruteForce()
     
     def SFBS(self):
 
@@ -543,6 +545,152 @@ class alternateThreadWorker(QRunnable):
 
                     modelsAnalyzed = modelsAnalyzed + 1
                     self.signals.updateRunLabel.emit("Models Analyzed: {0}".format(modelsAnalyzed))
+
+                """ If the model hasn't changed, complete the model and update the progress bar """
+                if modelChanged == False and currentPredictorSet != []:
+                    self.searchDictList[i]['FeatSelectionProgress'] = 'Completed'
+                    modelsCompleted = modelsCompleted + 1
+                    self.signals.updateProgBar.emit(int(100*modelsCompleted/self.numModels))
+
+
+        for i in reversed(range(len(self.searchDictList))):
+            if self.searchDictList[i]['Coef'] == []:
+                del self.searchDictList[i]
+            else:
+                fcstID = encryptions.generateFcstID(self.searchDictList[i]['Type'], self.searchDictList[i]['prdIDs'])
+                self.searchDictList[i]['fcstID'] = fcstID
+
+        pool.close()
+        pool.join()
+
+        self.signals.returnFcstDict.emit(self.searchDictList)
+    """
+    ########################################################################################
+    #########################################################################################
+    ########################################################################################
+    #########################################################################################
+    ########################################################################################
+    #########################################################################################
+    ########################################################################################
+    #########################################################################################
+    ########################################################################################
+    #########################################################################################
+
+
+    """
+
+    def BruteForce(self):
+
+        """ Set the regression scheme """
+        if self.objFunction == 'MLR':
+            self.ObjFunctionRun = MultipleRegression
+
+        elif self.objFunction == 'PCAR':
+            self.ObjFunctionRun = PrincipalComponentsRegression
+
+        elif self.objFunction == 'ZSCR':
+            self.ObjFunctionRun = ZScoreRegression
+
+        elif self.objFunction == 'ANN':
+            self.ObjFunctionRun = NeuralNetwork
+
+        """ Set the Cross validation type """
+        if self.crossVal == 'Leave One Out':
+            self.cv = model_selection.LeaveOneOut()
+        elif self.crossVal == 'K-Fold (5 folds)':
+            self.cv = model_selection.KFold(n_splits=5)
+        else:
+            self.cv = model_selection.KFold(n_splits=10)
+
+        """ Get number of models to run """
+        self.numModels = min((2 ** len(self.equationDict['PredictorPool'])) - 1, self.numModels)
+
+        """ Initialize a list of dictionarys to store model information """
+        self.searchDictList = [{
+                "fcstID"            : "",
+                "Type"              : "Linear - {0}".format(self.objFunction),
+                "Coef"              : [],
+                "prdIDs"            : [],
+                "Intercept"         : [],
+                "PrincCompData"     : {},
+                "Distribution"      : self.dist,
+                "Metrics"           : {
+                    "Cross Validated Adjusted R2"           : float("-inf"),
+                    "Root Mean Squared Prediction Error"    : float("inf"),
+                    "Cross Validated Nash-Sutcliffe"        : float("-inf"),
+                    "Adjusted R2"                           : float("-inf"),
+                    "Root Mean Squared Error"               : float("inf"),
+                    "Nash-Sutcliffe"                        : float("-inf"),
+                    "Sample Variance"                       : float("inf")},
+                "CrossValidation"                           : self.crossVal,
+                "Forecasted"                                : "",
+                "CV_Forecasted"     : "",
+                "Years Used"        : [],
+                "FeatSelectionProgress" : "Running"
+        } for n in range(self.numModels)]
+
+        """ Get the predictand Data"""
+        self.predictandData = pd.DataFrame().from_dict(self.equationDict['Predictand']['Data'], orient='columns')
+        self.predictandData.columns = ['Predictand']
+        if self.dist != 'Normal':
+            self.predictandData = np.log(self.predictandData)
+
+        """ Initialize data for predictors """
+        self.predictorData = pd.DataFrame()
+        for predictorName in self.predictorDict:
+            for interval in self.predictorDict[predictorName]:
+                if self.predictorDict[predictorName][interval]['prdID'] in list(self.equationDict['PredictorPool']):
+                    self.predictorData = pd.concat([self.predictorData, pd.DataFrame().from_dict(self.predictorDict[predictorName][interval]['Data'], orient='columns')], axis=1)
+        self.predictorDataNames = list(self.predictorData.columns)
+        if len(self.predictorDataNames) == 0:
+            print('No predictors selected')
+            self.signals.returnFcstDict.emit(self.searchDictList)
+            return
+
+        """ Begin a loop to iterate through parallized floating selection """
+        iterCounter = 0
+        modelsAnalyzed = 0
+        modelsCompleted = 0
+
+        """ Array to store current models """
+        currentModels = [[] for i in range(self.numModels)]
+
+        """ Set up a multiprocessing pool """
+        pool = ThreadPool(processes=CPUCount()-1)
+
+        while iterCounter <= len(self.predictorDataNames):
+
+            iterCounter = iterCounter + 1
+            print(iterCounter / (len(self.predictorDataNames)))
+
+            """ Iterate through each model and perform 1 iteration of Sequential Floating Selection """
+            for i in range(self.numModels):
+
+                """ Check to see if this model has completed yet"""
+                if self.searchDictList[i]['FeatSelectionProgress'] == 'Completed':
+                    continue
+
+                """ Set some variables for this iteration """
+                modelChanged = False
+                if iterCounter == 1: #Seed the equationDict with Forced Predictors during the 1st iteration
+                    self.searchDictList[i]['prdIDs'] = self.equationDict['ForcedPredictors']
+
+                currentPredictorSet = self.searchDictList[i]['prdIDs']
+                remainingPredictors = [prd for prd in self.predictorDataNames if prd not in currentPredictorSet]
+
+                """ Set up a pool of processes (to be run on multiple cores if there are lots of predictors) to test each predictor addition """
+
+                results = list(map(testPredictorSet, [list(l) for l in zip( repeat(currentPredictorSet),
+                                                                            remainingPredictors,
+                                                                            repeat('Add'),
+                                                                            repeat(currentModels),
+                                                                            repeat(self.cv),
+                                                                            repeat(self.perfMetric),
+                                                                            repeat(self.predictorData),
+                                                                            repeat(self.predictandData),
+                                                                            repeat(self.ObjFunctionRun),
+                                                                            repeat(pool))]))
+
 
                 """ If the model hasn't changed, complete the model and update the progress bar """
                 if modelChanged == False and currentPredictorSet != []:

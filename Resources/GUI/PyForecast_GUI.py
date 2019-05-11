@@ -1676,7 +1676,7 @@ class StandardRegressionTab(QtWidgets.QWidget):
         hlayout.addSpacerItem(QtWidgets.QSpacerItem(400,40,QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum))
         self.layout.addLayout(hlayout)
         self.featSelInput = CustomQComboBox(self.formScroll)
-        self.featSelInput.addItems(["Sequential Floating Forward Selection", "Sequential Floating Backwards Selection"])#["Forward Selection","Backward Selection",["Sequential Floating Forward Selection"],"Floating Backward"])
+        self.featSelInput.addItems(["Sequential Floating Forward Selection", "Sequential Floating Backwards Selection", "Brute Force"])#["Forward Selection","Backward Selection",["Sequential Floating Forward Selection"],"Floating Backward"])
         self.layout.addWidget(self.featSelInput)
         self.numModelsLabel = QtWidgets.QLabel("Number of Models")
         self.numModelsInfo = QtWidgets.QLabel() 
