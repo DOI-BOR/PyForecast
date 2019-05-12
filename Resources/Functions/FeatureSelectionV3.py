@@ -647,15 +647,13 @@ class alternateThreadWorker(QRunnable):
             self.signals.returnFcstDict.emit(self.searchDictList)
             return
 
-        """ Begin a loop to iterate through parallized floating selection """
-        modelsCompleted = 0
-
         """ Get a list of unique predictor combinations """
         predCombos = sum([list(map(list, itertools.combinations(self.predictorDataNames, i))) for i in range(len(self.predictorDataNames) + 1)], [])
         del predCombos[0]
 
         """ Array to store current models """
         currentModels = [[] for i in range(self.numModels)]
+        modelsCompleted = 0
 
         """ Set up a multiprocessing pool """
         pool = ThreadPool(processes=CPUCount()-1)
@@ -663,39 +661,56 @@ class alternateThreadWorker(QRunnable):
         """ Iterate through each predictor combination """
         allSignificantOriginalSetting = readConfig('allsignificantoverride')
         writeConfig('allsignificantoverride','True')
-        for i in range(len(predCombos)):
-
-            """ Check to see if this model has completed yet"""
-            if self.searchDictList[i]['FeatSelectionProgress'] == 'Completed':
-                continue
+        for predComboIdx in range(len(predCombos)):
 
             """ Set some variables for this iteration """
-            self.searchDictList[i]['prdIDs'] = predCombos[i]
-
-            currentPredictorSet = self.searchDictList[i]['prdIDs']
+            #self.searchDictList[i]['prdIDs'] = predCombos[i]
+            currentPredictorSet = predCombos[predComboIdx]#self.searchDictList[i]['prdIDs']
             remainingPredictors = []
-
-            """ Set up a pool of processes (to be run on multiple cores if there are lots of predictors) to test each predictor addition """
-            result = testPredictorSet(list_=[currentPredictorSet, remainingPredictors, 'Add', currentModels,
-                                             self.cv, self.perfMetric, self.predictorData, self.predictandData,
-                                             self.ObjFunctionRun, pool],SFBS=False,first_iteration=False)
-            if result[0]['prdID'] == ['000']:
-                continue
-            else:
-                self.searchDictList[i]['Metrics'] = result[1]
-                self.searchDictList[i]['prdIDs'] = result[0]['prdID']
-                self.searchDictList[i]['Forecasted'] = result[2]['Forecasted']
-                self.searchDictList[i]['CV_Forecasted'] = result[2]['CV_Forecasted']
-                self.searchDictList[i]['Coef'] = result[3]
-                self.searchDictList[i]['Intercept'] = result[4]
-                self.searchDictList[i]['PrincCompData'] = result[5]
-                self.searchDictList[i]['Years Used'] = result[6]
-                currentModels[i] = result[0]['prdID']
-
-            self.searchDictList[i]['FeatSelectionProgress'] = 'Completed'
             modelsCompleted = modelsCompleted + 1
             self.signals.updateRunLabel.emit("Models Analyzed: {0}".format(modelsCompleted))
             self.signals.updateProgBar.emit(int(100*modelsCompleted/self.numModels))
+
+            """ Test model """
+            result = testPredictorSet(list_=[currentPredictorSet, remainingPredictors, 'Add', currentModels,
+                                             self.cv, self.perfMetric, self.predictorData, self.predictandData,
+                                             self.ObjFunctionRun, pool],SFBS=False,first_iteration=False)
+
+            if result[0]['prdID'] == ['000']: #Catch predictor combos that can't be evaluated via PCA or ZSCORE
+                continue
+            else:
+                if predComboIdx < self.numModels: #Add results to solution pool if pool is not full
+                    self.searchDictList[predComboIdx]['Metrics'] = result[1]
+                    self.searchDictList[predComboIdx]['prdIDs'] = result[0]['prdID']
+                    self.searchDictList[predComboIdx]['Forecasted'] = result[2]['Forecasted']
+                    self.searchDictList[predComboIdx]['CV_Forecasted'] = result[2]['CV_Forecasted']
+                    self.searchDictList[predComboIdx]['Coef'] = result[3]
+                    self.searchDictList[predComboIdx]['Intercept'] = result[4]
+                    self.searchDictList[predComboIdx]['PrincCompData'] = result[5]
+                    self.searchDictList[predComboIdx]['Years Used'] = result[6]
+                    currentModels[predComboIdx] = result[0]['prdID']
+                else: #Process results and knock out less-performant models
+                    minIndex = -1
+                    minMetric = float("inf")
+                    for j in range(len(self.searchDictList)): #Find least performant model
+                        ithMetric = self.searchDictList[j]['Metrics'][self.perfMetric]
+                        if ithMetric < minMetric:
+                            minMetric = ithMetric
+                            minIndex = j
+
+                    if result[1][self.perfMetric] > minMetric: #Replace less-performant model if new one does better
+                        self.searchDictList[minIndex]['Metrics'] = result[1]
+                        self.searchDictList[minIndex]['prdIDs'] = result[0]['prdID']
+                        self.searchDictList[minIndex]['Forecasted'] = result[2]['Forecasted']
+                        self.searchDictList[minIndex]['CV_Forecasted'] = result[2]['CV_Forecasted']
+                        self.searchDictList[minIndex]['Coef'] = result[3]
+                        self.searchDictList[minIndex]['Intercept'] = result[4]
+                        self.searchDictList[minIndex]['PrincCompData'] = result[5]
+                        self.searchDictList[minIndex]['Years Used'] = result[6]
+                        currentModels[minIndex] = result[0]['prdID']
+                    else:
+                        continue
+
 
         for i in reversed(range(len(self.searchDictList))):
             if self.searchDictList[i]['Coef'] == []:
