@@ -649,7 +649,7 @@ class alternateThreadWorker(QRunnable):
 
         """ Get a list of unique predictor combinations """
         predCombos = sum([list(map(list, itertools.combinations(self.predictorDataNames, i))) for i in range(len(self.predictorDataNames) + 1)], [])
-        del predCombos[0]
+        del predCombos[0] # Remove the null-set
 
         """ Array to store current models """
         currentModels = [[] for i in range(self.numModels)]
@@ -691,14 +691,20 @@ class alternateThreadWorker(QRunnable):
                     currentModels[predComboIdx] = result[0]['prdID']
                 else: #Process results and knock out less-performant models
                     minIndex = -1
-                    minMetric = float("inf")
-                    for j in range(len(self.searchDictList)): #Find least performant model
+                    if self.perfMetric == 'Root Mean Squared Error' or self.perfMetric == 'Root Mean Squared Prediction Error':
+                        minMetric = float("-inf")
+                    else:
+                        minMetric = float("inf")
+                        
+                    # Find least performant model
+                    for j in range(len(self.searchDictList)):
                         ithMetric = self.searchDictList[j]['Metrics'][self.perfMetric]
-                        if ithMetric < minMetric:
+                        if (ithMetric < minMetric) or (ithMetric > minMetric and (self.perfMetric == 'Root Mean Squared Error' or self.perfMetric == 'Root Mean Squared Prediction Error')):
                             minMetric = ithMetric
                             minIndex = j
 
-                    if result[1][self.perfMetric] > minMetric: #Replace less-performant model if new one does better
+                    # Replace less-performant model if new one does better
+                    if (result[1][self.perfMetric] > minMetric) or (result[1][self.perfMetric] < minMetric and (self.perfMetric == 'Root Mean Squared Error' or self.perfMetric == 'Root Mean Squared Prediction Error')):
                         self.searchDictList[minIndex]['Metrics'] = result[1]
                         self.searchDictList[minIndex]['prdIDs'] = result[0]['prdID']
                         self.searchDictList[minIndex]['Forecasted'] = result[2]['Forecasted']
