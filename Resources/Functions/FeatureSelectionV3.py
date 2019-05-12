@@ -25,7 +25,7 @@ from Resources.Functions import encryptions
 from itertools import repeat, combinations
 from PyQt5.QtCore import pyqtSignal, QObject, QRunnable
 import warnings
-from Resources.Functions.miscFunctions import readConfig
+from Resources.Functions.miscFunctions import readConfig, writeConfig
 
 class alternateThreadWorkerSignals(QObject):
     """
@@ -75,7 +75,7 @@ class alternateThreadWorker(QRunnable):
             self.SFBS()
         else:
             self.BruteForce()
-    
+
     def SFBS(self):
 
         """ Set the regression scheme """
@@ -648,9 +648,11 @@ class alternateThreadWorker(QRunnable):
             return
 
         """ Begin a loop to iterate through parallized floating selection """
-        iterCounter = 0
-        modelsAnalyzed = 0
         modelsCompleted = 0
+
+        """ Get a list of unique predictor combinations """
+        predCombos = sum([list(map(list, itertools.combinations(self.predictorDataNames, i))) for i in range(len(self.predictorDataNames) + 1)], [])
+        del predCombos[0]
 
         """ Array to store current models """
         currentModels = [[] for i in range(self.numModels)]
@@ -658,46 +660,40 @@ class alternateThreadWorker(QRunnable):
         """ Set up a multiprocessing pool """
         pool = ThreadPool(processes=CPUCount()-1)
 
-        while iterCounter <= len(self.predictorDataNames):
+        """ Iterate through each predictor combination """
+        allSignificantOriginalSetting = readConfig('allsignificantoverride')
+        writeConfig('allsignificantoverride','True')
+        for i in range(len(predCombos)):
 
-            iterCounter = iterCounter + 1
-            print(iterCounter / (len(self.predictorDataNames)))
+            """ Check to see if this model has completed yet"""
+            if self.searchDictList[i]['FeatSelectionProgress'] == 'Completed':
+                continue
 
-            """ Iterate through each model and perform 1 iteration of Sequential Floating Selection """
-            for i in range(self.numModels):
+            """ Set some variables for this iteration """
+            self.searchDictList[i]['prdIDs'] = predCombos[i]
 
-                """ Check to see if this model has completed yet"""
-                if self.searchDictList[i]['FeatSelectionProgress'] == 'Completed':
-                    continue
+            currentPredictorSet = self.searchDictList[i]['prdIDs']
+            remainingPredictors = []
 
-                """ Set some variables for this iteration """
-                modelChanged = False
-                if iterCounter == 1: #Seed the equationDict with Forced Predictors during the 1st iteration
-                    self.searchDictList[i]['prdIDs'] = self.equationDict['ForcedPredictors']
+            """ Set up a pool of processes (to be run on multiple cores if there are lots of predictors) to test each predictor addition """
+            result = testPredictorSet(list_=[currentPredictorSet, remainingPredictors, 'Add', currentModels,
+                                             self.cv, self.perfMetric, self.predictorData, self.predictandData,
+                                             self.ObjFunctionRun, pool],SFBS=False,first_iteration=False)
 
-                currentPredictorSet = self.searchDictList[i]['prdIDs']
-                remainingPredictors = [prd for prd in self.predictorDataNames if prd not in currentPredictorSet]
+            self.searchDictList[i]['Metrics'] = result[1]
+            self.searchDictList[i]['prdIDs'] = result[0]['prdID']
+            self.searchDictList[i]['Forecasted'] = result[2]['Forecasted']
+            self.searchDictList[i]['CV_Forecasted'] = result[2]['CV_Forecasted']
+            self.searchDictList[i]['Coef'] = result[3]
+            self.searchDictList[i]['Intercept'] = result[4]
+            self.searchDictList[i]['PrincCompData'] = result[5]
+            self.searchDictList[i]['Years Used'] = result[6]
+            currentModels[i] = result[0]['prdID']
 
-                """ Set up a pool of processes (to be run on multiple cores if there are lots of predictors) to test each predictor addition """
-
-                results = list(map(testPredictorSet, [list(l) for l in zip( repeat(currentPredictorSet),
-                                                                            remainingPredictors,
-                                                                            repeat('Add'),
-                                                                            repeat(currentModels),
-                                                                            repeat(self.cv),
-                                                                            repeat(self.perfMetric),
-                                                                            repeat(self.predictorData),
-                                                                            repeat(self.predictandData),
-                                                                            repeat(self.ObjFunctionRun),
-                                                                            repeat(pool))]))
-
-
-                """ If the model hasn't changed, complete the model and update the progress bar """
-                if modelChanged == False and currentPredictorSet != []:
-                    self.searchDictList[i]['FeatSelectionProgress'] = 'Completed'
-                    modelsCompleted = modelsCompleted + 1
-                    self.signals.updateProgBar.emit(int(100*modelsCompleted/self.numModels))
-
+            self.searchDictList[i]['FeatSelectionProgress'] = 'Completed'
+            modelsCompleted = modelsCompleted + 1
+            self.signals.updateRunLabel.emit("Models Analyzed: {0}".format(modelsCompleted))
+            self.signals.updateProgBar.emit(int(100*modelsCompleted/self.numModels))
 
         for i in reversed(range(len(self.searchDictList))):
             if self.searchDictList[i]['Coef'] == []:
@@ -706,6 +702,7 @@ class alternateThreadWorker(QRunnable):
                 fcstID = encryptions.generateFcstID(self.searchDictList[i]['Type'], self.searchDictList[i]['prdIDs'])
                 self.searchDictList[i]['fcstID'] = fcstID
 
+        writeConfig('allsignificantoverride',allSignificantOriginalSetting)
         pool.close()
         pool.join()
 
@@ -835,30 +832,31 @@ def testPredictorSet(list_, SFBS=False, first_iteration=False):
                 "Sample Variance" : float("inf") }, \
                 {"Forecasted":None, "CV_Forecasted":None},None, None]
 
-    for i, prd in enumerate(testPredictors):
-        if np.round(coefs[i],3) == 0.0:
-            return [{'prdID':['000']}, \
-                {"Cross Validated Adjusted R2":float("-inf"),
-                "Root Mean Squared Prediction Error":float("inf"),
-                "Cross Validated Nash-Sutcliffe":float("-inf"),
-                "Adjusted R2" : float("-inf"),
-                "Root Mean Squared Error" : float("inf"),
-                "Nash-Sutcliffe": float("-inf"),
-                "Sample Variance" : float("inf") }, \
-                {"Forecasted":None, "CV_Forecasted":None},None, None]
-        
-        # DO NOT ALLOW NEGATIVE COEFFICIENTS FOR SNOTEL SWE PREDICTORS
-        if int(prd) >= 9000 and np.round(coefs[i], 3) <= 0:
-            return [{'prdID':['000']}, \
-                {"Cross Validated Adjusted R2":float("-inf"),
-                "Root Mean Squared Prediction Error":float("inf"),
-                "Cross Validated Nash-Sutcliffe":float("-inf"),
-                "Adjusted R2" : float("-inf"),
-                "Root Mean Squared Error" : float("inf"),
-                "Nash-Sutcliffe": float("-inf"),
-                "Sample Variance" : float("inf") }, \
-                {"Forecasted":None, "CV_Forecasted":None}, None, None]
-    
+    if not readConfig('allsignificantoverride') == 'True': #Catch Brute-Force method so it reports all possible combinations
+        for i, prd in enumerate(testPredictors):
+            if np.round(coefs[i],3) == 0.0:
+                return [{'prdID':['000']}, \
+                        {"Cross Validated Adjusted R2":float("-inf"),
+                         "Root Mean Squared Prediction Error":float("inf"),
+                         "Cross Validated Nash-Sutcliffe":float("-inf"),
+                         "Adjusted R2" : float("-inf"),
+                         "Root Mean Squared Error" : float("inf"),
+                         "Nash-Sutcliffe": float("-inf"),
+                         "Sample Variance" : float("inf") }, \
+                        {"Forecasted":None, "CV_Forecasted":None},None, None]
+
+            # DO NOT ALLOW NEGATIVE COEFFICIENTS FOR SNOTEL SWE PREDICTORS
+            if int(prd) >= 9000 and np.round(coefs[i], 3) <= 0:
+                return [{'prdID':['000']}, \
+                        {"Cross Validated Adjusted R2":float("-inf"),
+                         "Root Mean Squared Prediction Error":float("inf"),
+                         "Cross Validated Nash-Sutcliffe":float("-inf"),
+                         "Adjusted R2" : float("-inf"),
+                         "Root Mean Squared Error" : float("inf"),
+                         "Nash-Sutcliffe": float("-inf"),
+                         "Sample Variance" : float("inf") }, \
+                        {"Forecasted":None, "CV_Forecasted":None}, None, None]
+
 
     return [{"prdID" : testPredictors}, metrics, {"Forecasted":forecasted, "CV_Forecasted": CV_Forecasted}, coefs, intercept, princCompData, yearsUsed]
 
