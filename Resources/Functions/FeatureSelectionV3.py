@@ -679,16 +679,18 @@ class alternateThreadWorker(QRunnable):
             result = testPredictorSet(list_=[currentPredictorSet, remainingPredictors, 'Add', currentModels,
                                              self.cv, self.perfMetric, self.predictorData, self.predictandData,
                                              self.ObjFunctionRun, pool],SFBS=False,first_iteration=False)
-
-            self.searchDictList[i]['Metrics'] = result[1]
-            self.searchDictList[i]['prdIDs'] = result[0]['prdID']
-            self.searchDictList[i]['Forecasted'] = result[2]['Forecasted']
-            self.searchDictList[i]['CV_Forecasted'] = result[2]['CV_Forecasted']
-            self.searchDictList[i]['Coef'] = result[3]
-            self.searchDictList[i]['Intercept'] = result[4]
-            self.searchDictList[i]['PrincCompData'] = result[5]
-            self.searchDictList[i]['Years Used'] = result[6]
-            currentModels[i] = result[0]['prdID']
+            if result[0]['prdID'] == ['000']:
+                continue
+            else:
+                self.searchDictList[i]['Metrics'] = result[1]
+                self.searchDictList[i]['prdIDs'] = result[0]['prdID']
+                self.searchDictList[i]['Forecasted'] = result[2]['Forecasted']
+                self.searchDictList[i]['CV_Forecasted'] = result[2]['CV_Forecasted']
+                self.searchDictList[i]['Coef'] = result[3]
+                self.searchDictList[i]['Intercept'] = result[4]
+                self.searchDictList[i]['PrincCompData'] = result[5]
+                self.searchDictList[i]['Years Used'] = result[6]
+                currentModels[i] = result[0]['prdID']
 
             self.searchDictList[i]['FeatSelectionProgress'] = 'Completed'
             modelsCompleted = modelsCompleted + 1
