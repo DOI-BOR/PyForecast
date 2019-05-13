@@ -304,7 +304,7 @@ class alternateThreadWorker(QtCore.QRunnable):
                     emonthMap = remapMonth(emonth, wateryearStart= self.forecastDict['Options']['wateryearStart'])
 
                     # Determine the start and end water years of the data
-                    firstWaterYear = predictorData.index[0].year
+                    firstWaterYear = predictorData.index[0].year + 1
                     if predictorData.index[-1].month >= 10:
                         lastWaterYear = predictorData.index[-1].year + 1
                     else:
