@@ -668,8 +668,8 @@ class alternateThreadWorker(QRunnable):
             currentPredictorSet = predCombos[predComboIdx]#self.searchDictList[i]['prdIDs']
             remainingPredictors = []
             modelsCompleted = modelsCompleted + 1
-            self.signals.updateRunLabel.emit("Models Analyzed: {0}".format(modelsCompleted))
-            self.signals.updateProgBar.emit(int(100*modelsCompleted/self.numModels))
+            self.signals.updateRunLabel.emit("Models Analyzed: {0} of {1}".format(modelsCompleted, len(predCombos)))
+            self.signals.updateProgBar.emit(int(100*modelsCompleted/len(predCombos)))
 
             """ Test model """
             result = testPredictorSet(list_=[currentPredictorSet, remainingPredictors, 'Add', currentModels,
