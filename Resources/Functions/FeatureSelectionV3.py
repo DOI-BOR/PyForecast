@@ -99,9 +99,38 @@ class alternateThreadWorker(QRunnable):
         else:
             self.cv = model_selection.KFold(n_splits=10)
 
-        """ Get the predictand Data"""    
+        """ Get minimum number of models to run """
+        """self.numModels = min((2 ** len(self.equationDict['PredictorPool'])) - 1, self.numModels)"""
+
+        """ Initialize a list of dictionarys to store model information """
+        self.searchDictList = [{
+                "fcstID"            : "",
+                "Type"              : "Linear - {0}".format(self.objFunction),
+                "Coef"              : [],
+                "prdIDs"            : [],
+                "Intercept"         : [],
+                "PrincCompData"     : {},
+                "Distribution"      : self.dist,
+                "Metrics"           : {
+                    "Cross Validated Adjusted R2"           : float("-inf"),
+                    "Root Mean Squared Prediction Error"    : float("inf"),
+                    "Cross Validated Nash-Sutcliffe"        : float("-inf"),
+                    "Adjusted R2"                           : float("-inf"),
+                    "Root Mean Squared Error"               : float("inf"),
+                    "Nash-Sutcliffe"                        : float("-inf"),
+                    "Sample Variance"                       : float("inf")},
+                "CrossValidation"                           : self.crossVal,
+                "Forecasted"                                : "",
+                "CV_Forecasted"     : "",
+                "Years Used"        : [],
+                "FeatSelectionProgress" : "Running"
+        } for n in range(self.numModels)]
+
+        """ Get the predictand Data"""
         self.predictandData = pd.DataFrame().from_dict(self.equationDict['Predictand']['Data'], orient='columns')
         self.predictandData.columns = ['Predictand']
+        if self.dist != 'Normal':
+            self.predictandData = np.log(self.predictandData)
 
         """ Initialize data for predictors """
         self.predictorData = pd.DataFrame()
@@ -110,40 +139,18 @@ class alternateThreadWorker(QRunnable):
                 if self.predictorDict[predictorName][interval]['prdID'] in list(self.equationDict['PredictorPool']):
                     self.predictorData = pd.concat([self.predictorData, pd.DataFrame().from_dict(self.predictorDict[predictorName][interval]['Data'], orient='columns')], axis=1)
         self.predictorDataNames = list(self.predictorData.columns)
+        if len(self.predictorDataNames) == 0:
+            print('No predictors selected')
+            self.signals.returnFcstDict.emit(self.searchDictList)
+            return
 
-        """ Initialize a list of dictionarys to store model information """
-        self.searchDictList = [{
-                "fcstID"        : "",
-                "Type"          : "Linear - {0}".format(self.objFunction),
-                "Coef"          : [],
-                "prdIDs"         : self.predictorDataNames,
-                "Intercept"     : [],
-                "PrincCompData" :   {},
-                "Metrics"       : {
-                    "Cross Validated Adjusted R2"           : float("-inf"),
-                    "Root Mean Squared Prediction Error"    : float("inf"),
-                    "Cross Validated Nash-Sutcliffe"        : float("-inf"),
-                    "Adjusted R2"                           : float("-inf"),
-                    "Root Mean Squared Error"               : float("inf"),
-                    "Nash-Sutcliffe"                        : float("-inf") ,
-                    "Sample Variance"                       : float("inf")
-                },
-                "CrossValidation"   :self.crossVal,
-                "Forecasted"        :"",
-                "CV_Forecasted"     :"",
-                "Years Used"        :[],
-                "FeatSelectionProgress" : "Running"} for n in range(self.numModels)]
-
-        
         """ Begin a loop to iterate through parallized floating selection """
         iterCounter = 0
         modelsAnalyzed = 0
         modelsCompleted = 0
 
         """ Array to store current models """
-        #[JR] seeding the currentModels array with the complete set of predictors prevents the model that includes all the predictors from evaluating...
-        currentModels = [self.predictorDataNames for i in range(self.numModels)]
-        #currentModels = [[] for i in range(self.numModels)]
+        currentModels = [[] for i in range(self.numModels)]
 
         """ Set up a multiprocessing pool """
         pool = ThreadPool(processes=CPUCount()-1)
@@ -155,20 +162,20 @@ class alternateThreadWorker(QRunnable):
 
             """ Iterate through each model and perform 1 iteration of Sequential Floating Selection """
             for i in range(self.numModels):
-                #input()
+
                 """ Check to see if this model has completed yet"""
                 if self.searchDictList[i]['FeatSelectionProgress'] == 'Completed':
                     continue
 
                 """ Set some variables for this iteration """
                 modelChanged = False
+                #if iterCounter == 1: #Seed the equationDict with Forced Predictors during the 1st iteration
+                #    self.searchDictList[i]['prdIDs'] = self.equationDict['ForcedPredictors']
+
                 currentPredictorSet = self.searchDictList[i]['prdIDs']
                 predictorsToBeRemoved = currentPredictorSet
-                print("""
-                        Model Number: {0}
-                        current predictor set: {1}
-                        predictors to try and remove: {2}
-                        """.format(i, currentPredictorSet, predictorsToBeRemoved))
+
+                """ Set up a pool of processes (to be run on multiple cores if there are lots of predictors) to test each predictor removal """
 
                 results = list(map(testPredictorSet, [list(l) for l in zip( repeat(currentPredictorSet),
                                                                             predictorsToBeRemoved,
@@ -183,15 +190,14 @@ class alternateThreadWorker(QRunnable):
 
                 """ Determine if any of the removals increased model performance """
                 for result in results:
-                    print("")
-                    #input()
-                    print(""")
-                    We tried removing predictor: {0}
-                    The new metrics are: {1}
-                    the new predictor set is: {2}
-                    """.format(list(set(currentPredictorSet) - set(result[0]['prdID']) ), result[1], result[0]['prdID']))
-                    if result[0]['prdID'] == ['000'] or result[0]['prdID'] == ['-1000']:
+
+                    if result[0]['prdID'] == ['000']:
                         continue
+
+                    if result[0]['prdID'] == ['-1000']:
+                            modelsAnalyzed = modelsAnalyzed + 1
+                            self.signals.updateRunLabel.emit("Models Analyzed: {0}".format(modelsAnalyzed))
+                            continue
 
                     if Metrics.metricBetterThan( newMetric = result[1][self.perfMetric], oldMetric = self.searchDictList[i]['Metrics'][self.perfMetric], perfMeasure = self.perfMetric):
                         predictorRemoved = list(set(currentPredictorSet) - set(result[0]['prdID']) )
@@ -206,10 +212,48 @@ class alternateThreadWorker(QRunnable):
                         modelChanged = True
 
                     modelsAnalyzed = modelsAnalyzed + 1
-
                     self.signals.updateRunLabel.emit("Models Analyzed: {0}".format(modelsAnalyzed))
 
                     """ If we didn't remove a predictor, attempt to skip a step and try removing 2 predictors """
+                    if modelChanged == False:
+                        predictorsToBeRemoved = list(combinations(currentPredictorSet, 2))
+
+                        results = list(map(testPredictorSet, [list(l) for l in zip(repeat(currentPredictorSet),
+                                                                                   predictorsToBeRemoved,
+                                                                                   repeat('Remove'),
+                                                                                   repeat(currentModels),
+                                                                                   repeat(self.cv),
+                                                                                   repeat(self.perfMetric),
+                                                                                   repeat(self.predictorData),
+                                                                                   repeat(self.predictandData),
+                                                                                   repeat(self.ObjFunctionRun),
+                                                                                   repeat(pool))]))
+
+                        for result in results:
+
+                            if result[0]['prdID'] == ['000']:
+                                continue
+
+                            if result[0]['prdID'] == ['-1000']:
+                                modelsAnalyzed = modelsAnalyzed + 1
+                                self.signals.updateRunLabel.emit("Models Analyzed: {0}".format(modelsAnalyzed))
+                                continue
+
+                            if Metrics.metricBetterThan(newMetric=result[1][self.perfMetric], oldMetric=self.searchDictList[i]['Metrics'][self.perfMetric], perfMeasure=self.perfMetric):
+                                predictorRemoved = list(set(result[0]['prdID']) - set(currentPredictorSet))
+                                self.searchDictList[i]['Metrics'] = result[1]
+                                self.searchDictList[i]['prdIDs'] = result[0]['prdID']
+                                self.searchDictList[i]['Forecasted'] = result[2]['Forecasted']
+                                self.searchDictList[i]['CV_Forecasted'] = result[2]['CV_Forecasted']
+                                self.searchDictList[i]['Coef'] = result[3]
+                                self.searchDictList[i]['Intercept'] = result[4]
+                                self.searchDictList[i]['PrincCompData'] = result[5]
+                                self.searchDictList[i]['Years Used'] = result[6]
+                                currentModels[i] = result[0]['prdID']
+                                modelChanged = True
+
+                            modelsAnalyzed = modelsAnalyzed + 1
+                            self.signals.updateRunLabel.emit("Models Analyzed: {0}".format(modelsAnalyzed))
                     # if modelChanged == False:
                     #     predictorsToBeRemoved = list(combinations(currentPredictorSet, 2))
                     #     results = list(map(testPredictorSet, [list(l) for l in zip( repeat(currentPredictorSet),
@@ -243,52 +287,55 @@ class alternateThreadWorker(QRunnable):
 
                     #         self.signals.updateRunLabel.emit("Models Analyzed: {0}".format(modelsAnalyzed))
 
-                    """ Try and add a variable back in, but don't add in a predictor we just removed """
-                    currentPredictorSet = self.searchDictList[i]['prdIDs']
-                    if modelChanged == True:
-                        predictorsToBeAdded = list(set([prd for prd in self.predictorDataNames if prd not in currentPredictorSet]) - set(predictorRemoved))
-                    else:
-                        predictorsToBeAdded = [prd for prd in self.predictorDataNames if prd not in currentPredictorSet]
+                """ Try and add a variable back in, but don't add in a predictor we just removed """
+                currentPredictorSet = self.searchDictList[i]['prdIDs']
+                if modelChanged:
+                    predictorsToBeAdded = list(set([prd for prd in self.predictorDataNames if prd not in currentPredictorSet]) - set(predictorRemoved))
+                else:
+                    predictorsToBeAdded = [prd for prd in self.predictorDataNames if prd not in currentPredictorSet]
 
-                    results = list(map(testPredictorSet, [list(l) for l in zip( repeat(currentPredictorSet),
-                                                                                predictorsToBeAdded,
-                                                                                repeat('Add'),
-                                                                                repeat(currentModels),
-                                                                                repeat(self.cv),
-                                                                                repeat(self.perfMetric),
-                                                                                repeat(self.predictorData),
-                                                                                repeat(self.predictandData),
-                                                                                repeat(self.ObjFunctionRun),
-                                                                                repeat(pool))]))
+                results = list(map(testPredictorSet, [list(l) for l in zip( repeat(currentPredictorSet),
+                                                                            predictorsToBeAdded,
+                                                                            repeat('Add'),
+                                                                            repeat(currentModels),
+                                                                            repeat(self.cv),
+                                                                            repeat(self.perfMetric),
+                                                                            repeat(self.predictorData),
+                                                                            repeat(self.predictandData),
+                                                                            repeat(self.ObjFunctionRun),
+                                                                            repeat(pool))]))
 
-                    """ Determine if any of the additions increased model performance """
-                    for result in results:
+                """ Determine if any of the additions increased model performance """
+                for result in results:
 
-                        if result[0]['prdID'] == ['000']:
-                            continue
+                    if result[0]['prdID'] == ['000']:
+                        continue
 
-                        if Metrics.metricBetterThan( newMetric = result[1][self.perfMetric], oldMetric = self.searchDictList[i]['Metrics'][self.perfMetric], perfMeasure = self.perfMetric):
-                            predictorRemoved = list(set(currentPredictorSet) - set(result[0]['prdID']) )
-                            self.searchDictList[i]['Metrics'] = result[1]
-                            self.searchDictList[i]['prdIDs'] = result[0]['prdID']
-                            self.searchDictList[i]['Forecasted'] = result[2]['Forecasted']
-                            self.searchDictList[i]['CV_Forecasted'] = result[2]['CV_Forecasted']
-                            self.searchDictList[i]['Coef'] = result[3]
-                            self.searchDictList[i]['Intercept'] = result[4]
-                            self.searchDictList[i]['PrincCompData'] = result[5]
-                            currentModels[i] = result[0]['prdID']
-                            modelChanged = True
-
+                    if result[0]['prdID'] == ['-1000']:
                         modelsAnalyzed = modelsAnalyzed + 1
-
                         self.signals.updateRunLabel.emit("Models Analyzed: {0}".format(modelsAnalyzed))
+                        continue
 
-                        """ If the model hasn't changed, complete the model and update the progress bar """
-                        if modelChanged == False and currentPredictorSet != []:
-                            self.searchDictList[i]['FeatSelectionProgress'] = 'Completed'
-                            modelsCompleted = modelsCompleted + 1
+                    if Metrics.metricBetterThan( newMetric = result[1][self.perfMetric], oldMetric = self.searchDictList[i]['Metrics'][self.perfMetric], perfMeasure = self.perfMetric):
+                        predictorRemoved = list(set(currentPredictorSet) - set(result[0]['prdID']) )
+                        self.searchDictList[i]['Metrics'] = result[1]
+                        self.searchDictList[i]['prdIDs'] = result[0]['prdID']
+                        self.searchDictList[i]['Forecasted'] = result[2]['Forecasted']
+                        self.searchDictList[i]['CV_Forecasted'] = result[2]['CV_Forecasted']
+                        self.searchDictList[i]['Coef'] = result[3]
+                        self.searchDictList[i]['Intercept'] = result[4]
+                        self.searchDictList[i]['PrincCompData'] = result[5]
+                        currentModels[i] = result[0]['prdID']
+                        modelChanged = True
 
-                self.signals.updateProgBar.emit(int(100*(((iterCounter-1) * self.numModels) + i)/(len(self.predictorDataNames) * self.numModels)))
+                    modelsAnalyzed = modelsAnalyzed + 1
+                    self.signals.updateRunLabel.emit("Models Analyzed: {0}".format(modelsAnalyzed))
+
+                    """ If the model hasn't changed, complete the model and update the progress bar """
+                    if modelChanged == False and currentPredictorSet != []:
+                        self.searchDictList[i]['FeatSelectionProgress'] = 'Completed'
+                        modelsCompleted = modelsCompleted + 1
+                        self.signals.updateProgBar.emit(int(100*modelsCompleted/self.numModels))
 
 
         for i in reversed(range(len(self.searchDictList))):
