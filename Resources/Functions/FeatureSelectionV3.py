@@ -76,7 +76,8 @@ class alternateThreadWorker(QRunnable):
         else:
             self.BruteForce()
 
-    def SFBS(self):
+
+    def initializeContainers(self, bruteForce = False):
 
         """ Set the regression scheme """
         if self.objFunction == 'MLR':
@@ -100,7 +101,8 @@ class alternateThreadWorker(QRunnable):
             self.cv = model_selection.KFold(n_splits=10)
 
         """ Get minimum number of models to run """
-        """self.numModels = min((2 ** len(self.equationDict['PredictorPool'])) - 1, self.numModels)"""
+        if bruteForce:
+            self.numModels = min((2 ** len(self.equationDict['PredictorPool'])) - 1, self.numModels)
 
         """ Initialize a list of dictionarys to store model information """
         self.searchDictList = [{
@@ -139,6 +141,15 @@ class alternateThreadWorker(QRunnable):
                 if self.predictorDict[predictorName][interval]['prdID'] in list(self.equationDict['PredictorPool']):
                     self.predictorData = pd.concat([self.predictorData, pd.DataFrame().from_dict(self.predictorDict[predictorName][interval]['Data'], orient='columns')], axis=1)
         self.predictorDataNames = list(self.predictorData.columns)
+
+
+
+
+    def SFBS(self):
+
+        """ Initialize data containers needed by the feature selection algorithm """
+        self.initializeContainers()
+
         if len(self.predictorDataNames) == 0:
             print('No predictors selected')
             self.signals.returnFcstDict.emit(self.searchDictList)
@@ -254,38 +265,6 @@ class alternateThreadWorker(QRunnable):
 
                             modelsAnalyzed = modelsAnalyzed + 1
                             self.signals.updateRunLabel.emit("Models Analyzed: {0}".format(modelsAnalyzed))
-                    # if modelChanged == False:
-                    #     predictorsToBeRemoved = list(combinations(currentPredictorSet, 2))
-                    #     results = list(map(testPredictorSet, [list(l) for l in zip( repeat(currentPredictorSet),
-                    #                                                                 predictorsToBeRemoved,
-                    #                                                                 repeat('Remove'),
-                    #                                                                 repeat(currentModels),
-                    #                                                                 repeat(self.cv),
-                    #                                                                 repeat(self.perfMetric),
-                    #                                                                 repeat(self.predictorData),
-                    #                                                                 repeat(self.predictandData),
-                    #                                                                 repeat(self.ObjFunctionRun),
-                    #                                                                 repeat(pool))]))
-                    #     for result in results:
-
-                    #         if result[0]['prdID'] == '000':
-                    #             continue
-
-                    #         if Metrics.metricBetterThan( newMetric = result[1][self.perfMetric], oldMetric = self.searchDictList[i]['Metrics'][self.perfMetric], perfMeasure = self.perfMetric):
-                    #             predictorRemoved = list(set(currentPredictorSet) - set(result[0]['prdID']) )
-                    #             self.searchDictList[i]['Metrics'] = result[1]
-                    #             self.searchDictList[i]['prdIDs'] = result[0]['prdID']
-                    #             self.searchDictList[i]['Forecasted'] = result[2]['Forecasted']
-                    #             self.searchDictList[i]['CV_Forecasted'] = result[2]['CV_Forecasted']
-                    #             self.searchDictList[i]['Coef'] = result[3]
-                    #             self.searchDictList[i]['Intercept'] = result[4]
-                    #             self.searchDictList[i]['PrincCompData'] = result[5]
-                    #             currentModels[i] = result[0]['prdID']
-                    #             modelChanged = True
-
-                    #         modelsAnalyzed = modelsAnalyzed + 1
-
-                    #         self.signals.updateRunLabel.emit("Models Analyzed: {0}".format(modelsAnalyzed))
 
                 """ Try and add a variable back in, but don't add in a predictor we just removed """
                 currentPredictorSet = self.searchDictList[i]['prdIDs']
@@ -368,67 +347,9 @@ class alternateThreadWorker(QRunnable):
 
     def SFFS(self):
 
-        """ Set the regression scheme """
-        if self.objFunction == 'MLR':
-            self.ObjFunctionRun = MultipleRegression
+        """ Initialize data containers needed by the feature selection algorithm """
+        self.initializeContainers()
 
-        elif self.objFunction == 'PCAR':
-            self.ObjFunctionRun = PrincipalComponentsRegression
-
-        elif self.objFunction == 'ZSCR':
-            self.ObjFunctionRun = ZScoreRegression
-
-        elif self.objFunction == 'ANN':
-            self.ObjFunctionRun = NeuralNetwork
-
-        """ Set the Cross validation type """
-        if self.crossVal == 'Leave One Out':
-            self.cv = model_selection.LeaveOneOut()
-        elif self.crossVal == 'K-Fold (5 folds)':
-            self.cv = model_selection.KFold(n_splits=5)
-        else:
-            self.cv = model_selection.KFold(n_splits=10)
-
-        """ Get minimum number of models to run """
-        """self.numModels = min((2 ** len(self.equationDict['PredictorPool'])) - 1, self.numModels)"""
-
-        """ Initialize a list of dictionarys to store model information """
-        self.searchDictList = [{
-                "fcstID"            : "",
-                "Type"              : "Linear - {0}".format(self.objFunction),
-                "Coef"              : [],
-                "prdIDs"            : [],
-                "Intercept"         : [],
-                "PrincCompData"     : {},
-                "Distribution"      : self.dist,
-                "Metrics"           : {
-                    "Cross Validated Adjusted R2"           : float("-inf"),
-                    "Root Mean Squared Prediction Error"    : float("inf"),
-                    "Cross Validated Nash-Sutcliffe"        : float("-inf"),
-                    "Adjusted R2"                           : float("-inf"),
-                    "Root Mean Squared Error"               : float("inf"),
-                    "Nash-Sutcliffe"                        : float("-inf"),
-                    "Sample Variance"                       : float("inf")},
-                "CrossValidation"                           : self.crossVal,
-                "Forecasted"                                : "",
-                "CV_Forecasted"     : "",
-                "Years Used"        : [],
-                "FeatSelectionProgress" : "Running"
-        } for n in range(self.numModels)]
-
-        """ Get the predictand Data"""
-        self.predictandData = pd.DataFrame().from_dict(self.equationDict['Predictand']['Data'], orient='columns')
-        self.predictandData.columns = ['Predictand']
-        if self.dist != 'Normal':
-            self.predictandData = np.log(self.predictandData)
-
-        """ Initialize data for predictors """
-        self.predictorData = pd.DataFrame()
-        for predictorName in self.predictorDict:
-            for interval in self.predictorDict[predictorName]:
-                if self.predictorDict[predictorName][interval]['prdID'] in list(self.equationDict['PredictorPool']):
-                    self.predictorData = pd.concat([self.predictorData, pd.DataFrame().from_dict(self.predictorDict[predictorName][interval]['Data'], orient='columns')], axis=1)
-        self.predictorDataNames = list(self.predictorData.columns)
         if len(self.predictorDataNames) == 0:
             print('No predictors selected')
             self.signals.returnFcstDict.emit(self.searchDictList)
@@ -628,67 +549,9 @@ class alternateThreadWorker(QRunnable):
 
     def BruteForce(self):
 
-        """ Set the regression scheme """
-        if self.objFunction == 'MLR':
-            self.ObjFunctionRun = MultipleRegression
+        """ Initialize data containers needed by the feature selection algorithm """
+        self.initializeContainers(bruteForce=True)
 
-        elif self.objFunction == 'PCAR':
-            self.ObjFunctionRun = PrincipalComponentsRegression
-
-        elif self.objFunction == 'ZSCR':
-            self.ObjFunctionRun = ZScoreRegression
-
-        elif self.objFunction == 'ANN':
-            self.ObjFunctionRun = NeuralNetwork
-
-        """ Set the Cross validation type """
-        if self.crossVal == 'Leave One Out':
-            self.cv = model_selection.LeaveOneOut()
-        elif self.crossVal == 'K-Fold (5 folds)':
-            self.cv = model_selection.KFold(n_splits=5)
-        else:
-            self.cv = model_selection.KFold(n_splits=10)
-
-        """ Get number of models to run """
-        self.numModels = min((2 ** len(self.equationDict['PredictorPool'])) - 1, self.numModels)
-
-        """ Initialize a list of dictionarys to store model information """
-        self.searchDictList = [{
-                "fcstID"            : "",
-                "Type"              : "Linear - {0}".format(self.objFunction),
-                "Coef"              : [],
-                "prdIDs"            : [],
-                "Intercept"         : [],
-                "PrincCompData"     : {},
-                "Distribution"      : self.dist,
-                "Metrics"           : {
-                    "Cross Validated Adjusted R2"           : float("-inf"),
-                    "Root Mean Squared Prediction Error"    : float("inf"),
-                    "Cross Validated Nash-Sutcliffe"        : float("-inf"),
-                    "Adjusted R2"                           : float("-inf"),
-                    "Root Mean Squared Error"               : float("inf"),
-                    "Nash-Sutcliffe"                        : float("-inf"),
-                    "Sample Variance"                       : float("inf")},
-                "CrossValidation"                           : self.crossVal,
-                "Forecasted"                                : "",
-                "CV_Forecasted"     : "",
-                "Years Used"        : [],
-                "FeatSelectionProgress" : "Running"
-        } for n in range(self.numModels)]
-
-        """ Get the predictand Data"""
-        self.predictandData = pd.DataFrame().from_dict(self.equationDict['Predictand']['Data'], orient='columns')
-        self.predictandData.columns = ['Predictand']
-        if self.dist != 'Normal':
-            self.predictandData = np.log(self.predictandData)
-
-        """ Initialize data for predictors """
-        self.predictorData = pd.DataFrame()
-        for predictorName in self.predictorDict:
-            for interval in self.predictorDict[predictorName]:
-                if self.predictorDict[predictorName][interval]['prdID'] in list(self.equationDict['PredictorPool']):
-                    self.predictorData = pd.concat([self.predictorData, pd.DataFrame().from_dict(self.predictorDict[predictorName][interval]['Data'], orient='columns')], axis=1)
-        self.predictorDataNames = list(self.predictorData.columns)
         if len(self.predictorDataNames) == 0:
             print('No predictors selected')
             self.signals.returnFcstDict.emit(self.searchDictList)
