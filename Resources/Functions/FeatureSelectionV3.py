@@ -180,10 +180,10 @@ class alternateThreadWorker(QRunnable):
 
                 """ Set some variables for this iteration """
                 modelChanged = False
-                #if iterCounter == 1: #Seed the equationDict with Forced Predictors during the 1st iteration
-                #    self.searchDictList[i]['prdIDs'] = self.equationDict['ForcedPredictors']
+                #if iterCounter == 1:  # Seed the equationDict during the 1st iteration
+                #    self.searchDictList[i]['prdIDs'] = self.predictorDataNames  # self.equationDict['ForcedPredictors']
 
-                currentPredictorSet = self.searchDictList[i]['prdIDs']
+                currentPredictorSet = self.predictorDataNames #self.searchDictList[i]['prdIDs']
                 predictorsToBeRemoved = currentPredictorSet
 
                 """ Set up a pool of processes (to be run on multiple cores if there are lots of predictors) to test each predictor removal """
@@ -304,6 +304,7 @@ class alternateThreadWorker(QRunnable):
                         self.searchDictList[i]['Coef'] = result[3]
                         self.searchDictList[i]['Intercept'] = result[4]
                         self.searchDictList[i]['PrincCompData'] = result[5]
+                        self.searchDictList[i]['Years Used'] = result[6]
                         currentModels[i] = result[0]['prdID']
                         modelChanged = True
 
@@ -324,6 +325,7 @@ class alternateThreadWorker(QRunnable):
             else:
                 fcstID = encryptions.generateFcstID(self.searchDictList[i]['Type'], self.searchDictList[i]['prdIDs'])
                 self.searchDictList[i]['fcstID'] = fcstID
+                self.searchDictList[i]['FeatSelectionProgress'] = 'Completed'
 
         pool.close()
         pool.join()
@@ -380,7 +382,7 @@ class alternateThreadWorker(QRunnable):
 
                 """ Set some variables for this iteration """
                 modelChanged = False
-                if iterCounter == 1: #Seed the equationDict with Forced Predictors during the 1st iteration
+                if iterCounter == 1:  # Seed the equationDict with Forced Predictors during the 1st iteration
                     self.searchDictList[i]['prdIDs'] = self.equationDict['ForcedPredictors']
 
                 currentPredictorSet = self.searchDictList[i]['prdIDs']
@@ -754,7 +756,7 @@ def testPredictorSet(list_, SFBS=False, first_iteration=False):
     if readConfig('allsignificantoverride') == 'True':
         all_significant = True
 
-    if not all_significant:
+    if not all_significant: #Override all_significant determination by the selected regression model
         return [{'prdID':['-1000']}, \
                 {"Cross Validated Adjusted R2":float("-inf"),
                 "Root Mean Squared Prediction Error":float("inf"),
@@ -765,7 +767,7 @@ def testPredictorSet(list_, SFBS=False, first_iteration=False):
                 "Sample Variance" : float("inf") }, \
                 {"Forecasted":None, "CV_Forecasted":None},None, None]
 
-    if not readConfig('allsignificantoverride') == 'True': #Catch Brute-Force method so it reports all possible combinations
+    if not all_significant: #Catch Brute-Force method so it reports all possible combinations
         for i, prd in enumerate(testPredictors):
             if np.round(coefs[i],3) == 0.0:
                 return [{'prdID':['000']}, \
