@@ -168,8 +168,8 @@ class alternateThreadWorker(QRunnable):
 
         while iterCounter <= len(self.predictorDataNames):
 
-            iterCounter = iterCounter + 1
             print(iterCounter / (len(self.predictorDataNames)))
+            iterCounter = iterCounter + 1
 
             """ Iterate through each model and perform 1 iteration of Sequential Floating Selection """
             for i in range(self.numModels):
@@ -187,7 +187,6 @@ class alternateThreadWorker(QRunnable):
                 predictorsToBeRemoved = currentPredictorSet
 
                 """ Set up a pool of processes (to be run on multiple cores if there are lots of predictors) to test each predictor removal """
-
                 results = list(map(testPredictorSet, [list(l) for l in zip( repeat(currentPredictorSet),
                                                                             predictorsToBeRemoved,
                                                                             repeat('Remove'),
@@ -370,8 +369,8 @@ class alternateThreadWorker(QRunnable):
 
         while iterCounter <= len(self.predictorDataNames):
 
-            iterCounter = iterCounter + 1
             print(iterCounter / (len(self.predictorDataNames)))
+            iterCounter = iterCounter + 1
 
             """ Iterate through each model and perform 1 iteration of Sequential Floating Selection """
             for i in range(self.numModels):
@@ -575,6 +574,8 @@ class alternateThreadWorker(QRunnable):
         writeConfig('allsignificantoverride','True')
         for predComboIdx in range(len(predCombos)):
 
+            print(predComboIdx / len(predCombos))
+
             """ Set some variables for this iteration """
             #self.searchDictList[i]['prdIDs'] = predCombos[i]
             currentPredictorSet = predCombos[predComboIdx]#self.searchDictList[i]['prdIDs']
@@ -753,8 +754,10 @@ def testPredictorSet(list_, SFBS=False, first_iteration=False):
     else:
         metrics, forecasted, coefs, intercept, princCompData, CV_Forecasted, all_significant = ObjFunctionRun(testPredictorsData, predictandData, cv, perfMetric, pool)
 
+    userOverride = False
     if readConfig('allsignificantoverride') == 'True':
         all_significant = True
+        userOverride = True
 
     if not all_significant: #Override all_significant determination by the selected regression model
         return [{'prdID':['-1000']}, \
@@ -767,7 +770,7 @@ def testPredictorSet(list_, SFBS=False, first_iteration=False):
                 "Sample Variance" : float("inf") }, \
                 {"Forecasted":None, "CV_Forecasted":None},None, None]
 
-    if not all_significant: #Catch Brute-Force method so it reports all possible combinations
+    if not userOverride: #Catch Brute-Force method so it reports all possible combinations
         for i, prd in enumerate(testPredictors):
             if np.round(coefs[i],3) == 0.0:
                 return [{'prdID':['000']}, \
