@@ -1,3 +1,4 @@
+# Ignore pyc files and __pycache__ files
 *.pyc
 __pycache__/
-*.xlsx
+.vscode/

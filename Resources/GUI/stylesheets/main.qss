@@ -1,0 +1,22 @@
+QMainWindow {
+    background: #ededed;
+    margin: 0;
+    padding: 0;
+    font-family: 'Lao UI';
+    font-size: 15px;
+}
+
+QMenuBar { 
+    background-color: #555555;
+    color: white;
+    border-bottom: 1px solid darkgray
+}
+QMenuBar::item:selected {
+    background: #a8a8a8;
+    color: white
+}
+QTabWidget {
+    background: #e8e8e8;
+    font-family: 'Lao UI';
+    font-size: 15px;
+}

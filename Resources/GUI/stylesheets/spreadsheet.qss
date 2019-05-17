@@ -1,0 +1,50 @@
+QTableView {{
+    gridline-color: #bcbcbc;
+    outline: 0px;
+    margin: 0px;
+    padding: 0px;
+}}
+QTableView::item {{
+    margin: 0px;
+    padding: 0px;
+}}
+QTableView::item:focus {{
+    background-color: #d8d8d8;
+    color: #000000;
+    gridline-color: #bcbcbc;
+}}
+QTableView::item:selected {{
+    background-color: #d8d8d8;
+    color: #000000;
+    gridline-color: #bcbcbc;
+}}
+QHeaderView::section:horizontal {{
+    border-right: 1px solid #bcbcbc;
+    border-bottom: 1px solid #bcbcbc;
+    border-top: 1px solid #bcbcbc;
+    border-left: 0px;
+    background-color: #ffffff;
+    color: #5b5b5b
+}}
+QHeaderView::section:vertical {{
+    border-right: 1px solid #bcbcbc;
+    border-bottom: 1px solid #bcbcbc;
+    border-left: 1px solid #bcbcbc;
+    border-top: 0px;
+    background-color: #ffffff;
+    color: #5b5b5b;
+}}
+QHeaderView::section:vertical:checked {{
+    background-color: #e8e8e8;
+    border-right: 2px solid {0};
+    color: {0};
+}}
+QHeaderView::section:horizontal:checked {{
+    background-color: #e8e8e8;
+    border-bottom: 2px solid {0};
+    color: {0};
+}}
+QTableView QTableCornerButton::section {{
+    background: 'white';
+    border: 1px solid #bcbcbc;
+}}
