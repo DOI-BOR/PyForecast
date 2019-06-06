@@ -106,9 +106,11 @@ class MenuBar(QtWidgets.QMenuBar):
         self.preferencesAction = QtWidgets.QAction("Preferences")
         self.dataloaderAction = QtWidgets.QAction("Dataloaders")
         self.advancedOptionsAction = QtWidgets.QAction("Advanced Options")
+        self.viewTablesAction = QtWidgets.QAction("View Database Tables")
         self.editMenu.addAction(self.preferencesAction)
         self.editMenu.addAction(self.dataloaderAction)
         self.editMenu.addAction(self.advancedOptionsAction)
+        self.editMenu.addAction(self.viewTablesAction)
 
         # About Menu
         self.aboutMenu = self.addMenu("About")

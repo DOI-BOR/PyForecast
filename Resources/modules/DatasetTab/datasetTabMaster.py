@@ -85,6 +85,7 @@ class datasetTab(object):
 
         return
 
+
     def beginDatasetEdit(self):
         """
         Opens the dataset editor dialog to allow a user to edit the parameters of a dataset
@@ -93,17 +94,21 @@ class datasetTab(object):
         datasetID = self.datasetTab.selectedDatasetsWidget.item(idx).dataset.name
         dataset = self.datasetTable.loc[datasetID]
         if isinstance(dataset['DatasetAdditionalOptions'], dict):
+
             if 'Import Filename' in dataset['DatasetAdditionalOptions'].keys():
                 self.createUserDefinedDataset(options=dataset, importDatasetFlag=True)
                 return
+
             elif 'CompositeString' in dataset['DatasetAdditionalOptions'].keys():
                 self.editCompositeDialog = createCompositeDataset.compositeDatasetDialog(self.datasetTable, self.dataTable, dataset)
                 self.editCompositeDialog.returnDatasetSignal.connect(self.addNewlyCombinedDatasetToDatastores)
                 self.editCompositeDialog.exec_()
                 return
+
         self.createUserDefinedDataset(options=dataset)
 
         return
+
 
     def loadAdditionalDatasetLists(self):
         """
@@ -114,8 +119,6 @@ class datasetTab(object):
         self.datasetTab.climInput.addItems(list(self.additionalDatasetsList[self.additionalDatasetsList['DatasetType'] == 'CLIMATE INDICE']['DatasetName']))
         self.datasetTab.pdsiInput.addItems(list(self.additionalDatasetsList[self.additionalDatasetsList['DatasetType'] == 'PDSI']['DatasetName']))
         self.datasetTypesList.append(list(set(list(self.additionalDatasetsList['DatasetType']))))
-        
-        
 
         return
 
@@ -128,6 +131,7 @@ class datasetTab(object):
         
         if hucNumber in validHUCs:
             return True
+
         return False
     
     
@@ -143,10 +147,11 @@ class datasetTab(object):
 
         return
 
+
     @QtCore.pyqtSlot(object)
     def updateDatasetInSelectedDatasets(self, dataset):
         """
-        Updates the datasettable with any changes made by the user in the edit dialog. The data is re-load
+        Updates the datasettable with any changes made by the user in the edit dialog. The data is re-loaded upon completion in the data tab
         """
         if not dataset.index >= 500000:
             newIdx = [max([500000, max(self.datasetTable.index)+1])]
@@ -154,12 +159,17 @@ class datasetTab(object):
             self.datasetTable.drop(datasetToRemove.name, inplace=True)
             dataset.index = newIdx
             self.datasetTable = self.datasetTable.append(dataset, ignore_index=False)
+
         else:
             self.datasetTable.update(dataset)
+
         self.datasetTable = self.datasetTable[~self.datasetTable.index.duplicated(keep='last')]
         self.loadSelectedDatasets(self.datasetTable, self.datasetTab.selectedDatasetsWidget)
 
+        # NEED TO CHECK IF DATA TAB NOW MUST BE UPDATED
+
         return
+
 
     @QtCore.pyqtSlot(object)
     def addUserDefinedDatasetToSelectedDatasets(self, dataset):
@@ -168,6 +178,7 @@ class datasetTab(object):
         """
         if dataset.index != -1:
             pass
+
         else:
             if list(self.datasetTable.index) == []:
                 maxIndex = 0
@@ -178,10 +189,10 @@ class datasetTab(object):
             else:
                 maxIndex = maxIndex + 1
             dataset.index = [maxIndex]
+
         self.datasetTable = self.datasetTable.append(dataset, ignore_index=False)
         self.datasetTable = self.datasetTable[~self.datasetTable.index.duplicated(keep='last')]
         self.loadSelectedDatasets(self.datasetTable, self.datasetTab.selectedDatasetsWidget)
-
 
         return
 
@@ -242,7 +253,7 @@ class datasetTab(object):
 
     def addAdditionalDatasetToSelectedDatasets(self, type_):
         """
-
+        Reads the information in the selected additional dataset (PRISM/NRCC/PDSI/etc) and adds the dataset to the datasettable
         """
         if type_ == 'PRISM':
             huc = self.datasetTab.prismInput.text()
@@ -251,7 +262,7 @@ class datasetTab(object):
                 self.datasetTable = self.datasetTable.append(dataset, ignore_index=False)
                 self.datasetTab.prismInput.clear()
             else:
-                loggingAndErrors.showErrorMessage("HUC number is invalid")
+                loggingAndErrors.showErrorMessage(self, "HUC number is invalid")
                 
         elif type_ == 'NRCC':
             huc = self.datasetTab.nrccInput.text()
@@ -260,7 +271,7 @@ class datasetTab(object):
                 self.datasetTable = self.datasetTable.append(dataset, ignore_index=False)
                 self.datasetTab.nrccInput.clear()
             else:
-                loggingAndErrors.showErrorMessage("HUC number is invalid")
+                loggingAndErrors.showErrorMessage(self, "HUC number is invalid")
 
         elif type_ == 'PDSI':
             division = self.datasetTab.pdsiInput.currentText()
@@ -293,7 +304,6 @@ class datasetTab(object):
             self.searchableDatasetsTable.index.name = 'DatasetInternalID'
             self.datasetTypesList.append(list(set(list(self.searchableDatasetsTable['DatasetType']))))
             
-
         geojson_ = gisFunctions.dataframeToGeoJSON(self.searchableDatasetsTable)
         self.datasetTab.webMapView.page.loadFinished.connect(lambda x: self.datasetTab.webMapView.page.runJavaScript("loadJSONData({0})".format(geojson_)))
         self.datasetTab.webMapView.page.java_msg_signal.connect(lambda x: self.addDatasetToSelectedDatasets(int(x.split(':')[1])) if "ID:" in x else self.addDatasetToSelectedDatasets(str(x.split(':')[1])))
@@ -333,6 +343,7 @@ class datasetTab(object):
 
     def addDatasetToSelectedDatasets(self, datasetID):
         """
+        This function is responsible for adding datasets from map-click events
         input:  datasetID
                 - The ID (DatasetInternalID) of the dataset that is to be added to the selected datasets
         """

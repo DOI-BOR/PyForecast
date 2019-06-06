@@ -1,4 +1,5 @@
 from resources.modules.Miscellaneous import loggingAndErrors
+from resources.modules.MenuBar import databaseViewer
 from resources.GUI.Dialogs import PreferencesGUI
 from datetime import datetime
 import pickle
@@ -15,6 +16,13 @@ class menuBar(object):
         self.appMenu.saveAction.triggered.connect(self.saveForecastFile)
         self.appMenu.saveAsAction.triggered.connect(lambda: self.saveForecastFile(True))
         self.appMenu.openAction.triggered.connect(self.openForecastFile)
+        self.appMenu.viewTablesAction.triggered.connect(self.viewDatabase)
+        return
+
+    def viewDatabase(self):
+        """
+        """
+        self.databaseViewerDialog = databaseViewer.viewerWindow(self)
         return
     
     def openPreferencesGUI(self):

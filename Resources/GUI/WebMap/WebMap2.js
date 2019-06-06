@@ -33,11 +33,11 @@ var streetMap =  L.tileLayer('https://{s}.tile.openstreetmap.de/tiles/osmde/{z}/
 var map = L.map('map',
     {zoomControl: true,
     editable: true,
-    layers: [grayMap]}).setView([ 43, -113], 7); // Set up a map centered on the U.S. at zoom level 4
+    layers: [terrainMap]}).setView([ 43, -113], 7); // Set up a map centered on the U.S. at zoom level 4
 
 // Store the basemaps in a dict
-var baseMaps = {'Grayscale': grayMap,
-                'Terrain': terrainMap, 
+var baseMaps = {'Terrain': terrainMap,
+                'Grayscale': grayMap, 
                 'Streets': streetMap};
 
 // Create map panes
@@ -46,7 +46,7 @@ map.createPane('ClimPane')
 map.createPane("PointsPane")
 
 // Add controls
-var layerControl = L.control.layers(baseMaps).addTo(map);
+var layerControl = L.control.layers(baseMaps,null,{collapsed:false}).addTo(map);
 
 // Create a layer Group
 var layerGrp = L.layerGroup();
