@@ -22,3 +22,8 @@ These packages can be installed automatically to your default python distributio
 
 ## Use
 Run the software by running the 'run_PyForecast.bat' batch script. This will open the software along with a console window that will log any error messages. Users may also download the source code and run the program via a Python IDE with PyForecast.pyw, via Visual Studio with PyForecast.pyproj, or by installing the program using the latest release at [this link](https://github.com/usbr/PyForecast/releases).
+
+## Disclaimer
+The software as originally published constitutes a work of the United States Government and is not subject to domestic copyright protection under 17 USC ¤ 105. Subsequent contributions by members of the public, however, retain their original copyright.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
