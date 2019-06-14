@@ -223,12 +223,14 @@ USBR_POINTS_RESLayer.on("click",function(e) {
     var huc = e.layer.feature.properties.HUC_CODE;
     var region = e.layer.feature.properties.REGION;
     var pcode = e.layer.feature.properties.PCODE;
+    var url = "https://www.usbr.gov/pn-bin/inventory.pl?ui=true&interval=daily&site="+id;
     var popHTML = "<strong>USBR Reservoir Site</strong>" +
                   "<p>ID: " + id +
                   "</br>Name: " + name +
                   "</br>Elevation: " + Math.round(elev) +
                   "</br>HUC: " + huc +
                   "</br>Region: " + region +
+                  "</br><a href = " + url + ">Website</a>" +
                   '</p><button type="button" onclick="buttonPress()">Add Site</button>' +
                   '<p hidden id="info" style="margin:0">USBR|'+id+'|'+name+'|Inflow|' + region + '|' + pcode + '</p>';
     var pop = L.popup().setLatLng(e.latlng).setContent(popHTML).addTo(map)
@@ -248,12 +250,14 @@ USBR_POINTS_AGMETLayer.on("click",function(e) {
     } else {
         option3 = "";
     };
+    var url = "https://www.usbr.gov/pn-bin/inventory.pl?ui=true&interval=daily&site="+id;
     var popHTML = "<strong>USBR Agrimet Site</strong>" +
                   "<p>ID: " + id +
                   "</br>Name: " + name +
                   "</br>Elevation: " + Math.round(elev) +
                   //"</br>HUC: " + huc +
                   //"</br>Region: " + region +
+                  "</br><a href = " + url + ">Website</a>" +
                   '</p><select id="paramAgmet"><option value="MN">Minimum Temperatures (degF)</option><option value="MM">Average Temperatures (degF)</option><option value="MN">Maximum Temperatures (degF)</option>' + option3 + '</select>' +
                   '<button type="button" onclick="buttonPress()">Add Site</button>' +
                   '<p hidden id="info" style="margin:0">AGMET|'+id+'|'+name+'|Weather|' + region + '|' + pcode + '</p>';
