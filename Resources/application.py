@@ -855,7 +855,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
 
         return
 
-    def appendDatasetDictionaryItem(self, dataID, stationType, stationNumber, stationName, stationParam, stationUnits, resamplingMethod, decodeOptions):
+    def appendDatasetDictionaryItem(self, dataID, stationType, stationNumber, stationName, stationParam, stationUnits, resamplingMethod, decodeOptions, stationURL = ''):
         """
         This function adds an entry to the datasetDictionary and adds it to the Station Tab table
         """
@@ -869,7 +869,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
            
         if not duplicateDataset:
             self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":stationUnits,"Resampling":resamplingMethod,"Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
-            self.stationsTab.stationInfoPane.stationTable.addRow([dataID, stationType, stationNumber, stationName, stationParam])
+            self.stationsTab.stationInfoPane.stationTable.addRow([dataID, stationType, stationNumber, stationName, stationParam, stationURL])
         else:
             button = QtWidgets.QMessageBox.question(self, 'Error','Dataset has already been selected...'.format(traceback.format_exc()), QtWidgets.QMessageBox.Ok)
             if button == QtWidgets.QMessageBox.Ok:
@@ -905,10 +905,11 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         instructionList = stationString.split('|')
         
         if instructionList[0] == 'StationSelect':
-            stationType = instructionList[3]
             stationName = instructionList[1]
             stationNumber = instructionList[2]
+            stationType = instructionList[3]
             stationParam = instructionList[4]
+            stationUrl = instructionList[len(instructionList) - 1]
             
             if stationType == 'USGS':                
                 decodeOptions = {"dataLoader":"USGS_NWIS"}
@@ -965,7 +966,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             else:
                 return
             
-            self.appendDatasetDictionaryItem(dataID, stationType, stationNumber, stationName, stationParam, units, resample, decodeOptions)
+            self.appendDatasetDictionaryItem(dataID, stationType, stationNumber, stationName, stationParam, units, resample, decodeOptions, stationUrl)
 
         elif instructionList[0] == 'nrcc':
 

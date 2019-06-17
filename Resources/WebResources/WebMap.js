@@ -161,7 +161,7 @@ USGSLayer.on("click",function(e) {
                   "</br>HUC8: " + huc + 
                   "</br>Elevation: " + elev + 
                   "</br>POR: " + por + 
-                  "</br><a href = " + url + ">Website" + 
+                  '</br><a id="paramURL" href = ' + url + '>Website' +
                   '</a></p><button type="button" onclick="buttonPress()">Add Site</button>' + 
                   '<p hidden id="info" style="margin:0">USGS|'+id+'|'+name+'|Streamflow</p>';
     var pop = L.popup().setLatLng(e.latlng).setContent(popHTML).addTo(map)
@@ -187,7 +187,7 @@ SNOTELLayer.on("click",function(e) {
                   "</br>HUC8: " + huc + 
                   "</br>Elevation: " + elev + 
                   "</br>POR: " + por + 
-                  "</br><a href = " + url + ">Website" + 
+                  '</br><a id="paramURL" href = ' + url + '>Website' +
                   '</a></p>' + 
                   '<select id="param"><option value="SWE">SWE (in)</option><option value="Precip">Precip (in)</option>' + option3 + '</select>' +
                   '<button type="button" onclick="buttonPress()">Add Site</button>' + 
@@ -233,7 +233,7 @@ USBR_POINTS_RESLayer.on("click",function(e) {
                   "</br>Elevation: " + Math.round(elev) +
                   "</br>HUC: " + huc +
                   "</br>Region: " + region +
-                  "</br><a href = " + url + ">Website</a>" +
+                  '</br><a id="paramURL" href = ' + url + '>Website</a>' +
                   '</p><button type="button" onclick="buttonPress()">Add Site</button>' +
                   '<p hidden id="info" style="margin:0">USBR|'+id+'|'+name+'|Inflow|' + region + '|' + pcode + '</p>';
     var pop = L.popup().setLatLng(e.latlng).setContent(popHTML).addTo(map)
@@ -260,7 +260,7 @@ USBR_POINTS_AGMETLayer.on("click",function(e) {
                   "</br>Elevation: " + Math.round(elev) +
                   //"</br>HUC: " + huc +
                   //"</br>Region: " + region +
-                  "</br><a href = " + url + ">Website</a>" +
+                  '</br><a id="paramURL" href = ' + url + '>Website</a>' +
                   '</p><select id="paramAgmet"><option value="MN">Minimum Temperatures (degF)</option><option value="MM">Average Temperatures (degF)</option><option value="MN">Maximum Temperatures (degF)</option>' + option3 + '</select>' +
                   '<button type="button" onclick="buttonPress()">Add Site</button>' +
                   '<p hidden id="info" style="margin:0">AGMET|'+id+'|'+name+'|Weather|' + region + '|' + pcode + '</p>';
@@ -351,14 +351,16 @@ function buttonPress() {
         var num = infoList[1];
         var name = infoList[2];
         var param = document.getElementById('param').value;
-        console.log('StationSelect|'+name+'|'+num+'|'+type+'|'+param);
+        var url = document.getElementById('paramURL').href;
+        console.log('StationSelect|'+name+'|'+num+'|'+type+'|'+param+'|'+url);
     } else if (type == 'USBR') {
         var num = infoList[1];
         var name = infoList[2];
         var param = infoList[3];
         var region = infoList[4];
         var pcode = infoList[5];
-        console.log('StationSelect|'+name+'|'+num+'|'+type+'|'+param+'|'+region+'|'+pcode);
+        var url = document.getElementById('paramURL').href;
+        console.log('StationSelect|'+name+'|'+num+'|'+type+'|'+param+'|'+region+'|'+pcode+'|'+url);
     } else if (type == 'AGMET') {
         var num = infoList[1];
         var name = infoList[2];
@@ -366,7 +368,8 @@ function buttonPress() {
         var region = infoList[4];
         var pcode = infoList[5];
         var param = document.getElementById('paramAgmet').value;
-        console.log('StationSelect|'+name+'|'+num+'|'+type+'|Weather|'+region+'|'+param);
+        var url = document.getElementById('paramURL').href;
+        console.log('StationSelect|'+name+'|'+num+'|'+type+'|Weather|'+region+'|'+param+'|'+url);
     } else if (type == 'HUC') {
         var num = infoList[1];
         var name = infoList[2];
@@ -375,8 +378,9 @@ function buttonPress() {
     } else {
         var num = infoList[1];
         var name = infoList[2];
-        var param = infoList[3]
-        console.log('StationSelect|'+name+'|'+num+'|'+type+'|'+param);
+        var param = infoList[3];
+        var url = document.getElementById('paramURL').href;
+        console.log('StationSelect|'+name+'|'+num+'|'+type+'|'+param+'|'+url);
     };
     
 };
