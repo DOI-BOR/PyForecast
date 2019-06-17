@@ -224,6 +224,9 @@ USBR_POINTS_RESLayer.on("click",function(e) {
     var region = e.layer.feature.properties.REGION;
     var pcode = e.layer.feature.properties.PCODE;
     var url = "https://www.usbr.gov/pn-bin/inventory.pl?ui=true&interval=daily&site="+id;
+    if (region == "GP") {
+        url = "https://www.usbr.gov/gp/hydromet/"+id+".html";
+    }
     var popHTML = "<strong>USBR Reservoir Site</strong>" +
                   "<p>ID: " + id +
                   "</br>Name: " + name +
