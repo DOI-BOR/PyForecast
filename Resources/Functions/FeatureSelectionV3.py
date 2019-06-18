@@ -140,7 +140,14 @@ class alternateThreadWorker(QRunnable):
             for interval in self.predictorDict[predictorName]:
                 if self.predictorDict[predictorName][interval]['prdID'] in list(self.equationDict['PredictorPool']):
                     self.predictorData = pd.concat([self.predictorData, pd.DataFrame().from_dict(self.predictorDict[predictorName][interval]['Data'], orient='columns')], axis=1)
+
+        """ Remove predictor columns whose 'nan' count is greater than half of the data period """
+        nanCount = self.predictorData.isna().sum()
+        for i, v in nanCount.items():
+            if v > (len(self.predictandData) / 2):
+                del self.predictorData[i]
         self.predictorDataNames = list(self.predictorData.columns)
+
 
 
 
