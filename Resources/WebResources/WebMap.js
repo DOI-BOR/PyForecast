@@ -45,6 +45,7 @@ var SNOWCOURSE = new Object();
 var USBR_POLY = new Object();
 var USBR_POINTS = new Object();
 var USBR_AGMET = new Object();
+var NCDC = new Object();
 
 loadJSON('../../Resources/GIS/WATERSHEDS/HUC8_WGS84.json', function(response) {
     // Parse data into object
@@ -69,6 +70,10 @@ loadJSON('../../Resources/GIS/RECLAMATION_SITES/RESERVOIRS2.json', function(resp
 loadJSON('../../Resources/GIS/RECLAMATION_SITES/AGRIMET.json', function(response) {
     // Parse data into object
     window.USBR_AGMET = JSON.parse(response);
+});
+loadJSON('../../Resources/GIS/NCDC_SITES/NCDC.json', function(response) {
+    // Parse data into object
+    window.NCDC = JSON.parse(response);
 });
 
 
@@ -139,6 +144,21 @@ var USBR_POINTS_AGMETLayer = L.geoJSON( window.USBR_AGMET, {
         return L.circleMarker(latlng, {
             pane: "PointsPane",
             fillColor: "#CB9F5B",
+            color: "#000000",
+            radius: 7,
+            weight:1,
+            fillOpacity: 1
+            })
+        }
+    }).addTo(map);
+
+// Add the NOAA NCDC sites
+var NCDCLayer = L.geoJSON( window.NCDC, {
+
+    pointToLayer: function (feature, latlng) {
+        return L.circleMarker(latlng, {
+            pane: "PointsPane",
+            fillColor: "#FFCCFF",
             color: "#000000",
             radius: 7,
             weight:1,
@@ -261,9 +281,32 @@ USBR_POINTS_AGMETLayer.on("click",function(e) {
                   //"</br>HUC: " + huc +
                   //"</br>Region: " + region +
                   '</br><a id="paramURL" href = ' + url + '>Website</a>' +
-                  '</p><select id="paramAgmet"><option value="MN">Minimum Temperatures (degF)</option><option value="MM">Average Temperatures (degF)</option><option value="MN">Maximum Temperatures (degF)</option>' + option3 + '</select>' +
+                  '</p><select id="paramAgmet"><option value="MN">Minimum Temperatures (degF)</option><option value="MM">Average Temperatures (degF)</option><option value="MX">Maximum Temperatures (degF)</option>' + option3 + '</select>' +
                   '<button type="button" onclick="buttonPress()">Add Site</button>' +
                   '<p hidden id="info" style="margin:0">AGMET|'+id+'|'+name+'|Weather|' + region + '|' + pcode + '</p>';
+    var pop = L.popup().setLatLng(e.latlng).setContent(popHTML).addTo(map)
+
+});
+
+// Add the popups for the NOAA NCDC sites
+NCDCLayer.on("click",function(e) {
+    //alert('test');
+    var id = e.layer.feature.properties.ID;
+    var name = e.layer.feature.properties.NAME;
+    var elev = e.layer.feature.properties.ELEV;
+    var state = e.layer.feature.properties.STATE;
+    var url = "https://www.ncdc.noaa.gov/cdo-web/datasets/GHCND/stations/GHCND:"+id+"/detail";
+    var popHTML = "<strong>NOAA NCDC Meteorologic Site</strong>" +
+                  "<p>ID: " + id +
+                  "</br>Name: " + name +
+                  "</br>Elevation: " + Math.round(elev) +
+                  "</br>State: " + state +
+                  //"</br>Region: " + region +
+                  '</br><a id="paramURL" href = ' + url + '>Website</a>' +
+                  '</p><select id="paramNcdc"><option value="TMIN">Minimum Temperatures (degF)</option><option value="TAVG">Average Temperatures (degF)</option><option value="TMAX">Maximum Temperatures (degF)</option>' +
+                  '<option value="PRCP">Precipitation (in)</option><option value="WESD">SWE (in)</option></select>' +
+                  '<button type="button" onclick="buttonPress()">Add Site</button>' +
+                  '<p hidden id="info" style="margin:0">NCDC|'+id+'|'+name+'|Weather|' + state + '</p>';
     var pop = L.popup().setLatLng(e.latlng).setContent(popHTML).addTo(map)
 
 });
@@ -321,7 +364,8 @@ var dataLayers = {
     "NRCS SNOTEL Sites":SNOTELLayer,
     "NRCS Snow Course" :SNOWCOURSELayer,
     "USBR Natural Flow":USBR_POINTS_RESLayer,
-    "USBR Agrimet":USBR_POINTS_AGMETLayer
+    "USBR Agrimet":USBR_POINTS_AGMETLayer,
+    "NOAA Sites":NCDCLayer
 }
 
 // Add a basemap and layer selector
@@ -370,7 +414,16 @@ function buttonPress() {
         var param = document.getElementById('paramAgmet').value;
         var url = document.getElementById('paramURL').href;
         console.log('StationSelect|'+name+'|'+num+'|'+type+'|Weather|'+region+'|'+param+'|'+url);
-    } else if (type == 'HUC') {
+    } else if (type == 'NCDC') {
+        var num = infoList[1];
+        var name = infoList[2];
+        //var type = infoList[3];
+        var region = infoList[4];
+        var pcode = infoList[5];
+        var param = document.getElementById('paramNcdc').value;
+        var url = document.getElementById('paramURL').href;
+        console.log('StationSelect|'+name+'|'+num+'|'+type+'|Weather|'+region+'|'+param+'|'+url);
+    }else if (type == 'HUC') {
         var num = infoList[1];
         var name = infoList[2];
         var param = document.getElementById('paramHUC').value;
