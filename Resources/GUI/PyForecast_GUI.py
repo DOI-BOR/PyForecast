@@ -1365,7 +1365,7 @@ class FcstOptionsPane(QtWidgets.QWidget):
         self.periodLabel = QtWidgets.QLabel("Forecast Period")
         self.periodInfo = QtWidgets.QLabel() 
         self.periodInfo.setPixmap(QtGui.QPixmap(os.path.abspath("Resources/Fonts_Icons_Images/infoHover.png")).scaled(30,30, QtCore.Qt.KeepAspectRatio))
-        self.periodInfo.setToolTip('<html><head/><body><p>Set the inflow volumne period for your forecast (defaults to April - July)</p></body></html>')
+        self.periodInfo.setToolTip('<html><head/><body><p>Set the inflow volume period for your forecast (defaults to April - July)</p></body></html>')
         hlayout = QtWidgets.QHBoxLayout()
         hlayout.addWidget(self.periodInfo)
         hlayout.addWidget(self.periodLabel)
