@@ -290,11 +290,28 @@ USBR_POINTS_AGMETLayer.on("click",function(e) {
 
 // Add the popups for the NOAA NCDC sites
 NCDCLayer.on("click",function(e) {
-    //alert('test');
     var id = e.layer.feature.properties.ID;
     var name = e.layer.feature.properties.NAME;
     var elev = e.layer.feature.properties.ELEV;
     var state = e.layer.feature.properties.STATE;
+    var dtypes = e.layer.feature.properties.DATATYPES.split(",");
+    //alert(dtypes);
+    var dtypeDropDown = ''
+    if (dtypes.indexOf('PRCP') >= 0) {
+        dtypeDropDown = dtypeDropDown + '<option value=""PRCP"">PRCP - Precipitation</option>';
+    }
+    if (dtypes.indexOf('WESD') >= 0) {
+        dtypeDropDown = dtypeDropDown + '<option value=""WESD"">WESD - SWE</option>';
+    }
+    if (dtypes.indexOf('TMIN') >= 0) {
+        dtypeDropDown = dtypeDropDown + '<option value=""TMIN"">TMIN - Min Temps</option>';
+    }
+    if (dtypes.indexOf('TAVG') >= 0) {
+        dtypeDropDown = dtypeDropDown + '<option value=""TAVG"">TAVG - Avg Temps</option>';
+    }
+    if (dtypes.indexOf('TMAX') >= 0) {
+        dtypeDropDown = dtypeDropDown + '<option value=""TMAX"">TMAX - Max Temps</option>';
+    }
     var url = "https://www.ncdc.noaa.gov/cdo-web/datasets/GHCND/stations/GHCND:"+id+"/detail";
     var popHTML = "<strong>NOAA NCDC Meteorologic Site</strong>" +
                   "<p>ID: " + id +
@@ -302,9 +319,10 @@ NCDCLayer.on("click",function(e) {
                   "</br>Elevation: " + Math.round(elev) +
                   "</br>State: " + state +
                   //"</br>Region: " + region +
-                  '</br><a id="paramURL" href = ' + url + '>Website</a>' +
-                  '</p><select id="paramNcdc"><option value="TMIN">Minimum Temperatures (degF)</option><option value="TAVG">Average Temperatures (degF)</option><option value="TMAX">Maximum Temperatures (degF)</option>' +
-                  '<option value="PRCP">Precipitation (in)</option><option value="WESD">SWE (in)</option></select>' +
+                  '</br><a id="paramURL" href = ' + url + '>Click here</a> to figure out what data is available for this site before selecting from the drop-down box below' +
+                  //'</p><select id="paramNcdc"><option value="TMIN">TMIN - Minimum Temperatures</option><option value="TAVG">TAVG - Average Temperatures</option><option value="TMAX">TMAX - Maximum Temperatures</option>' +
+                  //'<option value="PRCP">PRCP - Precipitation</option><option value="WESD">WESD - SWE</option></select>' +
+                  '</p><select id="paramNcdc">' + dtypeDropDown + '</select>' +
                   '<button type="button" onclick="buttonPress()">Add Site</button>' +
                   '<p hidden id="info" style="margin:0">NCDC|'+id+'|'+name+'|Weather|' + state + '</p>';
     var pop = L.popup().setLatLng(e.latlng).setContent(popHTML).addTo(map)
