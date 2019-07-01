@@ -3,7 +3,7 @@
 # Description:     This script converts daily data into seasonal forecast predictors. e.g. daily temperature data will be converted into month;y temperature averages.
 
 # Import Libraries
-from PyQt5 import QtCore
+from PyQt5 import QtGui, QtCore, QtWidgets
 import json
 import pandas as pd
 import numpy as np
@@ -83,8 +83,14 @@ class alternateThreadWorker(QtCore.QRunnable):
         # Now we have our equationpools dict set up with one key per forecast equation in the form:
         # {"January 1st": {"Predictand":"", "Predictors":"",...}, "January 15th": {"Predictand":"", "Predictors":""},...}   
 
+        progressCounter = 0
+        maxCounter = self.forecastDict['EquationPools'].__len__() + len(self.dataDir)
+
         # Let's now add the known predictand to each equation key in the dict   
         for key in self.forecastDict['EquationPools']:
+
+            progressCounter += 1
+            print(str(progressCounter) + ' of ' + str(maxCounter) + ' -- Generating ' + key + ' equation...')
 
             keyMonth = key[:-5] # The "key" is of the form "January 15th" so "keyMonth" is now 'January"
             keyMonthMapped = remapMonth(keyMonth, wateryearStart=self.forecastDict['Options']['wateryearStart']) # Converts to a mapped month
@@ -149,6 +155,9 @@ class alternateThreadWorker(QtCore.QRunnable):
 
         # Next, let's create the pool of all the available predictors
         for predictor in self.dataDir: # Iterate over all datasets
+
+            progressCounter += 1
+            print(str(progressCounter) + ' of ' + str(maxCounter) + ' -- Generating ' + predictor['Name'] + ' predictor...')
 
             # Re-initialize the predictor ID numbers
             if self.forecastDict['PredictorPool'] == {} or self.update:
