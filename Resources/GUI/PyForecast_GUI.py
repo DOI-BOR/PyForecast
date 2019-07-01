@@ -1474,6 +1474,9 @@ class FcstOptionsPane(QtWidgets.QWidget):
         self.gridLayout1.addWidget(hline, 16, 0, 1, 4)
         self.updateButton = QtWidgets.QPushButton("Update Predictors")
         self.gridLayout1.addWidget(self.updateButton, 17, 0, 1, 4)
+        self.progressBar = QtWidgets.QProgressBar()
+        self.progressBar.setValue(0)
+        self.gridLayout1.addWidget(self.progressBar, 18, 0, 1, 4)
 
 
        
@@ -1747,6 +1750,9 @@ class StandardRegressionTab(QtWidgets.QWidget):
         self.bestModelTable = CustomTableView(self, rowLock = True, colLock = False, cols =4, rows = 0, headers = ['prdIDs','CV Adjusted R2','RMSPE','CV NSE'], menuFunctions = ['SAVEFCST', 'REGSTAT'], readOnly = True, dragFrom=False)
         self.bestModelTable.setMinimumHeight(250)
         self.layout.addWidget(self.bestModelTable)
+
+        self.predAnlysButton = QtWidgets.QPushButton("Predictor Analysis")
+        self.layout.addWidget(self.predAnlysButton)
 
         self.scroll = QtWidgets.QScrollArea()
         self.scrollContent = QtWidgets.QWidget()

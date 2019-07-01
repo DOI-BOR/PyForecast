@@ -20,6 +20,7 @@ class alternateThreadWorkerSignals(QtCore.QObject):
     # Define the signals emitted from this script
     returnForecastDict = QtCore.pyqtSignal(dict)
     returnPredictorDict = QtCore.pyqtSignal(list)
+    updateProgBar = QtCore.pyqtSignal(int)
 
 class alternateThreadWorker(QtCore.QRunnable):
     """
@@ -89,6 +90,7 @@ class alternateThreadWorker(QtCore.QRunnable):
         # Let's now add the known predictand to each equation key in the dict   
         for key in self.forecastDict['EquationPools']:
 
+            self.signals.updateProgBar.emit(int(100*progressCounter/maxCounter))
             progressCounter += 1
             print(str(progressCounter) + ' of ' + str(maxCounter) + ' -- Generating ' + key + ' equation...')
 
@@ -156,6 +158,7 @@ class alternateThreadWorker(QtCore.QRunnable):
         # Next, let's create the pool of all the available predictors
         for predictor in self.dataDir: # Iterate over all datasets
 
+            self.signals.updateProgBar.emit(int(100*progressCounter/maxCounter))
             progressCounter += 1
             print(str(progressCounter) + ' of ' + str(maxCounter) + ' -- Generating ' + predictor['TYPE'] + ' ' + predictor['Name'] + ' predictor...')
 
@@ -367,6 +370,7 @@ class alternateThreadWorker(QtCore.QRunnable):
             else:
                 continue
 
+        self.signals.updateProgBar.emit(int(100*progressCounter/maxCounter))
         print('Data Processing & Aggregation Complete!')
         # Return control to the main program
         if self.update:
