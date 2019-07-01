@@ -298,19 +298,19 @@ NCDCLayer.on("click",function(e) {
     //alert(dtypes);
     var dtypeDropDown = ''
     if (dtypes.indexOf('PRCP') >= 0) {
-        dtypeDropDown = dtypeDropDown + '<option value=""PRCP"">PRCP - Precipitation</option>';
+        dtypeDropDown = dtypeDropDown + "<option value='PRCP'>PRCP - Precipitation</option>";
     }
     if (dtypes.indexOf('WESD') >= 0) {
-        dtypeDropDown = dtypeDropDown + '<option value=""WESD"">WESD - SWE</option>';
+        dtypeDropDown = dtypeDropDown + "<option value='WESD'>WESD - SWE</option>";
     }
     if (dtypes.indexOf('TMIN') >= 0) {
-        dtypeDropDown = dtypeDropDown + '<option value=""TMIN"">TMIN - Min Temps</option>';
+        dtypeDropDown = dtypeDropDown + "<option value='TMIN'>TMIN - Min Temps</option>";
     }
     if (dtypes.indexOf('TAVG') >= 0) {
-        dtypeDropDown = dtypeDropDown + '<option value=""TAVG"">TAVG - Avg Temps</option>';
+        dtypeDropDown = dtypeDropDown + "<option value='TAVG'>TAVG - Avg Temps</option>";
     }
     if (dtypes.indexOf('TMAX') >= 0) {
-        dtypeDropDown = dtypeDropDown + '<option value=""TMAX"">TMAX - Max Temps</option>';
+        dtypeDropDown = dtypeDropDown + "<option value='TMAX'>TMAX - Max Temps</option>";
     }
     var url = "https://www.ncdc.noaa.gov/cdo-web/datasets/GHCND/stations/GHCND:"+id+"/detail";
     var popHTML = "<strong>NOAA NCDC Meteorologic Site</strong>" +

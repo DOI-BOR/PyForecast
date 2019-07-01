@@ -923,19 +923,19 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
                 dataID = encryptions.generateStationID(stationType, stationName, stationParam, decodeOptions['dataLoader'])
                 if stationParam == 'SWE':
                     resample = 'Sample'
-                    units = 'inches'
+                    units = 'Inches'
                 elif stationParam == 'SOIL':
                     resample = 'Mean'
                     units = 'pct'
                 else:
                     resample = 'Accumulation'
-                    units = 'inches'
+                    units = 'Inches'
                 #self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":units,"Resampling":resample,"Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
 
             elif stationType == 'SNOWCOURSE':
                 decodeOptions = {"dataLoader":"NRCS_WCC"}
                 dataID = encryptions.generateStationID(stationType, stationName, stationParam, decodeOptions['dataLoader'])
-                units = "inches"
+                units = "Inches"
                 #resample = "Sample"
                 resample = "NearestNeighbor"
                 #self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":"inches","Resampling":"Sample","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
@@ -960,7 +960,21 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
                 else:
                     resample = "Mean"
                     units = "DegF"
+                #self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":"CFS","Resampling":"Mean","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
 
+            elif stationType == 'NCDC':
+                stationParam = instructionList[6]
+                decodeOptions = {"dataLoader": "NCDC"}
+                dataID = encryptions.generateStationID(stationType, stationName, stationParam, decodeOptions['dataLoader'])
+                if stationParam == 'PRCP':
+                    resample = "Sum"
+                    units = "Inches"
+                elif stationParam == 'WESD':
+                    resample = "NearestNeighbor"
+                    units = "Inches"
+                else:
+                    resample = "Mean"
+                    units = "DegF"
                 #self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":"CFS","Resampling":"Mean","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
 
             else:
