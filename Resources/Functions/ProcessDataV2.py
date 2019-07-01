@@ -157,7 +157,7 @@ class alternateThreadWorker(QtCore.QRunnable):
         for predictor in self.dataDir: # Iterate over all datasets
 
             progressCounter += 1
-            print(str(progressCounter) + ' of ' + str(maxCounter) + ' -- Generating ' + predictor['Name'] + ' predictor...')
+            print(str(progressCounter) + ' of ' + str(maxCounter) + ' -- Generating ' + predictor['TYPE'] + ' ' + predictor['Name'] + ' predictor...')
 
             # Re-initialize the predictor ID numbers
             if self.forecastDict['PredictorPool'] == {} or self.update:
@@ -366,7 +366,8 @@ class alternateThreadWorker(QtCore.QRunnable):
                     
             else:
                 continue
-        
+
+        print('Data Processing & Aggregation Complete!')
         # Return control to the main program
         if self.update:
             self.signals.returnPredictorDict.emit([self.forecastDict['PredictorPool'],self.forecastDict['EquationPools']] )

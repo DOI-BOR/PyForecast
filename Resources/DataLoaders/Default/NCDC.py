@@ -26,7 +26,7 @@ def dataLoader(stationDict, startDate, endDate):
     # Download instructions for NCDC data:
     t1 = datetime.strftime(startDate, '%Y-%m-%d' )
     t2 = datetime.strftime(endDate, '%Y-%m-%d' )
-    url = "https://www.ncei.noaa.gov/access/services/data/v1?dataset=daily-summaries&stations={0}&dataTypes={1}&startDate={2}&endDate={3}&boundingBox=90,-180,-90,180"
+    url = "https://www.ncei.noaa.gov/access/services/data/v1?dataset=daily-summaries&stations={0}&dataTypes={1}&startDate={2}&endDate={3}&boundingBox=90,-180,-90,180&units=standard"
     url = url.format(stationID, pcode, t1, t2)
     print(url)
 

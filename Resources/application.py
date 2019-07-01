@@ -955,7 +955,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
                 decodeOptions = {"dataLoader":"USBR", "Region":region,"PCODE":pcode}
                 dataID = encryptions.generateStationID(stationType, stationName, stationParam, decodeOptions['dataLoader'])
                 if pcode == 'PP':
-                    resample = "Sum"
+                    resample = "Accumulation"
                     units = "Inches"
                 else:
                     resample = "Mean"
@@ -967,7 +967,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
                 decodeOptions = {"dataLoader": "NCDC"}
                 dataID = encryptions.generateStationID(stationType, stationName, stationParam, decodeOptions['dataLoader'])
                 if stationParam == 'PRCP':
-                    resample = "Sum"
+                    resample = "Accumulation"
                     units = "Inches"
                 elif stationParam == 'WESD':
                     resample = "NearestNeighbor"
