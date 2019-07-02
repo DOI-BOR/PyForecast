@@ -25,6 +25,7 @@ IMPORT THOSE LIBRARIES AND MODULES. ADDITIONALLY, WE ADD THE 'GUI' FOLDER TO THE
 
 import sys
 import os
+import numpy as np
 
 # Import GUI
 from Resources.GUI import PyForecast_GUI, DocumentationGUI, MissingNoGUI, editDataLoaders, RegressionStatsGUI
@@ -1832,6 +1833,10 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         self.regressionTab.regrSelectPane.pcarTab.regrButton.pressed.connect(self.runFeatureSelection)
         self.regressionTab.regrSelectPane.zscrTab.regrButton.pressed.connect(self.runFeatureSelection)
         self.regressionTab.regrSelectPane.annTab.regrButton.pressed.connect(self.runFeatureSelection)
+        self.regressionTab.regrSelectPane.mlrTab.predAnlysButton.pressed.connect(self.runPredictorAnalysis)
+        self.regressionTab.regrSelectPane.pcarTab.predAnlysButton.pressed.connect(self.runPredictorAnalysis)
+        self.regressionTab.regrSelectPane.zscrTab.predAnlysButton.pressed.connect(self.runPredictorAnalysis)
+        self.regressionTab.regrSelectPane.annTab.predAnlysButton.pressed.connect(self.runPredictorAnalysis)
         self.regressionTab.toggleButton.pressed.connect(self.plotFcstEntryRegressionTab)
         self.regressionTab.regrSelectPane.mlrTab.bestModelTable.saveFcstAction.triggered.connect(self.saveFcst)
         self.regressionTab.regrSelectPane.pcarTab.bestModelTable.saveFcstAction.triggered.connect(self.saveFcst)
@@ -1931,6 +1936,81 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         regressionWorker.signals.updateRunLabel.connect(label.setText)
         self.table.cellClicked.connect(self.fcstClicked)
         self.threadPool.start(regressionWorker)
+
+        return
+
+
+    def runPredictorAnalysis(self):
+        """ 
+        Function to generate a analysis on selected predictors given the model set.
+        """
+        try:
+            # Figure out which regression scheme and equation to analyze
+            if self.regressionTab.regrSelectPane.tabWidget.currentIndex() == 0:
+                regrScheme = 'MLR'
+                self.equation = self.regressionTab.regrSelectPane.mlrTab.eqSelect.currentText()
+                fcastEqns = self.mlrFcstList
+
+            elif self.regressionTab.regrSelectPane.tabWidget.currentIndex() == 1:
+                regrScheme = 'PCAR'
+                self.equation = self.regressionTab.regrSelectPane.pcarTab.eqSelect.currentText()
+                fcastEqns = self.pcarFcstList
+
+            elif self.regressionTab.regrSelectPane.tabWidget.currentIndex() == 2:
+                regrScheme = 'ZSCR'
+                self.equation = self.regressionTab.regrSelectPane.zscrTab.eqSelect.currentText()
+                fcastEqns = self.zscrFcstList
+
+            elif self.regressionTab.regrSelectPane.tabWidget.currentIndex() == 3:
+                regrScheme = 'ANN'
+                self.equation = self.regressionTab.regrSelectPane.annTab.eqSelect.currentText()
+                fcastEqns = self.annFcstList
+
+            else:
+                return
+
+            prdList = []
+            for eqn in fcastEqns:
+                prdList.extend(eqn['prdIDs'])
+
+            selPreds, selPredCounts = np.unique(prdList, return_counts=True)
+            predLib = self.forecastDict['PredictorPool']
+
+            # Get the key-path to the selected predictor id
+            #https://stackoverflow.com/questions/22162321/search-for-a-value-in-a-nested-dictionary-python
+            def getpath(nested_dict, value, prepath=()):
+                for k, v in nested_dict.items():
+                    path = prepath + (k,)
+                    if v == value:  # found value
+                        return path
+                    elif hasattr(v, 'items'):  # v is a dict
+                        p = getpath(v, value, path)  # recursive call
+                        if p is not None:
+                            return p
+
+            filename = "Resources/tempFiles/tmp{0}.csv".format(datetime.now().timestamp())
+            file = open(filename, "w")
+            file.write('PredictorID,PredictorName,PredictorAggregation,SelectCount\n')
+            for i in range(len(selPreds)):
+                predKeys = getpath(predLib, selPreds[i])
+                file.write('{0},{1},{2},{3}\n'.format(
+                    selPreds[i],
+                    predKeys[0],
+                    predKeys[1],
+                    selPredCounts[i]
+                ))
+            file.close()
+
+            try:
+                try:
+                    subprocess.check_call(['cmd','/c','start',filename])
+                except Exception as e:
+                    print(e)
+                    subprocess.check_call(['open',filename])
+            except:
+                pass
+        except:
+            print("No forecast equations to process...")
 
         return
 

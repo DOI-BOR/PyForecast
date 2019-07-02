@@ -827,7 +827,6 @@ def NeuralNetwork(xData, yData, crossVal, perfMetric, pool):
 
     return Metrics.computeMetrics(cv_ypred, ypred, yData, input_layer_size), ypred, np.random.random(input_layer_size), np.random.random(1), cv_ypred
 
-
 def MultipleRegression(xData, yData, crossVal, perfMetric, pool):
     """
     Simple multiple regression model. Takes an array of training predictor data

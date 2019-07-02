@@ -88,7 +88,7 @@ class VersionWindow(QtWidgets.QDialog):
             if line[0] == '#':
                 continue
             
-            line = line.split(":")
+            line = line.split("|")
             label = QtWidgets.QLabel(line[0].strip(' '))
             text = QtWidgets.QLineEdit()
             text.setReadOnly(True)

@@ -1477,10 +1477,8 @@ class FcstOptionsPane(QtWidgets.QWidget):
         self.progressBar = QtWidgets.QProgressBar()
         self.progressBar.setValue(0)
         self.gridLayout1.addWidget(self.progressBar, 18, 0, 1, 4)
-
         self.progressLabel = QtWidgets.QLabel(" ")
-        self.gridLayout1.addWidget(self.progressLabel)
-       
+        self.gridLayout1.addWidget(self.progressLabel, 19, 0, 1, 4)
 
         # Build the widget
         self.scroll = QtWidgets.QScrollArea()
@@ -1732,7 +1730,6 @@ class StandardRegressionTab(QtWidgets.QWidget):
         self.distInput = CustomQComboBox(self.formScroll)
         self.distInput.addItems(["Normal"])#, "Lognormal"])
         self.layout.addWidget(self.distInput)
-
 
         self.regrButton = QtWidgets.QPushButton("Run " + model)
         self.layout.addWidget(self.regrButton)
