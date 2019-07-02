@@ -1995,8 +1995,8 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
                 predKeys = getpath(predLib, selPreds[i])
                 file.write('{0},{1},{2},{3}\n'.format(
                     selPreds[i],
-                    predKeys[0],
-                    predKeys[1],
+                    predKeys[0].replace(","," "),
+                    predKeys[1].replace(","," "),
                     selPredCounts[i]
                 ))
             file.close()
