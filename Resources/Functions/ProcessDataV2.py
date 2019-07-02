@@ -21,6 +21,7 @@ class alternateThreadWorkerSignals(QtCore.QObject):
     returnForecastDict = QtCore.pyqtSignal(dict)
     returnPredictorDict = QtCore.pyqtSignal(list)
     updateProgBar = QtCore.pyqtSignal(int)
+    updateProgLabel = QtCore.pyqtSignal(str)
 
 class alternateThreadWorker(QtCore.QRunnable):
     """
@@ -91,6 +92,7 @@ class alternateThreadWorker(QtCore.QRunnable):
         for key in self.forecastDict['EquationPools']:
 
             self.signals.updateProgBar.emit(int(100*progressCounter/maxCounter))
+            self.signals.updateProgLabel.emit("Generating {0} predictand...".format(key))
             progressCounter += 1
             print(str(progressCounter) + ' of ' + str(maxCounter) + ' -- Generating ' + key + ' equation...')
 
@@ -159,6 +161,7 @@ class alternateThreadWorker(QtCore.QRunnable):
         for predictor in self.dataDir: # Iterate over all datasets
 
             self.signals.updateProgBar.emit(int(100*progressCounter/maxCounter))
+            self.signals.updateProgLabel.emit("Generating {0}-{1} predictor sets...".format(predictor['TYPE'], predictor['Name']))
             progressCounter += 1
             print(str(progressCounter) + ' of ' + str(maxCounter) + ' -- Generating ' + predictor['TYPE'] + ' ' + predictor['Name'] + ' predictor...')
 
@@ -371,6 +374,7 @@ class alternateThreadWorker(QtCore.QRunnable):
                 continue
 
         self.signals.updateProgBar.emit(int(100*progressCounter/maxCounter))
+        self.signals.updateProgLabel.emit("Done!")
         print('Data Processing & Aggregation Complete!')
         # Return control to the main program
         if self.update:

@@ -1606,6 +1606,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         processWorker = ProcessDataV2.alternateThreadWorker(d)
         processWorker.signals.returnForecastDict.connect(self.finishedProcessing)
         processWorker.signals.updateProgBar.connect(self.fcstOptionsTab.optionsPane.progressBar.setValue)
+        processWorker.signals.updateProgLabel.connect(self.fcstOptionsTab.optionsPane.progressLabel.setText)
         self.threadPool.start(processWorker)
 
         return

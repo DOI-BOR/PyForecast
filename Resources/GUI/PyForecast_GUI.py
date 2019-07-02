@@ -1478,7 +1478,8 @@ class FcstOptionsPane(QtWidgets.QWidget):
         self.progressBar.setValue(0)
         self.gridLayout1.addWidget(self.progressBar, 18, 0, 1, 4)
 
-
+        self.progressLabel = QtWidgets.QLabel(" ")
+        self.gridLayout1.addWidget(self.progressLabel)
        
 
         # Build the widget
@@ -2173,25 +2174,25 @@ class UI_MainWindow(object):
         
         self.fcstOptionsTab.layout = QtWidgets.QHBoxLayout()
 
-        # Add a verical spliiter to split the options pane from the correlations plot
-        self.fcstOptionsTab.splitter1 = QtWidgets.QSplitter(QtCore.Qt.Vertical)
-        self.fcstOptionsTab.optionsPane = FcstOptionsPane(self)
-        self.fcstOptionsTab.splitter1.addWidget(self.fcstOptionsTab.optionsPane)
-
-        # Add a horizontal splitter to split the table from splitter1
+        # Add a horizontal splitter to split the table from the plots
         self.fcstOptionsTab.splitter2 = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
-        self.fcstOptionsTab.splitter2.addWidget(self.fcstOptionsTab.splitter1)
         self.fcstOptionsTab.dualTreeView = FcstOptionsTrees(self)
         self.fcstOptionsTab.splitter2.addWidget(self.fcstOptionsTab.dualTreeView)
 
-        # Add a vertical splitter to split top widgets from plots
+        # Add a vertical splitter to split the tree from the plots - place tree in plots
         self.fcstOptionsTab.splitter3 = QtWidgets.QSplitter(QtCore.Qt.Vertical)
         self.fcstOptionsTab.plotsPane = plotsPane()
         self.fcstOptionsTab.splitter3.addWidget(self.fcstOptionsTab.splitter2)
         self.fcstOptionsTab.splitter3.addWidget(self.fcstOptionsTab.plotsPane)
 
-        # Lay out the tab
-        self.fcstOptionsTab.layout.addWidget(self.fcstOptionsTab.splitter3)
+        # Add a horizontal splitter to split the options pane from the tree and plots - place tree & plots in options
+        self.fcstOptionsTab.splitter1 = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
+        self.fcstOptionsTab.optionsPane = FcstOptionsPane(self)
+        self.fcstOptionsTab.splitter1.addWidget(self.fcstOptionsTab.optionsPane)
+        self.fcstOptionsTab.splitter1.addWidget(self.fcstOptionsTab.splitter3)
+
+        # Lay out the tab - place the options widget
+        self.fcstOptionsTab.layout.addWidget(self.fcstOptionsTab.splitter1)
 
         self.fcstOptionsTab.setLayout(self.fcstOptionsTab.layout)
         self.tabWidget.addTab(self.fcstOptionsTab, "Forecast Options")
