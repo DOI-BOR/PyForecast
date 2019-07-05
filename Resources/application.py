@@ -28,7 +28,7 @@ import os
 import numpy as np
 
 # Import GUI
-from Resources.GUI import PyForecast_GUI, DocumentationGUI, MissingNoGUI, editDataLoaders, RegressionStatsGUI
+from Resources.GUI import PyForecast_GUI, DocumentationGUI, MissingNoGUI, editDataLoaders, RegressionStatsGUI, MatrixPlot
 
 # Import PyQt5 GUI functions
 from PyQt5 import QtGui, QtCore, QtWidgets
@@ -390,7 +390,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
     def genForecastButtonClicked(self):
         """
         This function figures out which forecast equation was selected by the user,
-        and uses current water year data to generate a current water year forceast 
+        and uses current water year data to generate a current water year forecast
         based on that equation. 
 
         It begins by storing the equations predictor data (x-data, aka design matrix) into 
@@ -1119,6 +1119,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         self.dataTab.dataOptions.importButton.pressed.connect(self.importData)
         self.dataTab.dataTable.horizontalHeader().sectionClicked.connect(self.plotColumn)
         self.dataTab.dataOptions.missingButton.pressed.connect(self.missingDataViz)
+        self.dataTab.dataOptions.matrixButton.pressed.connect(self.matrixPlotDataViz)
         self.dataTab.dataTable.deletedColumnEmission.connect(self.deleteDatasetFromDataTable)
         self.dataTab.dataTable.cellChanged.connect(self.userEditedData)
 
@@ -1257,6 +1258,21 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         if data.empty:
             return
         dialog = MissingNoGUI.missingDialog(data)
+
+        return
+
+
+    def matrixPlotDataViz(self):
+        """
+        This function instantiates a dialog window that displays the serial completeness of the datasets. See
+        'GUI.MissingNoGUI.py' for more information on this function.
+        """
+
+        data = self.dataTab.dataTable.toDataFrame()
+        if data.empty:
+            return
+        import matplotlib as plt
+        dialog = MatrixPlot.matrixDialog(data)
 
         return
 

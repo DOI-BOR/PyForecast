@@ -1305,9 +1305,22 @@ class DataOptionsPane(QtWidgets.QWidget):
         self.optionsGrid.addWidget(self.missingInfo, 9, 1, 1, 1)
         self.optionsGrid.addWidget(self.missingButton, 9, 2, 1, 2)
 
+
+        # View matrix plot button
+        self.matrixLabel = QtWidgets.QLabel("Plot Correlation")
+        self.matrixInfo = QtWidgets.QLabel()
+        self.matrixInfo.setPixmap(QtGui.QPixmap(os.path.abspath("Resources/Fonts_Icons_Images/infoHover.png")).scaled(30,30, QtCore.Qt.KeepAspectRatio))
+        self.matrixInfo.setScaledContents(True)
+        self.matrixInfo.setToolTip('<html><head/><body><p>View the dataset correlations using a matrix plot.</p></body></html>')
+        self.matrixButton = QtWidgets.QPushButton("View")
+        self.optionsGrid.addWidget(self.matrixLabel, 10, 0, 1, 1)
+        self.optionsGrid.addWidget(self.matrixInfo, 10, 1, 1, 1)
+        self.optionsGrid.addWidget(self.matrixButton, 10, 2, 1, 2)
+
+
         spacer = QtWidgets.QWidget()
         spacer.setMaximumHeight(1200)
-        self.optionsGrid.addWidget(spacer, 10, 0, 1, 4)
+        self.optionsGrid.addWidget(spacer, 11, 0, 1, 4)
 
 
         # Build the widget
