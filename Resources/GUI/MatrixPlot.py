@@ -26,9 +26,19 @@ class matrixCanvas(FigureCanvas):
                                 QtWidgets.QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
 
-    def plotMatrix(self, data, color = (0.04,0.52,0.80)):
+    def plotMatrix(self, data):
         df2 = data.dropna()
         df2 = df2.apply(pd.to_numeric)
+        df2Index = []
+        colCounter = 1
+        self.myQMenuBar = QtWidgets.QMenuBar(self)
+        exitMenu = self.myQMenuBar.addMenu('Variable Descriptions')
+        for ithCol in df2:
+            df2Index.append('Var-' + str(colCounter))
+            exitAction = QtWidgets.QAction('Var-' + str(colCounter) + ': ' + ithCol.replace('\n', ', ').replace('\r', ''), self)
+            exitMenu.addAction(exitAction)
+            colCounter = colCounter + 1
+        df2.columns = df2Index
         scatter_matrix(df2, alpha=0.2, diagonal='kde', ax=self.ax0)
         #plt.savefig("Resources/tempFiles/MatrixPlot{0}.png".format(int(1000*np.random.random(1))))
         self.draw()
