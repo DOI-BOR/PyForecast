@@ -28,6 +28,8 @@ pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-hos
 ECHO OOOOOOOOOOO
 pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org xlrd -U --user
 ECHO OOOOOOOOOOOO
+pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org statsmodels -U --user
+ECHO OOOOOOOOOOOOO
 ECHO.
 ECHO Press any key to exit
 PAUSE

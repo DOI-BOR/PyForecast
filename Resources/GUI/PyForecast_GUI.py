@@ -1307,7 +1307,7 @@ class DataOptionsPane(QtWidgets.QWidget):
 
 
         # View matrix plot button
-        self.matrixLabel = QtWidgets.QLabel("Plot Correlation")
+        self.matrixLabel = QtWidgets.QLabel("Data Analysis")
         self.matrixInfo = QtWidgets.QLabel()
         self.matrixInfo.setPixmap(QtGui.QPixmap(os.path.abspath("Resources/Fonts_Icons_Images/infoHover.png")).scaled(30,30, QtCore.Qt.KeepAspectRatio))
         self.matrixInfo.setScaledContents(True)
