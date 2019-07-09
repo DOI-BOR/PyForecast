@@ -26,6 +26,7 @@ IMPORT THOSE LIBRARIES AND MODULES. ADDITIONALLY, WE ADD THE 'GUI' FOLDER TO THE
 import sys
 import os
 import numpy as np
+import shutil
 
 # Import GUI
 from Resources.GUI import PyForecast_GUI, DocumentationGUI, MissingNoGUI, editDataLoaders, RegressionStatsGUI, DataAnalysis
@@ -112,7 +113,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         This function removes any old csv files from the tempFiles directory
         """
         for file_ in os.listdir('Resources/tempFiles'):
-            if file_ == '__pycache__' or 'pyforecast.cfg':
+            if file_ == '__pycache__' or file_ == 'pyforecast.cfg':
                 continue
             filename = os.path.abspath('Resources/tempFiles/' + file_)
             try:
@@ -247,7 +248,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             if filename == '':
                 return
 
-            if '.' not in filename:
+            if '.fcst' not in filename:
                 filename = filename + '.fcst'
 
         pkl = {
@@ -255,9 +256,11 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             "forecastDict":self.forecastDict
         }
 
-        with open(filename, 'wb') as writefile:
+        tempFile = filename + '.temp'
+        with open(tempFile, 'wb') as writefile:
             pickle.dump(pkl, writefile, pickle.HIGHEST_PROTOCOL)
-
+        shutil.move(filename,filename + '.bkup')
+        shutil.move(tempFile,filename)
         self.setWindowTitle("PyForecast v2.0 - {0}".format(filename))
 
         return
