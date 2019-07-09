@@ -77,7 +77,12 @@ class matrixDialog(QtWidgets.QDialog):
         for ithCol in df:
             dSetName = ithCol.replace('\n', '; ').replace('\r', '').replace(',','')
             series = df.loc[:,ithCol]
-            X = np.log(series.values)
+            # Clean-up data
+            X = series.values
+            X = X[~np.isnan(X)]#remove nans
+            if X.min() <= 0:#shift data for log transform
+                X = X + (X.min() * -1) + 0.1
+            X = np.log(X) #log-transform data
             result = adfuller(X)
             critVals = ''
             stationarityVals = ''
