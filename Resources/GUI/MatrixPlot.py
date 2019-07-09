@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import subprocess
 import matplotlib
+import sys
 matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 from pandas.plotting import scatter_matrix
@@ -52,8 +53,10 @@ class matrixDialog(QtWidgets.QDialog):
         # Build menu bar
         self.myQMenuBar = QtWidgets.QMenuBar(self)
         self.statsMenu = self.myQMenuBar.addMenu('Data Analysis Options')
-        self.statsAction = QtWidgets.QAction('Run Stationarity Test', self)
+        self.statsAction = QtWidgets.QAction('Generate Summary Stats', self)
         self.statsMenu.addAction(self.statsAction)
+        self.stationarityAction = QtWidgets.QAction('Run Stationarity Test', self)
+        self.statsMenu.addAction(self.stationarityAction)
         self.exitMenu = self.myQMenuBar.addMenu('Variable Descriptions')
         mainLayout.addWidget(self.myQMenuBar)
         # Build scatter-plot
@@ -61,8 +64,50 @@ class matrixDialog(QtWidgets.QDialog):
         mainLayout.addWidget(self.plot)
         self.plot.plotMatrix(data, self.exitMenu)
         # Add menu actions
-        self.statsAction.triggered.connect(self.runStationarityTest)
+        self.statsAction.triggered.connect(self.runSummaryStats)
+        self.stationarityAction.triggered.connect(self.runStationarityTest)
         self.exec_()
+
+
+    def openFile(self, filename):
+        try:
+            try:
+                subprocess.check_call(['cmd','/c','start',filename])
+            except Exception as e:
+                print(e)
+                subprocess.check_call(['open',filename])
+        except:
+            pass
+
+
+    def writeDFrame(self, dataFrame, file):
+        colHeader = ','
+        for ithCol in dataFrame.columns:
+            colHeader = colHeader + ithCol.replace('\n', '').replace('\r', '').replace(',','') + ','
+        print(colHeader[:-1], file=file)
+        for index, row in dataFrame.iterrows():
+            rowStr = row.to_csv(header=False, index=False, sep=',').replace('\n', ',').replace('\r', '')
+            idxStr = index.replace('\n', '').replace('\r', '').replace(',','') + ','
+            print(idxStr + rowStr, file=file)
+
+
+    def runSummaryStats(self):
+        print('Calculating summary stats...')
+        filename = "Resources/tempFiles/tmp{0}.csv".format(datetime.now().timestamp())
+        file = open(filename, "w")
+        # summary stats
+        print('', file=file)
+        print('SUMMARY STATISTICS', file=file)
+        df = self.data.describe()
+        self.writeDFrame(df, file)
+        # correlation
+        print('', file=file)
+        print('CORRELATION MATRIX', file=file)
+        df = self.data.corr()
+        self.writeDFrame(df, file)
+        file.close()
+        self.openFile(filename)
+
 
     def runStationarityTest(self):
         print('Running stationarity test...')
@@ -102,12 +147,4 @@ class matrixDialog(QtWidgets.QDialog):
                 stationarityVals[:-1]
             ))
         file.close()
-
-        try:
-            try:
-                subprocess.check_call(['cmd','/c','start',filename])
-            except Exception as e:
-                print(e)
-                subprocess.check_call(['open',filename])
-        except:
-            pass
+        self.openFile(filename)
