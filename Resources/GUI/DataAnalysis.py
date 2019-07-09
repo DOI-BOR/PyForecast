@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 import subprocess
 import matplotlib
-import sys
 matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 from pandas.plotting import scatter_matrix
@@ -39,10 +38,10 @@ class matrixCanvas(FigureCanvas):
         #plt.savefig("Resources/tempFiles/MatrixPlot{0}.png".format(int(1000*np.random.random(1))))
         self.draw()
 
-class matrixDialog(QtWidgets.QDialog):
+class analysisDialog(QtWidgets.QDialog):
 
     def __init__(self, data):
-        super(matrixDialog, self).__init__()
+        super(analysisDialog, self).__init__()
         data = data.dropna()
         data = data.apply(pd.to_numeric)
         self.data = data

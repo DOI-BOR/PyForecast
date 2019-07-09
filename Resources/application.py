@@ -28,7 +28,7 @@ import os
 import numpy as np
 
 # Import GUI
-from Resources.GUI import PyForecast_GUI, DocumentationGUI, MissingNoGUI, editDataLoaders, RegressionStatsGUI, MatrixPlot
+from Resources.GUI import PyForecast_GUI, DocumentationGUI, MissingNoGUI, editDataLoaders, RegressionStatsGUI, DataAnalysis
 
 # Import PyQt5 GUI functions
 from PyQt5 import QtGui, QtCore, QtWidgets
@@ -1272,7 +1272,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         if data.empty:
             return
         import matplotlib as plt
-        dialog = MatrixPlot.matrixDialog(data)
+        dialog = DataAnalysis.analysisDialog(data)
 
         return
 
