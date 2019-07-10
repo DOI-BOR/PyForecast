@@ -1728,7 +1728,7 @@ class StandardRegressionTab(QtWidgets.QWidget):
         hlayout.addSpacerItem(QtWidgets.QSpacerItem(400,40,QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum))
         self.layout.addLayout(hlayout)
         self.scoreInput = CustomQComboBox(self.formScroll)
-        self.scoreInput.addItems(["Cross Validated Adjusted R2","Root Mean Squared Prediction Error","Cross Validated Nash-Sutcliffe"])
+        self.scoreInput.addItems(["Cross Validated Adjusted R2","Root Mean Squared Prediction Error","Cross Validated Nash-Sutcliffe","Mean Absolute Error"])
         self.layout.addWidget(self.scoreInput)
 
         self.distLabel = QtWidgets.QLabel("Inflow Distribution")
@@ -1758,7 +1758,7 @@ class StandardRegressionTab(QtWidgets.QWidget):
         hline.setFrameShadow(QtWidgets.QFrame.Plain)
         self.layout.addWidget(hline)
 
-        self.bestModelTable = CustomTableView(self, rowLock = True, colLock = False, cols =4, rows = 0, headers = ['prdIDs','CV Adjusted R2','RMSPE','CV NSE'], menuFunctions = ['SAVEFCST', 'REGSTAT'], readOnly = True, dragFrom=False)
+        self.bestModelTable = CustomTableView(self, rowLock = True, colLock = False, cols =5, rows = 0, headers = ['prdIDs','MAE','RMSE','CV Adjusted R2','CV NSE'], menuFunctions = ['SAVEFCST', 'REGSTAT'], readOnly = True, dragFrom=False)
         self.bestModelTable.setMinimumHeight(250)
         self.layout.addWidget(self.bestModelTable)
 

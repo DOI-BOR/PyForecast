@@ -37,6 +37,8 @@ def computeMetrics(cv_yStar, yStar, yActual, p):
     adjR2 = 1 - ((n-1)/(n-(p+1)))*(1-r2)
     cv_adjR2 = 1 - ((n-1)/(n-(p+1)))*(1-cv_r2)
 
+    """ Compute MAE values """
+    mae = float(np.sum(np.abs(yStar - yActual))) / (n-(p+1))
 
     """ Compute the RMSE """
     mse = ssResidual / (n-(p+1))
@@ -61,7 +63,8 @@ def computeMetrics(cv_yStar, yStar, yActual, p):
         "Adjusted R2" : adjR2, 
         "Root Mean Squared Error": rmse, 
         "Nash-Sutcliffe" : nse,
-        "Sample Variance" : s}
+        "Sample Variance" : s,
+        "Mean Absolute Error" : mae}
 
 
 def metricBetterThan( newMetric, oldMetric, perfMeasure ):
@@ -76,7 +79,7 @@ def metricBetterThan( newMetric, oldMetric, perfMeasure ):
         else:
             trueFalse = True
 
-    elif perfMeasure == 'Root Mean Squared Error' or perfMeasure == 'Root Mean Squared Prediction Error':
+    elif perfMeasure == 'Root Mean Squared Error' or perfMeasure == 'Root Mean Squared Prediction Error' or perfMeasure == 'Mean Absolute Error':
         if oldMetric < newMetric:
             trueFalse = False
         else:

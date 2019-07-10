@@ -738,6 +738,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         self.summaryTab.fcstInfoPane.forecastInfoTable.addRow(['',''])
         self.summaryTab.fcstInfoPane.forecastInfoTable.addRow(['Adj. R2',str(fcst['Metrics']['Adjusted R2'])])
         self.summaryTab.fcstInfoPane.forecastInfoTable.addRow(['RMSE',str(fcst['Metrics']['Root Mean Squared Error'])])
+        self.summaryTab.fcstInfoPane.forecastInfoTable.addRow(['MAE',str(fcst['Metrics']['Mean Absolute Error'])])
         self.summaryTab.fcstInfoPane.forecastInfoTable.addRow(['Nash-Sutcliffe',str(fcst['Metrics']['Nash-Sutcliffe'])])
 
         
@@ -2047,7 +2048,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         self.regrButton.setEnabled(True)
         self.table.setRowCount(0)
 
-        if self.perfMetric == 'Root Mean Squared Prediction Error':
+        if self.perfMetric == 'Root Mean Squared Prediction Error' or self.perfMetric == 'Mean Absolute Error':
             fcstDictList = sorted(fcstDictList, key=lambda i: i['Metrics'][self.perfMetric])
         else:
             fcstDictList = sorted(fcstDictList, key=lambda i: i['Metrics'][self.perfMetric], reverse=True)
@@ -2065,10 +2066,12 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             else:    
                 prdIDs = ', '.join(fcst['prdIDs'])
             
-            r2 = str(np.round(fcst['Metrics']['Cross Validated Adjusted R2'],2))
+
+            mae = str(np.round(fcst['Metrics']['Mean Absolute Error'],1))
             rmse = str(np.round(fcst['Metrics']['Root Mean Squared Prediction Error'],1))
+            r2 = str(np.round(fcst['Metrics']['Cross Validated Adjusted R2'],2))
             nse = str(np.round(fcst['Metrics']['Cross Validated Nash-Sutcliffe'],2))
-            self.table.addRow([prdIDs, r2, rmse, nse])
+            self.table.addRow([prdIDs, mae, rmse, r2, nse])
         
         currentRegScheme = self.regressionTab.regrSelectPane.tabWidget.currentIndex()
 

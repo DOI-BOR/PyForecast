@@ -120,7 +120,8 @@ class alternateThreadWorker(QRunnable):
                     "Adjusted R2"                           : float("-inf"),
                     "Root Mean Squared Error"               : float("inf"),
                     "Nash-Sutcliffe"                        : float("-inf"),
-                    "Sample Variance"                       : float("inf")},
+                    "Sample Variance"                       : float("inf"),
+                    "Mean Absolute Error"                   : float("inf")},
                 "CrossValidation"                           : self.crossVal,
                 "Forecasted"                                : "",
                 "CV_Forecasted"     : "",
@@ -611,7 +612,7 @@ class alternateThreadWorker(QRunnable):
                     currentModels[predComboIdx] = result[0]['prdID']
                 else: #Process results and knock out less-performant models
                     minIndex = -1
-                    if self.perfMetric == 'Root Mean Squared Error' or self.perfMetric == 'Root Mean Squared Prediction Error':
+                    if self.perfMetric == 'Root Mean Squared Error' or self.perfMetric == 'Root Mean Squared Prediction Error' or self.perfMetric == 'Mean Absolute Error':
                         minMetric = float("-inf")
                     else:
                         minMetric = float("inf")
@@ -619,12 +620,12 @@ class alternateThreadWorker(QRunnable):
                     # Find least performant model
                     for j in range(len(self.searchDictList)):
                         ithMetric = self.searchDictList[j]['Metrics'][self.perfMetric]
-                        if (ithMetric < minMetric) or (ithMetric > minMetric and (self.perfMetric == 'Root Mean Squared Error' or self.perfMetric == 'Root Mean Squared Prediction Error')):
+                        if (ithMetric < minMetric) or (ithMetric > minMetric and (self.perfMetric == 'Root Mean Squared Error' or self.perfMetric == 'Root Mean Squared Prediction Error' or self.perfMetric == 'Mean Absolute Error')):
                             minMetric = ithMetric
                             minIndex = j
 
                     # Replace less-performant model if new one does better
-                    if (result[1][self.perfMetric] > minMetric) or (result[1][self.perfMetric] < minMetric and (self.perfMetric == 'Root Mean Squared Error' or self.perfMetric == 'Root Mean Squared Prediction Error')):
+                    if (result[1][self.perfMetric] > minMetric) or (result[1][self.perfMetric] < minMetric and (self.perfMetric == 'Root Mean Squared Error' or self.perfMetric == 'Root Mean Squared Prediction Error' or self.perfMetric == 'Mean Absolute Error')):
                         self.searchDictList[minIndex]['Metrics'] = result[1]
                         self.searchDictList[minIndex]['prdIDs'] = result[0]['prdID']
                         self.searchDictList[minIndex]['Forecasted'] = result[2]['Forecasted']
@@ -698,7 +699,8 @@ def testPredictorSet(list_, SFBS=False, first_iteration=False):
         "Adjusted R2" : float("-inf"),
         "Root Mean Squared Error" : float("inf"),
         "Nash-Sutcliffe": float("-inf"),
-        "Sample Variance": float("-inf") }, \
+        "Sample Variance": float("-inf"),
+        "Mean Absolute Error": float("inf") }, \
         {"Forecasted":None, "CV_Forecasted":None},None, None]
 
     if ObjFunctionRun != ZScoreRegression:
@@ -722,7 +724,8 @@ def testPredictorSet(list_, SFBS=False, first_iteration=False):
         "Adjusted R2" : float("-inf"),
         "Root Mean Squared Error" : float("inf"),
         "Nash-Sutcliffe": float("-inf"),
-        "Sample Variance": float("-inf") }, \
+        "Sample Variance": float("-inf"),
+        "Mean Absolute Error" : float("inf") }, \
         {"Forecasted":None, "CV_Forecasted":None},None, None]
     
     if testPredictorsData.shape[1] == 1 and (ObjFunctionRun == PrincipalComponentsRegression or ObjFunctionRun == ZScoreRegression):
@@ -733,7 +736,8 @@ def testPredictorSet(list_, SFBS=False, first_iteration=False):
         "Adjusted R2" : float("-inf"),
         "Root Mean Squared Error" : float("inf"),
         "Nash-Sutcliffe": float("-inf"),
-        "Sample Variance": float("-inf") }, \
+        "Sample Variance": float("-inf"),
+        "Mean Absolute Error" : float("inf") }, \
         {"Forecasted":None, "CV_Forecasted":None},None, None]
 
 
@@ -756,7 +760,8 @@ def testPredictorSet(list_, SFBS=False, first_iteration=False):
                 "Adjusted R2" : float("-inf"),
                 "Root Mean Squared Error" : float("inf"),
                 "Nash-Sutcliffe": float("-inf"),
-                "Sample Variance" : float("inf") }, \
+                "Sample Variance" : float("inf"),
+                "Mean Absolute Error" : float("inf") }, \
                 {"Forecasted":None, "CV_Forecasted":None},None, None]
     else:
         metrics, forecasted, coefs, intercept, princCompData, CV_Forecasted, all_significant = ObjFunctionRun(testPredictorsData, predictandData, cv, perfMetric, pool)
@@ -774,7 +779,8 @@ def testPredictorSet(list_, SFBS=False, first_iteration=False):
                 "Adjusted R2" : float("-inf"),
                 "Root Mean Squared Error" : float("inf"),
                 "Nash-Sutcliffe": float("-inf"),
-                "Sample Variance" : float("inf") }, \
+                "Sample Variance" : float("inf"),
+                "Mean Absolute Error" : float("inf") }, \
                 {"Forecasted":None, "CV_Forecasted":None},None, None]
 
     if not userOverride: #Catch Brute-Force method so it reports all possible combinations
@@ -787,7 +793,8 @@ def testPredictorSet(list_, SFBS=False, first_iteration=False):
                          "Adjusted R2" : float("-inf"),
                          "Root Mean Squared Error" : float("inf"),
                          "Nash-Sutcliffe": float("-inf"),
-                         "Sample Variance" : float("inf") }, \
+                         "Sample Variance" : float("inf"),
+                         "Mean Absolute Error" : float("inf") }, \
                         {"Forecasted":None, "CV_Forecasted":None},None, None]
 
             # DO NOT ALLOW NEGATIVE COEFFICIENTS FOR SNOTEL SWE PREDICTORS
@@ -799,7 +806,8 @@ def testPredictorSet(list_, SFBS=False, first_iteration=False):
                          "Adjusted R2" : float("-inf"),
                          "Root Mean Squared Error" : float("inf"),
                          "Nash-Sutcliffe": float("-inf"),
-                         "Sample Variance" : float("inf") }, \
+                         "Sample Variance" : float("inf"),
+                         "Mean Absolute Error" : float("inf") }, \
                         {"Forecasted":None, "CV_Forecasted":None}, None, None]
 
 
@@ -935,7 +943,7 @@ def PrincipalComponentsRegression(xData, yData, crossVal, perfMetric, pool):
         print(E)
 
     """ Only return the best result """
-    bestMetric = {"Cross Validated Adjusted R2":-1000, "Root Mean Squared Prediction Error":10000,"Cross Validated Nash-Sutcliffe":-1000, "Cross Validated Adjusted R2":-1000, "Root Mean Squared Error":10000, "Cross Validated Nash-Sutcliffe":-1000, "Sample Variance":10000}
+    bestMetric = {"Cross Validated Adjusted R2":-1000, "Root Mean Squared Prediction Error":10000,"Cross Validated Nash-Sutcliffe":-1000, "Cross Validated Adjusted R2":-1000, "Root Mean Squared Error":10000, "Cross Validated Nash-Sutcliffe":-1000, "Sample Variance":10000, "Mean Absolute Error":10000}
     bestStarData = {"Forecasted":None}
     bestCoefs = []
     bestIntercept = []
