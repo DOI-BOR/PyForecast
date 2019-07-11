@@ -1275,7 +1275,6 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         data = self.dataTab.dataTable.toDataFrame()
         if data.empty:
             return
-        import matplotlib as plt
         dialog = DataAnalysis.analysisDialog(data)
 
         return
@@ -1438,6 +1437,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         self.fcstOptionsTab.dualTreeView.tree2.droppedPredictor.connect(self.addPredictorToEquation)
         self.fcstOptionsTab.dualTreeView.tree2.deletedItem.connect(self.deletePredictor)
         self.fcstOptionsTab.dualTreeView.tree2.forcedItem.connect(self.forcePredictor)
+        self.fcstOptionsTab.dualTreeView.tree2.dataAnalysisItem.connect(self.predictorDataAnalysis)
         self.fcstOptionsTab.dualTreeView.tree1.openExcelAction.triggered.connect(self.exportDataFromForecastOptionsTab)
 
         return
@@ -1495,6 +1495,43 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         self.displayForecastDict(self.forecastDict, onlyEquations=True)
         
         return
+
+
+    @QtCore.pyqtSlot(list)
+    def predictorDataAnalysis(self, list_):
+        """
+        Function build the dataframe and send the data to the DataAnalysis GUI
+
+        input: list_ = [equation, parent]
+        """
+        equation = list_[0]
+        parentText = list_[1]
+        predictand = self.forecastDict['EquationPools'][equation]['Predictand']
+
+        #Build dataframe with predictand data
+        predLabel = predictand['Name'] + ' '+ predictand['Unit']
+        predData = predictand['Data'][list(predictand['Data'])[0]]
+        s = pd.Series(predData, name=predLabel)
+
+        predictors = self.forecastDict['EquationPools'][equation]['PredictorPool']
+        for predID, predLabel in predictors.items():
+            print(predID + ' -- ' + predLabel)
+            predName = predLabel.split(':')[0].strip()
+            predFreq = predLabel.split(':')[1].strip()
+            predictor = self.forecastDict['PredictorPool'][predName][predFreq]
+
+            #Append predictor data to dataframe
+            predLabel = predName + ' ' + predFreq + ' ' + predictor['Unit']
+            predData = predictor['Data'][list(predictor['Data'])[0]]
+            sTemp = pd.Series(predData, name=predLabel)
+            s = pd.concat([s, sTemp], axis=1)
+
+        if s.empty:
+            return
+        dialog = DataAnalysis.analysisDialog(s)
+
+        return
+
 
     @QtCore.pyqtSlot(list)
     def forcePredictor(self, list_):

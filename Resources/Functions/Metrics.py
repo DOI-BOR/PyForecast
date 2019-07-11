@@ -13,9 +13,11 @@ def computeMetrics(cv_yStar, yStar, yActual, p):
           "Cross Validated Adjusted R2" : adjusted coefficient of determination using cross validated predictand
           "Root Mean Squared Prediction Error: root-mean-squared-error using cross validated predictand
           "Cross Validated Nash Sutcliffe" : Nash Sutcliffe model efficiency coefficient using cross validated predictand
-          "Adjusted R2" : <adjusted coefficient of determination using equation predictand>,
-          "Root Mean Squared Error" : root-mean-squared-error using equation predictand>,
-          "Nash-Sutcliffe" : Nash Sutcliffe model efficiency coefficient using equation predictand>
+          "Adjusted R2" : adjusted coefficient of determination using equation predictand,
+          "Root Mean Squared Error" : root-mean-squared-error using equation predictand,
+          "Nash-Sutcliffe" : Nash Sutcliffe model efficiency coefficient using equation predictand,
+          "Sample Variance" : variance of the squared errors,
+          "Mean Absolute Error" : mean of the absolute error values between observed and predicted values
       }
 
     """
@@ -37,7 +39,7 @@ def computeMetrics(cv_yStar, yStar, yActual, p):
     adjR2 = 1 - ((n-1)/(n-(p+1)))*(1-r2)
     cv_adjR2 = 1 - ((n-1)/(n-(p+1)))*(1-cv_r2)
 
-    """ Compute MAE values """
+    """ Compute the MAE """
     mae = float(np.sum(np.abs(yStar - yActual))) / (n-(p+1))
 
     """ Compute the RMSE """
