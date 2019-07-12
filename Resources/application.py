@@ -242,7 +242,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         filename = readConfig('savefilename')
 
         if filename == '' or saveNew:
-            filename = QtWidgets.QFileDialog.getSaveFileName(self, 'Save File As', 'unititled.fcst','*.fcst')[0]
+            filename = QtWidgets.QFileDialog.getSaveFileName(self, 'Save File As', 'untitled.fcst','*.fcst')[0]
             writeConfig('savefilename',filename)
 
             if filename == '':
