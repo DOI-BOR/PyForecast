@@ -256,11 +256,12 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             "forecastDict":self.forecastDict
         }
 
-        tempFile = filename + '.temp'
-        with open(tempFile, 'wb') as writefile:
+        #tempFile = filename + '.temp'
+        #with open(tempFile, 'wb') as writefile:
+        with open(filename, 'wb') as writefile:
             pickle.dump(pkl, writefile, pickle.HIGHEST_PROTOCOL)
-        shutil.move(filename,filename + '.bkup')
-        shutil.move(tempFile,filename)
+        #shutil.move(filename,filename + '.bkup')
+        #shutil.move(tempFile,filename)
         self.setWindowTitle("PyForecast v2.0 - {0}".format(filename))
 
         return
