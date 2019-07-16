@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from pandas.plotting import scatter_matrix
 from matplotlib import gridspec
 from statsmodels.tsa.stattools import adfuller
+import statsmodels.imputation.mice as mice
 from datetime import datetime
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from PyQt5 import QtWidgets, QtCore
@@ -54,7 +55,8 @@ class missingCanvas(FigureCanvas):
         FigureCanvas.setSizePolicy(self, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
 
-    def plotMissing(self, data, color=(0.04, 0.52, 0.80)):
+    def plotMissing(self, data, exitMenu = False):
+        color = (0.04, 0.52, 0.80)
         z = data.notnull().values
         g = np.zeros((data.shape[0], data.shape[1], 3))
         g[z < 0.5] = [1, 1, 1]
@@ -73,10 +75,12 @@ class missingCanvas(FigureCanvas):
         self.ax0.set_xticks(list(range(0, data.shape[1])))
         dataIndex = []
         colCounter = 1
-        for text in list(data.columns):
+        for ithCol in data:
             dataIndex.append('Var-' + str(colCounter))
+            exitAction = QtWidgets.QAction('Var-' + str(colCounter) + ': ' + ithCol.replace('\n', ', ').replace('\r', ''), self)
+            if exitMenu:
+                exitMenu.addAction(exitAction)
             colCounter = colCounter + 1
-        labels = [textwrap.fill(text, 15) for text in list(data.columns)]
         fontsize = 10
         self.ax0.set_xticklabels(dataIndex, wrap=True, ha=ha, fontsize=fontsize)
         if data.shape[0] > 7000:
@@ -106,8 +110,9 @@ class analysisDialog(QtWidgets.QDialog):
 
     def __init__(self, data):
         super(analysisDialog, self).__init__()
-        data = data.dropna()
         data = data.apply(pd.to_numeric)
+        self.rawdata = data
+        data = data.dropna()
         self.data = data
         self.setStyleSheet("background-color:white; color:black;")
         self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowSystemMenuHint | QtCore.Qt.WindowMinMaxButtonsHint)
@@ -125,17 +130,21 @@ class analysisDialog(QtWidgets.QDialog):
         self.statsMenu.addAction(self.statsAction)
         self.stationarityAction = QtWidgets.QAction('Run Stationarity Test', self)
         self.statsMenu.addAction(self.stationarityAction)
+        self.imputationAction = QtWidgets.QAction('Fill Missing Data', self)
+        self.statsMenu.addAction(self.imputationAction)
         self.exitMenu = self.myQMenuBar.addMenu('Variable Descriptions')
         self.mainLayout.addWidget(self.myQMenuBar)
         # Build scatter-plot
-        self.plot = matrixCanvas(self)
+        self.plot = missingCanvas(self)
         self.mainLayout.addWidget(self.plot)
-        self.plot.plotMatrix(data, self.exitMenu)
+        self.plot.plotMissing(self.rawdata, self.exitMenu)
+        self.setWindowTitle('Data Analysis - Missing Data Plot')
         # Add menu actions
         self.statsAction.triggered.connect(self.runSummaryStats)
         self.stationarityAction.triggered.connect(self.runStationarityTest)
         self.missingAction.triggered.connect(self.showMissingData)
         self.corrMatrixAction.triggered.connect(self.showCorrMatrix)
+        self.imputationAction.triggered.connect(self.runDataImputation)
         self.exec_()
 
 
@@ -151,17 +160,21 @@ class analysisDialog(QtWidgets.QDialog):
 
 
     def showCorrMatrix(self):
+        self.setWindowTitle('Data Analysis - Rendering Correlation Matrix...')
         self.mainLayout.removeWidget(self.plot)
         self.plot = matrixCanvas(self)
         self.mainLayout.addWidget(self.plot)
         self.plot.plotMatrix(self.data)
+        self.setWindowTitle('Data Analysis - Correlation Matrix')
 
 
     def showMissingData(self):
+        self.setWindowTitle('Data Analysis - Rendering Missing Data Plot...')
         self.mainLayout.removeWidget(self.plot)
         self.plot = missingCanvas(self)
         self.mainLayout.addWidget(self.plot)
-        self.plot.plotMissing(self.data)
+        self.plot.plotMissing(self.rawdata)
+        self.setWindowTitle('Data Analysis - Missing Data Plot')
 
 
     def writeDFrame(self, dataFrame, file):
@@ -232,3 +245,14 @@ class analysisDialog(QtWidgets.QDialog):
             ))
         file.close()
         self.openFile(filename)
+
+
+    def runDataImputation(self):
+        df = self.rawdata.copy()
+        #df = pd.DataFrame([[np.nan, 2, np.nan, 2],[3, 4, np.nan, 1],[np.nan, np.nan, 3.0, 5],[np.nan, 3, np.nan, 4]],columns = list('ABCD'))
+        #df = df.apply(pd.to_numeric)
+        #print(df)
+        #imp = mice.MICEData(df)
+        #imp.update_all()
+        #b=1
+        QtWidgets.QMessageBox.question(self, 'Info', 'Feature under development...',QtWidgets.QMessageBox.Ok)

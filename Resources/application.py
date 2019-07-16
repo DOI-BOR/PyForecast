@@ -1126,7 +1126,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         self.dataTab.dataOptions.updateButton.pressed.connect(lambda x = "True": self.downloadData(x))
         self.dataTab.dataOptions.importButton.pressed.connect(self.importData)
         self.dataTab.dataTable.horizontalHeader().sectionClicked.connect(self.plotColumn)
-        self.dataTab.dataOptions.missingButton.pressed.connect(self.missingDataViz)
+        #self.dataTab.dataOptions.missingButton.pressed.connect(self.missingDataViz)
         self.dataTab.dataOptions.matrixButton.pressed.connect(self.matrixPlotDataViz)
         self.dataTab.dataTable.deletedColumnEmission.connect(self.deleteDatasetFromDataTable)
         self.dataTab.dataTable.cellChanged.connect(self.userEditedData)
@@ -2131,7 +2131,6 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
                     prdIDs = ', '.join(fcst['prdIDs'])
             else:    
                 prdIDs = ', '.join(fcst['prdIDs'])
-            
 
             mae = str(np.round(fcst['Metrics']['Mean Absolute Error'],1))
             rmse = str(np.round(fcst['Metrics']['Root Mean Squared Prediction Error'],1))

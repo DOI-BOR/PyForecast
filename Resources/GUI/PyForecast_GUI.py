@@ -1314,15 +1314,15 @@ class DataOptionsPane(QtWidgets.QWidget):
         
 
         # View missing data button
-        self.missingLabel = QtWidgets.QLabel("View Missing")
-        self.missingInfo = QtWidgets.QLabel() 
-        self.missingInfo.setPixmap(QtGui.QPixmap(os.path.abspath("Resources/Fonts_Icons_Images/infoHover.png")).scaled(30,30, QtCore.Qt.KeepAspectRatio))
-        self.missingInfo.setScaledContents(True)
-        self.missingInfo.setToolTip('<html><head/><body><p>View the serial completeness of your dataset.</p></body></html>')
-        self.missingButton = QtWidgets.QPushButton("View")
-        self.optionsGrid.addWidget(self.missingLabel, 9, 0, 1, 1)
-        self.optionsGrid.addWidget(self.missingInfo, 9, 1, 1, 1)
-        self.optionsGrid.addWidget(self.missingButton, 9, 2, 1, 2)
+        #self.missingLabel = QtWidgets.QLabel("View Missing")
+        #self.missingInfo = QtWidgets.QLabel()
+        #self.missingInfo.setPixmap(QtGui.QPixmap(os.path.abspath("Resources/Fonts_Icons_Images/infoHover.png")).scaled(30,30, QtCore.Qt.KeepAspectRatio))
+        #self.missingInfo.setScaledContents(True)
+        #self.missingInfo.setToolTip('<html><head/><body><p>View the serial completeness of your dataset.</p></body></html>')
+        #self.missingButton = QtWidgets.QPushButton("View")
+        #self.optionsGrid.addWidget(self.missingLabel, 9, 0, 1, 1)
+        #self.optionsGrid.addWidget(self.missingInfo, 9, 1, 1, 1)
+        #self.optionsGrid.addWidget(self.missingButton, 9, 2, 1, 2)
 
 
         # View Data Analysis UI button
@@ -1332,14 +1332,14 @@ class DataOptionsPane(QtWidgets.QWidget):
         self.matrixInfo.setScaledContents(True)
         self.matrixInfo.setToolTip('<html><head/><body><p>View the dataset correlations using a matrix plot.</p></body></html>')
         self.matrixButton = QtWidgets.QPushButton("View")
-        self.optionsGrid.addWidget(self.matrixLabel, 10, 0, 1, 1)
-        self.optionsGrid.addWidget(self.matrixInfo, 10, 1, 1, 1)
-        self.optionsGrid.addWidget(self.matrixButton, 10, 2, 1, 2)
+        self.optionsGrid.addWidget(self.matrixLabel, 9, 0, 1, 1)
+        self.optionsGrid.addWidget(self.matrixInfo, 9, 1, 1, 1)
+        self.optionsGrid.addWidget(self.matrixButton, 9, 2, 1, 2)
 
 
         spacer = QtWidgets.QWidget()
         spacer.setMaximumHeight(1200)
-        self.optionsGrid.addWidget(spacer, 11, 0, 1, 4)
+        self.optionsGrid.addWidget(spacer, 10, 0, 1, 4)
 
 
         # Build the widget
