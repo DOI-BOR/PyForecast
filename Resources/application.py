@@ -27,6 +27,7 @@ import sys
 import os
 import numpy as np
 import shutil
+import statsmodels as sms
 
 # Import GUI
 from Resources.GUI import PyForecast_GUI, DocumentationGUI, MissingNoGUI, editDataLoaders, RegressionStatsGUI, DataAnalysis
@@ -1972,6 +1973,10 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         else:
             return
 
+        #[jr] delete me - benchmark test statsmodels regression
+        #self.startTime = time.time()
+        #self.regScheme = regrScheme
+
         d = {
             "RegressionScheme" : regrScheme,
             "CrossValidation" : crossVal,
@@ -1996,6 +2001,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         regressionWorker.signals.updateRunLabel.connect(label.setText)
         self.table.cellClicked.connect(self.fcstClicked)
         self.threadPool.start(regressionWorker)
+
 
         return
 
@@ -2029,6 +2035,18 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             else:
                 return
 
+            # Perform model analysis
+            predictand = self.forecastDict['EquationPools'][self.equation]['Predictand']
+            predictandData = pd.DataFrame().from_dict(predictand['Data'])
+
+            for eqn in fcastEqns:
+                commonIndex = eqn['Years Used']
+                obs = predictandData.loc[commonIndex]
+                mod = eqn['Forecasted']
+                resid = obs-mod
+                autoCorr = sms.stats.diagnostic.acorr_ljungbox(resid)
+
+            # Count selected predictors
             prdList = []
             for eqn in fcastEqns:
                 prdList.extend(eqn['prdIDs'])
@@ -2083,6 +2101,14 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         in the list to see if the user has previously saved that equation to the global fcstDictionary. If they have,
         then that option in the table is appended with a check mark.
         """
+
+        #[jr] delete me - benchmark test statsmodels regression
+        #print("---------------------- BENCHMARK ----------------------")
+        #print("Started " + self.regScheme + " Feature Selection at " + str(self.startTime))
+        #endTime = time.time()
+        #print("Finished " + self.regScheme + " Feature Selection at " + str(endTime))
+        #print("Time Elapsed: " + str(endTime - self.startTime))
+
 
         self.progBar.setValue(100)
         self.regrButton.setEnabled(True)

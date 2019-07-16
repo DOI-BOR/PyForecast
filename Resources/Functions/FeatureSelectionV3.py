@@ -18,6 +18,7 @@ import pandas as pd
 from scipy.stats import t
 import itertools
 import numpy as np
+import statsmodels.api as sm
 from sklearn import model_selection
 from sklearn.neural_network import MLPRegressor
 from Resources.Functions import Metrics
@@ -855,6 +856,14 @@ def MultipleRegression(xData, yData, crossVal, perfMetric, pool):
         model = np.linalg.lstsq(x.T, training_predictand, rcond=None)
         coefs = model[0][:-1]
         intercept = model[0][-1]
+
+        #[jr] delete me - test statsmodels regression
+        #model = sm.OLS(training_predictand, x.T)
+        #results = model.fit()
+        #print(results.summary())
+        #coefs = np.array([results.params[:-1]]).T
+        #intercept = np.array([results.params[-1]])
+
 
         """ Return the testing predictions """
         if returnCoefs:

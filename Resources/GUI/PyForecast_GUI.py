@@ -1781,7 +1781,7 @@ class StandardRegressionTab(QtWidgets.QWidget):
         self.bestModelTable.setMinimumHeight(250)
         self.layout.addWidget(self.bestModelTable)
 
-        self.predAnlysButton = QtWidgets.QPushButton("Predictor Analysis")
+        self.predAnlysButton = QtWidgets.QPushButton("Model Analysis")
         self.layout.addWidget(self.predAnlysButton)
 
         self.scroll = QtWidgets.QScrollArea()
@@ -2093,49 +2093,6 @@ class UI_MainWindow(object):
         self.regressionTab = QtWidgets.QWidget() # The container for the Regression Tab
         self.densityAnalysisTab = QtWidgets.QWidget() # The container for the Density Tab
 
-        #/////////// Set up the Summary Tab ////////////////////////////////////
-        #// The Summary tab had 3 main elements: The forecast selection tree,
-        #// the forecast information window, and the forecast plot window.
-
-        # Set up a layout for the tab
-        self.summaryTab.layout = QtWidgets.QHBoxLayout(self)
-        
-        # Add a horizontal splitter to divide the forecast selection pane from the plots
-        self.summaryTab.splitter1 = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
-        self.summaryTab.fcstSelectionPane = QtWidgets.QWidget()
-        self.summaryTab.fcstSelectionPane.layout = QtWidgets.QVBoxLayout()
-        self.summaryTab.fcstSelectionPane.header = QtWidgets.QTextEdit()
-        self.summaryTab.fcstSelectionPane.header.setHtml("""<div style="font-family:Trebuchet MS"><strong style="margin:0; font-size:20px">Select Forecast</strong></br>
-                                    <p style="margin:0; font-size:14px;">Use the list to select a forecast to view from this file.</p>
-                                    </div>""")
-        self.summaryTab.fcstSelectionPane.header.setReadOnly(True)
-        self.summaryTab.fcstSelectionPane.header.setFrameStyle(QtWidgets.QFrame.NoFrame)
-        self.summaryTab.fcstSelectionPane.header.setMaximumHeight(90)
-
-        self.summaryTab.fcstTree = CustomTreeView(self, menuFunctions=["GENCURRENT","DELETE"], dragFrom=False, dropTo=False)
-        self.summaryTab.fcstTree.setFrameStyle(QtWidgets.QFrame.NoFrame)
-        
-        self.summaryTab.fcstSelectionPane.layout.addWidget(self.summaryTab.fcstSelectionPane.header)
-        self.summaryTab.fcstSelectionPane.layout.addWidget(self.summaryTab.fcstTree)
-        self.summaryTab.fcstSelectionPane.setLayout(self.summaryTab.fcstSelectionPane.layout)
-
-        self.summaryTab.plots = PlotCanvas_3Plot(self)
-        self.summaryTab.splitter1.addWidget(self.summaryTab.fcstSelectionPane)
-        self.summaryTab.splitter1.addWidget(self.summaryTab.plots)
-
-        # Add a vertical splitter to dive the horizontal splitter from the forecast information pane
-        self.summaryTab.splitter2 = QtWidgets.QSplitter(QtCore.Qt.Vertical)
-        self.summaryTab.fcstInfoPane = FcstInfoPane(self)
-        self.summaryTab.splitter2.addWidget(self.summaryTab.splitter1)
-        self.summaryTab.splitter2.addWidget(self.summaryTab.fcstInfoPane)
-
-        # Lay out the tab
-        self.summaryTab.layout.addWidget(self.summaryTab.splitter2)
-        self.summaryTab.setLayout(self.summaryTab.layout)
-
-        # Add the tab to the tabWidget
-        self.tabWidget.addTab(self.summaryTab, "Summary")
-
         #///////////// Set up the Stations Tab /////////////////////////////////
         #// The Stations Tab is divided into 2 main elements: The webmap station selector,
         #// and the selected stations pane.
@@ -2265,6 +2222,49 @@ class UI_MainWindow(object):
         self.regressionTab.layout.addWidget(self.regressionTab.splitter)
         self.regressionTab.setLayout(self.regressionTab.layout)
         self.tabWidget.addTab(self.regressionTab, "Regression")
+
+        #/////////// Set up the Summary Tab ////////////////////////////////////
+        #// The Summary tab had 3 main elements: The forecast selection tree,
+        #// the forecast information window, and the forecast plot window.
+
+        # Set up a layout for the tab
+        self.summaryTab.layout = QtWidgets.QHBoxLayout(self)
+
+        # Add a horizontal splitter to divide the forecast selection pane from the plots
+        self.summaryTab.splitter1 = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
+        self.summaryTab.fcstSelectionPane = QtWidgets.QWidget()
+        self.summaryTab.fcstSelectionPane.layout = QtWidgets.QVBoxLayout()
+        self.summaryTab.fcstSelectionPane.header = QtWidgets.QTextEdit()
+        self.summaryTab.fcstSelectionPane.header.setHtml("""<div style="font-family:Trebuchet MS"><strong style="margin:0; font-size:20px">Select Forecast</strong></br>
+                                    <p style="margin:0; font-size:14px;">Use the list to select a forecast to view from this file.</p>
+                                    </div>""")
+        self.summaryTab.fcstSelectionPane.header.setReadOnly(True)
+        self.summaryTab.fcstSelectionPane.header.setFrameStyle(QtWidgets.QFrame.NoFrame)
+        self.summaryTab.fcstSelectionPane.header.setMaximumHeight(90)
+
+        self.summaryTab.fcstTree = CustomTreeView(self, menuFunctions=["GENCURRENT","DELETE"], dragFrom=False, dropTo=False)
+        self.summaryTab.fcstTree.setFrameStyle(QtWidgets.QFrame.NoFrame)
+
+        self.summaryTab.fcstSelectionPane.layout.addWidget(self.summaryTab.fcstSelectionPane.header)
+        self.summaryTab.fcstSelectionPane.layout.addWidget(self.summaryTab.fcstTree)
+        self.summaryTab.fcstSelectionPane.setLayout(self.summaryTab.fcstSelectionPane.layout)
+
+        self.summaryTab.plots = PlotCanvas_3Plot(self)
+        self.summaryTab.splitter1.addWidget(self.summaryTab.fcstSelectionPane)
+        self.summaryTab.splitter1.addWidget(self.summaryTab.plots)
+
+        # Add a vertical splitter to dive the horizontal splitter from the forecast information pane
+        self.summaryTab.splitter2 = QtWidgets.QSplitter(QtCore.Qt.Vertical)
+        self.summaryTab.fcstInfoPane = FcstInfoPane(self)
+        self.summaryTab.splitter2.addWidget(self.summaryTab.splitter1)
+        self.summaryTab.splitter2.addWidget(self.summaryTab.fcstInfoPane)
+
+        # Lay out the tab
+        self.summaryTab.layout.addWidget(self.summaryTab.splitter2)
+        self.summaryTab.setLayout(self.summaryTab.layout)
+
+        # Add the tab to the tabWidget
+        self.tabWidget.addTab(self.summaryTab, "Forecast")
 
         #///////////// Set up the Density Estimation Tab /////////////////////////////////
         #// The Density Estimation Tab allows users to visualize the distribution of forecasts 
