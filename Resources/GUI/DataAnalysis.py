@@ -249,10 +249,22 @@ class analysisDialog(QtWidgets.QDialog):
 
     def runDataImputation(self):
         df = self.rawdata.copy()
-        #df = pd.DataFrame([[np.nan, 2, np.nan, 2],[3, 4, np.nan, 1],[np.nan, np.nan, 3.0, 5],[np.nan, 3, np.nan, 4]],columns = list('ABCD'))
-        #df = df.apply(pd.to_numeric)
-        #print(df)
-        #imp = mice.MICEData(df)
-        #imp.update_all()
-        #b=1
+        # Rename column index statsmodels imputation does not like wierd column names
+        dataIndex = []
+        dfIndex = []
+        colCounter = 1
+        for ithCol in df:
+            dataIndex.append('Var' + str(colCounter))
+            dfIndex.append(ithCol.replace('\n', ', ').replace('\r', ''))
+            colCounter = colCounter + 1
+        df.columns = dataIndex
+        
+        df = df.apply(pd.to_numeric)
+        imp = mice.MICEData(df)
+        df1 = df.isna().sum()
+        print(df1)
+        imp.update_all()
+        df1 = imp.data.isna().sum()
+        print(df1)
+
         QtWidgets.QMessageBox.question(self, 'Info', 'Feature under development...',QtWidgets.QMessageBox.Ok)
