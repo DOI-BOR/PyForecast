@@ -106,6 +106,29 @@ class missingCanvas(FigureCanvas):
         self.draw()
 
 
+class imputationCanvas(FigureCanvas):
+
+    # Initialize a graph
+    def __init__(self, parent=None, dpi=100):
+        self.fig = plt.figure()
+        self.fig.patch.set_facecolor("#e8e8e8")
+        self.gs = gridspec.GridSpec(2,1)
+        self.ax0 = plt.subplot(self.gs[0])
+        self.ax1 = plt.subplot(self.gs[1])
+        FigureCanvas.__init__(self, self.fig)
+        self.setParent(parent)
+        FigureCanvas.setSizePolicy(self, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        FigureCanvas.updateGeometry(self)
+
+    def plotResult(self, rawData, filledData):
+        filledData.plot(ax=self.ax0, style='r--')
+        rawData.plot(ax=self.ax0, style='b-')
+        df = pd.concat([rawData, filledData], axis=1)
+        df.columns = ['raw','imputed']
+        df.boxplot(ax=self.ax1)
+        self.draw()
+
+
 class analysisDialog(QtWidgets.QDialog):
 
     def __init__(self, data):
@@ -178,17 +201,18 @@ class analysisDialog(QtWidgets.QDialog):
 
 
     def showImputationResult(self, imputationCol):
-        print(imputationCol)
+        self.setWindowTitle('Data Analysis - Rendering Imputation Results...')
         filled = self.imputedData[imputationCol]
         raw = self.imputeeData[imputationCol]
 
         # TODO: Visualize/QA/QC/Accept/Reject imputation results
+        self.mainLayout.removeWidget(self.plot)
+        self.plot = imputationCanvas(self)
+        self.mainLayout.addWidget(self.plot)
+        self.plot.plotResult(raw, filled)
+        self.setWindowTitle('Data Analysis - Imputation Results - ' + imputationCol)
 
-        # Summary stats - check if stats changed
 
-        # Time-series line plot - visual check
-
-        # Box and whiskers plot - plot new data-points against raw distribution
 
         a = 1
 
@@ -280,6 +304,8 @@ class analysisDialog(QtWidgets.QDialog):
         # Get columns with nans
         naSums = df.isnull().sum()
         naCols = naSums[naSums > 0]
+        if len(naCols) < 1:
+            return
         datetimeIdx = df.index
         self.imputeeData = df[naCols.index]
 
@@ -301,5 +327,4 @@ class analysisDialog(QtWidgets.QDialog):
             self.imputationMenu.addAction(ithImputationAction)
 
         df.columns = origIndex
-
-        QtWidgets.QMessageBox.question(self, 'Info', 'Feature under development...',QtWidgets.QMessageBox.Ok)
+        
