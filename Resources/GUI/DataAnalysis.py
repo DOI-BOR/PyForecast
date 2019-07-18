@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 import subprocess
 import matplotlib
-import textwrap
 matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 from pandas.plotting import scatter_matrix
@@ -12,6 +11,7 @@ import statsmodels.imputation.mice as mice
 from datetime import datetime
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from PyQt5 import QtWidgets, QtCore
+
 
 class matrixCanvas(FigureCanvas):
 
@@ -177,6 +177,22 @@ class analysisDialog(QtWidgets.QDialog):
         self.setWindowTitle('Data Analysis - Missing Data Plot')
 
 
+    def showImputationResult(self, imputationCol):
+        print(imputationCol)
+        filled = self.imputedData[imputationCol]
+        raw = self.imputeeData[imputationCol]
+
+        # TODO: Visualize/QA/QC/Accept/Reject imputation results
+
+        # Summary stats - check if stats changed
+
+        # Time-series line plot - visual check
+
+        # Box and whiskers plot - plot new data-points against raw distribution
+
+        a = 1
+
+
     def writeDFrame(self, dataFrame, file):
         colHeader = ','
         for ithCol in dataFrame.columns:
@@ -249,22 +265,41 @@ class analysisDialog(QtWidgets.QDialog):
 
     def runDataImputation(self):
         df = self.rawdata.copy()
+        df = df.apply(pd.to_numeric)
+
         # Rename column index statsmodels imputation does not like wierd column names
-        dataIndex = []
-        dfIndex = []
+        impIndex = []
+        origIndex = []
         colCounter = 1
         for ithCol in df:
-            dataIndex.append('Var' + str(colCounter))
-            dfIndex.append(ithCol.replace('\n', ', ').replace('\r', ''))
+            impIndex.append('Var' + str(colCounter))
+            origIndex.append(ithCol.replace('\n', ', ').replace('\r', ''))
             colCounter = colCounter + 1
-        df.columns = dataIndex
-        
-        df = df.apply(pd.to_numeric)
+        df.columns = impIndex
+
+        # Get columns with nans
+        naSums = df.isnull().sum()
+        naCols = naSums[naSums > 0]
+        datetimeIdx = df.index
+        self.imputeeData = df[naCols.index]
+
+        # Run imputation
         imp = mice.MICEData(df)
-        df1 = df.isna().sum()
-        print(df1)
+        #print(df.isna().sum())
         imp.update_all()
-        df1 = imp.data.isna().sum()
-        print(df1)
+        #print(imp.data.isna().sum())
+
+        # Get columns with filled-in nans
+        self.imputedData = imp.data[naCols.index]
+        self.imputedData.set_index(datetimeIdx, inplace=True)
+
+        # Append results to menu-bar
+        self.imputationMenu = self.myQMenuBar.addMenu('Data Imputation Results')
+        for ithCol in self.imputedData:
+            ithImputationAction = QtWidgets.QAction(ithCol, self)
+            ithImputationAction.triggered.connect(lambda checked, item=ithCol: self.showImputationResult(item))
+            self.imputationMenu.addAction(ithImputationAction)
+
+        df.columns = origIndex
 
         QtWidgets.QMessageBox.question(self, 'Info', 'Feature under development...',QtWidgets.QMessageBox.Ok)
