@@ -27,6 +27,7 @@ class matrixCanvas(FigureCanvas):
         FigureCanvas.updateGeometry(self)
 
     def plotMatrix(self, data, exitMenu = False):
+        self.fig.suptitle("Data Correlation Matrix")
         df = data.copy()
         dataIndex = []
         colCounter = 1
@@ -56,6 +57,7 @@ class missingCanvas(FigureCanvas):
         FigureCanvas.updateGeometry(self)
 
     def plotMissing(self, data, exitMenu = False):
+        self.fig.suptitle("Missing Data Visualization")
         color = (0.04, 0.52, 0.80)
         z = data.notnull().values
         g = np.zeros((data.shape[0], data.shape[1], 3))
@@ -121,10 +123,12 @@ class imputationCanvas(FigureCanvas):
         FigureCanvas.updateGeometry(self)
 
     def plotResult(self, rawData, filledData):
+        self.fig.suptitle("Data Imputation Results")
         filledData.plot(ax=self.ax0, style='r--')
         rawData.plot(ax=self.ax0, style='b-')
         df = pd.concat([rawData, filledData], axis=1)
         df.columns = ['raw','imputed']
+        #self.ax1.violinplot(dataset = [rawData.values,filledData.values])
         df.boxplot(ax=self.ax1)
         self.draw()
 
@@ -211,8 +215,6 @@ class analysisDialog(QtWidgets.QDialog):
         self.mainLayout.addWidget(self.plot)
         self.plot.plotResult(raw, filled)
         self.setWindowTitle('Data Analysis - Imputation Results - ' + imputationCol)
-
-
 
         a = 1
 
@@ -304,7 +306,8 @@ class analysisDialog(QtWidgets.QDialog):
         # Get columns with nans
         naSums = df.isnull().sum()
         naCols = naSums[naSums > 0]
-        if len(naCols) < 1:
+        if len(naCols) < 1: #don't run imputation if there are no missing data
+            QtWidgets.QMessageBox.question(self, 'Info', 'There are no missing data points to fill in...', QtWidgets.QMessageBox.Ok)
             return
         datetimeIdx = df.index
         self.imputeeData = df[naCols.index]
@@ -320,11 +323,13 @@ class analysisDialog(QtWidgets.QDialog):
         self.imputedData.set_index(datetimeIdx, inplace=True)
 
         # Append results to menu-bar
-        self.imputationMenu = self.myQMenuBar.addMenu('Data Imputation Results')
+        if hasattr(self, 'imputationMenu'):
+            self.imputationMenu.clear()
+        else:
+            self.imputationMenu = self.myQMenuBar.addMenu('Data Imputation Results')
         for ithCol in self.imputedData:
             ithImputationAction = QtWidgets.QAction(ithCol, self)
             ithImputationAction.triggered.connect(lambda checked, item=ithCol: self.showImputationResult(item))
             self.imputationMenu.addAction(ithImputationAction)
 
         df.columns = origIndex
-        
