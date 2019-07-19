@@ -18,7 +18,6 @@ import pandas as pd
 from scipy.stats import t
 import itertools
 import numpy as np
-import statsmodels.api as sm
 from sklearn import model_selection
 from sklearn.neural_network import MLPRegressor
 from Resources.Functions import Metrics
