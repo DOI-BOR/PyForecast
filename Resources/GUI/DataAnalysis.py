@@ -114,22 +114,40 @@ class imputationCanvas(FigureCanvas):
     def __init__(self, parent=None, dpi=100):
         self.fig = plt.figure()
         self.fig.patch.set_facecolor("#e8e8e8")
-        self.gs = gridspec.GridSpec(2,1)
+        self.gs = gridspec.GridSpec(2,2)
         self.ax0 = plt.subplot(self.gs[0])
+        self.ax0.title.set_text('Time-Series Graph')
         self.ax1 = plt.subplot(self.gs[1])
+        self.ax1.title.set_text('Distribution Difference')
+        self.ax2 = plt.subplot(self.gs[2])
+        self.ax2.title.set_text('Density Difference')
         FigureCanvas.__init__(self, self.fig)
         self.setParent(parent)
         FigureCanvas.setSizePolicy(self, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
 
     def plotResult(self, rawData, filledData):
+        filledPoints = filledData[rawData.isnull()]
         self.fig.suptitle("Data Imputation Results")
-        filledData.plot(ax=self.ax0, style='r--')
-        rawData.plot(ax=self.ax0, style='b-')
-        df = pd.concat([rawData, filledData], axis=1)
-        df.columns = ['raw','imputed']
-        #self.ax1.violinplot(dataset = [rawData.values,filledData.values])
-        df.boxplot(ax=self.ax1)
+        # time-series lineplot
+        rawData.plot(ax=self.ax0, color='dodgerblue', label='Raw Dataset')
+        filledPoints.plot(ax=self.ax0, linestyle = 'None', color='tomato', markerfacecolor='none', marker='o', label='Imputed Data-Points')
+        self.ax0.legend(loc='best')
+        # distribution boxplots
+        df = pd.concat([rawData, filledPoints, filledData], axis=1)
+        df.columns = ['Raw Dataset', 'Imputed Data-Points','Filled Dataset']
+        bplot = df.boxplot(ax=self.ax1, patch_artist=True, return_type=None, notch=True)#, color=color)
+        bplot.findobj(matplotlib.patches.Patch)[0].set_facecolor("dodgerblue")
+        bplot.findobj(matplotlib.patches.Patch)[1].set_facecolor("tomato")
+        bplot.findobj(matplotlib.patches.Patch)[2].set_facecolor("gray")
+        # distribution density plots
+        rawData.plot(ax=self.ax2, kind='density', color='dodgerblue', label='Raw Dataset')
+        filledPoints.plot(ax=self.ax2, kind='density', color='tomato', label='Imputed Data-Points')
+        filledData.plot(ax=self.ax2, kind='density', color='gray', label='Filled Dataset')
+        self.ax2.legend(loc='best')
+
+
+
         self.draw()
 
 
