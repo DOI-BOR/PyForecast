@@ -1278,6 +1278,15 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
 
         data = self.dataTab.dataTable.toDataFrame()
         if data.empty:
+            # Check there are datasets in the dataset dictionary
+            if len(self.datasetDirectory['datasets']) < 1:
+                QtWidgets.QMessageBox.question(self, 'Error', 'There are no selected datasets.\nPlease select datasets from the Stations tab...', QtWidgets.QMessageBox.Ok)
+                return
+
+            # Check that the datasets are not empty
+            if len(self.datasetDirectory['datasets'][0]['Data']) < 1:
+                QtWidgets.QMessageBox.question(self, 'Error', 'Data has not been downloaded for the selected datasets.\nPlease download data from the Data tab...', QtWidgets.QMessageBox.Ok)
+                return
             return
         dialog = DataAnalysis.analysisDialog(data)
 
@@ -1640,12 +1649,12 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
 
         # Check there are datasets in the dataset dictionary
         if len(self.datasetDirectory['datasets']) < 1:
-            QtWidgets.QMessageBox.question(self, 'Info', 'There are no selected datasets.\nPlease select datasets from the Stations tab...', QtWidgets.QMessageBox.Ok)
+            QtWidgets.QMessageBox.question(self, 'Error', 'There are no selected datasets.\nPlease select datasets from the Stations tab...', QtWidgets.QMessageBox.Ok)
             return
 
         # Check that the datasets are not empty
         if len(self.datasetDirectory['datasets'][0]['Data']) < 1:
-            QtWidgets.QMessageBox.question(self, 'Info', 'Data has not been downloaded for the selected datasets.\nPlease download data from the Data tab...', QtWidgets.QMessageBox.Ok)
+            QtWidgets.QMessageBox.question(self, 'Error', 'Data has not been downloaded for the selected datasets.\nPlease download data from the Data tab...', QtWidgets.QMessageBox.Ok)
             return
 
         # Print a warning to the screen

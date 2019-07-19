@@ -402,7 +402,6 @@ class CustomTreeView(QtWidgets.QTreeView):
         self.setAlternatingRowColors(True)
         self.setHeaderHidden(True)
 
-
         if dragFrom:
             self.setDragEnabled(True)
             
@@ -460,7 +459,9 @@ class CustomTreeView(QtWidgets.QTreeView):
             print('wrongMimeType')
             event.ignore()
             return
-        
+
+        # TODO: [JR] Need to detect if dropped item is a station and if so, programmatically add the predictors under it to the receiving equation for GitHub Issue #31
+
         # Ensure that the item is a valid predictor
         if item.hasChildren():
 
