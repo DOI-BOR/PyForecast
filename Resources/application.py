@@ -1637,7 +1637,17 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         This function creates seasonal forecast predictors as well as a data structure to store forecast equation information. The program reads the user's selected options and sends them along with the 
         daily data to an alternate thread where the program runs the 'ProcessDataV2.py' script. 
         """
-        
+
+        # Check there are datasets in the dataset dictionary
+        if len(self.datasetDirectory['datasets']) < 1:
+            QtWidgets.QMessageBox.question(self, 'Info', 'There are no selected datasets.\nPlease select datasets from the Stations tab...', QtWidgets.QMessageBox.Ok)
+            return
+
+        # Check that the datasets are not empty
+        if len(self.datasetDirectory['datasets'][0]['Data']) < 1:
+            QtWidgets.QMessageBox.question(self, 'Info', 'Data has not been downloaded for the selected datasets.\nPlease download data from the Data tab...', QtWidgets.QMessageBox.Ok)
+            return
+
         # Print a warning to the screen
         button = QtWidgets.QMessageBox.question(self, 'Warning','Continuing with this option will delete all exising forecasts. Continue?', QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
         if button != QtWidgets.QMessageBox.Ok:
