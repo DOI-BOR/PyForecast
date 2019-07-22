@@ -314,7 +314,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
 
             try:
                 self.displayForecastDict(self.forecastDict)
-                self.populateEquationsDropDown(4)
+                self.populateEquationsDropDown(3)
                 self.populateDensityEquations(5)
             except:
                 pass
@@ -1697,7 +1697,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         """ After the predictors have been processed, this function populates the other tabs' drop downs and """
         self.populateDensityEquations(5)
         self.displayForecastDict(dict_)
-        self.populateEquationsDropDown(4)
+        self.populateEquationsDropDown(3)
 
         return
 
