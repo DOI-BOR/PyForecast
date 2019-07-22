@@ -17,6 +17,7 @@ PyForecast is a statistical modeling tool useful in predicting monthly and seaso
     * [openpyxl](https://pypi.org/project/openpyxl/)
     * [xlrd](https://pypi.org/project/xlrd/)
     * [configparser](https://pypi.org/project/configparser/)
+    * [statsmodels](https://www.statsmodels.org/stable/index.html)
 
 These packages can be installed automatically to your default python distribution by running the 'install_dependencies.bat' script. 
 
