@@ -1836,7 +1836,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         with 'INFLOW, STREAMFLOW, FLOW' in the dataset name. 
         """
 
-        if tabNo == 3:
+        if tabNo == 2:
             
             # Clear the current target list
             self.fcstOptionsTab.optionsPane.targetInput.clear()
@@ -1888,7 +1888,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         forecast dictionary.
         """
 
-        if tabNo == 4:
+        if tabNo == 3:
 
             self.regressionTab.regrSelectPane.mlrTab.eqSelect.clear()
             self.regressionTab.regrSelectPane.pcarTab.eqSelect.clear()
