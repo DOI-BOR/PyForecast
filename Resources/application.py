@@ -1539,7 +1539,8 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             sTemp = pd.Series(predData, name=predLabel)
             s = pd.concat([s, sTemp], axis=1)
 
-        if s.empty:
+        if not isinstance(s, pd.DataFrame):
+            QtWidgets.QMessageBox.question(self, 'Error','No predictand/predictors to analyze.\n Apply options and/or assign predictors first.', QtWidgets.QMessageBox.Ok)
             return
         dialog = DataAnalysis.analysisDialog(s)
 
