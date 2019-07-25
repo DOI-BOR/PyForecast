@@ -1073,7 +1073,11 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
                 3:"Unitless",
                 4:"Unitless",
                 #5:"ppm",
-                5:"Unitless"}
+                5:"Unitless",
+                6: "Unitless",
+                7: "Unitless",
+                8: "Unitless",
+            }
             
             self.datasetDirectory['datasets'].append({"PYID":dataID, "TYPE":"CLIMATE","ID":str(stationNumber),"Name":stationName,"Parameter":"Indices","Units":units[stationNumber],"Resampling":"Mean","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
 

@@ -1134,6 +1134,7 @@ class StationInfoPane(QtWidgets.QWidget):
         self.ensoInput.addItem('PNA Teleconnection')
         self.ensoInput.addItem('AMO Teleconnection')
         self.ensoInput.addItem("PDO Teleconnection")
+        self.ensoInput.addItem("Arctic Oscillation Index")
         #self.ensoInput.addItem('Mauna Loa CO2')
         self.ensoButton = QtWidgets.QPushButton('Add')
         self.otherDataLayout.addWidget(self.ensoLabel, 4, 0, 1, 1)

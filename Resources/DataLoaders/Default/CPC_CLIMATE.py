@@ -151,6 +151,32 @@ def dataLoader(stationDict, startDate, endDate):
         df = df[df.index<=endDate]
         return df
 
+    elif stationNum == 6:
+        """
+        Arctic Oscillation Index (AOI) 
+        """
+        url = "https://www.cpc.ncep.noaa.gov/products/precip/CWlink/daily_ao_index/monthly.ao.index.b50.current.ascii"
+        dataMonth = pd.read_csv(url, names = ['year','month','AOI | Indice'], sep='\s+')
+        dataMonth['day'] = len(dataMonth.index)*[1]
+        datetimes = pd.to_datetime(dataMonth[['year','month','day']])
+        dataMonth.set_index(pd.DatetimeIndex(datetimes), inplace=True)
+        del dataMonth['year'], dataMonth['month'], dataMonth['day']
+        dataMonth = dataMonth.resample('D').mean()
+        dataMonth = dataMonth.fillna(method='ffill')
+        dataMonth = dataMonth[dataMonth.index >= startDate]
+        dataMonth = dataMonth[dataMonth.index <= endDate]
+        df = pd.DataFrame(index = pd.date_range(startDate, endDate))
+        df = pd.concat([df, dataMonth], axis = 1)
+        return df
+
+    elif stationNum == 7 or stationNum == 8:
+        """
+        Southern Oscillation Index (SOI) Anomalies or Standardized
+        """
+        url = "https://www.cpc.ncep.noaa.gov/data/indices/soi"
+        df=''
+        return df
+
     else:
         return pd.DataFrame()
         
