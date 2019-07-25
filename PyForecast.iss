@@ -11,7 +11,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; Run required batch file to consolidate all the stuff that InnoSetup needs.
-#expr Exec("C:\Users\jrocha\Documents\Python\PyForecast\installerPreBuild.bat")
+;#expr Exec("C:\Users\jrocha\Documents\Python\PyForecast\installerPreBuild.bat")
 
 #define MyAppName "PyForecast"
 #define MyAppVersion "1.0"
@@ -39,6 +39,8 @@ SetupIconFile={#bin}Resources\Fonts_Icons_Images\icon.ico
 Compression=lzma
 SolidCompression=yes
 PrivilegesRequired=lowest
+SignTool=signtool $f
+;signtool = "signtool.exe" sign /tr http://timestamp.digicert.com /td sha256 /fd sha256 /a $p
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
