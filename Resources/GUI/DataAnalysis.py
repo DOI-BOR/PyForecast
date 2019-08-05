@@ -209,7 +209,7 @@ class analysisDialog(QtWidgets.QDialog):
         self.mainLayout.removeWidget(self.plot)
         self.plot = matrixCanvas(self)
         self.mainLayout.addWidget(self.plot)
-        self.plot.plotMatrix(self.data)
+        self.plot.plotMatrix(self.rawdata)
         self.setWindowTitle('Data Analysis - Correlation Matrix')
 
 
@@ -255,12 +255,12 @@ class analysisDialog(QtWidgets.QDialog):
         # summary stats
         print('', file=file)
         print('SUMMARY STATISTICS', file=file)
-        df = self.data.describe()
+        df = self.rawdata.describe()
         self.writeDFrame(df, file)
         # correlation
         print('', file=file)
         print('CORRELATION MATRIX', file=file)
-        df = self.data.corr()
+        df = self.rawdata.corr()
         self.writeDFrame(df, file)
         file.close()
         self.openFile(filename)
@@ -268,7 +268,7 @@ class analysisDialog(QtWidgets.QDialog):
 
     def runStationarityTest(self):
         print('Running stationarity test...')
-        df = self.data.copy()
+        df = self.rawdata.copy()
 
         filename = "Resources/tempFiles/tmp{0}.csv".format(datetime.now().timestamp())
         file = open(filename, "w")

@@ -11,7 +11,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; Run required batch file to consolidate all the stuff that InnoSetup needs.
-;#expr Exec("C:\Users\jrocha\Documents\Python\PyForecast\installerPreBuild.bat")
+#expr Exec("C:\Users\jrocha\Documents\Python\PyForecast\installerPreBuild.bat")
 
 #define MyAppName "PyForecast"
 #define MyAppVersion "1.0"

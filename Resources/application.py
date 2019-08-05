@@ -1068,12 +1068,11 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             dataID = encryptions.generateStationID("CLIMATE",stationName, "Indice", decodeOptions['dataLoader'])
 
             units = {
-                1:"degC",
-                2:"degC",
-                3:"Unitless",
-                4:"Unitless",
-                #5:"ppm",
-                5:"Unitless",
+                1: "degC",
+                2: "degC",
+                3: "Unitless",
+                4: "Unitless",
+                5: "Unitless",
                 6: "Unitless",
                 7: "Unitless",
                 8: "Unitless",
