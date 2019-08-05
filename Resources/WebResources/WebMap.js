@@ -25,7 +25,7 @@ var streetMap =  L.tileLayer('https://{s}.tile.openstreetmap.de/tiles/osmde/{z}/
 
 var map = L.map('map',
     {zoomControl: true,
-    layers: [grayMap]}).setView([ 43, -113], 6); // Set up a map centered on the U.S. at zoom level 4
+    layers: [terrainMap]}).setView([ 43, -113], 6); // Set up a map centered on the U.S. at zoom level 4
 
 // Store the basemaps in a dict
 var baseMaps = {'Grayscale': grayMap,
@@ -165,7 +165,7 @@ var NCDCLayer = L.geoJSON( window.NCDC, {
             fillOpacity: 1
             })
         }
-    }).addTo(map);
+    });
 
 // Add the popups for the USGS sites
 USGSLayer.on("click",function(e) {

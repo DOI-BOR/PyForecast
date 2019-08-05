@@ -157,8 +157,8 @@ class analysisDialog(QtWidgets.QDialog):
         super(analysisDialog, self).__init__()
         data = data.apply(pd.to_numeric)
         self.rawdata = data
-        data = data.replace([np.inf, -np.inf], np.nan).dropna()
-        self.data = data
+        #data = data.replace([np.inf, -np.inf], np.nan).dropna()
+        #self.data = data
         self.setStyleSheet("background-color:white; color:black;")
         self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowSystemMenuHint | QtCore.Qt.WindowMinMaxButtonsHint)
         self.mainLayout = QtWidgets.QVBoxLayout()
