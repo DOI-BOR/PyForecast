@@ -1066,7 +1066,7 @@ class StationInfoPane(QtWidgets.QWidget):
         self.stationHeader.setMaximumHeight(125)
 
         # Add a table to display selected stations
-        self.stationTable = CustomTableView(self, rowLock = True, cols = 6, rows = 0, headers = ['PYID','Type','ID','Name','Parameter','URL'], menuFunctions=['COPY','OPEN','DELETEROW'])
+        self.stationTable = CustomTableView(self, rowLock = True, cols = 5, rows = 0, headers = ['Name','Parameter','Type','ID','URL'], menuFunctions=['COPY','OPEN','DELETEROW'])
 
         # Add a section to add other datasets
         self.otherDataLayout = QtWidgets.QGridLayout()

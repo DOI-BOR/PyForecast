@@ -299,7 +299,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
                 stationNumber = station['ID']
                 stationName = station['Name']
                 stationParam = station['Parameter']
-                self.stationsTab.stationInfoPane.stationTable.addRow([dataID, stationType, stationNumber, stationName, stationParam])
+                self.stationsTab.stationInfoPane.stationTable.addRow([stationName, stationParam, stationType, stationNumber])
             
             self.dataTab.dataTable.setRowCount(0)
             self.dataTab.dataTable.setColumnCount(0) 
@@ -860,7 +860,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         stationDict['PYID'] = dataID
         
         self.datasetDirectory['datasets'].append(stationDict)
-        self.stationsTab.stationInfoPane.stationTable.addRow([dataID, stationType, stationNumber, stationName, stationParam])
+        self.stationsTab.stationInfoPane.stationTable.addRow([stationName, stationParam, stationType, stationNumber])
 
         return
 
@@ -878,7 +878,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
            
         if not duplicateDataset:
             self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":stationUnits,"Resampling":resamplingMethod,"Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
-            self.stationsTab.stationInfoPane.stationTable.addRow([dataID, stationType, stationNumber, stationName, stationParam, stationURL])
+            self.stationsTab.stationInfoPane.stationTable.addRow([stationName, stationParam, stationType, stationNumber, stationURL])
         else:
             button = QtWidgets.QMessageBox.question(self, 'Error','Dataset has already been selected...'.format(traceback.format_exc()), QtWidgets.QMessageBox.Ok)
             if button == QtWidgets.QMessageBox.Ok:
@@ -1014,8 +1014,8 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             self.datasetDirectory['datasets'].append({"PYID": dataIDT, "TYPE":'NRCC',"ID":stationNumber,"Name":nameT,"Parameter":"Temperature","Units":"degF","Resampling":"Mean","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
             self.datasetDirectory['datasets'].append({"PYID": dataIDP, "TYPE":'NRCC',"ID":stationNumber,"Name":nameP,"Parameter":"Precipitation","Units":"inches","Resampling":"Accumulation","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
             
-            self.stationsTab.stationInfoPane.stationTable.addRow([dataIDT,'NRCC',stationNumber,nameT,'Temperature'])
-            self.stationsTab.stationInfoPane.stationTable.addRow([dataIDP,'NRCC',stationNumber,nameP,'Precipitation'])
+            self.stationsTab.stationInfoPane.stationTable.addRow([nameT,'Temperature','NRCC',stationNumber])
+            self.stationsTab.stationInfoPane.stationTable.addRow([nameP,'Precipitation','NRCC',stationNumber])
             self.stationsTab.stationInfoPane.nrccInput.clear()
 
         elif instructionList[0] == 'prism':
@@ -1041,8 +1041,8 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             self.datasetDirectory['datasets'].append({"PYID": dataIDT, "TYPE":'PRISM',"ID":stationNumber,"Name":nameT,"Parameter":"Temperature","Units":"degF","Resampling":"Mean","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
             self.datasetDirectory['datasets'].append({"PYID": dataIDP, "TYPE":'PRISM',"ID":stationNumber,"Name":nameP,"Parameter":"Precipitation","Units":"inches","Resampling":"Accumulation","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
  
-            self.stationsTab.stationInfoPane.stationTable.addRow([dataIDT, 'PRISM',stationNumber,nameT,'Temperature'])
-            self.stationsTab.stationInfoPane.stationTable.addRow([dataIDP, 'PRISM',stationNumber,nameP,'Precipitation'])
+            self.stationsTab.stationInfoPane.stationTable.addRow([nameT,'Temperature','PRISM',stationNumber,])
+            self.stationsTab.stationInfoPane.stationTable.addRow([nameP,'Precipitation','PRISM',stationNumber,])
             self.stationsTab.stationInfoPane.prismInput.clear()
 
         elif instructionList[0] == 'pdsi':
@@ -1056,7 +1056,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
 
             self.datasetDirectory['datasets'].append({"PYID":dataID, "TYPE":"PDSI", "ID":stationNumber, "Name": name+' PDSI', "Parameter":"PDSI","Units":"indices","Resampling":"Mean","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
 
-            self.stationsTab.stationInfoPane.stationTable.addRow([dataID, 'PDSI', stationNumber, name+' PDSI', 'PDSI'])
+            self.stationsTab.stationInfoPane.stationTable.addRow([name+' PDSI', 'PDSI','PDSI', stationNumber, ])
 
         elif instructionList[0] == 'clim':
             
@@ -1080,7 +1080,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             
             self.datasetDirectory['datasets'].append({"PYID":dataID, "TYPE":"CLIMATE","ID":str(stationNumber),"Name":stationName,"Parameter":"Indices","Units":units[stationNumber],"Resampling":"Mean","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
 
-            self.stationsTab.stationInfoPane.stationTable.addRow([dataID, "CLIMATE",str(stationNumber),stationName,'Indices'])
+            self.stationsTab.stationInfoPane.stationTable.addRow([stationName,'Indices',"CLIMATE",str(stationNumber)])
 
         else:
             return
