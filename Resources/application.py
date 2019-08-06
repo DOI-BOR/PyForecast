@@ -105,6 +105,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
 
         self.threadPool = QtCore.QThreadPool()
         writeConfig('savefilename','')
+        writeConfig('allsignificantoverride','False')
 
 
         return

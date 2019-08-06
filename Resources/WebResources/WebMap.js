@@ -441,11 +441,17 @@ function buttonPress() {
         var param = document.getElementById('paramNcdc').value;
         var url = document.getElementById('paramURL').href;
         console.log('StationSelect|'+name+'|'+num+'|'+type+'|Weather|'+region+'|'+param+'|'+url);
-    }else if (type == 'HUC') {
+    } else if (type == 'HUC') {
         var num = infoList[1];
         var name = infoList[2];
         var param = document.getElementById('paramHUC').value;
         console.log(param+'|'+num+'|'+name);
+    } else if (type == 'USGS') {
+        var num = infoList[1];
+        var name = infoList[2];
+        var param = infoList[3];
+        var url = document.getElementById('paramURL').href;
+        console.log('StationSelect|'+name+'|'+num+'|'+type+'|'+param+'|'+url);
     } else {
         var num = infoList[1];
         var name = infoList[2];
