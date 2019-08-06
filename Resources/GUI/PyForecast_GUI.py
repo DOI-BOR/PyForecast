@@ -1234,9 +1234,9 @@ class DataOptionsPane(QtWidgets.QWidget):
         self.porT2.setVisible(False)
         self.optionsGrid.addWidget(self.porLabel, 0, 0, 1, 1)
         self.optionsGrid.addWidget(self.porInfo, 0, 1, 1, 1)
-        self.optionsGrid.addWidget(self.porYes, 0, 2, 1, 1)
-        self.optionsGrid.addWidget(self.porNo, 0, 3, 1, 1)
-        self.optionsGrid.addWidget(self.porInput, 1, 2, 1, 2)
+        self.optionsGrid.addWidget(self.porNo, 0, 2, 1, 1)
+        self.optionsGrid.addWidget(self.porYes, 0, 3, 1, 1)
+        self.optionsGrid.addWidget(self.porInput, 1, 3, 1, 2)
         self.optionsGrid.addWidget(self.porT1, 1, 2, 1, 1)
         self.optionsGrid.addWidget(self.porT2, 1, 3, 1, 1)
 
