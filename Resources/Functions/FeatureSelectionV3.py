@@ -226,6 +226,7 @@ class alternateThreadWorker(QRunnable):
                         self.searchDictList[i]['Coef'] = result[3]
                         self.searchDictList[i]['Intercept'] = result[4]
                         self.searchDictList[i]['PrincCompData'] = result[5]
+                        self.searchDictList[i]['Years Used'] = result[6]
                         currentModels[i] = result[0]['prdID']
                         modelChanged = True
 
