@@ -1452,6 +1452,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         self.fcstOptionsTab.plotsPane.corrButton.pressed.connect(self.fcstOptionsCorrPlot)
         self.fcstOptionsTab.plotsPane.prdIDSignal.connect(self.addTofcstOptionsPlot)
         self.fcstOptionsTab.dualTreeView.tree2.droppedPredictor.connect(self.addPredictorToEquation)
+        self.fcstOptionsTab.dualTreeView.tree2.droppedStation.connect(self.addStationToEquation)
         self.fcstOptionsTab.dualTreeView.tree2.deletedItem.connect(self.deletePredictor)
         self.fcstOptionsTab.dualTreeView.tree2.forcedItem.connect(self.forcePredictor)
         self.fcstOptionsTab.dualTreeView.tree2.dataAnalysisItem.connect(self.predictorDataAnalysis)
@@ -1585,7 +1586,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
     def addPredictorToEquation(self, list_):
         """
         Function to add a selected predictor (prdID) to a selected equation. This function is called when a predictor
-        is dragged into an equaton. The program reads the prdID, and the drop-location equation and appends the prdID into 
+        is dragged into an equation. The program reads the prdID, and the drop-location equation and appends the prdID into
         the forecast equation predictors.
         """
         prdID = list_[0]
@@ -1604,6 +1605,17 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
 
         return
 
+    @QtCore.pyqtSlot(list)
+    def addStationToEquation(self, predList_):
+        """
+        Function to add selected predictors (prdID) to a selected equation. This function is called when a station
+        is dragged into an equation. The program reads the prdID, and the drop-location equation and appends the prdID into
+        the forecast equation predictors.
+        """
+        for predictor in predList_:
+            self.addPredictorToEquation([predictor[0], predictor[1]])
+
+        return
 
     def updateFcstData(self):
         """
@@ -1993,6 +2005,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             label = self.regressionTab.regrSelectPane.annTab.regModLabel
             self.table = self.regressionTab.regrSelectPane.annTab.bestModelTable
             selScheme = self.regressionTab.regrSelectPane.annTab.featSelInput.currentText()
+            dist = self.regressionTab.regrSelectPane.annTab.distInput.currentText()
 
         else:
             return

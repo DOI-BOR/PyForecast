@@ -393,6 +393,7 @@ class CustomTreeView(QtWidgets.QTreeView):
     forcedItem = QtCore.pyqtSignal(list)
     dataAnalysisItem = QtCore.pyqtSignal(list)
     droppedPredictor = QtCore.pyqtSignal(list)
+    droppedStation = QtCore.pyqtSignal(list)
     # Initialize a QTreeView and start with a blank tree
     def __init__(self, parent=None, dragFrom = False, dropTo = False, menuFunctions=['']):
 
@@ -443,7 +444,8 @@ class CustomTreeView(QtWidgets.QTreeView):
 
         # Set to be read-only
         self.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-    
+
+
     def dropEvent(self, event):
 
         prdID = -1
@@ -454,17 +456,35 @@ class CustomTreeView(QtWidgets.QTreeView):
            mod = QtGui.QStandardItemModel()
            mod.dropMimeData(event.mimeData(),QtCore.Qt.CopyAction, 0, 0, QtCore.QModelIndex())
            item = mod.item(0,0)
-           itemText = item.text()
         else:
             print('wrongMimeType')
             event.ignore()
             return
 
         # TODO: [JR] Need to detect if dropped item is a station and if so, programmatically add the predictors under it to the receiving equation for GitHub Issue #31
+        predList = []
 
-        # Ensure that the item is a valid predictor
+        # Check if the dropped item is a valid predictor or a station
+        itemNode = item.text()
+        itemNodeKeys = itemNode.replace('-',' ').split(' ')
+
+        itemParent = item.parent()
+
+        # Make sure that the accepting node is a predictorPool
+        dropIndex = self.indexAt(pos)
+        dropItem = self.model.itemFromIndex(dropIndex)
+        dropItemNode = dropItem.text()
+        dropParent = dropItem.parent()
+        if dropItemNode != 'PredictorPool':
+            QtWidgets.QMessageBox.question(self, 'Error',
+                                           'Invalid Operation. Drag-and-drop station/predictors on the "PredictorPool" node...',
+                                           QtWidgets.QMessageBox.Ok)
+            event.ignore()
+            return
+        else:
+            dropParentNode = dropParent.text()
+
         if item.hasChildren():
-
             numChildren = item.rowCount()
             print('item has {0} children'.format(numChildren))
             for i in range(numChildren):
@@ -472,28 +492,24 @@ class CustomTreeView(QtWidgets.QTreeView):
                 if 'prdID: ' in child.text():
                     prdID = child.text()[7:]
                     break
-        
             if prdID == -1:
                 print('no prdid')
                 event.ignore()
                 return
-        
         else:
             print('no children')
             event.ignore()
             return
 
-        # Make sure that the event's pos is OK
-        dropIndex = self.indexAt(pos)
-        dropItem = self.model.itemFromIndex(dropIndex)
-        if dropItem.text() == 'PredictorPool':
-            equation = dropItem.parent().text()
-            self.lastIndex = dropIndex        
-            self.droppedPredictor.emit([prdID, equation])
-            event.accept()
+        equation = dropParentNode
+        self.lastIndex = dropIndex
+        if len(predList) > 0:
+            self.droppedStation.emit(predList)
         else:
-            event.ignore()
-            return
+            self.droppedPredictor.emit([prdID, equation])
+
+        event.accept()
+        return
 
 
     def deleteRow(self):
