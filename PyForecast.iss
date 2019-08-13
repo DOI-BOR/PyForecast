@@ -40,7 +40,8 @@ Compression=lzma
 SolidCompression=yes
 PrivilegesRequired=lowest
 SignTool=signtool $f
-;signtool = "signtool.exe" sign /tr http://timestamp.digicert.com /td sha256 /fd sha256 /a $p
+;signtool = "signtool.exe" sign /tr http://timestamp.digicert.com /td sha256 /fd sha256 /a $p  
+LicenseFile=.\license.txt  
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
