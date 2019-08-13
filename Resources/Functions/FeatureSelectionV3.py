@@ -750,6 +750,9 @@ def testPredictorSet(list_, SFBS=False, first_iteration=False):
     if ObjFunctionRun == MultipleRegression:
         metrics, forecasted, coefs, intercept, CV_Forecasted, all_significant = ObjFunctionRun(testPredictorsData, predictandData, cv, perfMetric, pool)
         princCompData = {}
+    elif ObjFunctionRun == NeuralNetwork:
+        metrics, forecasted, coefs, intercept, CV_Forecasted, all_significant = ObjFunctionRun(testPredictorsData, predictandData, cv, perfMetric, pool)
+        princCompData = {}
     elif ObjFunctionRun == PrincipalComponentsRegression:
         try:
             metrics, forecasted, coefs, intercept, princCompData, CV_Forecasted, all_significant = ObjFunctionRun(testPredictorsData, predictandData, cv, perfMetric, pool)
@@ -834,7 +837,9 @@ def NeuralNetwork(xData, yData, crossVal, perfMetric, pool):
     ypred = nn.predict(xScaled)
     ypred = ypred*np.std(yData, axis=0) + np.mean(yData, axis=0)
 
-    return Metrics.computeMetrics(cv_ypred, ypred, yData, input_layer_size), ypred, np.random.random(input_layer_size), np.random.random(1), cv_ypred
+    metric_dict = Metrics.computeMetrics(cv_ypred, ypred, yData, input_layer_size)
+
+    return metric_dict, ypred, np.random.random(input_layer_size), np.random.random(1), cv_ypred, True
 
 def MultipleRegression(xData, yData, crossVal, perfMetric, pool):
     """

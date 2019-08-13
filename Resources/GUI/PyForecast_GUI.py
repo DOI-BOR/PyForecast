@@ -37,6 +37,7 @@ import ctypes
 import subprocess
 
 from Resources.GIS import CLIMATE_DIVISIONS
+from Resources.Functions.miscFunctions import monthLookup
 
 #///////////////////////// SET COMMON PROPERTIES ////////////////////////////////////////
 #//     Here we set the common properties that will be used across classes and objects.
@@ -464,38 +465,64 @@ class CustomTreeView(QtWidgets.QTreeView):
         # TODO: [JR] Need to detect if dropped item is a station and if so, programmatically add the predictors under it to the receiving equation for GitHub Issue #31
         predList = []
 
-        # Check if the dropped item is a valid predictor or a station
+
+        # Make sure that the accepting node is a predictorPool and the dropped node is either a station or a predictor
         itemNode = item.text()
         itemNodeKeys = itemNode.replace('-',' ').split(' ')
-
-        itemParent = item.parent()
-
-        # Make sure that the accepting node is a predictorPool
         dropIndex = self.indexAt(pos)
         dropItem = self.model.itemFromIndex(dropIndex)
         dropItemNode = dropItem.text()
         dropParent = dropItem.parent()
-        if dropItemNode != 'PredictorPool':
+        if dropItemNode != 'PredictorPool' or ('prdID' in itemNode) or ('Data' in itemNode) or ('Unit' in itemNode): #filter out non-station/predictor dropped nodes
             QtWidgets.QMessageBox.question(self, 'Error',
-                                           'Invalid Operation. Drag-and-drop station/predictors on the "PredictorPool" node...',
+                                           'Invalid Operation. Only drag-and-drop top-level station/predictor nodes on the "PredictorPool" node...',
                                            QtWidgets.QMessageBox.Ok)
             event.ignore()
             return
         else:
+            itemNodeCheck = monthLookup(itemNodeKeys[len(itemNodeKeys) - 2])
+            isStation = False
+            if itemNodeCheck == -1:
+                isStation = True
             dropParentNode = dropParent.text()
+            dropNodeKeys = dropParentNode.replace('-', ' ').split(' ')
+            acceptableMonth = monthLookup(dropNodeKeys[0]) - 1
+            if acceptableMonth == 0: #catch JAN - set DEC
+                acceptableMonth = 12
 
         if item.hasChildren():
             numChildren = item.rowCount()
-            print('item has {0} children'.format(numChildren))
-            for i in range(numChildren):
-                child = item.child(i)
-                if 'prdID: ' in child.text():
-                    prdID = child.text()[7:]
-                    break
-            if prdID == -1:
-                print('no prdid')
-                event.ignore()
-                return
+
+            if isStation:
+                print('station has {0} predictors'.format(numChildren))
+                stations = item
+                for i in range(numChildren):
+                    pred = stations.child(i)
+                    predNode = pred.text()
+                    predNodeKeys = predNode.replace('-', ' ').split(' ')
+                    predNodeEndMonth = monthLookup(predNodeKeys[len(predNodeKeys) - 2])
+                    if predNodeEndMonth == acceptableMonth:
+                        predChildren = pred.rowCount()
+                        for j in range(predChildren):
+                            child = pred.child(j)
+                            if 'prdID: ' in child.text():
+                                prdID = child.text()[7:]
+                                predList.append(prdID)
+                                break
+                        if prdID == -1:
+                            print('Predictor {0} - No Predictor ID'.format(predNode))
+
+            else:
+                print('predictor has {0} children'.format(numChildren))
+                for i in range(numChildren):
+                    child = item.child(i)
+                    if 'prdID: ' in child.text():
+                        prdID = child.text()[7:]
+                        break
+                if prdID == -1:
+                    print('no prdid')
+                    event.ignore()
+                    return
         else:
             print('no children')
             event.ignore()
@@ -504,7 +531,10 @@ class CustomTreeView(QtWidgets.QTreeView):
         equation = dropParentNode
         self.lastIndex = dropIndex
         if len(predList) > 0:
-            self.droppedStation.emit(predList)
+            predListOut = []
+            for i in range(len(predList)):
+                predListOut.append([predList[i], equation])
+            self.droppedStation.emit(predListOut)
         else:
             self.droppedPredictor.emit([prdID, equation])
 

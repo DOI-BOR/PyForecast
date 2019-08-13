@@ -66,7 +66,10 @@ def monthLookup(month):
         "November":11,
         "December":12
     }
-    return monthDict[month]
+    if month in monthDict:
+        return monthDict[month]
+    else:
+        return -1
 
 def readConfig(configKey, configGroup='DEFAULT'):
     config = configparser.ConfigParser()
