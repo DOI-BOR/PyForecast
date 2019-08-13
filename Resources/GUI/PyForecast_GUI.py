@@ -451,6 +451,7 @@ class CustomTreeView(QtWidgets.QTreeView):
 
         prdID = -1
         pos = event.pos()
+        predList = []
 
         # Get the item's text
         if event.mimeData().hasFormat('application/x-qabstractitemmodeldatalist'):
@@ -461,9 +462,6 @@ class CustomTreeView(QtWidgets.QTreeView):
             print('wrongMimeType')
             event.ignore()
             return
-
-        # TODO: [JR] Need to detect if dropped item is a station and if so, programmatically add the predictors under it to the receiving equation for GitHub Issue #31
-        predList = []
 
 
         # Make sure that the accepting node is a predictorPool and the dropped node is either a station or a predictor
@@ -486,13 +484,19 @@ class CustomTreeView(QtWidgets.QTreeView):
                 isStation = True
             dropParentNode = dropParent.text()
             dropNodeKeys = dropParentNode.replace('-', ' ').split(' ')
+            # Assumes users want to add the chunked predictors whose ending month
+            #   is the previous month with respect to the forecasting equation
+            # Example: If the equation is for FEB, then add all predictors subsets
+            #   under the station that end in JAN. Predictor chunks such as JAN01-JAN31,
+            #   JAN01-JAN14, JAN15-JAN31, OCT01-JAN14, and OCT01-JAN31.
             acceptableMonth = monthLookup(dropNodeKeys[0]) - 1
             if acceptableMonth == 0: #catch JAN - set DEC
                 acceptableMonth = 12
 
+        # Loop through the child nodes of the dropped node
         if item.hasChildren():
             numChildren = item.rowCount()
-
+            # Dropped node is a station so loop through the predictors
             if isStation:
                 print('station has {0} predictors'.format(numChildren))
                 stations = item
@@ -501,7 +505,7 @@ class CustomTreeView(QtWidgets.QTreeView):
                     predNode = pred.text()
                     predNodeKeys = predNode.replace('-', ' ').split(' ')
                     predNodeEndMonth = monthLookup(predNodeKeys[len(predNodeKeys) - 2])
-                    if predNodeEndMonth == acceptableMonth:
+                    if predNodeEndMonth == acceptableMonth: #check if predictor chunk is one we want to add and if so, add
                         predChildren = pred.rowCount()
                         for j in range(predChildren):
                             child = pred.child(j)
@@ -511,7 +515,7 @@ class CustomTreeView(QtWidgets.QTreeView):
                                 break
                         if prdID == -1:
                             print('Predictor {0} - No Predictor ID'.format(predNode))
-
+            # Dropped node is a predictor so add the predictor
             else:
                 print('predictor has {0} children'.format(numChildren))
                 for i in range(numChildren):
@@ -528,14 +532,15 @@ class CustomTreeView(QtWidgets.QTreeView):
             event.ignore()
             return
 
+        # Prep outputs and emit processing command
         equation = dropParentNode
         self.lastIndex = dropIndex
-        if len(predList) > 0:
+        if len(predList) > 0: #dropped node is a station
             predListOut = []
             for i in range(len(predList)):
                 predListOut.append([predList[i], equation])
             self.droppedStation.emit(predListOut)
-        else:
+        else: #dropped node is a predictor
             self.droppedPredictor.emit([prdID, equation])
 
         event.accept()
