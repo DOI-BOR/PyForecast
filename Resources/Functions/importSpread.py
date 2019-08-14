@@ -94,12 +94,13 @@ class importDialog(QtWidgets.QDialog):
 
     def importSheet(self):
         if self.filename == None:
+            self.fileLabel.setText('Select a CSV or XLSX file to import...')
             return
         try:
             headerRowIdx = 0
             # Data Array import override
             if self.arrayImportCheck.isChecked():
-                headerRowIdx = 4 #skip first 4 rows since this is where the Dataset Name, Parameter Name, Unit, and Resampling should be
+                headerRowIdx = 4 #skip first 4 rows since this is where the Dataset Name, Parameter Name, Unit, and Resampling tags should be
             # Try to import CSV File
             if '.csv' in self.filename:
                 # Read headers for data array import
@@ -112,12 +113,14 @@ class importDialog(QtWidgets.QDialog):
                 dfHeaders = pd.read_excel(self.filename, nrows=headerRowIdx, header=None)
                 # Try to read the data into a dataframe
                 df = pd.read_excel(self.filename, header=headerRowIdx, index_col=0, parse_dates=True, infer_datetime_format=True)
-            # Data Array import override
+            # Import a Data Array
             if self.arrayImportCheck.isChecked():
+                # Drop the Datetime column from the header array
                 dfHeaders = dfHeaders.drop(dfHeaders.columns[0], axis=1)
                 if len(dfHeaders.columns) == len(df.columns):
+                    # Loop through the data columns
                     for i in range(len(df)):
-                        # Get a random ID
+                        # Get the ith information from the data and header arrays
                         ithId = 'IMPORT' + str(int(100000 * np.random.rand()))
                         ithDf = df[df.columns[i]].to_frame()
                         ithHeaders = dfHeaders[dfHeaders.columns[i]]
@@ -129,10 +132,12 @@ class importDialog(QtWidgets.QDialog):
                         # Set up the data dictionary
                         ithDataDict = {"PYID":"", "TYPE":"IMPORT","ID":ithId,"Name":ithName,"Parameter":ithPar,"Units":ithUnits,"Resampling":ithResampling,"Decoding":{"dataLoader":"IMPORT"}, "Data":ithDf.to_dict(orient='dict')}
                         print(ithDataDict)
+                        # Add the dataset to the dataset dict
                         self.signals.returnDatasetSignal.emit(ithDataDict)
                 else:
                     self.fileLabel.setText('Header column count does not match the Data column count! Check your input data file...')
                     return
+            # Import a single column (old code)
             else:
                 # Get a random ID
                 id = 'IMPORT' + str(int(100000 * np.random.rand()))
