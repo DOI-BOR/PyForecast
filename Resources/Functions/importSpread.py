@@ -87,8 +87,7 @@ class importDialog(QtWidgets.QDialog):
         # Open a file dialog
         self.filename = QtWidgets.QFileDialog.getOpenFileName(self, 'Import data', os.path.abspath(os.sep),'Flat files (*.csv *.xlsx)')[0]
         if self.filename == '':
-            return  
-        
+            return
         self.fileLabel.setText(self.filename)
 
 
@@ -147,11 +146,7 @@ class importDialog(QtWidgets.QDialog):
                 dataDict = {"PYID":"", "TYPE":"IMPORT","ID":id,"Name":self.datasetNameEdit.text(),"Parameter":self.paramNameEdit.text(),"Units":self.unitNameEdit.text(),"Resampling":self.resampleChooser.currentText(),"Decoding":{"dataLoader":"IMPORT"}, "Data":df.to_dict(orient='dict')}
                 print(dataDict)
                 self.signals.returnDatasetSignal.emit(dataDict)
+            self.close()
         except Exception as e:
             print(e)
             return
-
-        self.close()
-        
-
-    
