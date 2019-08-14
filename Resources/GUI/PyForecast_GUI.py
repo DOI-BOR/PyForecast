@@ -37,7 +37,7 @@ import ctypes
 import subprocess
 
 from Resources.GIS import CLIMATE_DIVISIONS
-from Resources.Functions.miscFunctions import monthLookup
+from Resources.Functions.miscFunctions import monthCheck
 
 #///////////////////////// SET COMMON PROPERTIES ////////////////////////////////////////
 #//     Here we set the common properties that will be used across classes and objects.
@@ -478,7 +478,7 @@ class CustomTreeView(QtWidgets.QTreeView):
             event.ignore()
             return
         else:
-            itemNodeCheck = monthLookup(itemNodeKeys[len(itemNodeKeys) - 2])
+            itemNodeCheck = monthCheck(itemNodeKeys[len(itemNodeKeys) - 2])
             isStation = False
             if itemNodeCheck == -1:
                 isStation = True
@@ -489,7 +489,7 @@ class CustomTreeView(QtWidgets.QTreeView):
             # Example: If the equation is for FEB, then add all predictors subsets
             #   under the station that end in JAN. Predictor chunks such as JAN01-JAN31,
             #   JAN01-JAN14, JAN15-JAN31, OCT01-JAN14, and OCT01-JAN31.
-            acceptableMonth = monthLookup(dropNodeKeys[0]) - 1
+            acceptableMonth = monthCheck(dropNodeKeys[0]) - 1
             if acceptableMonth == 0: #catch JAN - set DEC
                 acceptableMonth = 12
 
@@ -504,7 +504,7 @@ class CustomTreeView(QtWidgets.QTreeView):
                     pred = stations.child(i)
                     predNode = pred.text()
                     predNodeKeys = predNode.replace('-', ' ').split(' ')
-                    predNodeEndMonth = monthLookup(predNodeKeys[len(predNodeKeys) - 2])
+                    predNodeEndMonth = monthCheck(predNodeKeys[len(predNodeKeys) - 2])
                     if predNodeEndMonth == acceptableMonth: #check if predictor chunk is one we want to add and if so, add
                         predChildren = pred.rowCount()
                         for j in range(predChildren):

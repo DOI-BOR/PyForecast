@@ -45,8 +45,7 @@ def lastWaterYear(dateToday):
     return last_Water_Year
 
 
-
-def monthLookup(month):
+def monthCheck(month):
     """
     This function simply converts the name of a month (e.g. 'March') to it's
     number (e.g. 3).
@@ -70,6 +69,29 @@ def monthLookup(month):
         return monthDict[month]
     else:
         return -1
+
+
+def monthLookup(month):
+    """
+    This function simply converts the name of a month (e.g. 'March') to it's
+    number (e.g. 3).
+    """
+    # First, if month is a name, not an integer, convert it to an integer
+    monthDict = {
+        "January":1,
+        "February":2,
+        "March":3,
+        "April":4,
+        "May":5,
+        "June":6,
+        "July":7,
+        "August":8,
+        "September":9,
+        "October":10,
+        "November":11,
+        "December":12
+    }
+    return monthDict[month]
 
 def readConfig(configKey, configGroup='DEFAULT'):
     config = configparser.ConfigParser()
