@@ -484,12 +484,18 @@ class CustomTreeView(QtWidgets.QTreeView):
                 isStation = True
             dropParentNode = dropParent.text()
             dropNodeKeys = dropParentNode.replace('-', ' ').split(' ')
-            # Assumes users want to add the chunked predictors whose ending month
-            #   is the previous month with respect to the forecasting equation
-            # Example: If the equation is for FEB, then add all predictors subsets
-            #   under the station that end in JAN. Predictor chunks such as JAN01-JAN31,
-            #   JAN01-JAN14, JAN15-JAN31, OCT01-JAN14, and OCT01-JAN31.
+            # Assumes users want to add the chunked predictors whose ending month is the previous month and
+            #   whose ending day is within 5 days of the end day with respect to the forecasting equation
+            # Example: If the equation is for a mid-month forecastfor FEB-15, then add all predictors subsets
+            #   under the station that end in JAN-31 and/or FEB-14. Predictor chunks such as JAN01-JAN31,
+            #   JAN15-JAN31, OCT01-JAN31, FEB-01-FEB14, OCT01-FEB14.
+            acceptableDay = dropNodeKeys[1]
+            isMidMonth = False
             acceptableMonth = monthCheck(dropNodeKeys[0]) - 1
+            if '01' not in acceptableDay:
+                isMidMonth = True
+                acceptableMonth = monthCheck(dropNodeKeys[0])
+
             if acceptableMonth == 0: #catch JAN - set DEC
                 acceptableMonth = 12
 
@@ -505,7 +511,8 @@ class CustomTreeView(QtWidgets.QTreeView):
                     predNode = pred.text()
                     predNodeKeys = predNode.replace('-', ' ').split(' ')
                     predNodeEndMonth = monthCheck(predNodeKeys[len(predNodeKeys) - 2])
-                    if predNodeEndMonth == acceptableMonth: #check if predictor chunk is one we want to add and if so, add
+                    predNodeEndDay = int(predNodeKeys[len(predNodeKeys) - 1])
+                    if predNodeEndMonth == acceptableMonth and ((isMidMonth == True and predNodeEndDay < 15) or (isMidMonth == False and predNodeEndDay > 15)): #check if predictor chunk is one we want to add and if so, add
                         predChildren = pred.rowCount()
                         for j in range(predChildren):
                             child = pred.child(j)
