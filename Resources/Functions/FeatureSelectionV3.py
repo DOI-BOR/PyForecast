@@ -146,7 +146,7 @@ class alternateThreadWorker(QRunnable):
         nanCount = self.predictorData.isna().sum()
         for i, v in nanCount.items():
             if v > (len(self.predictandData) / 2):
-                del self.predictorData[i]
+                a=1 #del self.predictorData[i] #disable this feature... [JR]
         self.predictorDataNames = list(self.predictorData.columns)
 
 
