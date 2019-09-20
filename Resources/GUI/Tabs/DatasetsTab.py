@@ -10,7 +10,7 @@ Description:        'DatasetsTab.py' is a PyQt5 GUI for the NextFlow application
 from    PyQt5   import  QtWidgets, \
                         QtCore, \
                         QtGui
-from    resources.GUI.CustomWidgets     import  DatasetBoxView
+from    resources.GUI.CustomWidgets     import  boxyListWidget
 from    resources.GUI.WebMap    import  webMapView
 import  sys
 import  os
@@ -48,7 +48,7 @@ class DatasetTab(QtWidgets.QWidget):
         label = QtWidgets.QLabel('<b style="font-size: 20px">Selected Datasets</b>')
         label.setTextFormat(QtCore.Qt.RichText)
         self.selectedDatasetsLabel = QtWidgets.QLabel("0 datasets have been selected:")
-        self.selectedDatasetsWidget = DatasetBoxView.DatasetBoxView()
+        self.selectedDatasetsWidget = boxyListWidget.boxyListWidget()
         self.selectedDatasetsWidget.setContextMenu(options=['remove', 'edit'])
         layout_.addWidget(label)
         layout_.addWidget(self.selectedDatasetsLabel)
@@ -70,7 +70,7 @@ class DatasetTab(QtWidgets.QWidget):
         self.keywordSearchBox = QtWidgets.QLineEdit()
         self.keywordSearchBox.setPlaceholderText("e.g. Alpine Meadow")
         self.keywordSearchButton = QtWidgets.QPushButton("Search")
-        self.searchResultsBox = DatasetBoxView.DatasetBoxView(searchBoxView=True)
+        self.searchResultsBox = boxyListWidget.boxyListWidget()
         layout_.addWidget(label)
         layout_.addWidget(keywordLabel)
         layout2 = QtWidgets.QHBoxLayout()
@@ -96,7 +96,7 @@ class DatasetTab(QtWidgets.QWidget):
         self.hucSelectionButton = QtWidgets.QPushButton("Select Watersheds")
         self.boxHucSearchButton = QtWidgets.QPushButton("Search Selected Areas")
         self.boxHucSearchButton.setEnabled(False)
-        self.boxHucResultsBox = DatasetBoxView.DatasetBoxView(searchBoxView=True)
+        self.boxHucResultsBox = boxyListWidget.boxyListWidget()
         layout2 = QtWidgets.QHBoxLayout()
         layout2.addWidget(self.boundingBoxButton)
         layout2.addWidget(self.hucSelectionButton)
@@ -135,13 +135,15 @@ class DatasetTab(QtWidgets.QWidget):
         self.nrccButton = QtWidgets.QPushButton("Add")
         self.nrccButton.setFixedWidth(100)
 
-        pdsiLabel = QtWidgets.QLabel("Palmer Drought Severity Index")
+        pdsiLabel = QtWidgets.QLabel("Palmer Drought Severity Index / Standardized Precipitation Index")
         pdsiInfo = QtWidgets.QLabel()
         pdsiInfo.setPixmap(self.infoIcon)
-        pdsiInfo.setToolTip("Returns climate-division averaged Palmer Drought Severity Index data from the CPC.")
+        pdsiInfo.setToolTip("Returns climate-division averaged Palmer Drought Severity Index / SPI data from the CPC.")
         self.pdsiInput = QtWidgets.QComboBox()
-        self.pdsiButton = QtWidgets.QPushButton("Add")
-        self.pdsiButton.setFixedWidth(100)
+        self.pdsiButton = QtWidgets.QPushButton("Add PDSI")
+        self.pdsiButton.setFixedWidth(70)
+        self.spiButton = QtWidgets.QPushButton("Add SPI")
+        self.spiButton.setFixedWidth(70)
 
         climLabel = QtWidgets.QLabel("Climate Indices")
         climInfo = QtWidgets.QLabel()
@@ -189,6 +191,7 @@ class DatasetTab(QtWidgets.QWidget):
         layout2 = QtWidgets.QHBoxLayout()
         layout2.addWidget(self.pdsiInput)
         layout2.addWidget(self.pdsiButton)
+        layout2.addWidget(self.spiButton)
         layout_.addLayout(layout2)
 
         layout2 = QtWidgets.QHBoxLayout()

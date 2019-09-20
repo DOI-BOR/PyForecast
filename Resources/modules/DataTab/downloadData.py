@@ -105,10 +105,7 @@ class alternateThreadWorker(QtCore.QRunnable):
                 self.df = pd.concat([self.df, df])
                 continue
 
-        
-            
-
-        
+                
         self.df = self.df[~self.df.index.duplicated(keep='first')]
         self.signals.returnNewData.emit(self.df)
         self.signals.finished.emit(True)

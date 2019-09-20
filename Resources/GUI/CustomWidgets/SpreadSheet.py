@@ -54,7 +54,7 @@ class SpreadSheetModel(QtCore.QAbstractItemModel):
         self.beginResetModel()
         self.dataTable = dataTable
         self.datasetTable = datasetTable
-        self.datasetNames = OrderedDict((id_,name) for id_, name in ((row[0], row[1]['DatasetName']) for row in self.datasetTable.iterrows()))
+        self.datasetNames = OrderedDict((id_,name) for id_, name in ((row[0], "{0}: {1}".format(row[1]['DatasetName'], row[1]['DatasetParameter'])) for row in self.datasetTable.iterrows()))
         for id_ in list(self.datasetNames):
             name = self.datasetNames[id_]
             words = name.split()
@@ -74,11 +74,8 @@ class SpreadSheetModel(QtCore.QAbstractItemModel):
             lines.append(line)
             self.datasetNames[id_] = '\n'.join(lines)
 
-
-                    
                     
         self.datasetNamesList = list(self.datasetNames)
-        #self.indexArray = np.array([[self.createIndex(i,j,self.dataTable.loc[(date, id_),'Value']) if (date, id_) in self.dataTable.index else self.createIndex(i,j,np.nan) for j, id_ in enumerate(self.datasetNamesList)] for i, date in enumerate(self.dataTable.index.levels[0])])
         self.indexArray = np.array([[self.createIndex(i,j) for j, id_ in enumerate(self.datasetNamesList)] for i, date in enumerate(self.dataTable.index.levels[0])])
         self.initialized = True
         self.endResetModel()
@@ -110,13 +107,6 @@ class SpreadSheetModel(QtCore.QAbstractItemModel):
                 val = str(round(self.dataTable.loc[(date, id_), 'Value'], 3))
             else:
                 val = QtCore.QVariant()
-            # try:
-            #     val = str(round(self.dataTable.loc[(date, id_), 'Value'], 3))
-            # except Exception as e:
-            #     print(self.dataTable.index.levels[1])
-            #     print(e)
-            #     print(id_)
-            #     print(date)
 
         elif role == QtCore.Qt.BackgroundRole:
             if (date, id_) in self.dataTable.index:

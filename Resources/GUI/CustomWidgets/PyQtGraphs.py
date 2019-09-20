@@ -273,7 +273,7 @@ class TimeSeriesSliderPlot(pg.GraphicsLayoutWidget):
         cc = colorCycler()
         dataset_ids = list(set(dataFrame.index.get_level_values(1)))
         self.dates = dataFrame.index.levels[0].astype('int64')/1000000000
-        self.names = [datasets.loc[id_]['DatasetName'] for id_ in dataset_ids]
+        self.names = ["{0}: {1}".format(datasets.loc[id_]['DatasetName'], datasets.loc[id_]['DatasetParameter']) for id_ in dataset_ids]
         self.unitList = [datasets.loc[id_]['DatasetUnits'] for id_ in dataset_ids]
         units = list(set(self.unitList))
         units = ', '.join(units)
@@ -298,8 +298,8 @@ class TimeSeriesSliderPlot(pg.GraphicsLayoutWidget):
                 dataItemsP1Names = [item.opts['name'] for item in dataItemsP1]
                 dataItemsP2 = self.p2.listDataItems()
                 dataItemsP2Names = [item.opts['name'] for item in dataItemsP2]
-                p1Item = dataItemsP1[dataItemsP1Names.index(datasets.loc[col]['DatasetName'])]
-                p2Item = dataItemsP2[dataItemsP2Names.index(datasets.loc[col]['DatasetName'])]
+                p1Item = dataItemsP1[dataItemsP1Names.index("{0}: {1}".format(datasets.loc[col]['DatasetName'], datasets.loc[col]['DatasetParameter']))]
+                p2Item = dataItemsP2[dataItemsP2Names.index("{0}: {1}".format(datasets.loc[col]['DatasetName'], datasets.loc[col]['DatasetParameter']))]
                 p1Item.setData(x_, y_, antialias=True)
                 p2Item.setData(x_, y_, antialias=True)
                 self.p1.vb.setRange(xRange = current_bounds[0], yRange = current_bounds[1])
@@ -359,7 +359,7 @@ class TimeSeriesSliderPlot(pg.GraphicsLayoutWidget):
                 self.p1CurveItems.append(PlotDataItem(x=x_, y=y_, connect='finite', pen=pen, stepMode = True, fillLevel=0,  fillbrush=cc.getColor(idxNum), name=self.names[i], antialias=False, downsampleMethod='subsample', autoDownsample=True, autoDownsampleFactor = 0.5, clipToView=True))
                 self.p2CurveItems.append(PlotDataItem(x=x_, y=y_, connect='finite', pen=pen, stepMode = True,  brush=cc.getColor(idxNum), name=self.names[i], antialias=False, downsampleMethod='subsample', autoDownsample=True, autoDownsampleFactor = 0.5, clipToView=True))
 
-            elif types[i] == 'line' and fill_below==True:
+            elif types[i] == 'line' and fill_below == True:
                 self.p1CurveItems.append(PlotDataItem(x=x_, y=y_, connect='finite', pen=pen, brush=cc.getColor(idxNum), name=self.names[i], antialias=False, downsampleMethod='peak', autoDownsample=True, autoDownsampleFactor = 0.5, clipToView=True))
                 self.p2CurveItems.append(PlotDataItem(x=x_, y=y_, connect='finite', pen=pen, brush=cc.getColor(idxNum), name=self.names[i], antialias=False, downsampleMethod='peak', autoDownsample=True, autoDownsampleFactor = 0.5, clipToView=True))
                 

@@ -17,7 +17,7 @@ import  subprocess
 from    PyQt5   import  QtWidgets, \
                         QtCore, \
                         QtGui
-from    resources.GUI.Tabs  import  DatasetsTab, DataTab, CreateForecastsTab
+from    resources.GUI.Tabs  import  DatasetsTab, DataTab
 
 myappid = u'reclamation.NextFlow.2b'
 if platform.system() == 'Windows':

@@ -60,13 +60,18 @@ class boxyListWidget(QtWidgets.QListWidget):
         return
 
 
-    def addWidget(self, widgetToAdd, dataForWidget = None):
+    def addWidget(self, widgetToAdd = QtWidgets.QLabel(), htmlDataForTextWidget = None, data = None):
         """
         Adds the widget to the list. Also give the widget item any associated data.
         """
         item = QtWidgets.QListWidgetItem()
+        item.data_ = data
         item.widget = widgetToAdd
-        item.data_ = dataForWidget
+        if item.widget == QtWidgets.QTextEdit():
+            item.HTMLdata_ = htmlDataForTextWidget
+            item.widget.setText(htmlDataForTextWidget)
+            item.widget.setTextFormat(QtCore.Qt.RichText)
+        
         self.addItem(item)
         self.setItemWidget(item, item.widget)
         self.addElementSignal.emit(self.count() - 1)

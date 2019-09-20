@@ -9,7 +9,7 @@ Description:    This script contains all the functionality associated with the
 """
 
 import pandas as pd
-from PyQt5 import QtCore
+from PyQt5 import QtCore, QtWidgets
 from resources.modules.Miscellaneous import loggingAndErrors
 from resources.modules.DatasetTab import gisFunctions
 from resources.GUI.Dialogs import UserDefinedDatasetDialog, createCompositeDataset
@@ -45,13 +45,14 @@ class datasetTab(object):
         self.datasetTab.keywordSearchBox.returnPressed.connect(lambda: self.searchAndReturnSearchResults(self.datasetTab.keywordSearchBox.text()))
         self.datasetTab.searchResultsBox.itemDoubleClicked.connect(self.navigateMapToSelectedItem)
         self.datasetTab.selectedDatasetsWidget.itemDoubleClicked.connect(self.navigateMapToSelectedItem)
-        self.datasetTab.boxHucResultsBox.itemDoubleClicked.connect(self.navigateMapToSelectedItem)
-        self.datasetTab.searchResultsBox.addSignal.connect(self.addDatasetToSelectedDatasets)
+        #self.datasetTab.boxHucResultsBox.itemDoubleClicked.connect(self.navigateMapToSelectedItem)
+        #self.datasetTab.searchResultsBox.addSignal.connect(self.addDatasetToSelectedDatasets)
         self.datasetTab.boxHucResultsBox.addSignal.connect(self.addDatasetToSelectedDatasets)
         self.datasetTab.selectedDatasetsWidget.removeSignal.connect(self.datasetRemovedFromDatasetTable)
         self.datasetTab.prismButton.clicked.connect(lambda x:self.addAdditionalDatasetToSelectedDatasets('PRISM'))
         self.datasetTab.nrccButton.clicked.connect(lambda x:self.addAdditionalDatasetToSelectedDatasets('NRCC'))
         self.datasetTab.pdsiButton.clicked.connect(lambda x:self.addAdditionalDatasetToSelectedDatasets('PDSI'))
+        self.datasetTab.spiButton.clicked.connect(lambda x:self.addAdditionalDatasetToSelectedDatasets('SPI'))
         self.datasetTab.climButton.clicked.connect(lambda x:self.addAdditionalDatasetToSelectedDatasets('CLIM'))
         self.datasetTab.boundingBoxButton.clicked.connect(lambda x: self.beginAreaSearch("bounding"))
         self.datasetTab.hucSelectionButton.clicked.connect(lambda x: self.beginAreaSearch("watershed"))
@@ -226,7 +227,9 @@ class datasetTab(object):
         else:
             self.datasetTab.webMapView.page.runJavaScript("getSelectedHUCs()", self.searchUsingHUCS)
 
+
         return
+
 
 
     def searchUsingCoords(self, coords):
@@ -276,6 +279,11 @@ class datasetTab(object):
         elif type_ == 'PDSI':
             division = self.datasetTab.pdsiInput.currentText()
             dataset = self.additionalDatasetsList[(self.additionalDatasetsList['DatasetName'] == division) & (self.additionalDatasetsList['DatasetType'] == 'PDSI')]
+            self.datasetTable = self.datasetTable.append(dataset, ignore_index=False)
+        
+        elif type_ == 'SPI':
+            division = self.datasetTab.pdsiInput.currentText()
+            dataset = self.additionalDatasetsList[(self.additionalDatasetsList['DatasetName'] == division) & (self.additionalDatasetsList['DatasetType'] == 'SPI')]
             self.datasetTable = self.datasetTable.append(dataset, ignore_index=False)
 
         elif type_ == 'CLIM':
@@ -427,7 +435,7 @@ class datasetTab(object):
         searchTable.sort_values(by=['Score'], inplace=True, ascending=False)
         del searchTable['Score'], searchTable['searchRow']
         searchTable = searchTable[:20]
-        self.loadSelectedDatasets(searchTable, self.datasetTab.searchResultsBox)
+        self.loadSelectedDatasets(searchTable, self.datasetTab.searchResultsBox, search=True)
 
         for result in searchTable.iterrows():
             if result[0] in list(self.datasetTable.index):
@@ -455,6 +463,63 @@ class datasetTab(object):
         widgetToLoadTo.clear()
         
         for dataset in datasetsToLoad.iterrows():
-            widgetToLoadTo.addEntry(dataset[1])
+
+            if widgetToLoadTo == self.datasetTab.searchResultsBox or widgetToLoadTo == self.datasetTab.boxHucResultsBox:
+
+                widget = QtWidgets.QWidget()
+                layout = QtWidgets.QVBoxLayout()
+                item = QtWidgets.QListWidgetItem()
+                item.textbox = QtWidgets.QLabel("""<b style="color:#0a85cc; font-size:14px">{0}</b><br>
+                            <b>ID: </b>{1}<br>
+                            <b>Type: </b>{2}<br>
+                            <b>Parameter: </b>{3}<br>
+                            <i style="font-size:10px; color:#4c4c4c">{4}</i>
+                            """.format( dataset['DatasetName'], 
+                                        dataset['DatasetExternalID'], 
+                                        dataset['DatasetAgency'] + ' ' + dataset['DatasetType'], 
+                                        dataset['DatasetParameter'], 
+                                        dataset.name)
+                )
+                item.textbox.setTextFormat(QtCore.Qt.RichText)
+                button = QtWidgets.QPushButton("Add Dataset")
+                layout.addWidget(item.textbox)
+                layout.addWidget(button)
+                widget.setLayout(layout)
+                widgetToLoadTo.addWidget(
+                    widgetToAdd = widget,
+                    data = dataset
+                )
+
+                def addSite(dataset):
+                    self.addDatasetToSelectedDatasets(dataset)
+                    html = item.textbox.text()
+                    if '&#10004' in html:
+                        return
+                    index = html.index("#")
+                    color = html[index:index+7]
+                    html = html.replace(color, '#5fd13c')
+                    index = html.index('>')
+                    index2 = html.index('</')
+                    name = html[index+1:index2]
+                    html = html.replace(name, '&#10004; ' + name)
+                    item.textbox.setText(html)
+
+                button.pressed.connect(lambda x=dataset: addSite(x))
+
+            else:
+
+                widgetToLoadTo.addWidget(
+                    data = dataset,
+                    htmlDataForTextWidget = """<b style="color:#0a85cc; font-size:14px">{0}</b><br>
+                            <b>ID: </b>{1}<br>
+                            <b>Type: </b>{2}<br>
+                            <b>Parameter: </b>{3}<br>
+                            <i style="font-size:10px; color:#4c4c4c">{4}</i>
+                            """.format( dataset['DatasetName'], 
+                                        dataset['DatasetExternalID'], 
+                                        dataset['DatasetAgency'] + ' ' + dataset['DatasetType'], 
+                                        dataset['DatasetParameter'], 
+                                        dataset.name)
+                )
 
         return

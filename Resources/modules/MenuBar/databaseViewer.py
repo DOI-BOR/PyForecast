@@ -33,7 +33,10 @@ class datasetTableDisplay(QtWidgets.QWidget):
 
 
 
-
+"""
+This model abstracts a QAbstractTableModel to display a 
+pandas data frame. 
+"""
 class PandasModel(QtCore.QAbstractTableModel):
     def __init__(self, data, parent=None):
         QtCore.QAbstractTableModel.__init__(self, parent)

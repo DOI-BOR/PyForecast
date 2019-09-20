@@ -24,6 +24,36 @@ from resources.GUI.CustomWidgets.SpreadSheet import SpreadSheetView
 import  sys
 import  os
 
+
+class StatisticalModelsTab(QtWidgets.QWidget):
+    """
+    """
+
+    def __init__(self, parent=None):
+        QtWidgets.QWidget.__init__(self)
+        overallLayout = QtWidgets.QHBoxLayout()
+        leftSectionLayout = QtWidgets.QVBoxLayout()
+
+        targetHeader = QtWidgets.QLabel("Forecast Target")
+        self.targetWidget = variableSpecWidget
+
+        predictorsHeader = QtWidgets.QLabel("Predictors")
+        self.predictorWidgetList = QtWidgets.QListWidget()
+
+        self.runButton = QtWidgets.QPushButton("Run")
+
+        self.setLayout(overallLayout)
+
+        return
+
+class modelProgressTracker(QtWidgets.QWidget):
+    """
+    """
+
+    def __init__(self, parent=None):
+
+        return
+
 class variableSpecWidget(QtWidgets.QWidget):
     """
     """
@@ -47,18 +77,5 @@ class variableSpecWidget(QtWidgets.QWidget):
         layout.addWidget(self.periodEdit, 3, 1, 1, 1)
         layout.addWidget(self.periodUnitSelect, 3, 2, 1, 1)
 
-
-class StatisticalModelsTab(QtWidgets.QWidget):
-    """
-    """
-
-    def __init__(self, parent=None):
-        QtWidgets.QWidget.__init__(self)
-        overallLayout = QtWidgets.QHBoxLayout()
-        leftSectionLayout = QtWidgets.QVBoxLayout()
-
-        targetHeader = QtWidgets.QLabel("Forecast Target")
-        predictorsHeader = QtWidgets.QLabel("Predictors")
-        targetWidget = QtWidgets.QWidget()
-
+        return
 
