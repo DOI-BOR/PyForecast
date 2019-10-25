@@ -25,7 +25,7 @@ var streetMap =  L.tileLayer('https://{s}.tile.openstreetmap.de/tiles/osmde/{z}/
 
 var map = L.map('map',
     {zoomControl: true,
-    layers: [grayMap]}).setView([ 43, -113], 6); // Set up a map centered on the U.S. at zoom level 4
+    layers: [terrainMap]}).setView([ 43, -113], 6); // Set up a map centered on the U.S. at zoom level 4
 
 // Store the basemaps in a dict
 var baseMaps = {'Grayscale': grayMap,
@@ -44,6 +44,8 @@ var SNOTEL = new Object();
 var SNOWCOURSE = new Object();
 var USBR_POLY = new Object();
 var USBR_POINTS = new Object();
+var USBR_AGMET = new Object();
+var NCDC = new Object();
 
 loadJSON('../../Resources/GIS/WATERSHEDS/HUC8_WGS84.json', function(response) {
     // Parse data into object
@@ -64,6 +66,14 @@ loadJSON('../../Resources/GIS/NRCS_SITES/SNOWCOURSE.json', function(response) {
 loadJSON('../../Resources/GIS/RECLAMATION_SITES/RESERVOIRS2.json', function(response) {
     // Parse data into object
     window.USBR_POINTS = JSON.parse(response);
+});
+loadJSON('../../Resources/GIS/RECLAMATION_SITES/AGRIMET.json', function(response) {
+    // Parse data into object
+    window.USBR_AGMET = JSON.parse(response);
+});
+loadJSON('../../Resources/GIS/NCDC_SITES/NCDC.json', function(response) {
+    // Parse data into object
+    window.NCDC = JSON.parse(response);
 });
 
 
@@ -110,11 +120,11 @@ var SNOWCOURSELayer = L.geoJSON( window.SNOWCOURSE, {
             fillOpacity: 1
             })
         }
-    }).addTo(map);  
+    }).addTo(map);
 
 // Add the USBR sites
-var USBR_POINTSLayer = L.geoJSON( window.USBR_POINTS, {
-    
+var USBR_POINTS_RESLayer = L.geoJSON( window.USBR_POINTS, {
+
     pointToLayer: function (feature, latlng) {
         return L.circleMarker(latlng, {
             pane: "PointsPane",
@@ -125,7 +135,37 @@ var USBR_POINTSLayer = L.geoJSON( window.USBR_POINTS, {
             fillOpacity: 1
             })
         }
-    }).addTo(map);  
+    }).addTo(map);
+
+// Add the USBR AGRIMET sites
+var USBR_POINTS_AGMETLayer = L.geoJSON( window.USBR_AGMET, {
+
+    pointToLayer: function (feature, latlng) {
+        return L.circleMarker(latlng, {
+            pane: "PointsPane",
+            fillColor: "#CB9F5B",
+            color: "#000000",
+            radius: 7,
+            weight:1,
+            fillOpacity: 1
+            })
+        }
+    }).addTo(map);
+
+// Add the NOAA NCDC sites
+var NCDCLayer = L.geoJSON( window.NCDC, {
+
+    pointToLayer: function (feature, latlng) {
+        return L.circleMarker(latlng, {
+            pane: "PointsPane",
+            fillColor: "#FFCCFF",
+            color: "#000000",
+            radius: 7,
+            weight:1,
+            fillOpacity: 1
+            })
+        }
+    });
 
 // Add the popups for the USGS sites
 USGSLayer.on("click",function(e) {
@@ -141,7 +181,7 @@ USGSLayer.on("click",function(e) {
                   "</br>HUC8: " + huc + 
                   "</br>Elevation: " + elev + 
                   "</br>POR: " + por + 
-                  "</br><a href = " + url + ">Website" + 
+                  '</br><a id="paramURL" href = ' + url + '>Website' +
                   '</a></p><button type="button" onclick="buttonPress()">Add Site</button>' + 
                   '<p hidden id="info" style="margin:0">USGS|'+id+'|'+name+'|Streamflow</p>';
     var pop = L.popup().setLatLng(e.latlng).setContent(popHTML).addTo(map)
@@ -167,7 +207,7 @@ SNOTELLayer.on("click",function(e) {
                   "</br>HUC8: " + huc + 
                   "</br>Elevation: " + elev + 
                   "</br>POR: " + por + 
-                  "</br><a href = " + url + ">Website" + 
+                  '</br><a id="paramURL" href = ' + url + '>Website' +
                   '</a></p>' + 
                   '<select id="param"><option value="SWE">SWE (in)</option><option value="Precip">Precip (in)</option>' + option3 + '</select>' +
                   '<button type="button" onclick="buttonPress()">Add Site</button>' + 
@@ -196,21 +236,95 @@ SNOWCOURSELayer.on("click",function(e) {
 });
 
 // Add the popups for the USBR sites
-USBR_POINTSLayer.on("click",function(e) {
+USBR_POINTS_RESLayer.on("click",function(e) {
     var id = e.layer.feature.properties.USBR_ID;
     var name = e.layer.feature.properties.NAME;
     var elev = e.layer.feature.properties.MeanElevation;
     var huc = e.layer.feature.properties.HUC_CODE;
     var region = e.layer.feature.properties.REGION;
     var pcode = e.layer.feature.properties.PCODE;
-    var popHTML = "<strong>USBR Reservoir Site</strong>" + 
+    var url = "https://www.usbr.gov/pn-bin/inventory.pl?ui=true&interval=daily&site="+id;
+    if (region == "GP") {
+        url = "https://www.usbr.gov/gp/hydromet/"+id+".html";
+    }
+    var popHTML = "<strong>USBR Reservoir Site</strong>" +
                   "<p>ID: " + id +
                   "</br>Name: " + name +
                   "</br>Elevation: " + Math.round(elev) +
                   "</br>HUC: " + huc +
                   "</br>Region: " + region +
-                  '</p><button type="button" onclick="buttonPress()">Add Site</button>' + 
+                  '</br><a id="paramURL" href = ' + url + '>Website</a>' +
+                  '</p><button type="button" onclick="buttonPress()">Add Site</button>' +
                   '<p hidden id="info" style="margin:0">USBR|'+id+'|'+name+'|Inflow|' + region + '|' + pcode + '</p>';
+    var pop = L.popup().setLatLng(e.latlng).setContent(popHTML).addTo(map)
+
+});
+
+// Add the popups for the USBR AGRIMET sites
+USBR_POINTS_AGMETLayer.on("click",function(e) {
+    var id = e.layer.feature.properties.USBR_ID;
+    var name = e.layer.feature.properties.NAME;
+    var elev = e.layer.feature.properties.MeanElevation;
+    var huc = e.layer.feature.properties.HUC_CODE;
+    var region = e.layer.feature.properties.REGION;
+    var pcode = e.layer.feature.properties.HASPRECIP;
+    if (pcode == "TRUE") {
+        option3 = '<option value="PP">Precipitation (in)</option>'
+    } else {
+        option3 = "";
+    };
+    var url = "https://www.usbr.gov/pn-bin/inventory.pl?ui=true&interval=daily&site="+id;
+    var popHTML = "<strong>USBR Agrimet Site</strong>" +
+                  "<p>ID: " + id +
+                  "</br>Name: " + name +
+                  "</br>Elevation: " + Math.round(elev) +
+                  //"</br>HUC: " + huc +
+                  //"</br>Region: " + region +
+                  '</br><a id="paramURL" href = ' + url + '>Website</a>' +
+                  '</p><select id="paramAgmet"><option value="MN">Minimum Temperatures (degF)</option><option value="MM">Average Temperatures (degF)</option><option value="MX">Maximum Temperatures (degF)</option>' + option3 + '</select>' +
+                  '<button type="button" onclick="buttonPress()">Add Site</button>' +
+                  '<p hidden id="info" style="margin:0">AGMET|'+id+'|'+name+'|Weather|' + region + '|' + pcode + '</p>';
+    var pop = L.popup().setLatLng(e.latlng).setContent(popHTML).addTo(map)
+
+});
+
+// Add the popups for the NOAA NCDC sites
+NCDCLayer.on("click",function(e) {
+    var id = e.layer.feature.properties.ID;
+    var name = e.layer.feature.properties.NAME;
+    var elev = e.layer.feature.properties.ELEV;
+    var state = e.layer.feature.properties.STATE;
+    var dtypes = e.layer.feature.properties.DATATYPES.split(",");
+    //alert(dtypes);
+    var dtypeDropDown = ''
+    if (dtypes.indexOf('PRCP') >= 0) {
+        dtypeDropDown = dtypeDropDown + "<option value='PRCP'>PRCP - Precipitation</option>";
+    }
+    if (dtypes.indexOf('WESD') >= 0) {
+        dtypeDropDown = dtypeDropDown + "<option value='WESD'>WESD - SWE</option>";
+    }
+    if (dtypes.indexOf('TMIN') >= 0) {
+        dtypeDropDown = dtypeDropDown + "<option value='TMIN'>TMIN - Min Temps</option>";
+    }
+    if (dtypes.indexOf('TAVG') >= 0) {
+        dtypeDropDown = dtypeDropDown + "<option value='TAVG'>TAVG - Avg Temps</option>";
+    }
+    if (dtypes.indexOf('TMAX') >= 0) {
+        dtypeDropDown = dtypeDropDown + "<option value='TMAX'>TMAX - Max Temps</option>";
+    }
+    var url = "https://www.ncdc.noaa.gov/cdo-web/datasets/GHCND/stations/GHCND:"+id+"/detail";
+    var popHTML = "<strong>NOAA NCDC Meteorologic Site</strong>" +
+                  "<p>ID: " + id +
+                  "</br>Name: " + name +
+                  "</br>Elevation: " + Math.round(elev) +
+                  "</br>State: " + state +
+                  //"</br>Region: " + region +
+                  '</br><a id="paramURL" href = ' + url + '>Click here</a> to figure out what data is available for this site before selecting from the drop-down box below' +
+                  //'</p><select id="paramNcdc"><option value="TMIN">TMIN - Minimum Temperatures</option><option value="TAVG">TAVG - Average Temperatures</option><option value="TMAX">TMAX - Maximum Temperatures</option>' +
+                  //'<option value="PRCP">PRCP - Precipitation</option><option value="WESD">WESD - SWE</option></select>' +
+                  '</p><select id="paramNcdc">' + dtypeDropDown + '</select>' +
+                  '<button type="button" onclick="buttonPress()">Add Site</button>' +
+                  '<p hidden id="info" style="margin:0">NCDC|'+id+'|'+name+'|Weather|' + state + '</p>';
     var pop = L.popup().setLatLng(e.latlng).setContent(popHTML).addTo(map)
 
 });
@@ -251,16 +365,25 @@ function clickHUC(e) {
     var coordinates = getCenter(e.target.feature);
     var name = e.target.feature.properties.NAME;
     var num = e.target.feature.properties.HUC8;
-    var popHTML = "<strong>HUC8: " + num + "</strong><p>Name: " + name + "</p>"
+    var popHTML = "<strong>Hydrologic Unit</strong>"+
+                  "<p>Name: " + name +
+                  "</br>HUC8: " + num +
+                  "</p>Select dataset to add: </br>" +
+                  '<select id="paramHUC"><option value="nrcc">NRCC Temperatures and Precipitation</option><option value="prism">PRISM Temperatures and Precipitation</option></select>' +
+                  '<button type="button" onclick="buttonPress()">Add Site</button>' +
+                  '<p hidden id="info" style="margin:0">HUC|'+num+'|'+name+'</p>';
+
     var pop = L.popup().setLatLng(coordinates).setContent(popHTML).addTo(map);
 };
 
 var dataLayers = {
     "Watersheds":HUCLayer,
-    "Streamgages":USGSLayer,
-    "SNOTEL Sites":SNOTELLayer,
-    "Snow Course" :SNOWCOURSELayer,
-    "Reservoirs":USBR_POINTSLayer
+    "USGS Streamgages":USGSLayer,
+    "NRCS SNOTEL Sites":SNOTELLayer,
+    "NRCS Snow Course" :SNOWCOURSELayer,
+    "USBR Natural Flow":USBR_POINTS_RESLayer,
+    "USBR Agrimet":USBR_POINTS_AGMETLayer,
+    "NOAA Sites":NCDCLayer
 }
 
 // Add a basemap and layer selector
@@ -290,19 +413,51 @@ function buttonPress() {
         var num = infoList[1];
         var name = infoList[2];
         var param = document.getElementById('param').value;
-        console.log('StationSelect|'+name+'|'+num+'|'+type+'|'+param);
+        var url = document.getElementById('paramURL').href;
+        console.log('StationSelect|'+name+'|'+num+'|'+type+'|'+param+'|'+url);
     } else if (type == 'USBR') {
         var num = infoList[1];
         var name = infoList[2];
         var param = infoList[3];
         var region = infoList[4];
         var pcode = infoList[5];
-        console.log('StationSelect|'+name+'|'+num+'|'+type+'|'+param+'|'+region+'|'+pcode);
+        var url = document.getElementById('paramURL').href;
+        console.log('StationSelect|'+name+'|'+num+'|'+type+'|'+param+'|'+region+'|'+pcode+'|'+url);
+    } else if (type == 'AGMET') {
+        var num = infoList[1];
+        var name = infoList[2];
+        //var type = infoList[3];
+        var region = infoList[4];
+        var pcode = infoList[5];
+        var param = document.getElementById('paramAgmet').value;
+        var url = document.getElementById('paramURL').href;
+        console.log('StationSelect|'+name+'|'+num+'|'+type+'|Weather|'+region+'|'+param+'|'+url);
+    } else if (type == 'NCDC') {
+        var num = infoList[1];
+        var name = infoList[2];
+        //var type = infoList[3];
+        var region = infoList[4];
+        var pcode = infoList[5];
+        var param = document.getElementById('paramNcdc').value;
+        var url = document.getElementById('paramURL').href;
+        console.log('StationSelect|'+name+'|'+num+'|'+type+'|Weather|'+region+'|'+param+'|'+url);
+    } else if (type == 'HUC') {
+        var num = infoList[1];
+        var name = infoList[2];
+        var param = document.getElementById('paramHUC').value;
+        console.log(param+'|'+num+'|'+name);
+    } else if (type == 'USGS') {
+        var num = infoList[1];
+        var name = infoList[2];
+        var param = infoList[3];
+        var url = document.getElementById('paramURL').href;
+        console.log('StationSelect|'+name+'|'+num+'|'+type+'|'+param+'|'+url);
     } else {
         var num = infoList[1];
         var name = infoList[2];
-        var param = infoList[3]
-        console.log('StationSelect|'+name+'|'+num+'|'+type+'|'+param);
+        var param = infoList[3];
+        //var url = document.getElementById('paramURL').href;
+        console.log('StationSelect|'+name+'|'+num+'|'+type+'|'+param+'|'+url);
     };
     
 };

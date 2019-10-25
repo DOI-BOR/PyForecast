@@ -30,7 +30,6 @@ Disclaimer:         This script, and the overall PyForecast Application have not
 """
 
 if __name__ == '__main__':
-
     # Import libraries and the application
     import sys
     import time
@@ -38,6 +37,8 @@ if __name__ == '__main__':
     import Resources.application as application
     import argparse
     from datetime import datetime
+    import multiprocessing
+    multiprocessing.freeze_support()
 
     # Begin loading the application
     app = QtWidgets.QApplication(sys.argv)

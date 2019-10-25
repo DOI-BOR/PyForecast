@@ -1,9 +1,11 @@
 # This file contains the version information for this release of
 # PyForecast. Date must be formatted as "yyyy-mm-dd" 
 
-Version Number: 2.0
-Beta Version: True
-Release Date: 2018-11-13
-Support Contact Name: Kevin Foley
-Support Contact Email: kfoley@usbr.gov
-Support Contact Phone: 406-247-7759
+Version Number | 2.0
+Updates | https://github.com/usbr/PyForecast/releases
+Wiki | https://github.com/usbr/PyForecast/wiki
+Beta Version | True
+Release Date | 2018-11-13
+Support Contact Name | Kevin Foley, Jon Rocha
+Support Contact Email | kfoley@usbr.gov, jrocha@usbr.gov
+Support Contact Phone | 406-247-7759, 208-378-6213

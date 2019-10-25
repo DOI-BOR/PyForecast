@@ -37,6 +37,7 @@ import ctypes
 import subprocess
 
 from Resources.GIS import CLIMATE_DIVISIONS
+from Resources.Functions.miscFunctions import monthCheck
 
 #///////////////////////// SET COMMON PROPERTIES ////////////////////////////////////////
 #//     Here we set the common properties that will be used across classes and objects.
@@ -390,7 +391,10 @@ class SummTreeView(QtWidgets.QWidget):
 class CustomTreeView(QtWidgets.QTreeView):
 
     deletedItem = QtCore.pyqtSignal(list)
+    forcedItem = QtCore.pyqtSignal(list)
+    dataAnalysisItem = QtCore.pyqtSignal(list)
     droppedPredictor = QtCore.pyqtSignal(list)
+    droppedStation = QtCore.pyqtSignal(list)
     # Initialize a QTreeView and start with a blank tree
     def __init__(self, parent=None, dragFrom = False, dropTo = False, menuFunctions=['']):
 
@@ -399,7 +403,6 @@ class CustomTreeView(QtWidgets.QTreeView):
 
         self.setAlternatingRowColors(True)
         self.setHeaderHidden(True)
-
 
         if dragFrom:
             self.setDragEnabled(True)
@@ -421,6 +424,16 @@ class CustomTreeView(QtWidgets.QTreeView):
             self.delAction = QtWidgets.QAction("Delete")
             self.addAction(self.delAction)
             self.delAction.triggered.connect(self.deleteRow)
+
+        if 'FORCE' in menuFunctions:
+            self.forceAction = QtWidgets.QAction("(Un)Force")
+            self.addAction(self.forceAction)
+            self.forceAction.triggered.connect(self.forceRow)
+
+        if 'DANALYSIS' in menuFunctions:
+            self.dataAnalysisAction = QtWidgets.QAction("Data Analysis")
+            self.addAction(self.dataAnalysisAction)
+            self.dataAnalysisAction.triggered.connect(self.dataAnalysis)
         
         if "SENDDENS" in menuFunctions:
             self.sendAction = QtWidgets.QAction("Send to Density Tab")
@@ -432,55 +445,113 @@ class CustomTreeView(QtWidgets.QTreeView):
 
         # Set to be read-only
         self.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-    
+
+
     def dropEvent(self, event):
 
         prdID = -1
         pos = event.pos()
+        predList = []
 
         # Get the item's text
         if event.mimeData().hasFormat('application/x-qabstractitemmodeldatalist'):
            mod = QtGui.QStandardItemModel()
            mod.dropMimeData(event.mimeData(),QtCore.Qt.CopyAction, 0, 0, QtCore.QModelIndex())
            item = mod.item(0,0)
-           itemText = item.text()
         else:
             print('wrongMimeType')
             event.ignore()
             return
-        
-        # Ensure that the item is a valid predictor
-        if item.hasChildren():
 
+
+        # Make sure that the accepting node is a predictorPool and the dropped node is either a station or a predictor
+        itemNode = item.text()
+        itemNodeKeys = itemNode.replace('-',' ').split(' ')
+        dropIndex = self.indexAt(pos)
+        dropItem = self.model.itemFromIndex(dropIndex)
+        dropItemNode = dropItem.text()
+        dropParent = dropItem.parent()
+        if dropItemNode != 'PredictorPool' or ('prdID' in itemNode) or ('Data' in itemNode) or ('Unit' in itemNode): #filter out non-station/predictor dropped nodes
+            QtWidgets.QMessageBox.question(self, 'Error',
+                                           'Invalid Operation. Only drag-and-drop top-level station/predictor nodes on the "PredictorPool" node...',
+                                           QtWidgets.QMessageBox.Ok)
+            event.ignore()
+            return
+        else:
+            itemNodeCheck = monthCheck(itemNodeKeys[len(itemNodeKeys) - 2])
+            isStation = False
+            if itemNodeCheck == -1:
+                isStation = True
+            dropParentNode = dropParent.text()
+            dropNodeKeys = dropParentNode.replace('-', ' ').split(' ')
+            # Assumes users want to add the chunked predictors whose ending month is the previous month and
+            #   whose ending day is within 5 days of the end day with respect to the forecasting equation
+            # Example: If the equation is for a mid-month forecastfor FEB-15, then add all predictors subsets
+            #   under the station that end in JAN-31 and/or FEB-14. Predictor chunks such as JAN01-JAN31,
+            #   JAN15-JAN31, OCT01-JAN31, FEB-01-FEB14, OCT01-FEB14.
+            acceptableDay = dropNodeKeys[1]
+            isMidMonth = False
+            acceptableMonth = monthCheck(dropNodeKeys[0]) - 1
+            if '01' not in acceptableDay:
+                isMidMonth = True
+                acceptableMonth = monthCheck(dropNodeKeys[0])
+
+            if acceptableMonth == 0: #catch JAN - set DEC
+                acceptableMonth = 12
+
+        # Loop through the child nodes of the dropped node
+        if item.hasChildren():
             numChildren = item.rowCount()
-            print('item has {0} children'.format(numChildren))
-            for i in range(numChildren):
-                child = item.child(i)
-                if 'prdID: ' in child.text():
-                    prdID = child.text()[7:]
-                    break
-        
-            if prdID == -1:
-                print('no prdid')
-                event.ignore()
-                return
-        
+            # Dropped node is a station so loop through the predictors
+            if isStation:
+                print('station has {0} predictors'.format(numChildren))
+                stations = item
+                for i in range(numChildren):
+                    pred = stations.child(i)
+                    predNode = pred.text()
+                    predNodeKeys = predNode.replace('-', ' ').split(' ')
+                    predNodeEndMonth = monthCheck(predNodeKeys[len(predNodeKeys) - 2])
+                    predNodeEndDay = int(predNodeKeys[len(predNodeKeys) - 1])
+                    if predNodeEndMonth == acceptableMonth and ((isMidMonth == True and predNodeEndDay < 15) or (isMidMonth == False and predNodeEndDay > 15)): #check if predictor chunk is one we want to add and if so, add
+                        predChildren = pred.rowCount()
+                        for j in range(predChildren):
+                            child = pred.child(j)
+                            if 'prdID: ' in child.text():
+                                prdID = child.text()[7:]
+                                predList.append(prdID)
+                                break
+                        if prdID == -1:
+                            print('Predictor {0} - No Predictor ID'.format(predNode))
+            # Dropped node is a predictor so add the predictor
+            else:
+                print('predictor has {0} children'.format(numChildren))
+                for i in range(numChildren):
+                    child = item.child(i)
+                    if 'prdID: ' in child.text():
+                        prdID = child.text()[7:]
+                        break
+                if prdID == -1:
+                    print('no prdid')
+                    event.ignore()
+                    return
         else:
             print('no children')
             event.ignore()
             return
 
-        # Make sure that the event's pos is OK
-        dropIndex = self.indexAt(pos)
-        dropItem = self.model.itemFromIndex(dropIndex)
-        if dropItem.text() == 'PredictorPool':
-            equation = dropItem.parent().text()
-            self.lastIndex = dropIndex        
+        # Prep outputs and emit processing command
+        equation = dropParentNode
+        self.lastIndex = dropIndex
+        if len(predList) > 0: #dropped node is a station
+            predListOut = []
+            for i in range(len(predList)):
+                predListOut.append([predList[i], equation])
+            self.droppedStation.emit(predListOut)
+        else: #dropped node is a predictor
             self.droppedPredictor.emit([prdID, equation])
-            event.accept()
-        else:
-            event.ignore()
-            return
+
+        event.accept()
+        return
 
 
     def deleteRow(self):
@@ -500,12 +571,42 @@ class CustomTreeView(QtWidgets.QTreeView):
             return
 
 
+    def forceRow(self):
+        print('forceRow')
+        currentIndex = self.currentIndex()
+        item = self.model.itemFromIndex(currentIndex)
+        parent = item.parent().parent()
+        text = item.text()
+        try:
+            text = text.split(':')[0].strip(' ')
+            test = int(text)
+            if len(text) == 5:
+                self.forcedItem.emit([text, parent.text()])
+        except Exception as e:
+            print(e)
+            return
+
+
+    def dataAnalysis(self):
+        print('dataAnalysis')
+        currentIndex = self.currentIndex()
+        item = self.model.itemFromIndex(currentIndex)
+        parent = item.parent()#.parent()
+        text = item.text()
+        try:
+            if parent == None:
+                self.dataAnalysisItem.emit([text, parent])
+        except Exception as e:
+            print(e)
+            return
+
+
     def addToTree(self, dict_, levels_in_max = None, exclude_keys=[]):
         self.model = QtGui.QStandardItemModel()
         self.addDictToModel(self.model, dict_, initial = True, levels_in_max = levels_in_max, levels_in = 1, exclude_keys = exclude_keys)
         self.setModel(self.model) 
 
-    def addDictToModel(self, model, dict_, initial=True, levels_in_max = None, levels_in = 1, exclude_keys = []):
+    def addDictToModel(self, model, dict_, initial=True, levels_in_max = None, levels_in = 1, exclude_keys = [], forcedPredIds = []):
        
         # Check for recursion
         if initial == True:
@@ -530,7 +631,11 @@ class CustomTreeView(QtWidgets.QTreeView):
                     item = QtGui.QStandardItem(str(key))
                     parentItem.appendRow(item)
                     if levels_in <= levels_in_max:
-                        self.addDictToModel(item, values, initial=False, levels_in_max=levels_in_max, levels_in=levels_in+1,exclude_keys = exclude_keys)
+
+                        if key == 'PredictorPool':
+                            self.addDictToModel(item, values, initial=False, levels_in_max=levels_in_max, levels_in=levels_in + 1, exclude_keys=exclude_keys, forcedPredIds = dict_['ForcedPredictors'])
+                        else:
+                            self.addDictToModel(item, values, initial=False, levels_in_max=levels_in_max, levels_in=levels_in+1,exclude_keys = exclude_keys)
 
                 elif isinstance(values, list):
                     item = QtGui.QStandardItem(str(key))
@@ -540,7 +645,11 @@ class CustomTreeView(QtWidgets.QTreeView):
                 else:
                     if isinstance(key, datetime):
                         key = datetime.strftime(key, '%Y')
-                    item = QtGui.QStandardItem(str(key) + ': ' + str(values))
+                    if key in forcedPredIds:
+                        item = QtGui.QStandardItem(str(key) + ': ' + u'\u24BB' + str(values))
+                    else:
+                        item = QtGui.QStandardItem(str(key) + ': ' + str(values))
+
                     parentItem.appendRow(item)
         except:
             print('\nERROR:')
@@ -1015,7 +1124,7 @@ class StationInfoPane(QtWidgets.QWidget):
         self.stationHeader.setMaximumHeight(125)
 
         # Add a table to display selected stations
-        self.stationTable = CustomTableView(self, rowLock = True, cols = 5, rows = 0, headers = ['PYID','Type','ID','Name','Parameter'], menuFunctions=['COPY','OPEN','DELETEROW'])
+        self.stationTable = CustomTableView(self, rowLock = True, cols = 5, rows = 0, headers = ['Name','Parameter','Type','ID','URL'], menuFunctions=['COPY','OPEN','DELETEROW'])
 
         # Add a section to add other datasets
         self.otherDataLayout = QtWidgets.QGridLayout()
@@ -1023,36 +1132,36 @@ class StationInfoPane(QtWidgets.QWidget):
         self.otherDataLayout.addWidget(self.stationLabel, 0, 0, 1, 4)
 
         # NRCC dataset layout
-        self.nrccLabel = QtWidgets.QLabel('NRCC')
-        self.nrccLabel.setMinimumWidth(100)
-        self.nrccLabel.setMaximumWidth(100)
-        self.nrccInfoButton = QtWidgets.QLabel()
-        self.nrccInfoButton.setPixmap(QtGui.QPixmap(os.path.abspath("Resources/Fonts_Icons_Images/infoHover.png")).scaled(30,30, QtCore.Qt.KeepAspectRatio))
-        self.nrccInfoButton.setScaledContents(True)
-        self.nrccInfoButton.setToolTip('<html><head/><body><p>NRCC gridded precipitation and temperature data, averaged by watershed.</p></body></html>')
-        self.nrccInput = QtWidgets.QLineEdit()
-        self.nrccInput.setPlaceholderText("Enter HUC8:")
+        #self.nrccLabel = QtWidgets.QLabel('NRCC')
+        #self.nrccLabel.setMinimumWidth(100)
+        #self.nrccLabel.setMaximumWidth(100)
+        #self.nrccInfoButton = QtWidgets.QLabel()
+        #self.nrccInfoButton.setPixmap(QtGui.QPixmap(os.path.abspath("Resources/Fonts_Icons_Images/infoHover.png")).scaled(30,30, QtCore.Qt.KeepAspectRatio))
+        #self.nrccInfoButton.setScaledContents(True)
+        #self.nrccInfoButton.setToolTip('<html><head/><body><p>NRCC gridded precipitation and temperature data, averaged by watershed.</p></body></html>')
+        #self.nrccInput = QtWidgets.QLineEdit()
+        #self.nrccInput.setPlaceholderText("Enter HUC8:")
         self.nrccButton = QtWidgets.QPushButton('Add')
-        self.otherDataLayout.addWidget(self.nrccLabel, 1, 0, 1, 1)
-        self.otherDataLayout.addWidget(self.nrccInfoButton, 1, 1, 1, 1)
-        self.otherDataLayout.addWidget(self.nrccInput, 1, 2, 1, 1)
-        self.otherDataLayout.addWidget(self.nrccButton, 1, 3, 1, 1)
+        #self.otherDataLayout.addWidget(self.nrccLabel, 1, 0, 1, 1)
+        #self.otherDataLayout.addWidget(self.nrccInfoButton, 1, 1, 1, 1)
+        #self.otherDataLayout.addWidget(self.nrccInput, 1, 2, 1, 1)
+        #self.otherDataLayout.addWidget(self.nrccButton, 1, 3, 1, 1)
 
         # Prism dataset layout
-        self.prismLabel = QtWidgets.QLabel('PRISM')
-        self.prismLabel.setMinimumWidth(100)
-        self.prismLabel.setMaximumWidth(100)
-        self.prismInfoButton = QtWidgets.QLabel()
-        self.prismInfoButton.setPixmap(QtGui.QPixmap(os.path.abspath("Resources/Fonts_Icons_Images/infoHover.png")).scaled(30,30, QtCore.Qt.KeepAspectRatio))
-        self.prismInfoButton.setScaledContents(True)
-        self.prismInfoButton.setToolTip('<html><head/><body><p>PRISM gridded precipitation and temperature data, averaged by watershed.</p></body></html>')
-        self.prismInput = QtWidgets.QLineEdit()
-        self.prismInput.setPlaceholderText("Enter HUC8:")
+        #self.prismLabel = QtWidgets.QLabel('PRISM')
+        #self.prismLabel.setMinimumWidth(100)
+        #self.prismLabel.setMaximumWidth(100)
+        #self.prismInfoButton = QtWidgets.QLabel()
+        #self.prismInfoButton.setPixmap(QtGui.QPixmap(os.path.abspath("Resources/Fonts_Icons_Images/infoHover.png")).scaled(30,30, QtCore.Qt.KeepAspectRatio))
+        #self.prismInfoButton.setScaledContents(True)
+        #self.prismInfoButton.setToolTip('<html><head/><body><p>PRISM gridded precipitation and temperature data, averaged by watershed.</p></body></html>')
+        #self.prismInput = QtWidgets.QLineEdit()
+        #self.prismInput.setPlaceholderText("Enter HUC8:")
         self.prismButton = QtWidgets.QPushButton('Add')
-        self.otherDataLayout.addWidget(self.prismLabel, 2, 0, 1, 1)
-        self.otherDataLayout.addWidget(self.prismInfoButton, 2, 1, 1, 1)
-        self.otherDataLayout.addWidget(self.prismInput, 2, 2, 1, 1)
-        self.otherDataLayout.addWidget(self.prismButton, 2, 3, 1, 1)
+        #self.otherDataLayout.addWidget(self.prismLabel, 2, 0, 1, 1)
+        #self.otherDataLayout.addWidget(self.prismInfoButton, 2, 1, 1, 1)
+        #self.otherDataLayout.addWidget(self.prismInput, 2, 2, 1, 1)
+        #self.otherDataLayout.addWidget(self.prismButton, 2, 3, 1, 1)
 
         # PDSI dataset 
         self.pdsiLabel = QtWidgets.QLabel("PDSI")
@@ -1060,7 +1169,6 @@ class StationInfoPane(QtWidgets.QWidget):
         self.pdsiLabel.setMaximumWidth(100)
         self.pdsiInfoButton = QtWidgets.QLabel()
         self.pdsiInfoButton.setPixmap(QtGui.QPixmap(os.path.abspath("Resources/Fonts_Icons_Images/infoHover.png")).scaled(30,30, QtCore.Qt.KeepAspectRatio))
-        self.pdsiInfoButton.setScaledContents(True)
         self.pdsiInfoButton.setToolTip('<html><head/><body><p>Palmer Drought Severity Index by Climate Division</p></body></html>')
         self.pdsiInput = CustomQComboBox(self.formScroll)
         self.pdsiInput.addItems(list(CLIMATE_DIVISIONS.divisions.keys()))
@@ -1080,9 +1188,12 @@ class StationInfoPane(QtWidgets.QWidget):
         self.ensoInput = CustomQComboBox(self.formScroll)
         self.ensoInput.addItem('Nino3.4 SST')
         self.ensoInput.addItem('Nino3.4 SST Anomaly')
-        self.ensoInput.addItem('PNA Teleconnection')
-        self.ensoInput.addItem('AMO Teleconnection')
-        self.ensoInput.addItem("PDO Teleconnection")
+        self.ensoInput.addItem('Pacific-North America Index')
+        self.ensoInput.addItem('Arctic Multi-Decadal Oscillation')
+        self.ensoInput.addItem('Pacific Decadal Oscillation')
+        self.ensoInput.addItem('Arctic Oscillation')
+        self.ensoInput.addItem('Southern Oscillation')
+        self.ensoInput.addItem('Multivariate ENSO')
         #self.ensoInput.addItem('Mauna Loa CO2')
         self.ensoButton = QtWidgets.QPushButton('Add')
         self.otherDataLayout.addWidget(self.ensoLabel, 4, 0, 1, 1)
@@ -1180,9 +1291,9 @@ class DataOptionsPane(QtWidgets.QWidget):
         self.porT2.setVisible(False)
         self.optionsGrid.addWidget(self.porLabel, 0, 0, 1, 1)
         self.optionsGrid.addWidget(self.porInfo, 0, 1, 1, 1)
-        self.optionsGrid.addWidget(self.porYes, 0, 2, 1, 1)
-        self.optionsGrid.addWidget(self.porNo, 0, 3, 1, 1)
-        self.optionsGrid.addWidget(self.porInput, 1, 2, 1, 2)
+        self.optionsGrid.addWidget(self.porNo, 0, 2, 1, 1)
+        self.optionsGrid.addWidget(self.porYes, 0, 3, 1, 1)
+        self.optionsGrid.addWidget(self.porInput, 1, 3, 1, 2)
         self.optionsGrid.addWidget(self.porT1, 1, 2, 1, 1)
         self.optionsGrid.addWidget(self.porT2, 1, 3, 1, 1)
 
@@ -1264,15 +1375,28 @@ class DataOptionsPane(QtWidgets.QWidget):
         
 
         # View missing data button
-        self.missingLabel = QtWidgets.QLabel("View Missing")
-        self.missingInfo = QtWidgets.QLabel() 
-        self.missingInfo.setPixmap(QtGui.QPixmap(os.path.abspath("Resources/Fonts_Icons_Images/infoHover.png")).scaled(30,30, QtCore.Qt.KeepAspectRatio))
-        self.missingInfo.setScaledContents(True)
-        self.missingInfo.setToolTip('<html><head/><body><p>View the serial completeness of your dataset.</p></body></html>')
-        self.missingButton = QtWidgets.QPushButton("View")
-        self.optionsGrid.addWidget(self.missingLabel, 9, 0, 1, 1)
-        self.optionsGrid.addWidget(self.missingInfo, 9, 1, 1, 1)
-        self.optionsGrid.addWidget(self.missingButton, 9, 2, 1, 2)
+        #self.missingLabel = QtWidgets.QLabel("View Missing")
+        #self.missingInfo = QtWidgets.QLabel()
+        #self.missingInfo.setPixmap(QtGui.QPixmap(os.path.abspath("Resources/Fonts_Icons_Images/infoHover.png")).scaled(30,30, QtCore.Qt.KeepAspectRatio))
+        #self.missingInfo.setScaledContents(True)
+        #self.missingInfo.setToolTip('<html><head/><body><p>View the serial completeness of your dataset.</p></body></html>')
+        #self.missingButton = QtWidgets.QPushButton("View")
+        #self.optionsGrid.addWidget(self.missingLabel, 9, 0, 1, 1)
+        #self.optionsGrid.addWidget(self.missingInfo, 9, 1, 1, 1)
+        #self.optionsGrid.addWidget(self.missingButton, 9, 2, 1, 2)
+
+
+        # View Data Analysis UI button
+        self.matrixLabel = QtWidgets.QLabel("Data Analysis")
+        self.matrixInfo = QtWidgets.QLabel()
+        self.matrixInfo.setPixmap(QtGui.QPixmap(os.path.abspath("Resources/Fonts_Icons_Images/infoHover.png")).scaled(30,30, QtCore.Qt.KeepAspectRatio))
+        self.matrixInfo.setScaledContents(True)
+        self.matrixInfo.setToolTip('<html><head/><body><p>View the dataset correlations using a matrix plot.</p></body></html>')
+        self.matrixButton = QtWidgets.QPushButton("View")
+        self.optionsGrid.addWidget(self.matrixLabel, 9, 0, 1, 1)
+        self.optionsGrid.addWidget(self.matrixInfo, 9, 1, 1, 1)
+        self.optionsGrid.addWidget(self.matrixButton, 9, 2, 1, 2)
+
 
         spacer = QtWidgets.QWidget()
         spacer.setMaximumHeight(1200)
@@ -1334,14 +1458,14 @@ class FcstOptionsPane(QtWidgets.QWidget):
         self.periodLabel = QtWidgets.QLabel("Forecast Period")
         self.periodInfo = QtWidgets.QLabel() 
         self.periodInfo.setPixmap(QtGui.QPixmap(os.path.abspath("Resources/Fonts_Icons_Images/infoHover.png")).scaled(30,30, QtCore.Qt.KeepAspectRatio))
-        self.periodInfo.setToolTip('<html><head/><body><p>Set the inflow volumne period for your forecast (defaults to April - July)</p></body></html>')
+        self.periodInfo.setToolTip('<html><head/><body><p>Set the inflow volume period for your forecast (defaults to April - July)</p></body></html>')
         hlayout = QtWidgets.QHBoxLayout()
         hlayout.addWidget(self.periodInfo)
         hlayout.addWidget(self.periodLabel)
         hlayout.addSpacerItem(QtWidgets.QSpacerItem(400,40,QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum))
         self.gridLayout1.addLayout(hlayout, 0, 0, 1, 4)
         self.periodStartInput = CustomQComboBox(self.formScroll)
-        self.periodStartInput.addItems(['TEST','January','February','March','April','May','June','July','August','September','October','November','December'])
+        self.periodStartInput.addItems(['January','February','March','April','May','June','July','August','September','October','November','December'])
         self.periodStartInput.setCurrentIndex(3)
         self.gridLayout1.addWidget(self.periodStartInput, 1, 0, 1, 2)
         self.periodEndInput = CustomQComboBox(self.formScroll)
@@ -1443,9 +1567,11 @@ class FcstOptionsPane(QtWidgets.QWidget):
         self.gridLayout1.addWidget(hline, 16, 0, 1, 4)
         self.updateButton = QtWidgets.QPushButton("Update Predictors")
         self.gridLayout1.addWidget(self.updateButton, 17, 0, 1, 4)
-
-
-       
+        self.progressBar = QtWidgets.QProgressBar()
+        self.progressBar.setValue(0)
+        self.gridLayout1.addWidget(self.progressBar, 18, 0, 1, 4)
+        self.progressLabel = QtWidgets.QLabel(" ")
+        self.gridLayout1.addWidget(self.progressLabel, 19, 0, 1, 4)
 
         # Build the widget
         self.scroll = QtWidgets.QScrollArea()
@@ -1501,7 +1627,7 @@ class FcstOptionsTrees(QtWidgets.QWidget):
         hlayout.addWidget(self.tree2Label)
         hlayout.addSpacerItem(QtWidgets.QSpacerItem(400,40,QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum))
         self.tree2Layout.addLayout(hlayout)
-        self.tree2 = CustomTreeView(self, dragFrom=True, dropTo=True, menuFunctions=['DELETE'])
+        self.tree2 = CustomTreeView(self, dragFrom=True, dropTo=True, menuFunctions=['DELETE','FORCE','DANALYSIS'])
         self.tree2.setFrameStyle(QtWidgets.QFrame.NoFrame)
         self.tree2Layout.addWidget(self.tree2)
 
@@ -1645,7 +1771,7 @@ class StandardRegressionTab(QtWidgets.QWidget):
         hlayout.addSpacerItem(QtWidgets.QSpacerItem(400,40,QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum))
         self.layout.addLayout(hlayout)
         self.featSelInput = CustomQComboBox(self.formScroll)
-        self.featSelInput.addItems(["Sequential Floating Forward Selection", "Sequential Floating Backwards Selection"])#["Forward Selection","Backward Selection",["Sequential Floating Forward Selection"],"Floating Backward"])
+        self.featSelInput.addItems(["Sequential Floating Forward Selection", "Sequential Floating Backwards Selection", "Brute Force"])#["Forward Selection","Backward Selection",["Sequential Floating Forward Selection"],"Floating Backward"])
         self.layout.addWidget(self.featSelInput)
         self.numModelsLabel = QtWidgets.QLabel("Number of Models")
         self.numModelsInfo = QtWidgets.QLabel() 
@@ -1682,7 +1808,7 @@ class StandardRegressionTab(QtWidgets.QWidget):
         hlayout.addSpacerItem(QtWidgets.QSpacerItem(400,40,QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum))
         self.layout.addLayout(hlayout)
         self.scoreInput = CustomQComboBox(self.formScroll)
-        self.scoreInput.addItems(["Cross Validated Adjusted R2","Root Mean Squared Prediction Error","Cross Validated Nash-Sutcliffe"])
+        self.scoreInput.addItems(["Cross Validated Adjusted R2","Root Mean Squared Prediction Error","Cross Validated Nash-Sutcliffe","Mean Absolute Error"])
         self.layout.addWidget(self.scoreInput)
 
         self.distLabel = QtWidgets.QLabel("Inflow Distribution")
@@ -1698,7 +1824,6 @@ class StandardRegressionTab(QtWidgets.QWidget):
         self.distInput.addItems(["Normal"])#, "Lognormal"])
         self.layout.addWidget(self.distInput)
 
-
         self.regrButton = QtWidgets.QPushButton("Run " + model)
         self.layout.addWidget(self.regrButton)
         self.regrProgress = QtWidgets.QProgressBar()
@@ -1713,9 +1838,12 @@ class StandardRegressionTab(QtWidgets.QWidget):
         hline.setFrameShadow(QtWidgets.QFrame.Plain)
         self.layout.addWidget(hline)
 
-        self.bestModelTable = CustomTableView(self, rowLock = True, colLock = False, cols =4, rows = 0, headers = ['prdIDs','CV Adjusted R2','RMSPE','CV NSE'], menuFunctions = ['SAVEFCST', 'REGSTAT'], readOnly = True, dragFrom=False)
+        self.bestModelTable = CustomTableView(self, rowLock = True, colLock = False, cols =5, rows = 0, headers = ['prdIDs','MAE','RMSE','CV Adjusted R2','CV NSE'], menuFunctions = ['SAVEFCST', 'REGSTAT'], readOnly = True, dragFrom=False)
         self.bestModelTable.setMinimumHeight(250)
         self.layout.addWidget(self.bestModelTable)
+
+        self.predAnlysButton = QtWidgets.QPushButton("Model Analysis")
+        self.layout.addWidget(self.predAnlysButton)
 
         self.scroll = QtWidgets.QScrollArea()
         self.scrollContent = QtWidgets.QWidget()
@@ -1977,9 +2105,12 @@ class UI_MainWindow(object):
         # Create a File Menu and add the File menu buttons
         self.fileMenu = self.menu.addMenu("File")
         self.newAction = QtWidgets.QAction('New Forecast', MainWindow)
+        self.newAction.setShortcut("Ctrl+N")
         self.saveAction = QtWidgets.QAction('Save Forecast', MainWindow)
+        self.saveAction.setShortcut("Ctrl+S")
         self.saveAsAction = QtWidgets.QAction('Save Forecast As...', MainWindow)
         self.openAction = QtWidgets.QAction('Open Forecast', MainWindow)
+        self.openAction.setShortcut("Ctrl+O")
         self.addLoaderAction = QtWidgets.QAction("Edit Dataloaders",MainWindow)
         self.setCustomDatetimeAction = QtWidgets.QAction('Set custom datetime', MainWindow)
         #self.blueThemeAction = QtWidgets.QAction("Blue / Gray")
@@ -2001,7 +2132,6 @@ class UI_MainWindow(object):
         self.fileMenu.addAction(self.setCustomDatetimeAction)
         self.fileMenu.addSeparator()
         self.fileMenu.addAction(self.exitAction)
-
         # Create an About Menu and add the About menu buttons
         self.aboutMenu = self.menu.addMenu("About")
         self.docAction = QtWidgets.QAction('Documentation', MainWindow)
@@ -2023,49 +2153,6 @@ class UI_MainWindow(object):
         self.fcstOptionsTab = QtWidgets.QWidget() # The container for the Forecast Options Tab
         self.regressionTab = QtWidgets.QWidget() # The container for the Regression Tab
         self.densityAnalysisTab = QtWidgets.QWidget() # The container for the Density Tab
-
-        #/////////// Set up the Summary Tab ////////////////////////////////////
-        #// The Summary tab had 3 main elements: The forecast selection tree,
-        #// the forecast information window, and the forecast plot window.
-
-        # Set up a layout for the tab
-        self.summaryTab.layout = QtWidgets.QHBoxLayout(self)
-        
-        # Add a horizontal splitter to divide the forecast selection pane from the plots
-        self.summaryTab.splitter1 = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
-        self.summaryTab.fcstSelectionPane = QtWidgets.QWidget()
-        self.summaryTab.fcstSelectionPane.layout = QtWidgets.QVBoxLayout()
-        self.summaryTab.fcstSelectionPane.header = QtWidgets.QTextEdit()
-        self.summaryTab.fcstSelectionPane.header.setHtml("""<div style="font-family:Trebuchet MS"><strong style="margin:0; font-size:20px">Select Forecast</strong></br>
-                                    <p style="margin:0; font-size:14px;">Use the list to select a forecast to view from this file.</p>
-                                    </div>""")
-        self.summaryTab.fcstSelectionPane.header.setReadOnly(True)
-        self.summaryTab.fcstSelectionPane.header.setFrameStyle(QtWidgets.QFrame.NoFrame)
-        self.summaryTab.fcstSelectionPane.header.setMaximumHeight(90)
-
-        self.summaryTab.fcstTree = CustomTreeView(self, menuFunctions=["GENCURRENT","DELETE"], dragFrom=False, dropTo=False)
-        self.summaryTab.fcstTree.setFrameStyle(QtWidgets.QFrame.NoFrame)
-        
-        self.summaryTab.fcstSelectionPane.layout.addWidget(self.summaryTab.fcstSelectionPane.header)
-        self.summaryTab.fcstSelectionPane.layout.addWidget(self.summaryTab.fcstTree)
-        self.summaryTab.fcstSelectionPane.setLayout(self.summaryTab.fcstSelectionPane.layout)
-
-        self.summaryTab.plots = PlotCanvas_3Plot(self)
-        self.summaryTab.splitter1.addWidget(self.summaryTab.fcstSelectionPane)
-        self.summaryTab.splitter1.addWidget(self.summaryTab.plots)
-
-        # Add a vertical splitter to dive the horizontal splitter from the forecast information pane
-        self.summaryTab.splitter2 = QtWidgets.QSplitter(QtCore.Qt.Vertical)
-        self.summaryTab.fcstInfoPane = FcstInfoPane(self)
-        self.summaryTab.splitter2.addWidget(self.summaryTab.splitter1)
-        self.summaryTab.splitter2.addWidget(self.summaryTab.fcstInfoPane)
-
-        # Lay out the tab
-        self.summaryTab.layout.addWidget(self.summaryTab.splitter2)
-        self.summaryTab.setLayout(self.summaryTab.layout)
-
-        # Add the tab to the tabWidget
-        self.tabWidget.addTab(self.summaryTab, "Summary")
 
         #///////////// Set up the Stations Tab /////////////////////////////////
         #// The Stations Tab is divided into 2 main elements: The webmap station selector,
@@ -2134,25 +2221,25 @@ class UI_MainWindow(object):
         
         self.fcstOptionsTab.layout = QtWidgets.QHBoxLayout()
 
-        # Add a verical spliiter to split the options pane from the correlations plot
-        self.fcstOptionsTab.splitter1 = QtWidgets.QSplitter(QtCore.Qt.Vertical)
-        self.fcstOptionsTab.optionsPane = FcstOptionsPane(self)
-        self.fcstOptionsTab.splitter1.addWidget(self.fcstOptionsTab.optionsPane)
-
-        # Add a horizontal splitter to split the table from splitter1
+        # Add a horizontal splitter to split the table from the plots
         self.fcstOptionsTab.splitter2 = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
-        self.fcstOptionsTab.splitter2.addWidget(self.fcstOptionsTab.splitter1)
         self.fcstOptionsTab.dualTreeView = FcstOptionsTrees(self)
         self.fcstOptionsTab.splitter2.addWidget(self.fcstOptionsTab.dualTreeView)
 
-        # Add a vertical splitter to split top widgets from plots
+        # Add a vertical splitter to split the tree from the plots - place tree in plots
         self.fcstOptionsTab.splitter3 = QtWidgets.QSplitter(QtCore.Qt.Vertical)
         self.fcstOptionsTab.plotsPane = plotsPane()
         self.fcstOptionsTab.splitter3.addWidget(self.fcstOptionsTab.splitter2)
         self.fcstOptionsTab.splitter3.addWidget(self.fcstOptionsTab.plotsPane)
 
-        # Lay out the tab
-        self.fcstOptionsTab.layout.addWidget(self.fcstOptionsTab.splitter3)
+        # Add a horizontal splitter to split the options pane from the tree and plots - place tree & plots in options
+        self.fcstOptionsTab.splitter1 = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
+        self.fcstOptionsTab.optionsPane = FcstOptionsPane(self)
+        self.fcstOptionsTab.splitter1.addWidget(self.fcstOptionsTab.optionsPane)
+        self.fcstOptionsTab.splitter1.addWidget(self.fcstOptionsTab.splitter3)
+
+        # Lay out the tab - place the options widget
+        self.fcstOptionsTab.layout.addWidget(self.fcstOptionsTab.splitter1)
 
         self.fcstOptionsTab.setLayout(self.fcstOptionsTab.layout)
         self.tabWidget.addTab(self.fcstOptionsTab, "Forecast Options")
@@ -2196,6 +2283,49 @@ class UI_MainWindow(object):
         self.regressionTab.layout.addWidget(self.regressionTab.splitter)
         self.regressionTab.setLayout(self.regressionTab.layout)
         self.tabWidget.addTab(self.regressionTab, "Regression")
+
+        #/////////// Set up the Summary Tab ////////////////////////////////////
+        #// The Summary tab had 3 main elements: The forecast selection tree,
+        #// the forecast information window, and the forecast plot window.
+
+        # Set up a layout for the tab
+        self.summaryTab.layout = QtWidgets.QHBoxLayout(self)
+
+        # Add a horizontal splitter to divide the forecast selection pane from the plots
+        self.summaryTab.splitter1 = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
+        self.summaryTab.fcstSelectionPane = QtWidgets.QWidget()
+        self.summaryTab.fcstSelectionPane.layout = QtWidgets.QVBoxLayout()
+        self.summaryTab.fcstSelectionPane.header = QtWidgets.QTextEdit()
+        self.summaryTab.fcstSelectionPane.header.setHtml("""<div style="font-family:Trebuchet MS"><strong style="margin:0; font-size:20px">Select Forecast</strong></br>
+                                    <p style="margin:0; font-size:14px;">Use the list to select a forecast to view from this file.</p>
+                                    </div>""")
+        self.summaryTab.fcstSelectionPane.header.setReadOnly(True)
+        self.summaryTab.fcstSelectionPane.header.setFrameStyle(QtWidgets.QFrame.NoFrame)
+        self.summaryTab.fcstSelectionPane.header.setMaximumHeight(90)
+
+        self.summaryTab.fcstTree = CustomTreeView(self, menuFunctions=["GENCURRENT","DELETE"], dragFrom=False, dropTo=False)
+        self.summaryTab.fcstTree.setFrameStyle(QtWidgets.QFrame.NoFrame)
+
+        self.summaryTab.fcstSelectionPane.layout.addWidget(self.summaryTab.fcstSelectionPane.header)
+        self.summaryTab.fcstSelectionPane.layout.addWidget(self.summaryTab.fcstTree)
+        self.summaryTab.fcstSelectionPane.setLayout(self.summaryTab.fcstSelectionPane.layout)
+
+        self.summaryTab.plots = PlotCanvas_3Plot(self)
+        self.summaryTab.splitter1.addWidget(self.summaryTab.fcstSelectionPane)
+        self.summaryTab.splitter1.addWidget(self.summaryTab.plots)
+
+        # Add a vertical splitter to dive the horizontal splitter from the forecast information pane
+        self.summaryTab.splitter2 = QtWidgets.QSplitter(QtCore.Qt.Vertical)
+        self.summaryTab.fcstInfoPane = FcstInfoPane(self)
+        self.summaryTab.splitter2.addWidget(self.summaryTab.splitter1)
+        self.summaryTab.splitter2.addWidget(self.summaryTab.fcstInfoPane)
+
+        # Lay out the tab
+        self.summaryTab.layout.addWidget(self.summaryTab.splitter2)
+        self.summaryTab.setLayout(self.summaryTab.layout)
+
+        # Add the tab to the tabWidget
+        self.tabWidget.addTab(self.summaryTab, "Forecast")
 
         #///////////// Set up the Density Estimation Tab /////////////////////////////////
         #// The Density Estimation Tab allows users to visualize the distribution of forecasts 

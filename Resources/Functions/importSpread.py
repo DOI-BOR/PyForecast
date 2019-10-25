@@ -24,10 +24,11 @@ class importDialog(QtWidgets.QDialog):
         super(importDialog, self).__init__()
         mainLayout = QtWidgets.QVBoxLayout()
 
-        self.setWindowTitle("Add Custom Dataset from flat file")
+        self.setWindowTitle("Add dataset from file")
 
         datasetNameTitle = QtWidgets.QLabel("Dataset Name")
         self.datasetNameEdit = QtWidgets.QLineEdit()
+        self.datasetNameEdit.setText('Dataset1')
         hlayout = QtWidgets.QHBoxLayout()
         hlayout.addWidget(datasetNameTitle)
         hlayout.addWidget(self.datasetNameEdit)
@@ -35,6 +36,7 @@ class importDialog(QtWidgets.QDialog):
 
         paramNameTitle = QtWidgets.QLabel("Parameter Name")
         self.paramNameEdit = QtWidgets.QLineEdit()
+        self.paramNameEdit.setText('Parameter1')
         hlayout = QtWidgets.QHBoxLayout()
         hlayout.addWidget(paramNameTitle)
         hlayout.addWidget(self.paramNameEdit)
@@ -42,6 +44,7 @@ class importDialog(QtWidgets.QDialog):
 
         unitNameTitle = QtWidgets.QLabel("Unit Name")
         self.unitNameEdit = QtWidgets.QLineEdit()
+        self.unitNameEdit.setText('cfs')
         hlayout = QtWidgets.QHBoxLayout()
         hlayout.addWidget(unitNameTitle)
         hlayout.addWidget(self.unitNameEdit)
@@ -70,6 +73,10 @@ class importDialog(QtWidgets.QDialog):
         self.importButton.pressed.connect(self.importSheet)
         mainLayout.addWidget(self.importButton)
 
+        self.arrayImportCheck = QtWidgets.QCheckBox("Import Data Array")
+        self.arrayImportCheck.setChecked(False)
+        mainLayout.addWidget(self.arrayImportCheck)
+
         self.signals = importSignals()
         self.filename = None
         self.setLayout(mainLayout)
@@ -80,55 +87,66 @@ class importDialog(QtWidgets.QDialog):
         # Open a file dialog
         self.filename = QtWidgets.QFileDialog.getOpenFileName(self, 'Import data', os.path.abspath(os.sep),'Flat files (*.csv *.xlsx)')[0]
         if self.filename == '':
-            return  
-        
+            return
         self.fileLabel.setText(self.filename)
 
 
     def importSheet(self):
         if self.filename == None:
+            self.fileLabel.setText('Select a CSV or XLSX file to import...')
             return
-        # Try to import CSV File
-        if '.csv' in self.filename:
-
-            try:
+        try:
+            headerRowIdx = 0
+            # Data Array import override
+            if self.arrayImportCheck.isChecked():
+                headerRowIdx = 4 #skip first 4 rows since this is where the Dataset Name, Parameter Name, Unit, and Resampling tags should be
+            # Try to import CSV File
+            if '.csv' in self.filename:
+                # Read headers for data array import
+                dfHeaders = pd.read_csv(self.filename, nrows=headerRowIdx, header=None)
                 # Try to read the data into a dataframe
-                df = pd.read_csv(self.filename, header=0, index_col=0, parse_dates=True, infer_datetime_format=True)
-                
-                # Set the column name 
+                df = pd.read_csv(self.filename, header=headerRowIdx, index_col=0, parse_dates=True, infer_datetime_format=True)
+            # Try to import XLSX file
+            elif '.xlsx' in self.filename:
+                # Read headers for data array import
+                dfHeaders = pd.read_excel(self.filename, nrows=headerRowIdx, header=None)
+                # Try to read the data into a dataframe
+                df = pd.read_excel(self.filename, header=headerRowIdx, index_col=0, parse_dates=True, infer_datetime_format=True)
+            # Import a Data Array
+            if self.arrayImportCheck.isChecked():
+                # Drop the Datetime column from the header array
+                dfHeaders = dfHeaders.drop(dfHeaders.columns[0], axis=1)
+                if len(dfHeaders.columns) == len(df.columns):
+                    # Loop through the data columns
+                    for i in range(len(df)):
+                        # Get the ith information from the data and header arrays
+                        ithId = 'IMPORT' + str(int(100000 * np.random.rand()))
+                        ithDf = df[df.columns[i]].to_frame()
+                        ithHeaders = dfHeaders[dfHeaders.columns[i]]
+                        ithName = ithHeaders[0]
+                        ithDf.columns = [ithName]
+                        ithPar = ithHeaders[1]
+                        ithUnits = ithHeaders[2]
+                        ithResampling  = ithHeaders[3]
+                        # Set up the data dictionary
+                        ithDataDict = {"PYID":"", "TYPE":"IMPORT","ID":ithId,"Name":ithName,"Parameter":ithPar,"Units":ithUnits,"Resampling":ithResampling,"Decoding":{"dataLoader":"IMPORT"}, "Data":ithDf.to_dict(orient='dict')}
+                        print(ithDataDict)
+                        # Add the dataset to the dataset dict
+                        self.signals.returnDatasetSignal.emit(ithDataDict)
+                else:
+                    self.fileLabel.setText('Header column count does not match the Data column count! Check your input data file...')
+                    return
+            # Import a single column (old code)
+            else:
+                # Get a random ID
+                id = 'IMPORT' + str(int(100000 * np.random.rand()))
+                # Set the column name
                 df.columns = [self.datasetNameEdit.text()]
-
-                # Give it a unique ID
-                id = 'CSV'+str(int(1000*np.random.rand()))
-
                 # Set up the data dictionary
                 dataDict = {"PYID":"", "TYPE":"IMPORT","ID":id,"Name":self.datasetNameEdit.text(),"Parameter":self.paramNameEdit.text(),"Units":self.unitNameEdit.text(),"Resampling":self.resampleChooser.currentText(),"Decoding":{"dataLoader":"IMPORT"}, "Data":df.to_dict(orient='dict')}
-
-            except Exception as e:
-                print(e)
-                return
-        elif '.xlsx' in self.filename:
-
-            try:
-                # Try to read the data into a dataframe
-                df = pd.read_excel(self.filename, header=0, index_col=0, parse_dates=True, infer_datetime_format=True)
-
-                # Set the collumn name
-                df.columns = [self.datasetNameEdit.text()]
-
-                # Give it a unique ID
-                id = 'XLSX'+str(int(1000*np.random.rand()))
-
-                # Set up the data directory
-                dataDict = {"PYID":"", "TYPE":"IMPORT","ID":id,"Name":self.datasetNameEdit.text(),"Parameter":self.paramNameEdit.text(),"Units":self.unitNameEdit.text(),"Resampling":self.resampleChooser.currentText(),"Decoding":{"dataLoader":"IMPORT"}, "Data":df.to_dict(orient='dict')}
-
-            except Exception as e:
-                print(e)
-                return
-
-        print(dataDict)
-        self.signals.returnDatasetSignal.emit(dataDict)
-        self.close()
-        
-
-    
+                print(dataDict)
+                self.signals.returnDatasetSignal.emit(dataDict)
+            self.close()
+        except Exception as e:
+            print(e)
+            return

@@ -47,13 +47,17 @@ self.forecastDict = {
     "EquationPools" : {
         "January 1st" : {
             "PredictorPool" : {
-                "prdIDs" : [101, 104, 133, 152, ..., 211]
+                "101" : "predictorName: prdInterval",
+                "133" : "predictorName: prdInterval",
+                ...,
+                "nthPrdID" : "NthPredictor: NthInterval",
             },
             "Predictand" : {
                 "Name"  : "Porcupine Reservoir Inflow April-July",
                 "Unit" : "KAF",
                 "Data"  : pd.DataFrame(data, index = water years)
             },
+            "ForcedPredictors" : [101, 221],
             "ForecastEquations" : [
                 {
                     "fcstID"                : 20112,

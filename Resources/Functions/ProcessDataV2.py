@@ -3,7 +3,7 @@
 # Description:     This script converts daily data into seasonal forecast predictors. e.g. daily temperature data will be converted into month;y temperature averages.
 
 # Import Libraries
-from PyQt5 import QtCore
+from PyQt5 import QtGui, QtCore, QtWidgets
 import json
 import pandas as pd
 import numpy as np
@@ -20,6 +20,8 @@ class alternateThreadWorkerSignals(QtCore.QObject):
     # Define the signals emitted from this script
     returnForecastDict = QtCore.pyqtSignal(dict)
     returnPredictorDict = QtCore.pyqtSignal(list)
+    updateProgBar = QtCore.pyqtSignal(int)
+    updateProgLabel = QtCore.pyqtSignal(str)
 
 class alternateThreadWorker(QtCore.QRunnable):
     """
@@ -69,7 +71,7 @@ class alternateThreadWorker(QtCore.QRunnable):
                 monthInv = remapMonth(month, inv=True, wateryearStart= self.forecastDict['Options']['wateryearStart']) # Convert the remapped month back to a real one
                 monthInv = "0" + str(monthInv) # Zero-pad the monthe (i.e. change "2" to "02")
                 monthInv = datetime.strftime(datetime.strptime(monthInv[-2:] + '011901', '%m%d%Y'), '%B')  + ' 01st' # Generate a string in the format "January 1st"
-                self.forecastDict['EquationPools'][monthInv] = {"PredictorPool":{}, "Predictand":{}, "ForecastEquations":{}}
+                self.forecastDict['EquationPools'][monthInv] = {"PredictorPool":{}, "Predictand":{}, "ForecastEquations":{}, "ForcedPredictors":[]}
                
         else:
             for month in range(remapMonth(self.forecastDict['Options']['fcstStart'], wateryearStart= self.forecastDict['Options']['wateryearStart']), remapMonth(self.forecastDict['Options']['fcstPeriodEnd'], wateryearStart= self.forecastDict['Options']['wateryearStart'])+1):
@@ -77,14 +79,22 @@ class alternateThreadWorker(QtCore.QRunnable):
                 monthInv = "0" + str(monthInv) # Zero-pad the monthe (i.e. change "2" to "02")
                 monthInv1 = datetime.strftime(datetime.strptime(monthInv[-2:] + '011901', '%m%d%Y'), '%B') + ' 01st' # Generate a string in the format "January 1st"
                 monthInv2 = datetime.strftime(datetime.strptime(monthInv[-2:] + '011901', '%m%d%Y'), '%B') + ' 15th' # Generate a string in the format "January 15th"
-                self.forecastDict['EquationPools'][monthInv1] = {"PredictorPool":{}, "Predictand":{}, "ForecastEquations":{}}
-                self.forecastDict['EquationPools'][monthInv2] = {"PredictorPool":{}, "Predictand":{}, "ForecastEquations":{}}
+                self.forecastDict['EquationPools'][monthInv1] = {"PredictorPool":{}, "Predictand":{}, "ForecastEquations":{}, "ForcedPredictors":[]}
+                self.forecastDict['EquationPools'][monthInv2] = {"PredictorPool":{}, "Predictand":{}, "ForecastEquations":{}, "ForcedPredictors":[]}
 
         # Now we have our equationpools dict set up with one key per forecast equation in the form:
         # {"January 1st": {"Predictand":"", "Predictors":"",...}, "January 15th": {"Predictand":"", "Predictors":""},...}   
 
+        progressCounter = 0
+        maxCounter = self.forecastDict['EquationPools'].__len__() + len(self.dataDir)
+
         # Let's now add the known predictand to each equation key in the dict   
         for key in self.forecastDict['EquationPools']:
+
+            self.signals.updateProgBar.emit(int(100*progressCounter/maxCounter))
+            self.signals.updateProgLabel.emit("Generating {0} predictand...".format(key))
+            progressCounter += 1
+            print(str(progressCounter) + ' of ' + str(maxCounter) + ' -- Generating ' + key + ' equation...')
 
             keyMonth = key[:-5] # The "key" is of the form "January 15th" so "keyMonth" is now 'January"
             keyMonthMapped = remapMonth(keyMonth, wateryearStart=self.forecastDict['Options']['wateryearStart']) # Converts to a mapped month
@@ -150,6 +160,11 @@ class alternateThreadWorker(QtCore.QRunnable):
         # Next, let's create the pool of all the available predictors
         for predictor in self.dataDir: # Iterate over all datasets
 
+            self.signals.updateProgBar.emit(int(100*progressCounter/maxCounter))
+            self.signals.updateProgLabel.emit("Generating {0}-{1} predictor sets...".format(predictor['TYPE'], predictor['Name']))
+            progressCounter += 1
+            print(str(progressCounter) + ' of ' + str(maxCounter) + ' -- Generating ' + predictor['TYPE'] + ' ' + predictor['Name'] + ' predictor...')
+
             # Re-initialize the predictor ID numbers
             if self.forecastDict['PredictorPool'] == {} or self.update:
                 swe_prdID = '09000'
@@ -202,13 +217,14 @@ class alternateThreadWorker(QtCore.QRunnable):
                     unit = predictor['Units'] + ' Avg'
                     self.forecastDict['PredictorPool'][name][key]['Unit'] = unit
 
+
             elif predictor['Resampling'] == 'Sample':
 
                 intervals = self.predictorDicts(sample=True)
                 self.forecastDict['PredictorPool'][name] = intervals
 
                 for key in intervals:
-                    
+
                     month = monthLookup(key[:-3])
                     day = int(key[-2:])
                     dataMask = (predictorData.index.month == month) & (predictorData.index.day == day)
@@ -221,6 +237,44 @@ class alternateThreadWorker(QtCore.QRunnable):
                     #     data.index = data.index + pd.DateOffset(years=1)
 
                     # Add a predictor ID
+                    if predictor['Parameter'] == 'SWE':
+                        swe_prdID = str(int(swe_prdID) + 1).zfill(5)
+                        self.forecastDict['PredictorPool'][name][key]['prdID'] = swe_prdID
+                        prdID = swe_prdID
+                    else:
+                        reg_prdID = str(int(reg_prdID) + 1).zfill(5)
+                        self.forecastDict['PredictorPool'][name][key]['prdID'] = reg_prdID
+                        prdID = reg_prdID
+
+                    data = data.round(3)
+                    data.columns = [prdID]
+                    self.forecastDict['PredictorPool'][name][key]['Data'] = data.to_dict(orient='dict')
+
+                    # Add a unit description
+                    unit = predictor['Units']
+                    self.forecastDict['PredictorPool'][name][key]['Unit'] = unit
+
+
+            elif predictor['Resampling'] == 'NearestNeighbor':
+
+                intervals = self.predictorDicts(sample=True)
+                self.forecastDict['PredictorPool'][name] = intervals
+
+                for key in intervals:
+
+                    month = monthLookup(key[:-3])
+                    day = int(key[-2:])
+                    # fill data with nearest neighbor looking out 5 timesteps
+                    predictorData2 = predictorData.interpolate(method='nearest',limit=5,limit_direction='both')
+                    dataMask = (predictorData2.index.month == month) & (predictorData2.index.day == day)
+                    data = predictorData2.loc[dataMask]
+                    data = data.resample('AS').mean()
+                    # Compensate for water years
+                    if month >= monthLookup(self.forecastDict['Options']['wateryearStart']):
+                        data.index = data.index + pd.DateOffset(years=1)
+                    # if month == 10 or month == 11 or month == 12:
+                    #     data.index = data.index + pd.DateOffset(years=1)
+
                     # Add a predictor ID
                     if predictor['Parameter'] == 'SWE':
                         swe_prdID = str(int(swe_prdID) + 1).zfill(5)
@@ -231,12 +285,9 @@ class alternateThreadWorker(QtCore.QRunnable):
                         self.forecastDict['PredictorPool'][name][key]['prdID'] = reg_prdID
                         prdID = reg_prdID
 
-
                     data = data.round(3)
                     data.columns = [prdID]
                     self.forecastDict['PredictorPool'][name][key]['Data'] = data.to_dict(orient='dict')
-
-                    
 
                     # Add a unit description
                     unit = predictor['Units']
@@ -321,7 +372,10 @@ class alternateThreadWorker(QtCore.QRunnable):
                     
             else:
                 continue
-        
+
+        self.signals.updateProgBar.emit(int(100*progressCounter/maxCounter))
+        self.signals.updateProgLabel.emit("Done!")
+        print('Data Processing & Aggregation Complete!')
         # Return control to the main program
         if self.update:
             self.signals.returnPredictorDict.emit([self.forecastDict['PredictorPool'],self.forecastDict['EquationPools']] )

@@ -25,9 +25,12 @@ IMPORT THOSE LIBRARIES AND MODULES. ADDITIONALLY, WE ADD THE 'GUI' FOLDER TO THE
 
 import sys
 import os
+import numpy as np
+import shutil
+import statsmodels as sms
 
 # Import GUI
-from Resources.GUI import PyForecast_GUI, DocumentationGUI, MissingNoGUI, editDataLoaders, RegressionStatsGUI
+from Resources.GUI import PyForecast_GUI, DocumentationGUI, MissingNoGUI, editDataLoaders, RegressionStatsGUI, DataAnalysis
 
 # Import PyQt5 GUI functions
 from PyQt5 import QtGui, QtCore, QtWidgets
@@ -102,6 +105,8 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
 
         self.threadPool = QtCore.QThreadPool()
         writeConfig('savefilename','')
+        writeConfig('allsignificantoverride','False')
+
 
         return
 
@@ -110,13 +115,15 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         This function removes any old csv files from the tempFiles directory
         """
         for file_ in os.listdir('Resources/tempFiles'):
-            if file_ == '__pycache__' or 'pyforecast.cfg':
+            if file_ == '__pycache__' or file_ == 'pyforecast.cfg':
                 continue
             filename = os.path.abspath('Resources/tempFiles/' + file_)
             try:
                 os.remove(filename)
             except:
                 pass
+
+
     def setDate(self, date):
         """
         This function sets the date in the software. It stores the time in a config file called 'Resources/tempFiles/pyforecast.cfg'
@@ -237,13 +244,13 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         filename = readConfig('savefilename')
 
         if filename == '' or saveNew:
-            filename = QtWidgets.QFileDialog.getSaveFileName(self, 'Save File As', 'unititled.fcst','*.fcst')[0]
+            filename = QtWidgets.QFileDialog.getSaveFileName(self, 'Save File As', 'untitled.fcst','*.fcst')[0]
             writeConfig('savefilename',filename)
 
             if filename == '':
                 return
 
-            if '.' not in filename:
+            if '.fcst' not in filename:
                 filename = filename + '.fcst'
 
         pkl = {
@@ -251,14 +258,19 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             "forecastDict":self.forecastDict
         }
 
-        with open(filename, 'wb') as writefile:
+        tempFile = filename + '.temp'
+        with open(tempFile, 'wb') as writefile:
+        #with open(filename, 'wb') as writefile:
             pickle.dump(pkl, writefile, pickle.HIGHEST_PROTOCOL)
-
+        if os.path.exists(filename):
+            shutil.move(filename,filename + '.bkup')
+        if os.path.exists(tempFile):
+            shutil.move(tempFile,filename)
         self.setWindowTitle("PyForecast v2.0 - {0}".format(filename))
 
         return
 
-  
+
     def openFile(self):
         """
         Function to read a pickled .fcst file and extract the 2 main dictionaries. Then, uses the 2 dictionaries
@@ -288,7 +300,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
                 stationNumber = station['ID']
                 stationName = station['Name']
                 stationParam = station['Parameter']
-                self.stationsTab.stationInfoPane.stationTable.addRow([dataID, stationType, stationNumber, stationName, stationParam])
+                self.stationsTab.stationInfoPane.stationTable.addRow([stationName, stationParam, stationType, stationNumber])
             
             self.dataTab.dataTable.setRowCount(0)
             self.dataTab.dataTable.setColumnCount(0) 
@@ -303,7 +315,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
 
             try:
                 self.displayForecastDict(self.forecastDict)
-                self.populateEquationsDropDown(4)
+                self.populateEquationsDropDown(3)
                 self.populateDensityEquations(5)
             except:
                 pass
@@ -386,7 +398,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
     def genForecastButtonClicked(self):
         """
         This function figures out which forecast equation was selected by the user,
-        and uses current water year data to generate a current water year forceast 
+        and uses current water year data to generate a current water year forecast
         based on that equation. 
 
         It begins by storing the equations predictor data (x-data, aka design matrix) into 
@@ -731,6 +743,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         self.summaryTab.fcstInfoPane.forecastInfoTable.addRow(['',''])
         self.summaryTab.fcstInfoPane.forecastInfoTable.addRow(['Adj. R2',str(fcst['Metrics']['Adjusted R2'])])
         self.summaryTab.fcstInfoPane.forecastInfoTable.addRow(['RMSE',str(fcst['Metrics']['Root Mean Squared Error'])])
+        self.summaryTab.fcstInfoPane.forecastInfoTable.addRow(['MAE',str(fcst['Metrics']['Mean Absolute Error'])])
         self.summaryTab.fcstInfoPane.forecastInfoTable.addRow(['Nash-Sutcliffe',str(fcst['Metrics']['Nash-Sutcliffe'])])
 
         
@@ -848,11 +861,11 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         stationDict['PYID'] = dataID
         
         self.datasetDirectory['datasets'].append(stationDict)
-        self.stationsTab.stationInfoPane.stationTable.addRow([dataID, stationType, stationNumber, stationName, stationParam])
+        self.stationsTab.stationInfoPane.stationTable.addRow([stationName, stationParam, stationType, stationNumber])
 
         return
 
-    def appendDatasetDictionaryItem(self, dataID, stationType, stationNumber, stationName, stationParam, stationUnits, resamplingMethod, decodeOptions):
+    def appendDatasetDictionaryItem(self, dataID, stationType, stationNumber, stationName, stationParam, stationUnits, resamplingMethod, decodeOptions, stationURL = ''):
         """
         This function adds an entry to the datasetDictionary and adds it to the Station Tab table
         """
@@ -866,7 +879,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
            
         if not duplicateDataset:
             self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":stationUnits,"Resampling":resamplingMethod,"Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
-            self.stationsTab.stationInfoPane.stationTable.addRow([dataID, stationType, stationNumber, stationName, stationParam])
+            self.stationsTab.stationInfoPane.stationTable.addRow([stationName, stationParam, stationType, stationNumber, stationURL])
         else:
             button = QtWidgets.QMessageBox.question(self, 'Error','Dataset has already been selected...'.format(traceback.format_exc()), QtWidgets.QMessageBox.Ok)
             if button == QtWidgets.QMessageBox.Ok:
@@ -902,10 +915,11 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         instructionList = stationString.split('|')
         
         if instructionList[0] == 'StationSelect':
-            stationType = instructionList[3]
             stationName = instructionList[1]
             stationNumber = instructionList[2]
+            stationType = instructionList[3]
             stationParam = instructionList[4]
+            stationUrl = instructionList[len(instructionList) - 1]
             
             if stationType == 'USGS':                
                 decodeOptions = {"dataLoader":"USGS_NWIS"}
@@ -919,20 +933,21 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
                 dataID = encryptions.generateStationID(stationType, stationName, stationParam, decodeOptions['dataLoader'])
                 if stationParam == 'SWE':
                     resample = 'Sample'
-                    units = 'inches'
+                    units = 'Inches'
                 elif stationParam == 'SOIL':
                     resample = 'Mean'
                     units = 'pct'
                 else:
                     resample = 'Accumulation'
-                    units = 'inches'
+                    units = 'Inches'
                 #self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":units,"Resampling":resample,"Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
 
             elif stationType == 'SNOWCOURSE':
                 decodeOptions = {"dataLoader":"NRCS_WCC"}
                 dataID = encryptions.generateStationID(stationType, stationName, stationParam, decodeOptions['dataLoader'])
-                units = "inches"
-                resample = "Sample"
+                units = "Inches"
+                #resample = "Sample"
+                resample = "NearestNeighbor"
                 #self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":"inches","Resampling":"Sample","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
 
             elif stationType == 'USBR':
@@ -944,14 +959,45 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
                 resample = "Mean"
                 #self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":"CFS","Resampling":"Mean","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
 
+            elif stationType == 'AGMET':
+                region = instructionList[5]
+                pcode = instructionList[6]
+                decodeOptions = {"dataLoader":"USBR", "Region":region,"PCODE":pcode}
+                dataID = encryptions.generateStationID(stationType, stationName, stationParam, decodeOptions['dataLoader'])
+                if pcode == 'PP':
+                    resample = "Accumulation"
+                    units = "Inches"
+                else:
+                    resample = "Mean"
+                    units = "DegF"
+                #self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":"CFS","Resampling":"Mean","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
+
+            elif stationType == 'NCDC':
+                stationParam = instructionList[6]
+                decodeOptions = {"dataLoader": "NCDC"}
+                dataID = encryptions.generateStationID(stationType, stationName, stationParam, decodeOptions['dataLoader'])
+                if stationParam == 'PRCP':
+                    resample = "Accumulation"
+                    units = "Inches"
+                elif stationParam == 'WESD':
+                    resample = "NearestNeighbor"
+                    units = "Inches"
+                else:
+                    resample = "Mean"
+                    units = "DegF"
+                #self.datasetDirectory['datasets'].append({"PYID":dataID,"TYPE":stationType,"ID":stationNumber,"Name":stationName,"Parameter":stationParam,"Units":"CFS","Resampling":"Mean","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
+
             else:
                 return
             
-            self.appendDatasetDictionaryItem(dataID, stationType, stationNumber, stationName, stationParam, units, resample, decodeOptions)
+            self.appendDatasetDictionaryItem(dataID, stationType, stationNumber, stationName, stationParam, units, resample, decodeOptions, stationUrl)
 
         elif instructionList[0] == 'nrcc':
 
-            stationNumber = self.stationsTab.stationInfoPane.nrccInput.text()
+            if instructionList.__len__() == 1:
+                stationNumber = self.stationsTab.stationInfoPane.nrccInput.text()
+            else:
+                stationNumber = instructionList[1]
 
             # Check to ensure the HUC is valid
             if not isValidHUC(stationNumber):
@@ -969,13 +1015,16 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             self.datasetDirectory['datasets'].append({"PYID": dataIDT, "TYPE":'NRCC',"ID":stationNumber,"Name":nameT,"Parameter":"Temperature","Units":"degF","Resampling":"Mean","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
             self.datasetDirectory['datasets'].append({"PYID": dataIDP, "TYPE":'NRCC',"ID":stationNumber,"Name":nameP,"Parameter":"Precipitation","Units":"inches","Resampling":"Accumulation","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
             
-            self.stationsTab.stationInfoPane.stationTable.addRow([dataIDT,'NRCC',stationNumber,nameT,'Temperature'])
-            self.stationsTab.stationInfoPane.stationTable.addRow([dataIDP,'NRCC',stationNumber,nameP,'Precipitation'])
+            self.stationsTab.stationInfoPane.stationTable.addRow([nameT,'Temperature','NRCC',stationNumber])
+            self.stationsTab.stationInfoPane.stationTable.addRow([nameP,'Precipitation','NRCC',stationNumber])
             self.stationsTab.stationInfoPane.nrccInput.clear()
 
         elif instructionList[0] == 'prism':
 
-            stationNumber = self.stationsTab.stationInfoPane.prismInput.text()
+            if instructionList.__len__() == 1:
+                stationNumber = self.stationsTab.stationInfoPane.prismInput.text()
+            else:
+                stationNumber = instructionList[1]
 
             # Check to ensure the HUC is valid
             if not isValidHUC(stationNumber):
@@ -993,8 +1042,8 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             self.datasetDirectory['datasets'].append({"PYID": dataIDT, "TYPE":'PRISM',"ID":stationNumber,"Name":nameT,"Parameter":"Temperature","Units":"degF","Resampling":"Mean","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
             self.datasetDirectory['datasets'].append({"PYID": dataIDP, "TYPE":'PRISM',"ID":stationNumber,"Name":nameP,"Parameter":"Precipitation","Units":"inches","Resampling":"Accumulation","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
  
-            self.stationsTab.stationInfoPane.stationTable.addRow([dataIDT, 'PRISM',stationNumber,nameT,'Temperature'])
-            self.stationsTab.stationInfoPane.stationTable.addRow([dataIDP, 'PRISM',stationNumber,nameP,'Precipitation'])
+            self.stationsTab.stationInfoPane.stationTable.addRow([nameT,'Temperature','PRISM',stationNumber,])
+            self.stationsTab.stationInfoPane.stationTable.addRow([nameP,'Precipitation','PRISM',stationNumber,])
             self.stationsTab.stationInfoPane.prismInput.clear()
 
         elif instructionList[0] == 'pdsi':
@@ -1008,7 +1057,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
 
             self.datasetDirectory['datasets'].append({"PYID":dataID, "TYPE":"PDSI", "ID":stationNumber, "Name": name+' PDSI', "Parameter":"PDSI","Units":"indices","Resampling":"Mean","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
 
-            self.stationsTab.stationInfoPane.stationTable.addRow([dataID, 'PDSI', stationNumber, name+' PDSI', 'PDSI'])
+            self.stationsTab.stationInfoPane.stationTable.addRow([name+' PDSI', 'PDSI','PDSI', stationNumber, ])
 
         elif instructionList[0] == 'clim':
             
@@ -1020,16 +1069,19 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             dataID = encryptions.generateStationID("CLIMATE",stationName, "Indice", decodeOptions['dataLoader'])
 
             units = {
-                1:"degC",
-                2:"degC",
-                3:"Unitless",
-                4:"Unitless",
-                #5:"ppm",
-                5:"Unitless"}
+                1: "degC",
+                2: "degC",
+                3: "Unitless",
+                4: "Unitless",
+                5: "Unitless",
+                6: "Unitless",
+                7: "Unitless",
+                8: "Unitless",
+            }
             
             self.datasetDirectory['datasets'].append({"PYID":dataID, "TYPE":"CLIMATE","ID":str(stationNumber),"Name":stationName,"Parameter":"Indices","Units":units[stationNumber],"Resampling":"Mean","Decoding":decodeOptions, "Data":{}, "lastDateTime":None})
 
-            self.stationsTab.stationInfoPane.stationTable.addRow([dataID, "CLIMATE",str(stationNumber),stationName,'Indices'])
+            self.stationsTab.stationInfoPane.stationTable.addRow([stationName,'Indices',"CLIMATE",str(stationNumber)])
 
         else:
             return
@@ -1078,7 +1130,8 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         self.dataTab.dataOptions.updateButton.pressed.connect(lambda x = "True": self.downloadData(x))
         self.dataTab.dataOptions.importButton.pressed.connect(self.importData)
         self.dataTab.dataTable.horizontalHeader().sectionClicked.connect(self.plotColumn)
-        self.dataTab.dataOptions.missingButton.pressed.connect(self.missingDataViz)
+        #self.dataTab.dataOptions.missingButton.pressed.connect(self.missingDataViz)
+        self.dataTab.dataOptions.matrixButton.pressed.connect(self.matrixPlotDataViz)
         self.dataTab.dataTable.deletedColumnEmission.connect(self.deleteDatasetFromDataTable)
         self.dataTab.dataTable.cellChanged.connect(self.userEditedData)
 
@@ -1217,6 +1270,29 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         if data.empty:
             return
         dialog = MissingNoGUI.missingDialog(data)
+
+        return
+
+
+    def matrixPlotDataViz(self):
+        """
+        This function instantiates a dialog window that displays the serial completeness of the datasets. See
+        'GUI.MissingNoGUI.py' for more information on this function.
+        """
+
+        data = self.dataTab.dataTable.toDataFrame()
+        if data.empty:
+            # Check there are datasets in the dataset dictionary
+            if len(self.datasetDirectory['datasets']) < 1:
+                QtWidgets.QMessageBox.question(self, 'Error', 'There are no selected datasets.\nPlease select datasets from the Stations tab...', QtWidgets.QMessageBox.Ok)
+                return
+
+            # Check that the datasets are not empty
+            if len(self.datasetDirectory['datasets'][0]['Data']) < 1:
+                QtWidgets.QMessageBox.question(self, 'Error', 'Data has not been downloaded for the selected datasets.\nPlease download data from the Data tab...', QtWidgets.QMessageBox.Ok)
+                return
+            return
+        dialog = DataAnalysis.analysisDialog(data)
 
         return
 
@@ -1376,7 +1452,10 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         self.fcstOptionsTab.plotsPane.corrButton.pressed.connect(self.fcstOptionsCorrPlot)
         self.fcstOptionsTab.plotsPane.prdIDSignal.connect(self.addTofcstOptionsPlot)
         self.fcstOptionsTab.dualTreeView.tree2.droppedPredictor.connect(self.addPredictorToEquation)
+        self.fcstOptionsTab.dualTreeView.tree2.droppedStation.connect(self.addStationToEquation)
         self.fcstOptionsTab.dualTreeView.tree2.deletedItem.connect(self.deletePredictor)
+        self.fcstOptionsTab.dualTreeView.tree2.forcedItem.connect(self.forcePredictor)
+        self.fcstOptionsTab.dualTreeView.tree2.dataAnalysisItem.connect(self.predictorDataAnalysis)
         self.fcstOptionsTab.dualTreeView.tree1.openExcelAction.triggered.connect(self.exportDataFromForecastOptionsTab)
 
         return
@@ -1437,10 +1516,77 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
 
 
     @QtCore.pyqtSlot(list)
-    def addPredictorToEquation(self, list_):
+    def predictorDataAnalysis(self, list_):
+        """
+        Function build the dataframe and send the data to the DataAnalysis GUI
+
+        input: list_ = [equation, parent]
+        """
+        equation = list_[0]
+        parentText = list_[1]
+        predictand = self.forecastDict['EquationPools'][equation]['Predictand']
+
+        #Build dataframe with predictand data
+        predLabel = predictand['Name'] + ' '+ predictand['Unit']
+        predData = predictand['Data'][list(predictand['Data'])[0]]
+        s = pd.Series(predData, name=predLabel)
+
+        predictors = self.forecastDict['EquationPools'][equation]['PredictorPool']
+        for predID, predLabel in predictors.items():
+            print(predID + ' -- ' + predLabel)
+            predName = predLabel.split(':')[0].strip()
+            predFreq = predLabel.split(':')[1].strip()
+            predictor = self.forecastDict['PredictorPool'][predName][predFreq]
+
+            #Append predictor data to dataframe
+            predLabel = predName + ' ' + predFreq + ' ' + predictor['Unit']
+            predData = predictor['Data'][list(predictor['Data'])[0]]
+            sTemp = pd.Series(predData, name=predLabel)
+            s = pd.concat([s, sTemp], axis=1)
+
+        if not isinstance(s, pd.DataFrame):
+            QtWidgets.QMessageBox.question(self, 'Error','No predictand/predictors to analyze.\n Apply options and/or assign predictors first.', QtWidgets.QMessageBox.Ok)
+            return
+        dialog = DataAnalysis.analysisDialog(s)
+
+        return
+
+
+    @QtCore.pyqtSlot(list)
+    def forcePredictor(self, list_):
         """
         Function to add a selected predictor (prdID) to a selected equation. This function is called when a predictor
         is dragged into an equaton. The program reads the prdID, and the drop-location equation and appends the prdID into 
+        the forecast equation predictors.
+        
+        input: list_ = [prdID, equation]
+        
+        """
+        prdID = list_[0]
+        equation = list_[1]
+        #for predictor in self.forecastDict['PredictorPool']:
+        #    for interval in self.forecastDict['PredictorPool'][predictor]:
+        #        if self.forecastDict['PredictorPool'][predictor][interval]['prdID'] == prdID:
+        if prdID in self.forecastDict['EquationPools'][equation]['ForcedPredictors']:
+            self.forecastDict['EquationPools'][equation]['ForcedPredictors'].remove(prdID)
+        else:
+            self.forecastDict['EquationPools'][equation]['ForcedPredictors'].append(prdID)
+        self.displayForecastDict(self.forecastDict, onlyEquations = True)
+        item = self.fcstOptionsTab.dualTreeView.tree2.model.findItems(equation)[0]
+        predictorPoolChild = item.child(0,0)
+        index = self.fcstOptionsTab.dualTreeView.tree2.model.indexFromItem(predictorPoolChild)
+        index2 = self.fcstOptionsTab.dualTreeView.tree2.model.indexFromItem(item)
+        self.fcstOptionsTab.dualTreeView.tree2.setExpanded(index2, True)
+        self.fcstOptionsTab.dualTreeView.tree2.setExpanded(index, True)
+
+        return
+
+
+    @QtCore.pyqtSlot(list)
+    def addPredictorToEquation(self, list_):
+        """
+        Function to add a selected predictor (prdID) to a selected equation. This function is called when a predictor
+        is dragged into an equation. The program reads the prdID, and the drop-location equation and appends the prdID into
         the forecast equation predictors.
         """
         prdID = list_[0]
@@ -1459,6 +1605,17 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
 
         return
 
+    @QtCore.pyqtSlot(list)
+    def addStationToEquation(self, predList_):
+        """
+        Function to add selected predictors (prdID) to a selected equation. This function is called when a station
+        is dragged into an equation. The program reads the prdID, and the drop-location equation and appends the prdID into
+        the forecast equation predictors.
+        """
+        for predictor in predList_:
+            self.addPredictorToEquation([predictor[0], predictor[1]])
+
+        return
 
     def updateFcstData(self):
         """
@@ -1506,7 +1663,17 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         This function creates seasonal forecast predictors as well as a data structure to store forecast equation information. The program reads the user's selected options and sends them along with the 
         daily data to an alternate thread where the program runs the 'ProcessDataV2.py' script. 
         """
-        
+
+        # Check there are datasets in the dataset dictionary
+        if len(self.datasetDirectory['datasets']) < 1:
+            QtWidgets.QMessageBox.question(self, 'Error', 'There are no selected datasets.\nPlease select datasets from the Stations tab...', QtWidgets.QMessageBox.Ok)
+            return
+
+        # Check that the datasets are not empty
+        if len(self.datasetDirectory['datasets'][0]['Data']) < 1:
+            QtWidgets.QMessageBox.question(self, 'Error', 'Data has not been downloaded for the selected datasets.\nPlease download data from the Data tab...', QtWidgets.QMessageBox.Ok)
+            return
+
         # Print a warning to the screen
         button = QtWidgets.QMessageBox.question(self, 'Warning','Continuing with this option will delete all exising forecasts. Continue?', QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
         if button != QtWidgets.QMessageBox.Ok:
@@ -1536,6 +1703,8 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         self.fcstOptionsTab.optionsPane.updateButton.setEnabled(False)
         processWorker = ProcessDataV2.alternateThreadWorker(d)
         processWorker.signals.returnForecastDict.connect(self.finishedProcessing)
+        processWorker.signals.updateProgBar.connect(self.fcstOptionsTab.optionsPane.progressBar.setValue)
+        processWorker.signals.updateProgLabel.connect(self.fcstOptionsTab.optionsPane.progressLabel.setText)
         self.threadPool.start(processWorker)
 
         return
@@ -1545,7 +1714,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         """ After the predictors have been processed, this function populates the other tabs' drop downs and """
         self.populateDensityEquations(5)
         self.displayForecastDict(dict_)
-        self.populateEquationsDropDown(4)
+        self.populateEquationsDropDown(3)
 
         return
 
@@ -1611,9 +1780,9 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
 
         self.forecastDict = dict_
         if onlyEquations:
-            self.fcstOptionsTab.dualTreeView.tree2.addToTree(self.forecastDict['EquationPools'], levels_in_max=10, exclude_keys=['ForecastEquations'])
+            self.fcstOptionsTab.dualTreeView.tree2.addToTree(self.forecastDict['EquationPools'], levels_in_max=10, exclude_keys=['ForecastEquations','ForcedPredictors'])
         else:
-            self.fcstOptionsTab.dualTreeView.tree2.addToTree(self.forecastDict['EquationPools'], levels_in_max=10, exclude_keys=['ForecastEquations'])
+            self.fcstOptionsTab.dualTreeView.tree2.addToTree(self.forecastDict['EquationPools'], levels_in_max=10, exclude_keys=['ForecastEquations','ForcedPredictors'])
             self.fcstOptionsTab.dualTreeView.tree1.addToTree(self.forecastDict['PredictorPool'], levels_in_max=10)
         self.fcstOptionsTab.optionsPane.applyButton.setEnabled(True)
         self.fcstOptionsTab.optionsPane.updateButton.setEnabled(True)
@@ -1684,7 +1853,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         with 'INFLOW, STREAMFLOW, FLOW' in the dataset name. 
         """
 
-        if tabNo == 3:
+        if tabNo == 2:
             
             # Clear the current target list
             self.fcstOptionsTab.optionsPane.targetInput.clear()
@@ -1736,7 +1905,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         forecast dictionary.
         """
 
-        if tabNo == 4:
+        if tabNo == 3:
 
             self.regressionTab.regrSelectPane.mlrTab.eqSelect.clear()
             self.regressionTab.regrSelectPane.pcarTab.eqSelect.clear()
@@ -1761,6 +1930,10 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         self.regressionTab.regrSelectPane.pcarTab.regrButton.pressed.connect(self.runFeatureSelection)
         self.regressionTab.regrSelectPane.zscrTab.regrButton.pressed.connect(self.runFeatureSelection)
         self.regressionTab.regrSelectPane.annTab.regrButton.pressed.connect(self.runFeatureSelection)
+        self.regressionTab.regrSelectPane.mlrTab.predAnlysButton.pressed.connect(self.runPredictorAnalysis)
+        self.regressionTab.regrSelectPane.pcarTab.predAnlysButton.pressed.connect(self.runPredictorAnalysis)
+        self.regressionTab.regrSelectPane.zscrTab.predAnlysButton.pressed.connect(self.runPredictorAnalysis)
+        self.regressionTab.regrSelectPane.annTab.predAnlysButton.pressed.connect(self.runPredictorAnalysis)
         self.regressionTab.toggleButton.pressed.connect(self.plotFcstEntryRegressionTab)
         self.regressionTab.regrSelectPane.mlrTab.bestModelTable.saveFcstAction.triggered.connect(self.saveFcst)
         self.regressionTab.regrSelectPane.pcarTab.bestModelTable.saveFcstAction.triggered.connect(self.saveFcst)
@@ -1832,9 +2005,14 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             label = self.regressionTab.regrSelectPane.annTab.regModLabel
             self.table = self.regressionTab.regrSelectPane.annTab.bestModelTable
             selScheme = self.regressionTab.regrSelectPane.annTab.featSelInput.currentText()
+            dist = self.regressionTab.regrSelectPane.annTab.distInput.currentText()
 
         else:
             return
+
+        #[jr] delete me - benchmark test statsmodels regression
+        #self.startTime = time.time()
+        #self.regScheme = regrScheme
 
         d = {
             "RegressionScheme" : regrScheme,
@@ -1861,6 +2039,94 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         self.table.cellClicked.connect(self.fcstClicked)
         self.threadPool.start(regressionWorker)
 
+
+        return
+
+
+    def runPredictorAnalysis(self):
+        """ 
+        Function to generate a analysis on selected predictors given the model set.
+        """
+        try:
+            # Figure out which regression scheme and equation to analyze
+            if self.regressionTab.regrSelectPane.tabWidget.currentIndex() == 0:
+                regrScheme = 'MLR'
+                self.equation = self.regressionTab.regrSelectPane.mlrTab.eqSelect.currentText()
+                fcastEqns = self.mlrFcstList
+
+            elif self.regressionTab.regrSelectPane.tabWidget.currentIndex() == 1:
+                regrScheme = 'PCAR'
+                self.equation = self.regressionTab.regrSelectPane.pcarTab.eqSelect.currentText()
+                fcastEqns = self.pcarFcstList
+
+            elif self.regressionTab.regrSelectPane.tabWidget.currentIndex() == 2:
+                regrScheme = 'ZSCR'
+                self.equation = self.regressionTab.regrSelectPane.zscrTab.eqSelect.currentText()
+                fcastEqns = self.zscrFcstList
+
+            elif self.regressionTab.regrSelectPane.tabWidget.currentIndex() == 3:
+                regrScheme = 'ANN'
+                self.equation = self.regressionTab.regrSelectPane.annTab.eqSelect.currentText()
+                fcastEqns = self.annFcstList
+
+            else:
+                return
+
+            # Perform model analysis
+            predictand = self.forecastDict['EquationPools'][self.equation]['Predictand']
+            predictandData = pd.DataFrame().from_dict(predictand['Data'])
+
+            for eqn in fcastEqns:
+                commonIndex = eqn['Years Used']
+                obs = predictandData.loc[commonIndex]
+                mod = eqn['Forecasted']
+                resid = obs-mod
+                autoCorr = sms.stats.diagnostic.acorr_ljungbox(resid)
+
+            # Count selected predictors
+            prdList = []
+            for eqn in fcastEqns:
+                prdList.extend(eqn['prdIDs'])
+
+            selPreds, selPredCounts = np.unique(prdList, return_counts=True)
+            predLib = self.forecastDict['PredictorPool']
+
+            # Get the key-path to the selected predictor id
+            #https://stackoverflow.com/questions/22162321/search-for-a-value-in-a-nested-dictionary-python
+            def getpath(nested_dict, value, prepath=()):
+                for k, v in nested_dict.items():
+                    path = prepath + (k,)
+                    if v == value:  # found value
+                        return path
+                    elif hasattr(v, 'items'):  # v is a dict
+                        p = getpath(v, value, path)  # recursive call
+                        if p is not None:
+                            return p
+
+            filename = "Resources/tempFiles/tmp{0}.csv".format(datetime.now().timestamp())
+            file = open(filename, "w")
+            file.write('PredictorID,PredictorName,PredictorAggregation,SelectCount\n')
+            for i in range(len(selPreds)):
+                predKeys = getpath(predLib, selPreds[i])
+                file.write('{0},{1},{2},{3}\n'.format(
+                    selPreds[i],
+                    predKeys[0].replace(","," "),
+                    predKeys[1].replace(","," "),
+                    selPredCounts[i]
+                ))
+            file.close()
+
+            try:
+                try:
+                    subprocess.check_call(['cmd','/c','start',filename])
+                except Exception as e:
+                    print(e)
+                    subprocess.check_call(['open',filename])
+            except:
+                pass
+        except:
+            print("No forecast equations to process...")
+
         return
 
 
@@ -1873,11 +2139,19 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         then that option in the table is appended with a check mark.
         """
 
+        #[jr] delete me - benchmark test statsmodels regression
+        #print("---------------------- BENCHMARK ----------------------")
+        #print("Started " + self.regScheme + " Feature Selection at " + str(self.startTime))
+        #endTime = time.time()
+        #print("Finished " + self.regScheme + " Feature Selection at " + str(endTime))
+        #print("Time Elapsed: " + str(endTime - self.startTime))
+
+
         self.progBar.setValue(100)
         self.regrButton.setEnabled(True)
         self.table.setRowCount(0)
 
-        if self.perfMetric == 'Root Mean Squared Prediction Error':
+        if self.perfMetric == 'Root Mean Squared Prediction Error' or self.perfMetric == 'Mean Absolute Error':
             fcstDictList = sorted(fcstDictList, key=lambda i: i['Metrics'][self.perfMetric])
         else:
             fcstDictList = sorted(fcstDictList, key=lambda i: i['Metrics'][self.perfMetric], reverse=True)
@@ -1894,11 +2168,12 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
                     prdIDs = ', '.join(fcst['prdIDs'])
             else:    
                 prdIDs = ', '.join(fcst['prdIDs'])
-            
-            r2 = str(np.round(fcst['Metrics']['Cross Validated Adjusted R2'],2))
+
+            mae = str(np.round(fcst['Metrics']['Mean Absolute Error'],1))
             rmse = str(np.round(fcst['Metrics']['Root Mean Squared Prediction Error'],1))
+            r2 = str(np.round(fcst['Metrics']['Cross Validated Adjusted R2'],2))
             nse = str(np.round(fcst['Metrics']['Cross Validated Nash-Sutcliffe'],2))
-            self.table.addRow([prdIDs, r2, rmse, nse])
+            self.table.addRow([prdIDs, mae, rmse, r2, nse])
         
         currentRegScheme = self.regressionTab.regrSelectPane.tabWidget.currentIndex()
 

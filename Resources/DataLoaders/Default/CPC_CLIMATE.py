@@ -151,6 +151,66 @@ def dataLoader(stationDict, startDate, endDate):
         df = df[df.index<=endDate]
         return df
 
+    elif stationNum == 6:
+        """
+        Arctic Oscillation Index (AOI) 
+        """
+        url = "https://www.cpc.ncep.noaa.gov/products/precip/CWlink/daily_ao_index/monthly.ao.index.b50.current.ascii"
+        dataMonth = pd.read_csv(url, names = ['year','month','AOI | Indice'], sep='\s+')
+        dataMonth['day'] = len(dataMonth.index)*[1]
+        datetimes = pd.to_datetime(dataMonth[['year','month','day']])
+        dataMonth.set_index(pd.DatetimeIndex(datetimes), inplace=True)
+        del dataMonth['year'], dataMonth['month'], dataMonth['day']
+        dataMonth = dataMonth.resample('D').mean()
+        dataMonth = dataMonth.fillna(method='ffill')
+        dataMonth = dataMonth[dataMonth.index >= startDate]
+        dataMonth = dataMonth[dataMonth.index <= endDate]
+        df = pd.DataFrame(index = pd.date_range(startDate, endDate))
+        df = pd.concat([df, dataMonth], axis = 1)
+        return df
+
+    elif stationNum == 7:
+        """
+        Southern Oscillation Index (SOI) 
+        """
+        url = "https://www.esrl.noaa.gov/psd/data/correlation/soi.data"
+        df = pd.read_csv(url, skiprows=1, names=['year','1','2','3','4','5','6','7','8','9','10','11','12'], sep='\s+')
+        lastRow = df.index[df['year']=='SOI'].tolist()[0] -1
+        df = df[df.index<lastRow]
+        df = df.melt(id_vars=['year'],var_name='month')
+        dates = [str(df['year'][i])+'-'+str(df['month'][i]) for i in df.index]
+        df.set_index(pd.DatetimeIndex(pd.to_datetime(dates, format='%Y/%m')), inplace=True)
+        df.sort_index(inplace=True)
+        df['value'] = pd.to_numeric(df['value'])
+        df.replace(to_replace=-99.990, value=np.nan, inplace=True)
+        df = pd.DataFrame(df['value'])
+        df = df.asfreq('D')
+        df.fillna(method='ffill',inplace=True)
+        df = df[df.index>=startDate]
+        df = df[df.index<=endDate]
+        return df
+
+    elif stationNum == 8:
+        """
+        Multivariate ENSO Index (MEI) 
+        """
+        url = "https://www.esrl.noaa.gov/psd/enso/mei/data/meiv2.data"
+        df = pd.read_csv(url, skiprows=1, names=['year','1','2','3','4','5','6','7','8','9','10','11','12'], sep='\s+')
+        lastRow = df.index[df['year']=='Multivariate'].tolist()[0] -1
+        df = df[df.index<lastRow]
+        df = df.melt(id_vars=['year'],var_name='month')
+        dates = [str(df['year'][i])+'-'+str(df['month'][i]) for i in df.index]
+        df.set_index(pd.DatetimeIndex(pd.to_datetime(dates, format='%Y/%m')), inplace=True)
+        df.sort_index(inplace=True)
+        df['value'] = pd.to_numeric(df['value'])
+        df.replace(to_replace=-999.00, value=np.nan, inplace=True)
+        df = pd.DataFrame(df['value'])
+        df = df.asfreq('D')
+        df.fillna(method='ffill',inplace=True)
+        df = df[df.index>=startDate]
+        df = df[df.index<=endDate]
+        return df
+
     else:
         return pd.DataFrame()
         
