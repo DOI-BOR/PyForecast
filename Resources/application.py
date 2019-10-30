@@ -2,7 +2,7 @@
 
 Script Name:        application.py
 Script Author:      Kevin Foley, Civil Engineer, Reclamation
-Last Modified:      Nov 13, 2018
+Last Modified:      Oct 24 2019
 
 Description:        'application.py' is the main processing script for the 
                     PyForecast application. This script loads the GUI and directs
@@ -1017,7 +1017,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             
             self.stationsTab.stationInfoPane.stationTable.addRow([nameT,'Temperature','NRCC',stationNumber])
             self.stationsTab.stationInfoPane.stationTable.addRow([nameP,'Precipitation','NRCC',stationNumber])
-            self.stationsTab.stationInfoPane.nrccInput.clear()
+            #self.stationsTab.stationInfoPane.nrccInput.clear()
 
         elif instructionList[0] == 'prism':
 
@@ -1044,7 +1044,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
  
             self.stationsTab.stationInfoPane.stationTable.addRow([nameT,'Temperature','PRISM',stationNumber,])
             self.stationsTab.stationInfoPane.stationTable.addRow([nameP,'Precipitation','PRISM',stationNumber,])
-            self.stationsTab.stationInfoPane.prismInput.clear()
+            #self.stationsTab.stationInfoPane.prismInput.clear()
 
         elif instructionList[0] == 'pdsi':
 

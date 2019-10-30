@@ -34,11 +34,13 @@ var baseMaps = {'Grayscale': grayMap,
 
 // Create map panes
 map.createPane("HUCPane")
+map.createPane("ClimDivPane")
 map.createPane("PointsPane")
 
 
 // Load the local JSON files
 var HUC8 = new Object();
+var CLIM_DIV = new Object();
 var USGS = new Object();
 var SNOTEL = new Object();
 var SNOWCOURSE = new Object();
@@ -50,6 +52,10 @@ var NCDC = new Object();
 loadJSON('../../Resources/GIS/WATERSHEDS/HUC8_WGS84.json', function(response) {
     // Parse data into object
     window.HUC8 = JSON.parse(response);
+});
+loadJSON('../../Resources/GIS/CLIMATE_DIVISION/CLIMATE_DIVISION_GEOJSON.json', function(response){
+    // Parse data into object
+    window.CLIM_DIV = JSON.parse(response);
 });
 loadJSON('../../Resources/GIS/USGS_SITES/STREAMGAGES.json', function(response) {
     // Parse data into object
@@ -339,6 +345,16 @@ var HUCLayer = L.geoJSON( window.HUC8, {
             fillOpacity: 0.0},
     onEachFeature: window.onHUCFeatures}).addTo(map);
 
+var CLIM_DIV_Layer = L.geoJSON( window.CLIM_DIV, {
+    style: {pane:"HUCPane",
+            fillColor: "#f5bb3d",
+            weight: 1,
+            opacity: 0.8,
+            color: "#f5bb3d",
+            fillOpacity: 0},
+    onEachFeature: window.onClimFeatures
+});
+
 
 // Add interactivity to the HUC boundaries
 function onHUCFeatures( feature, layer ) {
@@ -376,18 +392,72 @@ function clickHUC(e) {
     var pop = L.popup().setLatLng(coordinates).setContent(popHTML).addTo(map);
 };
 
-var dataLayers = {
-    "Watersheds":HUCLayer,
-    "USGS Streamgages":USGSLayer,
-    "NRCS SNOTEL Sites":SNOTELLayer,
-    "NRCS Snow Course" :SNOWCOURSELayer,
-    "USBR Natural Flow":USBR_POINTS_RESLayer,
-    "USBR Agrimet":USBR_POINTS_AGMETLayer,
-    "NOAA Sites":NCDCLayer
+function onClimFeatures( feature, layer ) {
+    layer.on({
+        mouseover: highlightClim,
+        mouseout: resetHighlightClim,
+        click: clickClim
+    });
+};
+
+function highlightClim(e) {
+    var layer = e.target;
+    layer.setStyle({
+        color:"#f5be3d",
+        weight:3
+    });
+};
+
+function resetHighlightClim(e) {
+    window.CLIM_DIV_Layer.resetStyle(e.target);
+};
+
+function clickClim(e) {
+    var coordinates = getCenter(e.target.feature);
+    var name = e.target.feature.properties.NAME;
+    var num = e.target.feature.properties.STATE + ', ' + e.target.feature.properties.NAME;
+    var popHTML = "<strong>Climate Division</strong>"+
+                  "<p>Name: " + name +
+                  "</br>Code: " + num +
+                  "</p>Select dataset to add: </br>" +
+                  '<select id="paramClim"><option value="pdsi">Palmer Drought Severity Index</option></select>' +
+                  '<button type="button" onclick="buttonPress()">Add Site</button>' +
+                  '<p hidden id="info" style="margin:0">CLIM|'+num+'|'+name+'</p>';
+
+    var pop = L.popup().setLatLng(coordinates).setContent(popHTML).addTo(map);
+};
+
+
+
+var groupedOverlays = {
+    "Stations":{
+        "USGS Streamgages":USGSLayer,
+        "NRCS SNOTEL Sites":SNOTELLayer,
+        "NRCS Snow Course" :SNOWCOURSELayer,
+        "USBR Natural Flow":USBR_POINTS_RESLayer,
+        "USBR Agrimet":USBR_POINTS_AGMETLayer,
+        "NOAA Sites":NCDCLayer
+    },
+    "Areas":{
+        "Watersheds":window.HUCLayer,
+        "Climate Divisions":window.CLIM_DIV_Layer,
+    }
 }
 
+var options = {
+    exclusiveGroups: ["Areas"],
+    groupCheckboxes: false
+}
 // Add a basemap and layer selector
-L.control.layers(baseMaps, dataLayers).addTo(map);
+//L.control.layers(baseMaps, dataLayers).addTo(map);
+//L.control.layers(polyLayers).addTo(map);
+
+L.control.groupedLayers(baseMaps, groupedOverlays, options).addTo(map);
+
+//window.HUCLayer.on("add", function(e){window.CLIM_DIV_Layer.remove()});
+//window.HUCLayer.on("remove", function(e){window.CLIM_DIV_Layer.addTo(map);});
+//window.CLIM_DIV_Layer.on("add", function(e){window.HUCLayer.remove()});
+//window.CLIM_DIV_Layer.on("remove", function(e){window.HUCLayer.addTo(map);});
 
 // Function to load local JSON file
 function loadJSON(filename, callback) {   
@@ -441,6 +511,11 @@ function buttonPress() {
         var param = document.getElementById('paramNcdc').value;
         var url = document.getElementById('paramURL').href;
         console.log('StationSelect|'+name+'|'+num+'|'+type+'|Weather|'+region+'|'+param+'|'+url);
+    } else if (type == 'CLIM') {
+        var num = infoList[1];
+        var name = infoList[2];
+        var param = document.getElementById('paramClim').value;
+        console.log(param+'|'+num+'|'+name);
     } else if (type == 'HUC') {
         var num = infoList[1];
         var name = infoList[2];
