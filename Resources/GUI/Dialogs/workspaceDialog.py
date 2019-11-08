@@ -29,8 +29,21 @@ class datasetEditorWindow(QtWidgets.QDialog):
 
         return
 
+    def checkSavedChangesBeforeSwitchingDatasets(self, selection):
+        """
+        Checks the current dataset to see if there are any changes that need to be saved. 
+        If there are unsaved changes, prompt the user and resolve the changes before 
+        proceeding. Then proceeds to change the selected dataset.
+        """
+        
+        if self.dataChanged:
+            # Create Message here and 
+
+        return 
+
     def selectDataset(self, datasetID):
         """
+        Sets the selected dataset in the dialog
         """
 
         return
@@ -120,7 +133,8 @@ class datasetEditorWindow(QtWidgets.QDialog):
         formLayout.addRow(DatasetCompositeLabel,    self.DatasetCompositeField)
         formLayout.addRow(DatasetImportFileLabel,   self.DatasetImportFileField)
         formLayout.addRow(DatasetAddOptionsLabel,   self.DatasetAddOptionsField)
-        
+
+
 
 
         return
