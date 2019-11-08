@@ -67,9 +67,12 @@ class datasetTab(object):
         """
         Resets the tab to reflect any backend changes to the datasettables, views, etc.
         """
+
+        # Read in the 'current_map_location' and 'current_map_layers' fields of the user config file.
         loc = self.userOptionsConfig['DATASETS TAB']['current_map_location'].split(":")[1].split("|")
         layers = self.userOptionsConfig['DATASETS TAB']['current_map_layers'].split(":")[1]
 
+        # Run Javascript in the QWebEngine to zoom to the location and set the active layers
         self.datasetTab.webMapView.page.runJavaScript("zoomToLoc({0},{1},{2})".format(loc[0], loc[1], loc[2]))
         self.datasetTab.webMapView.page.runJavaScript("setActiveLayers({0})".format(layers))
         self.loadSelectedDatasets(self.datasetTable, self.datasetTab.selectedDatasetsWidget)
@@ -91,9 +94,12 @@ class datasetTab(object):
         """
         Opens the dataset editor dialog to allow a user to edit the parameters of a dataset
         """
+
+        # Get the row number of the dataset to be edited, and the associated dataset
         idx = self.datasetTab.selectedDatasetsWidget.currentRow()
         datasetID = self.datasetTab.selectedDatasetsWidget.item(idx).dataset.name
         dataset = self.datasetTable.loc[datasetID]
+
         if isinstance(dataset['DatasetAdditionalOptions'], dict):
 
             if 'Import Filename' in dataset['DatasetAdditionalOptions'].keys():

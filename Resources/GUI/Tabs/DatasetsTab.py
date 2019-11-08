@@ -49,7 +49,7 @@ class DatasetTab(QtWidgets.QWidget):
         label.setTextFormat(QtCore.Qt.RichText)
         self.selectedDatasetsLabel = QtWidgets.QLabel("0 datasets have been selected:")
         self.selectedDatasetsWidget = boxyListWidget.boxyListWidget()
-        self.selectedDatasetsWidget.setContextMenu(options=['remove', 'edit'])
+        self.selectedDatasetsWidget.setContextMenu(menuItems=['remove', 'edit'])
         layout_.addWidget(label)
         layout_.addWidget(self.selectedDatasetsLabel)
         layout_.addWidget(self.selectedDatasetsWidget)

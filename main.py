@@ -35,7 +35,7 @@ import warnings
 warnings.filterwarnings('ignore')
 import time
 import argparse
-import resources.application as application
+from PyQt5 import QtWebEngineWidgets
 from datetime import datetime
 from PyQt5 import QtGui, QtWidgets, QtCore
 
@@ -56,6 +56,8 @@ if __name__ == '__main__':
     # Begin loading the application
     app = QtWidgets.QApplication(sys.argv)
     app.setWindowIcon(QtGui.QIcon('resources/GraphicalResources/icons/icon.ico'))
+
+    import resources.application as application
 
     # Parse arguemnts
     parser = argparse.ArgumentParser()

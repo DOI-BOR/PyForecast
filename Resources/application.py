@@ -64,7 +64,9 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
                 'DatasetLongitude',         # e.g. -112.324
                 'DatasetElevation',         # e.g. 3133 (in ft)
                 'DatasetPORStart',          # e.g. 1/24/1993
-                'DatasetPOREnd',            # e.g. 1/22/2019
+                'DatasetPOREnd',            # e.g. 1/22/2019\
+                'DatasetCompositeEquation', # e.g. C/100121,102331,504423/1.0,0.5,4.3/0,0,5
+                'DatasetImportFileName',    # e.g. 'C://Users//JoeDow//Dataset.CSV'
                 'DatasetAdditionalOptions'
             ]
         ) 

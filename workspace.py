@@ -1,3 +1,7 @@
+"""
+Basic Spreadsheet model and view to display NextFlow table based data.
+"""
+
 from PyQt5 import QtWidgets, QtCore, QtGui
 import pandas as pd
 import os
@@ -5,7 +9,6 @@ import sys
 import numpy as np
 from collections import OrderedDict
 import subprocess
-
 
 class SpreadSheetModel(QtCore.QAbstractItemModel):
     """
@@ -244,6 +247,13 @@ class SpreadSheetView(QtWidgets.QTableView):
         self.interpAction = QtWidgets.QAction('Interpolate')
         self.excelAction = QtWidgets.QAction('Open in Excel')
 
+        # Keyboard shortcuts
+        self.copyShortcut = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+C"), self)
+        self.copyShortcut.activated.connect(self.copySelectionToClipboard)
+        self.pasteShortcut = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+V"), self)
+        self.pasteShortcut.activated.connect(self.pasteSelectionFromClipboard)
+
+        # Connect signal/slots
         self.copyAction.triggered.connect(self.copySelectionToClipboard)
         self.pasteAction.triggered.connect(self.pasteSelectionFromClipboard)
         self.interpAction.triggered.connect(self.interpolateInSelection)
