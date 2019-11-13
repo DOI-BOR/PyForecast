@@ -69,7 +69,6 @@ def dataLoader(stationDict, startDate, endDate):
     # ---- PN REGION ------
     elif region == 'PN':
 
-
         # Download instructions for PN data:
         syear = datetime.strftime(startDate, '%Y')
         smonth = datetime.strftime(startDate, '%m')
@@ -103,6 +102,42 @@ def dataLoader(stationDict, startDate, endDate):
 
         # Return the dataframe
         return dfOut
+
+    elif region == 'UC':
+        # Construct the API call
+        baseURL = 'https://www.usbr.gov/pn-bin/hdb/hdb.pl?svr={0}&sdi={1}&tstp={2}&t1={3}&t2={4}&table=R&mrid=0&format=json'.format(
+            'uchdb2',
+            pcode,
+            'DY',
+            datetime.strftime(startDate, '%Y-%m-%dT00:00'),
+            datetime.strftime(endDate, '%Y-%m-%dT00:00'))
+
+        # Get the repsonse from the API
+        data = requests.get(baseURL)
+        if data.status_code == 200:
+            pass
+        else:
+            return pd.DataFrame()
+
+        # Convert the response to JSON
+        data = data.json() # Convert to JSON array
+
+        # Parse the JSON
+        timestamps = [pd.to_datetime(data['Series'][0]['Data'][i]['t']) for i in range(len(data['Series'][0]['Data']))]
+        values = [data['Series'][0]['Data'][i]['v'] for i in range(len(data['Series'][0]['Data']))]
+
+        # Store JSON data in dataframe
+        df = pd.DataFrame(values, index=timestamps, columns=stationID) # Convert the data into a dataframe
+        df[stationID] = pd.to_numeric(df[stationID]) # Convert values to floating point numbers
+        df = df.resample('D').asfreq() # Ensure that data is at daily frequency
+        df = df.fillna(method='ffill') # Forward fill any missing data
+
+        df = df[~df.index.duplicated(keep='first')] # Remove duplicates from the dataset
+        df = df[~df.index.isnull()]
+
+        df.columns = ['HDB | ' + stationID + ' | Streamflow | CFS']
+
+        return df
 
     else:
         pass
