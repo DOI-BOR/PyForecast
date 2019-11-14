@@ -442,6 +442,10 @@ class CustomTreeView(QtWidgets.QTreeView):
         if "GENCURRENT" in menuFunctions:
             self.genAction = QtWidgets.QAction("Generate Current Forecast")
             self.addAction(self.genAction)
+        
+        if "GENALLFCST" in menuFunctions:
+            self.genAllAction = QtWidgets.QAction("Generate All Forecasts")
+            self.addAction(self.genAllAction)
 
         # Set to be read-only
         self.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)

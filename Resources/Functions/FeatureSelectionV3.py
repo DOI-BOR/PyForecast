@@ -1040,14 +1040,20 @@ def ZScoreRegression(xData, yData, crossVal, perfMetric, pool):
     C = []
     r2List = np.array(r2List)
     for row in xData:
+
         missing = np.isnan(row)
         r2 = r2List[~missing]
         c = np.dot(row[~missing], r2)/np.sum(r2)
         C.append(c)
     C = np.array(C).reshape(-1,1)
+
+    """ Get rid of any nans in composite dataset and ydata"""
+    missing = np.isnan(C)
+    yData_ = yData[~missing]
+    C = np.array(C[~missing]).reshape(-1,1)
     
     """ Regress the composite dataset against the y data using cross validation and least squares ) """
-    metrics, predictandStar, zCoefs, zIntercept, cv_predictandStar, all_significant = MultipleRegression(C, yData, crossVal, perfMetric, pool)
+    metrics, predictandStar, zCoefs, zIntercept, cv_predictandStar, all_significant = MultipleRegression(C, yData_, crossVal, perfMetric, pool)
 
     """ Compute the actual coefficients and intercept """
     coefs = []

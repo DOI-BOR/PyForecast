@@ -390,12 +390,18 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         """
         self.summaryTab.fcstTree.delAction.triggered.connect(self.deleteForecast)
         self.summaryTab.fcstTree.genAction.triggered.connect(self.genForecastButtonClicked)
+        #self.summaryTab.fcstTree.genAllAction.triggered.connect(self.genAllForecastsButtonClicked)
         self.summaryTab.fcstTree.clicked.connect(self.fcstSelectedToView)
         
         return
 
 
-    def genForecastButtonClicked(self):
+    def genAllForecastsButtonClicked(self):
+        pass
+        
+        #self.genForecastButtonClicked(gen_all=True, idx_to_gen=i)
+
+    def genForecastButtonClicked(self, gen_all = False, idx_to_gen = None):
         """
         This function figures out which forecast equation was selected by the user,
         and uses current water year data to generate a current water year forecast
@@ -410,11 +416,18 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         outlined at https://onlinecourses.science.psu.edu/stat501/node/315/
         """
 
-        # Retrieve the forecast that the user selected to view
-        index = self.summaryTab.fcstTree.selectedIndexes()[0]
-        fcst = self.fcstSelectedToView(index, returnFcstOnly=True)
-        if fcst == None:
-            return
+        if not gen_all:
+            # Retrieve the forecast that the user selected to view
+            index = self.summaryTab.fcstTree.selectedIndexes()[0]
+            fcst = self.fcstSelectedToView(index, returnFcstOnly=True)
+            if fcst == None:
+                return
+        
+        else:
+            index = idx_to_gen
+            fcst = self.fcstSelectedToView(index, returnFcstOnly=True)
+            if fcst == None:
+                return
         
         # Reconstruct the predictor data that was used to generate the equation.
         prdIDs = fcst['PrdIDs']
@@ -498,10 +511,11 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
                 self.forecastDict['EquationPools'][fcst['Equation']]['ForecastEquations'][fcst['fcstID']]['Forecasts'][currentWaterYear]['degFreedom'] = degF
 
                 """ Plot the resulting forecast and prediction interval """
-                self.plotForecastSummaryTab(self.forecastDict['EquationPools'][fcst['Equation']]['ForecastEquations'][fcst['fcstID']])
-                self.fcstSelectedToView(index)
-                self.reDrawForecastDict()
-                self.summaryTab.fcstTree.setExpanded(index, True)
+                if not gen_all:
+                    self.plotForecastSummaryTab(self.forecastDict['EquationPools'][fcst['Equation']]['ForecastEquations'][fcst['fcstID']])
+                    self.fcstSelectedToView(index)
+                    self.reDrawForecastDict()
+                    self.summaryTab.fcstTree.setExpanded(index, True)
 
             else:
                 print(currentData)
@@ -561,11 +575,12 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             self.forecastDict['EquationPools'][fcst['Equation']]['ForecastEquations'][fcst['fcstID']]['Forecasts'][currentWaterYear]['StdErrPred'] = se_pred
             self.forecastDict['EquationPools'][fcst['Equation']]['ForecastEquations'][fcst['fcstID']]['Forecasts'][currentWaterYear]['degFreedom'] = degF
 
-            """ Plot the resulting forecast and prediction interval """
-            self.plotForecastSummaryTab(self.forecastDict['EquationPools'][fcst['Equation']]['ForecastEquations'][fcst['fcstID']])
-            self.fcstSelectedToView(index)
-            self.reDrawForecastDict()
-            self.summaryTab.fcstTree.setExpanded(index, True)
+            if not gen_all:
+                """ Plot the resulting forecast and prediction interval """
+                self.plotForecastSummaryTab(self.forecastDict['EquationPools'][fcst['Equation']]['ForecastEquations'][fcst['fcstID']])
+                self.fcstSelectedToView(index)
+                self.reDrawForecastDict()
+                self.summaryTab.fcstTree.setExpanded(index, True)
 
         if 'ZSCR' in fcst['Type']:
 
@@ -614,11 +629,12 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             self.forecastDict['EquationPools'][fcst['Equation']]['ForecastEquations'][fcst['fcstID']]['Forecasts'][currentWaterYear]['StdErrPred'] = se_pred
             self.forecastDict['EquationPools'][fcst['Equation']]['ForecastEquations'][fcst['fcstID']]['Forecasts'][currentWaterYear]['degFreedom'] = degF
 
-            """ Plot the resulting forecast and prediction interval """
-            self.plotForecastSummaryTab(self.forecastDict['EquationPools'][fcst['Equation']]['ForecastEquations'][fcst['fcstID']])
-            self.fcstSelectedToView(index)
-            self.reDrawForecastDict()
-            self.summaryTab.fcstTree.setExpanded(index, True)
+            if not gen_all:
+                """ Plot the resulting forecast and prediction interval """
+                self.plotForecastSummaryTab(self.forecastDict['EquationPools'][fcst['Equation']]['ForecastEquations'][fcst['fcstID']])
+                self.fcstSelectedToView(index)
+                self.reDrawForecastDict()
+                self.summaryTab.fcstTree.setExpanded(index, True)
 
 
             return
