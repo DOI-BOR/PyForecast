@@ -253,6 +253,12 @@ USBR_POINTS_RESLayer.on("click",function(e) {
     if (region == "GP") {
         url = "https://www.usbr.gov/gp/hydromet/"+id+".html";
     }
+    if (region == "UC") {
+        url = "https://www.usbr.gov/uc/water/ff/RESERVOIR_DATA/"+id+"/dashboard.html#huc";
+    }
+    if (region == "LC") {
+        url = "https://www.usbr.gov/uc/water/ff/RESERVOIR_DATA/"+id+"/dashboard.html#huc";
+    }
     var popHTML = "<strong>USBR Reservoir Site</strong>" +
                   "<p>ID: " + id +
                   "</br>Name: " + name +
