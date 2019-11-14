@@ -83,12 +83,12 @@ def dataLoader(stationDict, startDate, endDate):
         # Download the data and check for a valid response
         response = requests.get(url)
         if response.status_code == 200:
-            pass
+            response = response.text
         else:
             return pd.DataFrame()
         
         # Parse the data into a dataframe
-        df = pd.read_csv(url, parse_dates=['DateTime']) # Read the data into a dataframe
+        df = pd.read_csv(StringIO(response), parse_dates=['DateTime']) # Read the data into a dataframe
         df.set_index(pd.DatetimeIndex(pd.to_datetime(df['DateTime'])), inplace=True) # Set the index to the datetime column
         del df['DateTime'] # Delete the redundant datetime column
         df = df[~df.index.duplicated(keep='first')] # Remove duplicates from the dataset
@@ -113,7 +113,7 @@ def dataLoader(stationDict, startDate, endDate):
         }
 
     	# Construct the API call
-        url = 'https://www.usbr.gov/pn-bin/hdb/hdb.pl?svr={0}&sdi={1}&tstp={4}&t1={2}&t2={3}&table=R&mrid=0&format=csv'.format(
+        url = 'https://www.usbr.gov/pn-bin/hdb/hdb.pl?svr={0}&sdi={1}&tstp={4}&t1={2}&t2={3}&table=R&mrid=0&format=88'.format(
             svr_lookup[region.upper()],
     		pcode,
     		datetime.strftime(startDate, '%Y-%m-%dT00:00'),
@@ -123,18 +123,14 @@ def dataLoader(stationDict, startDate, endDate):
     	# Get the repsonse from the API
         response = requests.get(url)
         if response.status_code == 200:
-            response = response.text.replace('<BR>', '\n')           
-            html_junk = '<HTML><HEAD><TITLE>Bureau of Reclamation HDB Data</TITLE></HEAD><BODY><PRE>'
-            response = response.replace(html_junk, '')
-            response = response.replace('</PRE></BODY></HTML>', '')
-            response = response.strip()
+            response = response.text
         else:
             return pd.DataFrame()
         
     	# Parse the data into a dataframe
-        df = pd.read_csv(StringIO(response), parse_dates=['DATETIME']) # Read the data into a dataframe
-        df.set_index(pd.DatetimeIndex(pd.to_datetime(df['DATETIME'])), inplace=True) # Set the index to the datetime column
-        del df['DATETIME'] # Delete the redundant datetime column
+        df = pd.read_csv(StringIO(response), parse_dates=['Date']) # Read the data into a dataframe
+        df.set_index(pd.DatetimeIndex(pd.to_datetime(df['Date'])), inplace=True) # Set the index to the datetime column
+        del df['Date'] # Delete the redundant datetime column
         df = df[~df.index.duplicated(keep='first')] # Remove duplicates from the dataset
         df = df[~df.index.isnull()]
         col_name = 'USBR | ' + stationID + ' | Inflow | CFS'
