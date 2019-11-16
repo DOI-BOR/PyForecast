@@ -140,4 +140,6 @@ class datasetEditorWindow(QtWidgets.QDialog):
         return
     
     
-
+# Debugging
+if __name__ == '__main__':
+    print()

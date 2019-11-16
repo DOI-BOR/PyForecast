@@ -1,141 +1,197 @@
-from PyQt5 import QtWidgets, QtCore, QtGui
-import pandas as pd
-import os
-import sys
-import numpy as np
-from collections import OrderedDict
-import subprocess
+"""
+Script Name:    datasetTabMaster.py
 
-class ListModel(QtCore.QAbstractListModel):
+Description:    This script contains all the functionality associated with the 
+                Datasets Tab. Operations such as finding and defining datasets
+                as well as editing and deleting datasets are defined in this 
+                script. The GUI behind the datasets tab is defined in the 
+                resources.GUI.Tabs.DatasetsTab script.
+"""
+
+import pandas as pd
+from PyQt5 import QtCore, QtWidgets
+from resources.modules.Miscellaneous import loggingAndErrors
+from resources.modules.DatasetTab import gisFunctions
+from resources.GUI.Dialogs import UserDefinedDatasetDialog, createCompositeDataset
+from fuzzywuzzy.fuzz import WRatio 
+import multiprocessing as mp
+import itertools
+from time import sleep
+import ast
+
+class datasetTab(object):
     """
+    DATASETS TAB
+    The Datasets Tab contains information about the selected datasets. It allows users to select and 
+    configure datasets using the map or the search functionality.
     """
-    def __init__(self, parent=None):
+
+    def __init__(self):
         """
+        Initialize the tab
         """
-        QtCore.QAbstractItemModel.__init__(self)
+
+        self.connectEvents()
+        self.loadDatasetCatalog()
+        self.loadDatasetMap()
 
         return
 
-    def loadDatasetIntoModel(self, dataset):
+    def connectEvents(self):
         """
+        Connects all the signal/slot events for the dataset tab
         """
 
-        self.dataset = dataset
+        # Buttons
+        self.datasetTab.keywordSearchButton.clicked.connect(        lambda x: self.searchForDataset(self.datasetTab.keywordSearchBox.text()))
+        #self.datasetTab.prismButton.clicked.connect(                lambda x: self.)
 
-        self.indexArray = np.array([self.createIndex(i,0) for i in range(len(self.dataset))])
+        # CHECK THIS ONE
+        self.datasetTab.webMapView.page.java_msg_signal.connect(lambda x: self.addDatasetToSelectedDatasets(int(x.split(':')[1])) if "ID:" in x else self.addDatasetToSelectedDatasets(str(x.split(':')[1])))
+
+
+        return
+
+    def loadDatasetCatalog(self):
+        """
+        Reads the dataset catalogs located at /resources/GIS/ and loads them into 2 
+        dataframes ('additionalDatasetsTable', 'searchableDatasetsTable').
+        """
+
+        # Read the dataset catalogs into pandas dataframes
+        self.searchableDatasetsTable = pd.read_excel("resources/GIS/PointDatasets.xlsx", index_col=0)
+        self.searchableDatasetsTable.index.name = 'DatasetInternalID'
+        self.additionalDatasetsTable = pd.read_excel('resources/GIS/AdditionalDatasets.xlsx', dtype={"DatasetExternalID": str}, index_col=0)
+        self.additionalDatasetsTable.inex.name = 'DatasetInternalID'
+
+        # Also, populate the climate indices 
+        for i, dataset in self.additionalDatasetsTable[self.additionalDatasetsTable['DatasetType'] == 'CLIMATE INDICE'].iterrows():
+            self.datasetTab.climInput.insertItem(i, text = dataset['DatasetName'], userData = dataset)
+        
+        # Create Completers for the watershed / climate division inputs
+        self.datasetTab.prismCompleter.setModelWithDataFrame(self.additionalDatasetsTable[self.additionalDatasetsTable['DatasetAgency'] == 'PRISM'])
+        self.datasetTab.nrccCompleter.setModelWithDataFrame(self.additionalDatasetsTable[self.additionalDatasetsTable['DatasetAgency'] == 'NRCC'])
+        self.datasetTab.pdsiCompleter.setModelWithDataFrame(self.additionalDatasetsTable[self.additionalDatasetsTable['DatasetType'] == 'PDSI'])
+
         
         return
 
-    def index(self, row, column, parent = QtCore.QModelIndex()):
-
-        return self.indexArray[row]
-
-    def deleteDatasetFromModel(self):
+    def loadDatasetMap(self):
         """
+        Loads the dataset catalog into the leaflet map
         """
 
+        # Create a geojson file of all the point datasets
+        geojson_ = gisFunctions.dataframeToGeoJSON(self.searchableDatasetsTable)
+
+        # Load the geojson file into the web map
+        self.datasetTab.webMapView.page.loadFinished.connect(lambda x: self.datasetTab.webMapView.page.runJavaScript("loadJSONData({0})".format(geojson_)))
 
         return
 
-    def rowCount(self, parent = QtCore.QModelIndex()):
+
+    def addDataset(self, datasetInternalID = None):
         """
-        """
-        return len(self.dataset)
+        Adds the dataset defined by the datasetInternalID to the self.datasetTable table.
+        This function also updates the dataset list in the GUI.
 
-
-    def data(self, index, role = QtCore.Qt.DisplayRole):
-        """
-        """
-        return QtCore.QVariant(self.dataset.iloc[index.row()]['DatasetName'])
-
-
-
-class RichTextItemDelegate(QtWidgets.QStyledItemDelegate):
-    """
-    """
-
-    def paint(self, painter, option, index):
-        """
+        Arguments:
+            datasetInternalID -> The DatasetInternalID associated with the dataset to add. The ID's are 
+                                 found in the dataset catalogs.
         """
 
-        # Save the current state of the painter
-        painter.save()
+        # Check to make sure that this dataset in not already in the datasetTable
+        if datasetInternalID in list(self.datasetTable.index):
 
-        # Set the delegate to default to the item's options
-        self.initStyleOption(option)
+            # PRINT ERROR ABOUT THE DATASET ALREADY BEING ADDED
+            return
+        
+        # Find the dataset from the appropriate dataset catalog
+        if datasetInternalID > 99999        # This is a point dataset
 
-        # Create a QTextDocument to hold the rich text
-        doc = QtGui.QTextDocument(self)
+            # Get the specific dataset
+            dataset = self.searchableDatasetsTable.loc[datasetInternalID]
+            
+        else:                               # This is a HUC/CLIM/PDSI/OTHER dataset
 
-        # Set the document's text to the item's text
-        doc.setHtml(option.text)
+            # Get the specific dataset
+            dataset = self.additionalDatasetsTable.loc[datasetInternalID]
+        
+        # Append the dataset to the dataset table
+        self.datasetTable = self.datasetTable.append(dataset, ignore_index = False)
 
-        # Set the context
-        ctx = QtGui.QAbstractTextDocumentLayout.PaintContext()
+        # Refresh the dataset list view
+        
 
-        # Move the painter to the top left
-        painter.translate(option.rect.topLeft())
-        painter.setClipRect(option.rect.translated(-option.rect.topLeft()))
+        return
+    
+    def removeDataset(self, datasetInternalID = None):
+        """
+        Removes the dataset defined by the datasetInternalID from the self.datasetTable table.
+        This function also updates the dataset list in the GUI.
 
-        # Paint the item
-        doc.documentLayout().draw(painter, ctx)
+        Arguments:
+            datasetInternalID -> The DatasetInternalID associated with the dataset to add. The ID's are 
+                                 found in the dataset catalogs.
+        """
 
-        # Restore the state of the painter
-        painter.restore()
+        # Provide a warning that this will delete all associated forecasts, data, etc associated with this id
+
+        # Begin by removing the dataset from the datasetTable
+        self.datasetTable.drop(datasetInternalID, inplace = True)
+
+        # Next remove all data from the DataTable
+        self.dataTable.drop(datasetInternalID, level='DatasetInternalID', inplace = True)
+
+        # Update the multiIndex of the DataTable
+        self.dataTable.set_index(self.dataTable.index.remove_unused_levels(), inplace = True)
 
         return
 
-    def sizeHint(self, option, index):
+    def searchForDataset(self, searchTerm = None):
         """
+        Searched the default dataset list and returns any potential matches
+
+        input:  searchTerm
+                - The keyword or keywords to search the default dataset list for.
+                  example: 'Yellowstone River Billings'
+        
+        output: results
+                - a dataframe of results which is a subset of the searchableDatasetsTable
         """
 
-        return 
+        # Begin by disabling the search button while we look
+        self.datasetTab.keywordSearchButton.setEnabled(False)
 
+        # Ensure that the search term is longer than 4 characters (the fuzzy search doesn't work well with short search terms)
+        if len(searchTerm) < 4: 
 
-    
+            # ADD POPUP BOX TO TELL USER ABOUT THE ERROR
+            self.datasetTab.keywordSearchButton.setEnabled(True)
+            return
+        
+        # Create a copy of the searchable dataset list
+        searchTable = self.searchableDatasetsTable.copy()
 
-class ListView(QtWidgets.QListView):
-    """
-    """
+        # Create a column in the searchTable containing all the keywords
+        searchTable['searchColumn'] = searchTable[['DatasetName', 'DatasetType','DatasetAgency', 'DatasetExternalID']].apply(lambda x: ' '.join(x), axis=1)
 
-    def __init__(self, parent=None):
-        """
-        """
-        QtWidgets.QListView.__init__(self)
-        self.setModel(ListModel(self))
+        # Create a multiprocessing pool to perform the search
+        pool = mp.Pool(mp.cpu_count() - 1)
+
+        # Compute the scores (the fit score of the search term against the search column)
+        searchTable['score'] = list(pool.starmap(WRatio, zip(searchTable['searchColumn'], itertools.repeat(searchTerm, len(searchTable)))))
+
+        # Close the pool
+        pool.close()
+        pool.join()
+
+        # Order the search results by score and load the results into the listWidget
+        searchTable.sort_values(by=['score'], inplace=True, ascending=False)
+        del searchTable['score'], searchTable['searchColumn']
+        
+        # NEED TO LOAD THE DATA INTO WIDGET
+
+        self.datasetTab.keywordSearchButton.setEnabled(True)
 
         return
-
-if __name__ == '__main__':
-
-    datasetTable = pd.DataFrame(
-            index = pd.Index([], dtype=int, name='DatasetInternalID'),
-            columns = [
-                'DatasetType',              # e.g. STREAMGAGE, or RESERVOIR
-                'DatasetExternalID',        # e.g. "GIBR" or "06025500"
-                'DatasetName',              # e.g. Gibson Reservoir
-                'DatasetAgency',            # e.g. USGS
-                'DatasetParameter',         # e.g. Temperature
-                'DatasetUnits',             # e.g. CFS
-                'DatasetDefaultResampling', # e.g. average 
-                'DatasetDataloader',        # e.g. RCC_ACIS
-                'DatasetHUC8',              # e.g. 10030104
-                'DatasetLatitude',          # e.g. 44.352
-                'DatasetLongitude',         # e.g. -112.324
-                'DatasetElevation',         # e.g. 3133 (in ft)
-                'DatasetPORStart',          # e.g. 1/24/1993
-                'DatasetPOREnd',            # e.g. 1/22/2019
-                'DatasetAdditionalOptions'
-            ]
-        ) 
-
-    datasetTable.loc[100101] = ['STREAMGAGE','GIBR','Gibson Reservoir','USBR','Inflow','CFS','','','','','','','','','']
-    datasetTable.loc[100301] = ['STREAMGAGE','WSSW','Welcome Creek','USBR','Inflow','CFS','','','','','','','','','']
-
-    app = QtWidgets.QApplication(sys.argv)
-    widg = ListView()
-    widg.model().loadDatasetIntoModel(datasetTable)
-    
-    widg.show()
-    
-    sys.exit(app.exec_())

@@ -60,4 +60,4 @@ def dataframeToGeoJSON(df):
         if isinstance(obj, (datetime, date)):
             return obj.isoformat()
         raise TypeError("Type is not serializable")
-    return '{"crs":{"type":"name","properties":{"name":"EPSG:4326"}},' + geojson.dumps(geojson.FeatureCollection(features), allow_nan = True, sort_keys=True, default=json_serial)[1:]
+    return ("""{"crs":{"type":"name","properties":{"name":"EPSG:4326"}},""" + geojson.dumps(geojson.FeatureCollection(features), allow_nan = True, sort_keys=True, default=json_serial)[1:]).replace('NaN,', '"",')

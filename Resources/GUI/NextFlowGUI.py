@@ -39,6 +39,10 @@ class UI_MainWindow(object):
         self.setWindowTitle("NextFlow - Untitled.fcst")
         self.setMinimumSize(QtCore.QSize(900,750))
 
+        # Fonts
+        for fontFile in os.listdir("resources/GraphicalResources/fonts"):
+            QtGui.QFontDatabase.addApplicationFont("resources/GraphicalResources/fonts/{0}".format(fontFile))
+
         # Stylesheet
         self.setStyleSheet(open(os.path.abspath('resources/GUI/stylesheets/main.qss')).read())
         
@@ -46,14 +50,18 @@ class UI_MainWindow(object):
         self.appMenu = MenuBar()
         self.setMenuBar(self.appMenu)
 
+        # Icons
+        datasetIcon = QtGui.QIcon(QtGui.QPixmap(os.path.abspath("resources/graphicalResources/icons/list-24px.svg")))
+        dataIcon = QtGui.QIcon(QtGui.QPixmap(os.path.abspath("resources/graphicalResources/icons/trending_up-24px.svg")))
+
         # Tabs
         tabWidget = QtWidgets.QTabWidget()
 
-        self.datasetTab = DatasetsTab.DatasetTab()
-        tabWidget.addTab(self.datasetTab, "Datasets")
+        self.datasetTab = DatasetsTab.DatasetTab(self)
+        tabWidget.addTab(self.datasetTab, datasetIcon, "Datasets")
 
         self.dataTab = DataTab.DataTab()
-        tabWidget.addTab(self.dataTab, "Data")
+        tabWidget.addTab(self.dataTab, dataIcon, "Data")
 
         #self.forecastsTab = CreateForecastsTab.CreateForecastsTab()
         #tabWidget.addTab(self.forecastsTab, "Create Forecasts")

@@ -22,24 +22,7 @@ class webMapView(QtWebEngineWidgets.QWebEngineView):
         url = QtCore.QUrl.fromLocalFile(os.path.abspath('resources/GUI/WebMap/WebMap.html'))
         self.setPage(self.page)
         self.load(url)
-        self.channel = QtWebChannel.QWebChannel()
-        self.webClass = webClass()
-        self.channel.registerObject('webobj', self.webClass)
-        self.page.setWebChannel(self.channel)
         
-
-class webClass(QtCore.QObject):
-    """
-    """
-    def __init__(self):
-        QtCore.QObject.__init__(self)
-        self.loc = ''
-        self.layers = ''
-    @QtCore.pyqtSlot(list)
-    def getJavascriptVariable(self, l):
-        self.loc = l[0]
-        self.layers = l[1]
-        return    
 
 class webMapPage(QtWebEngineWidgets.QWebEnginePage):
     """
@@ -64,7 +47,7 @@ class webMapPage(QtWebEngineWidgets.QWebEnginePage):
         """
         #if lvl != 0:
         #    return
-        print(msg)
+        print("Message logged from webmap console: ", msg)
         self.java_msg_signal.emit(msg)
 
 # Test implementation

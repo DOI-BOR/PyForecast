@@ -201,7 +201,7 @@ class ScaledDataViewer(QtWidgets.QDialog):
 
         self.setLayout(layout1)
 
-class resamplePlotViewer(PyQtGraphs)
+#class resamplePlotViewer(PyQtGraphs)
 
 if __name__ == "__main__":
     

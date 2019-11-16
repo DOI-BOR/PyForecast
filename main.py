@@ -39,6 +39,21 @@ from PyQt5 import QtWebEngineWidgets
 from datetime import datetime
 from PyQt5 import QtGui, QtWidgets, QtCore
 
+
+# Custom application style to make the tooltip behavior a bit more tolerable.
+class NextFlowProxyStyle(QtWidgets.QProxyStyle):
+
+    def __init__(self):
+        QtWidgets.QProxyStyle.__init__(self)
+    
+    def styleHint(self, hint, option, widget, returnData):
+        if hint == QtWidgets.QStyle.SH_ToolTip_WakeUpDelay:
+            return 1400
+        elif hint == QtWidgets.QStyle.SH_ToolTip_FallAsleepDelay:
+            return 10
+        else:
+            return self.baseStyle().styleHint(hint, option, widget, returnData)
+
 if __name__ == '__main__':
 
     # Print out a welcom message
@@ -56,6 +71,8 @@ if __name__ == '__main__':
     # Begin loading the application
     app = QtWidgets.QApplication(sys.argv)
     app.setWindowIcon(QtGui.QIcon('resources/GraphicalResources/icons/icon.ico'))
+    app.style_ = NextFlowProxyStyle()
+    app.setStyle(app.style_)
 
     import resources.application as application
 

@@ -16,18 +16,18 @@ body {
 
 .leaflet-popup-tip,
 .leaflet-popup-content-wrapper {
-    background: #0a85cc;
+    background: rgb(0, 115, 150);
     border-radius: 2px;
     color: aliceblue;
-    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    font-family: 'Segoe UI', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
 }
 h1 {
-    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    font-family: 'Segoe UI', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
     font-size: 14px;
     margin:0
 }
 p {
-    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    font-family: 'Segoe UI', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
     font-size: 12px;
     margin:0
 }
@@ -39,24 +39,24 @@ select {
 }
 button {
     background-color: rgb(238, 238, 238);
-    border-color: rgb(51, 51, 51);
+    border-color: rgb(29, 29, 29);
     padding: 5px;
     border-radius: 0;
-    border-width: 2px;
+    border-width: 1px;
     border-style: solid;
     width: 100%;
-    margin-top: 20px;
-    color: #242424
+    margin-top: 10px;
+    color: rgb(0,62,81)
 }
 button:hover {
-    border-color:  rgb(109, 214, 255);
+    border-color:  rgb(0, 0, 0);
     background-color: rgb(202, 202, 202);
     color: #000000,
 }
 .mapboxgl-popup-content {
     color: balck;
     background-color: white;
-    border-color: #0a85cc;
+    border-color: rgb(0, 115, 150);
     box-shadow: 2px 2px 2px rgb(52,34,94);
     border-radius: 2px;
     min-width: 200px;
@@ -66,7 +66,7 @@ button:hover {
                                 width: 20%;}
 .leaflet-control-zoom a {
     opacity: 1;
-    color: #0a85cc;
+    color: rgb(0, 115, 150);;
     background-color: rgb(238, 238, 238);
 }
 
@@ -74,5 +74,5 @@ button:hover {
     background-color: rgb(238, 238, 238)
 }
 .leaflet-control-attribution a {
-	color: #0a85cc;
+	color: rgb(0, 115, 150);;
 	}

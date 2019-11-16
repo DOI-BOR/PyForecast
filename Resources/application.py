@@ -29,7 +29,7 @@ import configparser
 import pandas as pd
 
 
-class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMaster.datasetTab, dataTabMaster.dataTab, menuBarMaster.menuBar):
+class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMaster.datasetTab, menuBarMaster.menuBar):
     """
     GLOBAL APPLICATION INITIALIZATION
     This section of the script deals with the initialization of the software. These subroutines 
@@ -56,6 +56,7 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
                 'DatasetName',              # e.g. Gibson Reservoir
                 'DatasetAgency',            # e.g. USGS
                 'DatasetParameter',         # e.g. Temperature
+                "DatasetParameterCode",     # e.g. avgt
                 'DatasetUnits',             # e.g. CFS
                 'DatasetDefaultResampling', # e.g. average 
                 'DatasetDataloader',        # e.g. RCC_ACIS
@@ -153,8 +154,8 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
         pd.set_option('display.max_rows', 25)
 
         # Set-up all the tabs and menu bars
-        self.setupDatasetTab()
-        self.setupDataTab()
+        self.initializeDatasetTab()
+        #self.setupDataTab()
         self.setupMenuBar()
 
         # Intiate a threadpool

@@ -12,10 +12,9 @@ import subprocess
 
 class SpreadSheetModel(QtCore.QAbstractItemModel):
     """
+    The SpeadsheetModel is a Qt model that works on top of NextFlow's
+    DataTable to display data in the SpreadsheetView.
     """
-    
-    # Signals:
-    changedDataSignal = QtCore.pyqtSignal(dict)
 
     def __init__(self, parent = None):
         """
@@ -46,13 +45,17 @@ class SpreadSheetModel(QtCore.QAbstractItemModel):
         ...
         """
 
+        # Let the view know we're resetting the model
         self.beginResetModel()
 
+        # Create references to the dataTable and the datasetTable
         self.dataTable = dataTable
         self.datasetTable = datasetTable
         
+        # Create an index dictionary for dataset names (looks like: {100101: "Gibson Reservoir: Inflow", ...})
         self.datasetIndex = OrderedDict((id_,name) for id_, name in ((row[0], "{0}: {1}".format(row[1]['DatasetName'], row[1]['DatasetParameter'])) for row in self.datasetTable.iterrows()))
-        print(self.datasetIndex[100101])
+        
+        # Create a list of the dataset numbers (looks like [100101, ...])
         self.datasetIndexedList = [item[0] for item in list(self.datasetIndex.items())]
 
         # Iterate through the datasets and chop up the dataset names for a prettier display in the table
@@ -73,9 +76,10 @@ class SpreadSheetModel(QtCore.QAbstractItemModel):
             lines.append(line)  # add the last line
             self.datasetIndex[id_] = '\n'.join(lines) # join the lines by a newline character
 
-        # Create an index array to associate model indices with data from the table
+        # Create an index array to associate model indices with data from the table (looks like: [[QModelIndex(...), QModelIndex(...),...],...])
         self.indexArray = np.array([[self.createIndex(i,j) for j, id_ in enumerate(self.datasetIndexedList)] for i, date in enumerate(self.dataTable.index.levels[0])])
 
+        # Let the view know we're done resetting the model
         self.initialized = True
         self.endResetModel()
 
@@ -323,6 +327,8 @@ class SpreadSheetView(QtWidgets.QTableView):
 
     def pasteSelectionFromClipboard(self):
         """
+        This function reads comma delimited data from the system clipboard and 
+        inserts it into the model (thus adjusting the dataframe in the process)
         """
 
         # Get the clipboard object
@@ -360,6 +366,7 @@ class SpreadSheetView(QtWidgets.QTableView):
 
 
         return
+        
 
     def copySelectionToClipboard(self):
         """

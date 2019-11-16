@@ -2,8 +2,9 @@ QMainWindow {
     background: #ededed;
     margin: 0;
     padding: 0;
-    font-family: 'Lao UI';
+    font-family: 'Segoe UI';
     font-size: 15px;
+    color: #003E51
 }
 
 QMenuBar { 
@@ -17,6 +18,11 @@ QMenuBar::item:selected {
 }
 QTabWidget {
     background: #e8e8e8;
-    font-family: 'Lao UI';
+    font-family: 'Segoe UI';
     font-size: 15px;
+    color: #003E51
+}
+QLabel {
+    font-family: 'Segoe UI';
+    color: #003E51;
 }

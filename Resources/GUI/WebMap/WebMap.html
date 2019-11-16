@@ -15,31 +15,23 @@ Description:        WebMap.html provides the HTML code for the station
         <meta charset='utf-8' />
         <title>WebMap</title>
         <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
-        <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.1/dist/leaflet.css" />
         <script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js"></script>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-        <script src="https://unpkg.com/esri-leaflet/dist/esri-leaflet.js"></script>
         <script src='leaflet_shades/dist/leaflet-shades.js'></script>
+        <script src='leaflet.groupedlayercontrol.min.js'></script>
+        <link rel='stylesheet' href='leaflet.groupedlayercontrol.min.css'>
         <link href='WebMap.css' rel='stylesheet' />
         <link href='leaflet_shades/src/css/leaflet-shades.css' rel='stylesheet'>
     </head>
 
     <body>
-        <div id='map' ></div>
+        <script>
+            console.log(window.location.pathname);
+            </script>
+        <div id='map'></div>
         <script src='WebMap2.js'></script>
         
     </body>
-    <script>
-            window.onload = function() {
-                new QWebChannel(qt.webChannelTransport, function(channel) {
-                    var webobj = channel.objects.webobj;
-                    window.foo = webobj;
-                    window.loaded = true;
-                    window.updateApplication();
-                })
-            }
-        
-        </script>
 
 </html>

@@ -7,13 +7,12 @@ Description:        'DatasetsTab.py' is a PyQt5 GUI for the NextFlow application
                     to add data to the plots, tables, and webmaps.
 """
 
-from    PyQt5   import  QtWidgets, \
-                        QtCore, \
-                        QtGui
-from    resources.GUI.CustomWidgets     import  boxyListWidget
-from    resources.GUI.WebMap    import  webMapView
-import  sys
-import  os
+from PyQt5 import  QtWidgets, QtCore, QtGui
+from resources.GUI.CustomWidgets import DatasetList_HTML_Formatted
+from resources.GUI.WebMap import webMapView
+
+import sys
+import os
 
 class DatasetTab(QtWidgets.QWidget):
     """
@@ -22,7 +21,7 @@ class DatasetTab(QtWidgets.QWidget):
     see the 'DatasetTab' section of 'application.py'
     """
     def __init__(self, parent = None):
-        self.infoIcon = QtGui.QPixmap(os.path.abspath('resources/GraphicalResources/icons/infoHover.png')).scaled(30,30, QtCore.Qt.KeepAspectRatio)
+        self.infoIcon = QtGui.QPixmap(os.path.abspath('resources/GraphicalResources/icons/info-24px.svg'))
         """
         Initialization function for the DatasetTab class. Physically
         lays out the DatasetTab widget.
@@ -31,6 +30,8 @@ class DatasetTab(QtWidgets.QWidget):
         parent -- The parent widget of this tab. Not used.
         """
         QtWidgets.QWidget.__init__(self)
+
+        self.parent = parent
 
         # Layout Elements
         layout = QtWidgets.QVBoxLayout()
@@ -45,16 +46,16 @@ class DatasetTab(QtWidgets.QWidget):
         # Right hand side tab pane - DatasetListTab
         DatasetListTab = QtWidgets.QWidget()
         layout_ = QtWidgets.QVBoxLayout()
-        label = QtWidgets.QLabel('<b style="font-size: 20px">Selected Datasets</b>')
+        label = QtWidgets.QLabel('<b style="font-size: 17px">Selected Datasets</b>')
         label.setTextFormat(QtCore.Qt.RichText)
         self.selectedDatasetsLabel = QtWidgets.QLabel("0 datasets have been selected:")
-        self.selectedDatasetsWidget = boxyListWidget.boxyListWidget()
-        self.selectedDatasetsWidget.setContextMenu(menuItems=['remove', 'edit'])
+        self.selectedDatasetsWidget = DatasetList_HTML_Formatted.DatasetList_HTML_Formatted(datasetTable=self.parent.datasetTable)
+        self.selectedDatasetsWidget.defineContextMenu(menuItems=['Remove Dataset'])
         layout_.addWidget(label)
         layout_.addWidget(self.selectedDatasetsLabel)
         layout_.addWidget(self.selectedDatasetsWidget)
         DatasetListTab.setLayout(layout_)
-        icon = QtGui.QPixmap(os.path.abspath("resources/graphicalResources/icons/datasetListTab.png"))
+        icon = QtGui.QPixmap(os.path.abspath("resources/graphicalResources/icons/playlist_add_check-24px.svg"))
         matrix_ = QtGui.QTransform()
         matrix_.rotate(270)
         icon = QtGui.QIcon(icon.transformed(matrix_))
@@ -70,7 +71,7 @@ class DatasetTab(QtWidgets.QWidget):
         self.keywordSearchBox = QtWidgets.QLineEdit()
         self.keywordSearchBox.setPlaceholderText("e.g. Alpine Meadow")
         self.keywordSearchButton = QtWidgets.QPushButton("Search")
-        self.searchResultsBox = boxyListWidget.boxyListWidget()
+        self.searchResultsBox = DatasetList_HTML_Formatted.DatasetList_HTML_Formatted( buttonText = 'Add Dataset')
         layout_.addWidget(label)
         layout_.addWidget(keywordLabel)
         layout2 = QtWidgets.QHBoxLayout()
@@ -79,7 +80,7 @@ class DatasetTab(QtWidgets.QWidget):
         layout_.addLayout(layout2)
         layout_.addWidget(self.searchResultsBox)
         SearchTab.setLayout(layout_)
-        icon = QtGui.QPixmap(os.path.abspath("resources/graphicalResources/icons/searchTab.png"))
+        icon = QtGui.QPixmap(os.path.abspath("resources/graphicalResources/icons/search-24px.svg"))
         matrix_ = QtGui.QTransform()
         matrix_.rotate(270)
         icon = QtGui.QIcon(icon.transformed(matrix_))
@@ -96,7 +97,7 @@ class DatasetTab(QtWidgets.QWidget):
         self.hucSelectionButton = QtWidgets.QPushButton("Select Watersheds")
         self.boxHucSearchButton = QtWidgets.QPushButton("Search Selected Areas")
         self.boxHucSearchButton.setEnabled(False)
-        self.boxHucResultsBox = boxyListWidget.boxyListWidget()
+        self.boxHucResultsBox = DatasetList_HTML_Formatted.DatasetList_HTML_Formatted(buttonText = 'Add Dataset')
         layout2 = QtWidgets.QHBoxLayout()
         layout2.addWidget(self.boundingBoxButton)
         layout2.addWidget(self.hucSelectionButton)
@@ -104,7 +105,7 @@ class DatasetTab(QtWidgets.QWidget):
         layout_.addWidget(self.boxHucSearchButton)
         layout_.addWidget(self.boxHucResultsBox)
         boxHucSearchTab.setLayout(layout_)
-        icon = QtGui.QPixmap(os.path.abspath("resources/graphicalResources/icons/hucBoxTab.png"))
+        icon = QtGui.QPixmap(os.path.abspath("resources/graphicalResources/icons/image_search-24px.svg"))
         matrix_ = QtGui.QTransform()
         matrix_.rotate(270)
         icon = QtGui.QIcon(icon.transformed(matrix_))
@@ -122,7 +123,7 @@ class DatasetTab(QtWidgets.QWidget):
         prismInfo.setPixmap(self.infoIcon)
         prismInfo.setToolTip("Returns watershed averaged temperature and precipitation data from the PRISM dataset")
         self.prismInput = QtWidgets.QLineEdit()
-        self.prismInput.setPlaceholderText("Enter HUC8:")
+        self.prismInput.setPlaceholderText("Start typing a watershed:")
         self.prismButton = QtWidgets.QPushButton("Add")
         self.prismButton.setFixedWidth(100)
 
@@ -131,7 +132,7 @@ class DatasetTab(QtWidgets.QWidget):
         nrccInfo.setPixmap(self.infoIcon)
         nrccInfo.setToolTip("Returns watershed averaged temperature and precipitation data from the NRCC dataset")
         self.nrccInput = QtWidgets.QLineEdit()
-        self.nrccInput.setPlaceholderText("Enter HUC8:")
+        self.nrccInput.setPlaceholderText("Start typing a watershed:")
         self.nrccButton = QtWidgets.QPushButton("Add")
         self.nrccButton.setFixedWidth(100)
 
@@ -139,7 +140,8 @@ class DatasetTab(QtWidgets.QWidget):
         pdsiInfo = QtWidgets.QLabel()
         pdsiInfo.setPixmap(self.infoIcon)
         pdsiInfo.setToolTip("Returns climate-division averaged Palmer Drought Severity Index / SPI data from the CPC.")
-        self.pdsiInput = QtWidgets.QComboBox()
+        self.pdsiInput = QtWidgets.QLineEdit()
+        self.pdsiInput.setPlaceholderText("Start typing a State or division number:")
         self.pdsiButton = QtWidgets.QPushButton("Add PDSI")
         self.pdsiButton.setFixedWidth(70)
         self.spiButton = QtWidgets.QPushButton("Add SPI")
@@ -215,7 +217,7 @@ class DatasetTab(QtWidgets.QWidget):
 
         #layout_.addWidget(blank)
         AdditionalDatasetTab.setLayout(layout_)
-        icon = QtGui.QPixmap(os.path.abspath("resources/graphicalResources/icons/additionalTab.png"))
+        icon = QtGui.QPixmap(os.path.abspath("resources/graphicalResources/icons/public-24px.svg"))
         matrix_ = QtGui.QTransform()
         matrix_.rotate(270)
         icon = QtGui.QIcon(icon.transformed(matrix_))
