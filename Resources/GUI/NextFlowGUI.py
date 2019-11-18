@@ -96,7 +96,7 @@ class MenuBar(QtWidgets.QMenuBar):
         self.excelAction = QtWidgets.QAction("To Excel")
         self.pdfAction = QtWidgets.QAction("To PDF")
         self.databaseAction = QtWidgets.QAction("To Database")
-        self.exitAction = QtWidgets.QAction("Exit FlowCast")
+        self.exitAction = QtWidgets.QAction("Exit NextFlow")
         self.fileMenu.addAction(self.newAction)
         self.fileMenu.addAction(self.saveAction)
         self.fileMenu.addAction(self.saveAsAction)

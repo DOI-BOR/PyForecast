@@ -20,6 +20,7 @@ import multiprocessing as mp
 import itertools
 from time import sleep
 import ast
+import numpy as np
 
 class datasetTab(object):
     """
@@ -54,6 +55,8 @@ class datasetTab(object):
         self.datasetTab.pdsiButton.clicked.connect(                 lambda x: self.addWatershedClimateDivisionDataset(self.climCompleter.selectedDataset['DatasetExternalID'].iloc[0], 'PDSI'))
         self.datasetTab.spiButton.clicked.connect(                  lambda x: self.addWatershedClimateDivisionDataset(self.climCompleter.selectedDataset['DatasetExternalID'].iloc[0], 'SPI'))
         self.datasetTab.climButton.clicked.connect(                 lambda x: self.addDataset(self.datasetTab.climInput.currentData().name))
+        self.datasetTab.keywordSearchBox.returnPressed.connect(     lambda: self.searchForDataset(self.datasetTab.keywordSearchBox.text()))
+        self.datasetTab.addiButton.clicked.connect(                 lambda x: self.openUserDefinedDatasetEditor())
 
         # Map Features
         self.datasetTab.webMapView.page.java_msg_signal.connect(    self.addDatasetsFromWebMap)
@@ -62,6 +65,9 @@ class datasetTab(object):
         self.datasetTab.selectedDatasetsWidget.itemDoubleClicked.connect(               self.navigateMapToSelectedItem)
         self.datasetTab.searchResultsBox.itemDoubleClicked.connect(                     self.navigateMapToSelectedItem)
         self.datasetTab.boxHucResultsBox.itemDoubleClicked.connect(                     self.navigateMapToSelectedItem)
+        self.datasetTab.searchResultsBox.buttonPressSignal.connect(                     self.addDataset)
+        self.datasetTab.boxHucResultsBox.buttonPressSignal.connect(                     self.addDataset)
+        self.datasetTab.selectedDatasetsWidget.buttonPressSignal.connect(               self.openUserDefinedDatasetEditor)
         self.datasetTab.selectedDatasetsWidget.Remove_DatasetAction.triggered.connect(  lambda x: self.removeDataset(self.datasetTab.selectedDatasetsWidget.currentItem().data(QtCore.Qt.UserRole).name))
 
 
@@ -137,11 +143,12 @@ class datasetTab(object):
                                  found in the dataset catalogs.
         """
 
-
         # Check to make sure that this dataset in not already in the datasetTable
         if datasetInternalID in list(self.datasetTable.index):
 
-            # PRINT ERROR ABOUT THE DATASET ALREADY BEING ADDED
+            # PRINT ERROR ABOUT THE DATASET ALREADY BEING 
+            loggingAndErrors.showErrorMessage(self, "Dataset already selected")
+
             return
         
         # Find the dataset from the appropriate dataset catalog
@@ -175,7 +182,10 @@ class datasetTab(object):
         """
 
         # Provide a warning that this will delete all associated forecasts, data, etc associated with this id
-
+        ret = loggingAndErrors.displayDialogYesNo("This action will remove any associated data using this dataset (e.g. forecasts, forecast equations, composite datasets). Continue?")
+        if ret == False:
+            return
+        
         # Begin by removing the dataset from the datasetTable
         self.datasetTable.drop(datasetInternalID, inplace = True)
 
@@ -185,10 +195,90 @@ class datasetTab(object):
         # Update the multiIndex of the DataTable
         self.dataTable.set_index(self.dataTable.index.remove_unused_levels(), inplace = True)
 
+        # Next, remove any datasets that depend on this dataset (i.e. composite datasets)
+        for i, dataset in self.datasetTable.iterrows():
+            if str(datasetInternalID) in str(dataset['DatasetCompositeEquation']):
+                self.removeDataset(dataset.name)
+
         # Refresh the dataset list view
         self.datasetTab.selectedDatasetsWidget.setDatasetTable(self.datasetTable)
 
         return
+
+    def openUserDefinedDatasetEditor(self, datasetID = None):
+        """
+        Opens the user defined dataset editor. Allows the user 
+        to create custom datasets (import files, composite, custom loaders, etc).
+        Initializes to the given ID, or it the ID is None, then initializes
+        to a blank dataset
+        """
+
+        # Figure out if we're editing an existing dataset 
+        if datasetID in list(self.datasetTable.index):
+            
+            # Get the dataset to be edited
+            dataset = self.datasetTable.loc[datasetID]
+        
+        else:
+
+            # Create a blank dataset to be edited
+            if list(self.datasetTable.index) == []:
+                newID = 900000
+            else:
+                newID = max(self.datasetTable.index) + 1 if max(self.datasetTable.index) >= 900000 else 900000
+            dataset = pd.Series(
+                data = ['OTHER','','','','','','','average','','',np.nan, np.nan, np.nan, '','','','',{}],
+                index = [
+                        'DatasetType',              # e.g. STREAMGAGE, or RESERVOIR
+                        'DatasetExternalID',        # e.g. "GIBR" or "06025500"
+                        'DatasetName',              # e.g. Gibson Reservoir
+                        'DatasetAgency',            # e.g. USGS
+                        'DatasetParameter',         # e.g. Temperature
+                        "DatasetParameterCode",     # e.g. avgt
+                        'DatasetUnits',             # e.g. CFS
+                        'DatasetDefaultResampling', # e.g. average 
+                        'DatasetDataloader',        # e.g. RCC_ACIS
+                        'DatasetHUC8',              # e.g. 10030104
+                        'DatasetLatitude',          # e.g. 44.352
+                        'DatasetLongitude',         # e.g. -112.324
+                        'DatasetElevation',         # e.g. 3133 (in ft)
+                        'DatasetPORStart',          # e.g. 1/24/1993
+                        'DatasetPOREnd',            # e.g. 1/22/2019\
+                        'DatasetCompositeEquation', # e.g. C/100121,102331,504423/1.0,0.5,4.3/0,0,5
+                        'DatasetImportFileName',    # e.g. 'C://Users//JoeDow//Dataset.CSV'
+                        'DatasetAdditionalOptions'],
+                name = newID
+            )
+
+        # Open the dialog with the dataset
+        self.editorDialog = UserDefinedDatasetDialog.EditorDialog(self, dataset)
+
+        # Connect the close events
+        self.editorDialog.saveDatasetSignal.connect(self.saveUserDefinedDataset)
+        
+        return
+    
+
+    def saveUserDefinedDataset(self, dataset):
+        """
+        Connected to the saveDatasetSignal of the Editor Dialog. Updates the
+        global DatasetTable with the updated or new datset
+        """
+
+        # Check if dataset is new
+        if dataset.name in list(self.datasetTable.index):
+            
+            # Update the dataset table
+            self.datasetTable.update(dataset)
+
+        else:
+
+            # Create a new row in the dataset table
+            self.datasetTable = self.datasetTable.append(dataset, ignore_index = False)
+
+        # Update the display
+        self.datasetTab.selectedDatasetsWidget.setDatasetTable(self.datasetTable)
+
 
     def addDatasetsFromWebMap(self, datasetAdditionMessage):
         """

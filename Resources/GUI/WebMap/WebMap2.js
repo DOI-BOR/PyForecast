@@ -483,6 +483,7 @@ function enableHUCSelect() {
         // turn off the default interaction
         layer.off("mouseout");
         layer.off("mouseover");
+        layer.off("click");
 
         layer.on("click", function(e) {
 
@@ -537,21 +538,20 @@ function getSelectedHUCs() {
         layer.on("mouseout", function(e){
             window.hucLayer.resetStyle(e.target);
         });
+        layer.off("click");
+        layer.on("click", function(e){
+            var coordinates = getCenter(layer.feature, e);
+            var name = layer.feature.properties.NAME;
+            var num = layer.feature.properties.HUC8;
+            var popHTML = "<strong>HUC8: " + num + "</strong><p><strong>Name: <strong>" + name;
+            popHTML = popHTML + `</br><select id='param'>`;
+            popHTML = popHTML + `<option value='PRISM'>PRSIM Temperature & Precipitation</option><option value='NRCC'>NRCC Temperature & Precipitation</option></select></p>`;
+            popHTML = popHTML + '<button type="button" onclick="HUCPress()">Add Temp/Precip</button>' + `<p hidden id="hucNum" style="margin:0">${num}</p>` ;
+            var pop = L.popup().setLatLng(coordinates).setContent(popHTML).addTo(window.map);
+        })
     
     });
     
-    window.hucLayer.on('click', function(e) {
-
-        var coordinates = getCenter(e.layer.feature, e);
-        var name = e.layer.feature.properties.NAME;
-        var num = e.layer.feature.properties.HUC8;
-        var popHTML = "<strong>HUC8: " + num + "</strong><p><strong>Name: <strong>" + name;
-        popHTML = popHTML + `</br><select id='param'>`;
-        popHTML = popHTML + `<option value='PRISM'>PRSIM Temperature & Precipitation</option><option value='NRCC'>NRCC Temperature & Precipitation</option></select></p>`;
-        popHTML = popHTML + '<button type="button" onclick="HUCPress()">Add Temp/Precip</button>' + `<p hidden id="hucNum" style="margin:0">${num}</p>` ;
-        var pop = L.popup().setLatLng(coordinates).setContent(popHTML).addTo(window.map);
-
-    });
     
 
     // Return the HUC List

@@ -1,428 +1,312 @@
-from PyQt5 import QtWidgets, QtCore
-from datetime import datetime
-from resources.modules.Miscellaneous import  loggingAndErrors
+"""
+"""
 
+from PyQt5 import QtCore, QtGui, QtWidgets
 import pandas as pd
 import os
-from collections import OrderedDict
-import importlib
 
-class UserDefinedDatasetDialog(QtWidgets.QDialog):
+
+class CompositeEquationEditor(QtWidgets.QListWidget):
     """
+    This widget contains an editor for defining composite datasets. 
+    The widget is a ListWidget.
     """
 
-    returnDatasetSignal = QtCore.pyqtSignal(object)
-    updatedDatasetSignal = QtCore.pyqtSignal(object)
-    returnDataFromImportSignal = QtCore.pyqtSignal(object)
+    def __init__(self, parent = None, initialEquation = ""):
 
-    def __init__(self, loadOptions=None, parent=None, datasetTypes=None, importDatasetFlag=False,):
-        super(UserDefinedDatasetDialog, self).__init__()
-        self.importDatasetFlag = importDatasetFlag
-        if 'USER DEFINED' not in datasetTypes:
-            datasetTypes.append('USER DEFINED')
-        mainLayout = QtWidgets.QVBoxLayout()
+        QtWidgets.QListWidget.__init__(self, parent)
         self.parent = parent
-        self.setWindowTitle("Add or Edit Dataset")
+        self.datasetTable = self.parent.parent.datasetTable
+        self.addItemButtonList = []
+        self.removeItemButtonList = []
+        self.datasetList = []
+        self.coefList = []
+        self.lagList = []
+        self.datasetNames = [(d['DatasetExternalID'] + ': ' + d['DatasetParameter'], d.name) for i, d in self.datasetTable.iterrows()]
 
-        nameEditTitle = QtWidgets.QLabel("Dataset Name *")
-        self.nameEdit = QtWidgets.QLineEdit()
-        hlayout = QtWidgets.QHBoxLayout()
-        hlayout.addWidget(nameEditTitle)
-        hlayout.addWidget(self.nameEdit)
-        mainLayout.addLayout(hlayout)
+        self.addIcon = QtGui.QIcon(QtGui.QPixmap('resources/GraphicalResources/icons/add_circle-24px.svg'))
+        self.removeIcon = QtGui.QIcon(QtGui.QPixmap('resources/GraphicalResources/icons/remove_circle-24px.svg'))
 
-        idEditTitle = QtWidgets.QLabel("Dataset ID *")
-        self.idEdit = QtWidgets.QLineEdit()
-        hlayout = QtWidgets.QHBoxLayout()
-        hlayout.addWidget(idEditTitle)
-        hlayout.addWidget(self.idEdit)
-        mainLayout.addLayout(hlayout)
-
-        agencyEditTitle = QtWidgets.QLabel("Dataset Agency")
-        self.agencyEdit = QtWidgets.QLineEdit()
-        hlayout = QtWidgets.QHBoxLayout()
-        hlayout.addWidget(agencyEditTitle)
-        hlayout.addWidget(self.agencyEdit)
-        mainLayout.addLayout(hlayout)
-
-        typeTitle =  QtWidgets.QLabel("Dataset Type")
-        self.typeDropDown = QtWidgets.QComboBox()
-        self.typeDropDown.addItems(datasetTypes)
-        self.typeDropDown.setCurrentText("USER DEFINED")
-        hlayout = QtWidgets.QHBoxLayout()
-        hlayout.addWidget(typeTitle)
-        hlayout.addWidget(self.typeDropDown)
-        mainLayout.addLayout(hlayout)
-
-        paramEditTitle = QtWidgets.QLabel("Dataset Parameter *")
-        self.paramEdit = QtWidgets.QLineEdit()
-        hlayout = QtWidgets.QHBoxLayout()
-        hlayout.addWidget(paramEditTitle)
-        hlayout.addWidget(self.paramEdit)
-        mainLayout.addLayout(hlayout)
-
-        paramCodeTitle = QtWidgets.QLabel("Dataset Parameter Code *")
-        self.paramCodeEdit = QtWidgets.QLineEdit()
-        hlayout = QtWidgets.QHBoxLayout()
-        hlayout.addWidget(paramCodeTitle)
-        hlayout.addWidget(self.paramCodeEdit)
-        mainLayout.addLayout(hlayout)
-
-        unitsEditTitle = QtWidgets.QLabel("Parameter Units *")
-        self.unitsEdit = QtWidgets.QLineEdit()
-        hlayout = QtWidgets.QHBoxLayout()
-        hlayout.addWidget(unitsEditTitle)
-        hlayout.addWidget(self.unitsEdit)
-        mainLayout.addLayout(hlayout)
-
-        resamplingMethodTitle = QtWidgets.QLabel("Resampling")
-        self.resampleChooser = QtWidgets.QComboBox()
-        self.resampleChooser.addItems(['average','sample','accumulation'])
-        hlayout = QtWidgets.QHBoxLayout()
-        hlayout.addWidget(resamplingMethodTitle)
-        hlayout.addWidget(self.resampleChooser)
-        mainLayout.addLayout(hlayout)
-
-        latTitle = QtWidgets.QLabel("Dataset Latitude")
-        self.latEdit = QtWidgets.QLineEdit()
-        hlayout = QtWidgets.QHBoxLayout()
-        hlayout.addWidget(latTitle)
-        hlayout.addWidget(self.latEdit)
-        mainLayout.addLayout(hlayout)
-
-        longTitle = QtWidgets.QLabel("Dataset Longitude")
-        self.longEdit = QtWidgets.QLineEdit()
-        hlayout = QtWidgets.QHBoxLayout()
-        hlayout.addWidget(longTitle)
-        hlayout.addWidget(self.longEdit)
-        mainLayout.addLayout(hlayout)
-
-        loaderSelectTitle = QtWidgets.QLabel("Select Loader")
-        self.loaderDropDown = QtWidgets.QComboBox()
-        self.defaultLoaders = os.listdir("resources/DataLoaders/")
-        self.customLoaders = os.listdir("resources/DataLoaders/CustomDataLoaders/")
-        if not importDatasetFlag:
-            for i, file in enumerate(self.defaultLoaders + self.customLoaders):
-                if file[-3:] == '.py':
-                    self.loaderDropDown.addItem(file[:-3])
-
-            self.loaderDropDown.currentTextChanged.connect(self.populateOptions)
-        else:
-            self.loaderDropDown.addItem("IMPORT")
-            
-        hlayout = QtWidgets.QHBoxLayout()
-        hlayout.addWidget(loaderSelectTitle)
-        hlayout.addWidget(self.loaderDropDown)
-        mainLayout.addLayout(hlayout)
-
-        decriptionTitle = QtWidgets.QLabel("Loader Description")
-        self.description = QtWidgets.QTextEdit()
-        self.description.setMinimumHeight(70)
-        self.description.setReadOnly(True)
-        self.description.setFontFamily('consolas')
-        mainLayout.addWidget(decriptionTitle)
-        mainLayout.addWidget(self.description)
-
-        if not importDatasetFlag:
-            self.optionsTable = OptionsTable()
-            mainLayout.addWidget(self.optionsTable)
-        else:
-            self.loadFileButton = QtWidgets.QPushButton("Choose File")
-            self.loadFileButton.clicked.connect(self.setFileName)
-            self.fileNameText = QtWidgets.QLabel("No file chosen...")
-            self.fileName = ""
-            hlayout = QtWidgets.QHBoxLayout()
-            hlayout.addWidget(self.loadFileButton)
-            hlayout.addWidget(self.fileNameText)
-            mainLayout.addLayout(hlayout)
-
-        addButton = QtWidgets.QPushButton("Confirm")
-        addButton.clicked.connect(self.packageAndReturn)
-        cancelButton = QtWidgets.QPushButton("Cancel")
-        cancelButton.clicked.connect(self.close)
-        hlayout = QtWidgets.QHBoxLayout()
-        hlayout.addWidget(addButton)
-        hlayout.addWidget(cancelButton)
-        mainLayout.addLayout(hlayout)
-
-        self.setLayout(mainLayout)
-        if not importDatasetFlag:
-            self.populateOptions()
-        else:
-            self.setImportLayout()
-        self.editFlag = False
-
-        if isinstance(loadOptions, pd.Series):
-            self.editFlag = True
-            self.loadOptions(loadOptions)
+        self.addNewDatasetRow()
         
+        return
+
+    def processEquationIntoWidget(self, equation = None):
+
+        equation = equation.split('/')
+        datasets = [int(i) for i in equation[0].split(',')]
+        coefs = [float(i) for i in equation[1].split(',')]
+        lags = [int(i) for i in equation[2].split(',')]
+
+        for i, dataset in enumerate(datasets):
+            idx = list(map(lambda x: x[1] == dataset, self.datasetNames)).index(True)
+            self.addNewDatasetRow()
+            self.datasetList[i].setCurrentIndex(idx)
+            self.coefList[i].setText(coefs[i])
+            self.lagList[i].setValue(lags[i])
+        
+        return
+
+
+    def processEquationFromWidget(self):
+
+        datasets = []
+        coefs = []
+        lags = []
+
+        for i in range(len(self.datasetList)):
+            datasets.append(self.datasetList[i].data(QtCore.Qt.UserRole))
+            coefs.append(self.coefList[i].text())
+            lags.append(self.lagList[i].value())
+
+        datasetString = ','.join(datasets)
+        coefString = ','.join(coefs)
+        lagString = ','.join(lags)
+
+        return 'C/{0}/{1}/{2}'.format(datasetString, coefString, lagString)
+
+
+    def findClickedButton(self):
+
+        addButtonIndex = -1
+        removeButtonIndex = -1
+
+        for i, button in enumerate(self.addItemButtonList):
+            if button.isChecked():
+                button.setChecked(False)
+                addButtonIndex = i
+                break
+        
+        for i, button in enumerate(self.removeItemButtonList):
+            if button.isChecked():
+                button.setChecked(False)
+                removeButtonIndex = i
+                break
+
+        if addButtonIndex > -1:
+            self.addNewDatasetRow()
+        
+        if removeButtonIndex > -1:
+            self.addItemButtonList.pop(removeButtonIndex)
+            self.removeItemButtonList.pop(removeButtonIndex)
+            self.datasetList.pop(removeButtonIndex)
+            self.coefList.pop(removeButtonIndex)
+            self.lagList.pop(removeButtonIndex)
+            self.takeItem(removeButtonIndex)
+
+    
+    def addNewDatasetRow(self):
+
+        # Layout
+        layout = QtWidgets.QHBoxLayout()
+
+        # Elements
+        self.addItemButtonList.append(QtWidgets.QPushButton(self.addIcon, 'Add Dataset'))
+        self.addItemButtonList[-1].clicked.connect(self.findClickedButton)
+        self.removeItemButtonList.append(QtWidgets.QPushButton(self.removeIcon, 'Remove'))
+        self.removeItemButtonList[-1].clicked.connect(self.findClickedButton)
+        self.datasetList.append(QtWidgets.QComboBox())
+        for subItem in self.datasetNames:
+            self.datasetList[-1].addItem(subItem[0], subItem[1])
+        self.coefList.append(QtWidgets.QLineEdit())
+        self.lagList.append(QtWidgets.QSpinBox())
+        self.lagList[-1].setSuffix(' days')
+        
+        # Validators
+        self.lagList[-1].setMaximum(0)
+        self.lagList[-1].setMinimum(-10000)
+        self.coefList[-1].setValidator(QtGui.QDoubleValidator())
+
+        # Layout elements
+        layout.addWidget(self.addItemButtonList[-1])
+        layout.addWidget(self.removeItemButtonList[-1])
+        layout.addWidget(QtWidgets.QLabel("Dataset"))
+        layout.addWidget(self.datasetList[-1])
+        layout.addWidget(QtWidgets.QLabel("Scale"))
+        layout.addWidget(self.coefList[-1])
+        layout.addWidget(QtWidgets.QLabel("Lag"))
+        layout.addWidget(self.lagList[-1])
+
+        # Create a new listwidget item
+        item = QtWidgets.QListWidgetItem()
+        widg = QtWidgets.QWidget()
+        widg.setLayout(layout)
+        self.addItem(item)
+        self.setItemWidget(item, widg)
+
+        return
+
+
+class EditorDialog(QtWidgets.QDialog):
+    """
+    """
+
+    saveDatasetSignal = QtCore.pyqtSignal(object)
+
+    def __init__(self, parent = None, dataset = None):
+
+        QtWidgets.QDialog.__init__(self, parent)
+
+        # Create a reference to the dataset
+        self.dataset = dataset
+        self.parent = parent
+
+        # Set up the UI
+        self.layoutUI()
+
+        # Populate the combo boxes on the form, starting with the dataset type box
+        datasetTypes = list(set(self.parent.searchableDatasetsTable['DatasetType'])) + list(set(self.parent.additionalDatasetsTable['DatasetType'])) + ['OTHER']
+        self.typeEdit.addItems(datasetTypes)
+
+        # Populate the dataloader edit
+        for fname in os.listdir('resources/DataLoaders'):
+            self.loaderEdit.addItem(fname[:fname.index('.py')])
+        self.loaderEdit.addItem('No Loader')
+
+        # Populate the UI with the dataset values
+        self.populateForm(dataset)
+        
+        # Connect Events on the Dialog
+        self.typeRadioGroup.buttonClicked[int].connect(self.processRadioButton)
+
+        # Show the dialog
         self.show()
+
         return
 
-    def setImportLayout(self):
-        self.description.setPlainText("""
-Load data from a CSV or XLSX file. 
-Data should be formatted in two columns
-with headers similar to:
+    def populateForm(self, dataset = None):
+        """
+        """
 
-Date        |   Data Value
-------------|--------------
-2018-10-01  |   2342.2
-2018-10-02  |   2345.3
-...         |   ....""")
-        return
-
-    def setFileName(self):
-        fname = QtWidgets.QFileDialog.getOpenFileName(self, 'Import File', 'C:\\', 'Flat Files (*.csv *.xlsx *.xls)')[0]
-        if fname != '':
-            self.fileName = fname
-            self.fileNameText.setText(fname)
+        if dataset['DatasetType'] == '':
+            self.typeEdit.setCurrentText("OTHER")
         else:
-            return
-
-        return
-
-    def packageAndReturn(self):
-        """
-        """
-        # Set up a dataframe to store data
-        df = pd.DataFrame(index = [1])
-
-        # Check to make sure required fields are entered
-        if '' in [self.nameEdit.text(), self.idEdit.text(), self.paramEdit.text(), self.unitsEdit.text()]:
-            loggingAndErrors.showErrorMessage(self, "Name, ID, Parameter, and Units are all required arguments")
-            return 
-
-        additionalOptionsDict = OrderedDict()
-        df['DatasetExternalID'] = self.idEdit.text()
-        df['DatasetName'] = self.nameEdit.text()
-        df['DatasetType'] = self.typeDropDown.currentText()
-        df['DatasetParameter'] = self.paramEdit.text()
-        df['DatasetParameterCode'] = self.paramCodeEdit.text()
-        df['DatasetUnits'] = self.unitsEdit.text()
-        df['DatasetAgency'] = self.agencyEdit.text()
-        df['DatasetDataloader'] = self.loaderDropDown.currentText()
-        df['DatasetLatitude'] = self.latEdit.text()
-        df['DatasetLongitude'] = self.longEdit.text()
-        df['DatasetDefaultResampling'] = self.resampleChooser.currentText()
-
-        if not self.importDatasetFlag:
-            for row in range(self.optionsTable.rowCount()):
-                key = self.optionsTable.item(row, 0).text()
-                value = self.optionsTable.item(row, 1).text()
-                if key in self.parent.datasetTable.columns:
-                    df[key] = value
-                else:
-                    additionalOptionsDict[key] = value
+            self.typeEdit.setCurrentText(dataset['DatasetType'])
+        
+        self.nameEdit.setText(      dataset["DatasetName"])
+        self.agencyEdit.setText(    dataset['DatasetAgency'])
+        self.paramEdit.setText(     dataset['DatasetParameter'])
+        self.pcodeEdit.setText(     dataset['DatasetParameterCode'])
+        self.unitEdit.setText(      dataset['DatasetUnits'])
+        
+        if dataset['DatasetDataloader'] == '':
+            self.loaderEdit.setCurrentText('No Loader')
         else:
-            if self.fileName == '':
-                return
-            additionalOptionsDict['Import Filename'] = self.fileName
-
-        if additionalOptionsDict != {}:
-            df['DatasetAdditionalOptions'] = [additionalOptionsDict]
-
-        # Check to make sure the dataloader works with the provided data
-        if not self.testLoader(df):
-            return
-
-        if self.editFlag:
-            df.set_index(pd.Index([self.storedIDX]), inplace=True)
-            self.updatedDatasetSignal.emit(df)
-            self.close()
-            return
-
-        # Emit the dataset information
-        self.returnDatasetSignal.emit(df)
-        if self.importDatasetFlag:
-            self.returnDataFromImportSignal.emit(self.datasetToReturnEventually)
-        self.close()
-        return
-
-    def populateOptions(self):
-        """
-        Reads the docstring of the dataloader and adds that data to the loader description.
-        It also reads the required subarguments to load into the table
-        """
-        # Clear the existing table
-        self.optionsTable.setRowCount(0)
-
-        # Clear the existing description
-        self.description.clear()
+            self.loaderEdit.setCurrentText(dataset['DatasetDataloader'])
         
-        # Import the selected dataloader
-        loader = self.loaderDropDown.currentText()
-        if loader+'.py' in self.defaultLoaders:
-            dataloader = importlib.import_module('resources.DataLoaders.'+ loader)
-        else:
-            dataloader = importlib.import_module('resources.DataLoaders.CustomDataLoaders.'+ loader)
+        self.hucEdit.setText(       dataset['DatasetHUC8'])
+        self.latEdit.setText(       str(dataset['DatasetLatitude']))
+        self.longEdit.setText(      str(dataset['DatasetLongitude']))
+        self.elevEdit.setText(      str(dataset['DatasetElevation']))
+
+        if dataset['DatasetCompositeEquation'] != '':
+            self.compRadio.setChecked(True)
+            self.loaderEdit.setCurrentText('No Loader')
         
-        # Load the dataloaders description and options
-        docstring = dataloader.dataLoader.__doc__
-        description = docstring.split('DEFAULT OPTIONS')[0]
-        description = description.replace('\n', '')
-        options = docstring.split("DEFAULT OPTIONS")[1]
-
-        self.description.setPlainText(description)
-
-        for option in options.splitlines():
-            if option.strip() == '':
-                continue
-            else:
-                key = option.split(':')[0].strip()
-                value = option.split(':')[1].strip()
-                currentRow = self.optionsTable.rowCount()
-                self.optionsTable.insertRow(currentRow)
-                item = QtWidgets.QTableWidgetItem(key)
-                item.setFlags(QtCore.Qt.ItemIsEnabled)
-                self.optionsTable.setItem(currentRow, 0, item)
-                self.optionsTable.setItem(currentRow, 1, QtWidgets.QTableWidgetItem(value))
+        if dataset['DatasetImportFileName'] != '':
+            self.importRadio.setChecked(True)
+            self.loaderEdit.setCurrentText('No Loader')
 
         return
 
-    def loadOptions(self, dataset):
+    def saveAndReturnDataset(self):
         """
-        Loads data from an existing dataset into the dialog for editing. 
         """
-        self.storedIDX = dataset.name
-        self.nameEdit.setText(str(dataset['DatasetName']))
-        self.idEdit.setText(str(dataset['DatasetExternalID']))
-        self.agencyEdit.setText(str(dataset['DatasetAgency']))
-        self.paramEdit.setText(str(dataset['DatasetParameter']))
-        self.paramCodeEdit.setText(str(dataset['DatasetParameterCode']))
-        self.unitsEdit.setText(str(dataset['DatasetUnits']))
-        self.typeDropDown.setCurrentText(str(dataset['DatasetType']))
-        self.loaderDropDown.setCurrentText(dataset['DatasetDataloader'])
-        self.resampleChooser.setCurrentText(dataset['DatasetDefaultResampling'])
-        self.latEdit.setText(str(dataset['DatasetLatitude']))
-        self.longEdit.setText(str(dataset['DatasetLongitude']))
-        
-        if self.importDatasetFlag:
-            self.fileNameText.setText(dataset['DatasetAdditionalOptions']['Import Filename'])
-            return
 
-        loader = self.loaderDropDown.currentText()
-        if loader+'.py' in self.defaultLoaders:
-            dataloader = importlib.import_module('resources.DataLoaders.'+ loader)
-        else:
-            dataloader = importlib.import_module('resources.DataLoaders.CustomDataLoaders.'+ loader)
-
-        docstring = dataloader.dataLoader.__doc__
-        description = docstring.split('DEFAULT OPTIONS')[0]
-        description = description.replace('\n', '')
-        options = docstring.split("DEFAULT OPTIONS")[1]
-
-        self.description.setPlainText(description)
-
-        self.optionsTable.setRowCount(0)
-
-        for option in options.splitlines():
-            if option.strip() == '':
-                continue
-            else:
-                key = option.split(':')[0].strip()
-                value = option.split(':')[1].strip()
-                if key in self.parent.datasetTable.columns:
-                    filledVal = dataset[key]
-                else:
-                    try:
-                        filledVal = dataset['DatasetAdditionalOptions'][key]
-                    except:
-                        filledVal = value
-                currentRow = self.optionsTable.rowCount()
-                self.optionsTable.insertRow(currentRow)
-                item = QtWidgets.QTableWidgetItem(key)
-                item.setFlags(QtCore.Qt.ItemIsEnabled)
-                self.optionsTable.setItem(currentRow, 0, item)
-                self.optionsTable.setItem(currentRow, 1, QtWidgets.QTableWidgetItem(filledVal))
         return
 
-    def testLoader(self, dataset):
-        """
-        Reads the dataset and tests the parameters with the specified dataloader to ensure that 
-        the dataset can be properly downloaded or imported. 
-        """
-        if self.importDatasetFlag:
-            fileName = dataset['DatasetAdditionalOptions'].iloc[0]['Import Filename']
-            try:
-                if fileName[-4:] == '.csv':
-                    df = pd.read_csv(fileName, index_col=0, parse_dates=True)
-                elif '.xls' in fileName[-5:]:
-                    df = pd.read_excel(fileName, index_col=0, parse_dates=True)
-                else:
-                    return False
-                self.datasetToReturnEventually = df
-                return True
-            except:
-                return False
+    def processRadioButton(self, buttonIndex = None):
 
-
-        # Attempt to import the loader
-        try:
-            loaderName = list(dataset['DatasetDataloader'])[0]
-            if loaderName + '.py' in  self.defaultLoaders:
-                loader = importlib.import_module('resources.DataLoaders.'+ loaderName)
-            else:
-                loader = importlib.import_module('resources.DataLoaders.CustomDataLoaders'+ loaderName)
+        if buttonIndex == 0:
+            self.compEquationEditor.setEnabled(False)
+            self.importFileButton.setEnabled(False)
+            self.loaderEdit.setEnabled(True)
         
-        except Exception as E:
-            loggingAndErrors.showErrorMessage(self, "Error: Could not initialize the selected dataloader. Please check the dataloader for errors.\n"+str(E))
-            return False
-
-        # Try and use the loader to load the last 10 days of data
-        try:
-            currentDate = pd.to_datetime(self.parent.userOptionsConfig['GENERAL']['application_datetime'])
-            startDate = currentDate - pd.DateOffset(10)
-            data = loader.dataLoader(dataset.loc[1], startDate, currentDate)
-        except Exception as E:
-            loggingAndErrors.showErrorMessage(self, "Error: Dataloader could not return data for the past 10 days. Check dataloader for errors.\n"+str(E))
-            return False
-
-        return True
-
-
-# Create a custom table widget
-class OptionsTable(QtWidgets.QTableWidget):
-
-    # Runs when the table is first initialized by the application
-    def __init__(self,parent=None):
-
-        QtWidgets.QTableWidget.__init__(self)
-
-        # Set the table properties
-        self.setColumnCount(2)
-        self.setRowCount(0)
-        self.setHorizontalHeaderLabels(["Option","Value"])
-        self.setShowGrid(True)
-        self.setGridStyle(QtCore.Qt.DotLine)
-        self.setCornerButtonEnabled(False)
-        self.verticalHeader().setVisible(False)
-        self.setFrameStyle(QtWidgets.QFrame.NoFrame)
-
-    # Function that clears and re=populates the table with all the custom dataloaders
-    def populateOptions(self, item):
-
-        # Clear the existing table
-        self.setRowCount(0)
-
-        # Get the selected custom loader
-        selection = item
-
-        # Import the dataloader options
-        dataloader = importlib.import_module('Resources.DataLoaders.Custom.'+selection)
-        dataloaderOptionsFunction = getattr(dataloader, "dataLoaderInfo")
-
-        # Get the options
-        optionsList = list(dataloaderOptionsFunction()[0])
-        self.description = dataloaderOptionsFunction()[1]
+        if buttonIndex == 1:
+            self.loaderEdit.setCurrentText('No Loader')
+            self.loaderEdit.setEnabled(False)
+            self.importFileButton.setEnabled(False)
+            self.compEquationEditor.setEnabled(True)
         
-        # Load the options into the table
-        for i, option in enumerate(optionsList):
+        if buttonIndex == 2:
+            self.loaderEdit.setCurrentText('No Loader')
+            self.loaderEdit.setEnabled(False)
+            self.importFileButton.setEnabled(True)
+            self.compEquationEditor.setEnabled(False)
 
-            self.insertRow(i)
-            self.setItem(i, 0, QtWidgets.QTableWidgetItem(option))
+        return
 
-        # Stretch last section
-        header = self.horizontalHeader()
-        header.setSectionResizeMode(0,QtWidgets.QHeaderView.Stretch)
-        header.setSectionResizeMode(1, QtWidgets.QHeaderView.Interactive)
+    def layoutUI(self):
+
+        # Layouts
+        layout_form =       QtWidgets.QFormLayout()
+        layout_buttons =    QtWidgets.QHBoxLayout()
+        layout_radio =      QtWidgets.QFormLayout()
+        layout_file =       QtWidgets.QHBoxLayout()
+
+        # Form
+        self.typeEdit =     QtWidgets.QComboBox()
+        self.nameEdit =     QtWidgets.QLineEdit()
+        self.agencyEdit =   QtWidgets.QLineEdit()
+        self.paramEdit =    QtWidgets.QLineEdit()
+        self.pcodeEdit =    QtWidgets.QLineEdit()
+        self.unitEdit =     QtWidgets.QLineEdit()
+        self.loaderEdit =   QtWidgets.QComboBox()
+        self.hucEdit =      QtWidgets.QLineEdit()
+        self.latEdit =      QtWidgets.QLineEdit()
+        self.longEdit =     QtWidgets.QLineEdit()
+        self.elevEdit =     QtWidgets.QLineEdit()
+        
+        # Type Radio
+        self.typeRadioGroup =   QtWidgets.QButtonGroup()
+        self.regRadio =         QtWidgets.QRadioButton()
+        self.compRadio =        QtWidgets.QRadioButton()
+        self.importRadio =      QtWidgets.QRadioButton()
+        self.typeRadioGroup.addButton(self.regRadio)
+        self.typeRadioGroup.addButton(self.compRadio)
+        self.typeRadioGroup.addButton(self.importRadio)
+        self.regRadio.setChecked(True)
+        
+        # Layout the radio buttons
+        layout_radio.addRow("Regular Dataloader",   self.regRadio)
+        layout_radio.addRow("Composite Dataset",    self.compRadio)
+        layout_radio.addRow("File Import",          self.importRadio)
+
+        # Composite Equation Editor
+        self.compEquationEditor = CompositeEquationEditor(self)
+        
+        # Import files select widget
+        self.importFileName =       QtWidgets.QLabel("No File Selected")
+        self.importFileButton =     QtWidgets.QPushButton("Select File")
+
+        # Layout file select
+        layout_file.addWidget(self.importFileName)
+        layout_file.addWidget(self.importFileButton)
+
+        # Dialog Buttons
+        self.saveAndCloseButton =   QtWidgets.QPushButton("Save and Close")
+        self.closeButton =          QtWidgets.QPushButton("Close")
+
+        # Layout Dialog Buttons
+        layout_buttons.addWidget(self.saveAndCloseButton)
+        layout_buttons.addWidget(self.closeButton)
+
+        # Layout the editor
+        layout_form.addRow("Dataset Type",              self.typeEdit)
+        layout_form.addRow("Dataset Name",              self.nameEdit)
+        layout_form.addRow("Dataset Agency",            self.agencyEdit)
+        layout_form.addRow("Dataset Parameter",         self.paramEdit)
+        layout_form.addRow("Dataset Parameter Code",    self.pcodeEdit)
+        layout_form.addRow("Dataset Units",             self.unitEdit)
+        layout_form.addRow("Dataset Loader",            self.loaderEdit)
+        layout_form.addRow("Dataset HUC8",              self.hucEdit)
+        layout_form.addRow("Dataset Latitude",          self.latEdit)
+        layout_form.addRow("Dataset Longitude",         self.longEdit)
+        layout_form.addRow("Dataset Elevation",         self.elevEdit)
+        layout_form.addRow("Source",                    layout_radio)
+        layout_form.addRow("Composite Equation",        self.compEquationEditor)
+        layout_form.addRow("Import File",               layout_file)
+        layout_form.addRow(layout_buttons)
+
+        # Assign the layout
+        self.setLayout(layout_form)
