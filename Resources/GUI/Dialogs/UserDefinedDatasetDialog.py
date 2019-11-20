@@ -6,6 +6,9 @@ import pandas as pd
 import os
 
 
+
+
+
 class CompositeEquationEditor(QtWidgets.QListWidget):
     """
     This widget contains an editor for defining composite datasets. 
@@ -14,9 +17,14 @@ class CompositeEquationEditor(QtWidgets.QListWidget):
 
     def __init__(self, parent = None, initialEquation = ""):
 
+        # Instantiate the widget and set a reference tot he parent
         QtWidgets.QListWidget.__init__(self, parent)
         self.parent = parent
+
+        # Get a reference to the NextFlow dataset Table
         self.datasetTable = self.parent.parent.datasetTable
+
+        # Intanstiate some list to keep track of the buttons and inputs
         self.addItemButtonList = []
         self.removeItemButtonList = []
         self.datasetList = []
@@ -24,20 +32,33 @@ class CompositeEquationEditor(QtWidgets.QListWidget):
         self.lagList = []
         self.datasetNames = [(d['DatasetExternalID'] + ': ' + d['DatasetParameter'], d.name) for i, d in self.datasetTable.iterrows()]
 
+        # Create icons for the buttons
         self.addIcon = QtGui.QIcon(QtGui.QPixmap('resources/GraphicalResources/icons/add_circle-24px.svg'))
         self.removeIcon = QtGui.QIcon(QtGui.QPixmap('resources/GraphicalResources/icons/remove_circle-24px.svg'))
 
-        self.addNewDatasetRow()
+        # Check if there is an initial equation, and load it. Otherwise, create an empty row
+        if initialEquation == "":
+            self.addNewDatasetRow()
         
+        else:
+            self.processEquationIntoWidget(initialEquation)
+
         return
 
+
     def processEquationIntoWidget(self, equation = None):
+        """
+        Reads the equation from the argument and loads it
+        into the widget.
+        """
 
+        # Parse the equation into sections
         equation = equation.split('/')
-        datasets = [int(i) for i in equation[0].split(',')]
-        coefs = [float(i) for i in equation[1].split(',')]
-        lags = [int(i) for i in equation[2].split(',')]
+        datasets = [int(i) for i in equation[1].split(',')]
+        coefs = [i for i in equation[2].split(',')]
+        lags = [int(i) for i in equation[3].split(',')]
 
+        # Load the equation into the widget
         for i, dataset in enumerate(datasets):
             idx = list(map(lambda x: x[1] == dataset, self.datasetNames)).index(True)
             self.addNewDatasetRow()
@@ -49,44 +70,61 @@ class CompositeEquationEditor(QtWidgets.QListWidget):
 
 
     def processEquationFromWidget(self):
+        """
+        Reads the widget lists and formats the current equation
+        into a equation string
+        """
 
+        # Instantiate some lists to store equation information
         datasets = []
         coefs = []
         lags = []
 
+        # Read the widget lists and get the specific values
         for i in range(len(self.datasetList)):
-            datasets.append(self.datasetList[i].data(QtCore.Qt.UserRole))
+            datasets.append(self.datasetList[i].currentData(QtCore.Qt.UserRole))
             coefs.append(self.coefList[i].text())
             lags.append(self.lagList[i].value())
 
-        datasetString = ','.join(datasets)
-        coefString = ','.join(coefs)
-        lagString = ','.join(lags)
+        # Put together the equation string
+        datasetString = ','.join(map(str,datasets))
+        coefString = ','.join(map(str,coefs))
+        lagString = ','.join(map(str,lags))
 
         return 'C/{0}/{1}/{2}'.format(datasetString, coefString, lagString)
 
 
     def findClickedButton(self):
+        """
+        This function is called when an add or remove button is clicked. It 
+        determines which button was clicked and acts appropriately.
+        """
 
         addButtonIndex = -1
         removeButtonIndex = -1
 
+        # Figure out if an 'add' button was clicked
         for i, button in enumerate(self.addItemButtonList):
             if button.isChecked():
                 button.setChecked(False)
                 addButtonIndex = i
                 break
         
+        # Figure out if a 'remove' button was clicked
         for i, button in enumerate(self.removeItemButtonList):
             if button.isChecked():
                 button.setChecked(False)
                 removeButtonIndex = i
                 break
 
+        # Do 'add' button stuff
         if addButtonIndex > -1:
             self.addNewDatasetRow()
         
+        # Do 'remove' button stuff
         if removeButtonIndex > -1:
+            if len(self.removeItemButtonList) == 1:
+                return
             self.addItemButtonList.pop(removeButtonIndex)
             self.removeItemButtonList.pop(removeButtonIndex)
             self.datasetList.pop(removeButtonIndex)
@@ -94,23 +132,30 @@ class CompositeEquationEditor(QtWidgets.QListWidget):
             self.lagList.pop(removeButtonIndex)
             self.takeItem(removeButtonIndex)
 
-    
+        return
+
+
     def addNewDatasetRow(self):
 
         # Layout
-        layout = QtWidgets.QHBoxLayout()
+        layout_ = QtWidgets.QHBoxLayout()
 
         # Elements
         self.addItemButtonList.append(QtWidgets.QPushButton(self.addIcon, 'Add Dataset'))
+        self.addItemButtonList[-1].setCheckable(True)
         self.addItemButtonList[-1].clicked.connect(self.findClickedButton)
         self.removeItemButtonList.append(QtWidgets.QPushButton(self.removeIcon, 'Remove'))
+        self.removeItemButtonList[-1].setCheckable(True)
         self.removeItemButtonList[-1].clicked.connect(self.findClickedButton)
         self.datasetList.append(QtWidgets.QComboBox())
         for subItem in self.datasetNames:
             self.datasetList[-1].addItem(subItem[0], subItem[1])
         self.coefList.append(QtWidgets.QLineEdit())
+        self.coefList[-1].setText('1.0')
         self.lagList.append(QtWidgets.QSpinBox())
         self.lagList[-1].setSuffix(' days')
+        self.lagList[-1].setValue(0)
+
         
         # Validators
         self.lagList[-1].setMaximum(0)
@@ -118,23 +163,28 @@ class CompositeEquationEditor(QtWidgets.QListWidget):
         self.coefList[-1].setValidator(QtGui.QDoubleValidator())
 
         # Layout elements
-        layout.addWidget(self.addItemButtonList[-1])
-        layout.addWidget(self.removeItemButtonList[-1])
-        layout.addWidget(QtWidgets.QLabel("Dataset"))
-        layout.addWidget(self.datasetList[-1])
-        layout.addWidget(QtWidgets.QLabel("Scale"))
-        layout.addWidget(self.coefList[-1])
-        layout.addWidget(QtWidgets.QLabel("Lag"))
-        layout.addWidget(self.lagList[-1])
+        layout_.addWidget(self.addItemButtonList[-1])
+        layout_.addWidget(self.removeItemButtonList[-1])
+        layout_.addWidget(QtWidgets.QLabel("Dataset"))
+        layout_.addWidget(self.datasetList[-1])
+        layout_.addWidget(QtWidgets.QLabel("Scale"))
+        layout_.addWidget(self.coefList[-1])
+        layout_.addWidget(QtWidgets.QLabel("Lag"))
+        layout_.addWidget(self.lagList[-1])
 
         # Create a new listwidget item
         item = QtWidgets.QListWidgetItem()
+        item.setText("")
         widg = QtWidgets.QWidget()
-        widg.setLayout(layout)
+        widg.setLayout(layout_)
+        item.setSizeHint(QtCore.QSize(widg.sizeHint().width() + 20,widg.sizeHint().height() + 15))
         self.addItem(item)
         self.setItemWidget(item, widg)
 
         return
+
+
+
 
 
 class EditorDialog(QtWidgets.QDialog):
@@ -146,6 +196,8 @@ class EditorDialog(QtWidgets.QDialog):
     def __init__(self, parent = None, dataset = None):
 
         QtWidgets.QDialog.__init__(self, parent)
+
+        self.setWindowTitle("User Defined Dataset")
 
         # Create a reference to the dataset
         self.dataset = dataset
@@ -160,17 +212,26 @@ class EditorDialog(QtWidgets.QDialog):
 
         # Populate the dataloader edit
         for fname in os.listdir('resources/DataLoaders'):
-            self.loaderEdit.addItem(fname[:fname.index('.py')])
+            if '.py' in fname:
+                self.loaderEdit.addItem(fname[:fname.index('.py')])
         self.loaderEdit.addItem('No Loader')
+
+        # Connect Events on the Dialog
+        self.compRadio.toggled.connect(self.processRadioButton)
+        self.regRadio.toggled.connect(self.processRadioButton)
+        self.importRadio.toggled.connect(self.processRadioButton)
 
         # Populate the UI with the dataset values
         self.populateForm(dataset)
-        
-        # Connect Events on the Dialog
-        self.typeRadioGroup.buttonClicked[int].connect(self.processRadioButton)
+
+        # If there is a import file, store the input file directory location
+        self.fileLocation = os.path.dirname(self.dataset['DatasetImportFileName'])
 
         # Show the dialog
         self.show()
+
+        # resize to fit contents
+        self.resize(self.sizeHint().width() + 100, self.sizeHint().height())
 
         return
 
@@ -199,42 +260,97 @@ class EditorDialog(QtWidgets.QDialog):
         self.longEdit.setText(      str(dataset['DatasetLongitude']))
         self.elevEdit.setText(      str(dataset['DatasetElevation']))
 
+        self.importFileButton.setEnabled(False)
+        self.compEquationEditor.setEnabled(False)
+
         if dataset['DatasetCompositeEquation'] != '':
             self.compRadio.setChecked(True)
             self.loaderEdit.setCurrentText('No Loader')
+            self.compEquationEditor.processEquationIntoWidget(dataset['DatasetCompositeEquation'])
         
         if dataset['DatasetImportFileName'] != '':
             self.importRadio.setChecked(True)
             self.loaderEdit.setCurrentText('No Loader')
+            self.importFileName.setText(dataset['DatasetImportFileName'])
 
         return
+
 
     def saveAndReturnDataset(self):
         """
         """
+        
+        # Figure out the data source first and foremost
+        if self.typeRadioGroup.checkedId() == -2:
+            # Regular Dataloader
+            self.dataset['DatasetCompositeEquation'] = ''
+            self.dataset['DatasetImportFileName'] = ''
+            self.dataset['DatasetDataloader'] = self.loaderEdit.currentText()
+
+        elif self.typeRadioGroup.checkedId() == -3:
+            # Composite Equation
+            self.dataset['DatasetCompositeEquation'] = self.compEquationEditor.processEquationFromWidget()
+            self.dataset['DatasetDataloader'] = ''
+            self.dataset['DatasetImportFileName'] = ''
+
+        elif self.typeRadioGroup.checkedId() == -4:
+            # import file 
+            self.dataset['DatasetImportFileName'] = self.importFileName.text()
+            self.dataset['DatasetDataloader'] = ''
+            self.dataset['DatasetCompositeEquation'] = ''
+
+        self.dataset['DatasetType'] = self.typeEdit.currentText()
+        self.dataset['DatasetName'] = self.nameEdit.text()
+        self.dataset['DatasetAgency'] = self.agencyEdit.text()
+        self.dataset['DatasetParameter'] = self.paramEdit.text()
+        self.dataset['DatasetParameterCode'] = self.pcodeEdit.text()
+        self.dataset['DatasetUnits'] = self.unitEdit.text()
+        self.dataset['DatasetHUC8'] = self.hucEdit.text()
+        self.dataset['DatasetLatitude'] = float(self.latEdit.text())
+        self.dataset['DatasetLongitude'] = float(self.longEdit.text())
+        self.dataset['DatasetElevation'] = float(self.elevEdit.text())
+
+        self.saveDatasetSignal.emit(self.dataset)
+
+        self.close()
 
         return
 
-    def processRadioButton(self, buttonIndex = None):
+    def processRadioButton(self, dummy):
 
-        if buttonIndex == 0:
+        # Get the toggled button
+        buttonIndex = self.typeRadioGroup.checkedId()
+
+        if buttonIndex == -2:
             self.compEquationEditor.setEnabled(False)
             self.importFileButton.setEnabled(False)
             self.loaderEdit.setEnabled(True)
         
-        if buttonIndex == 1:
+        if buttonIndex == -3:
             self.loaderEdit.setCurrentText('No Loader')
             self.loaderEdit.setEnabled(False)
             self.importFileButton.setEnabled(False)
             self.compEquationEditor.setEnabled(True)
         
-        if buttonIndex == 2:
+        if buttonIndex == -4:
             self.loaderEdit.setCurrentText('No Loader')
             self.loaderEdit.setEnabled(False)
             self.importFileButton.setEnabled(True)
             self.compEquationEditor.setEnabled(False)
 
         return
+
+
+    def fileSelectDialog(self, location = os.getcwd()):
+
+        fname = self.importFileName.text()
+
+        ret, _ = QtWidgets.QFileDialog().getOpenFileName(self, "Select Import File", location, "Flat Files (*.csv *.xlsx *.xls)")
+
+        if ret != "":
+            fname = ret
+            self.importFileName.setText(fname)
+        return 
 
     def layoutUI(self):
 
@@ -278,6 +394,7 @@ class EditorDialog(QtWidgets.QDialog):
         # Import files select widget
         self.importFileName =       QtWidgets.QLabel("No File Selected")
         self.importFileButton =     QtWidgets.QPushButton("Select File")
+        self.importFileButton.clicked.connect(lambda x: self.fileSelectDialog(self.fileLocation))
 
         # Layout file select
         layout_file.addWidget(self.importFileName)
@@ -286,6 +403,8 @@ class EditorDialog(QtWidgets.QDialog):
         # Dialog Buttons
         self.saveAndCloseButton =   QtWidgets.QPushButton("Save and Close")
         self.closeButton =          QtWidgets.QPushButton("Close")
+        self.saveAndCloseButton.clicked.connect(self.saveAndReturnDataset)
+        self.closeButton.clicked.connect(self.close)
 
         # Layout Dialog Buttons
         layout_buttons.addWidget(self.saveAndCloseButton)

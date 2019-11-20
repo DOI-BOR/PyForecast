@@ -83,9 +83,9 @@ class datasetTab(object):
         """
 
         # Read the dataset catalogs into pandas dataframes
-        self.searchableDatasetsTable = pd.read_excel("resources/GIS/PointDatasets.xlsx", dtype={"DatasetExternalID": str}, index_col=0)
+        self.searchableDatasetsTable = pd.read_excel("resources/GIS/PointDatasets.xlsx", dtype={"DatasetExternalID": str, "DatasetHUC8":str}, index_col=0)
         self.searchableDatasetsTable.index.name = 'DatasetInternalID'
-        self.additionalDatasetsTable = pd.read_excel('resources/GIS/AdditionalDatasets.xlsx', dtype={"DatasetExternalID": str}, index_col=0)
+        self.additionalDatasetsTable = pd.read_excel('resources/GIS/AdditionalDatasets.xlsx', dtype={"DatasetExternalID": str,  "DatasetHUC8":str}, index_col=0)
         self.additionalDatasetsTable.index.name = 'DatasetInternalID'
 
         # Also, populate the climate indices
@@ -167,6 +167,7 @@ class datasetTab(object):
 
         # Refresh the dataset list view
         self.datasetTab.selectedDatasetsWidget.setDatasetTable(self.datasetTable)
+        self.datasetTab.selectedDatasetsLabel.setText("{0} datasets have been selected:".format(len(self.datasetTable)))
         
 
         return
@@ -202,6 +203,7 @@ class datasetTab(object):
 
         # Refresh the dataset list view
         self.datasetTab.selectedDatasetsWidget.setDatasetTable(self.datasetTable)
+        self.datasetTab.selectedDatasetsLabel.setText("{0} datasets have been selected:".format(len(self.datasetTable)))
 
         return
 
@@ -248,6 +250,7 @@ class datasetTab(object):
                         'DatasetImportFileName',    # e.g. 'C://Users//JoeDow//Dataset.CSV'
                         'DatasetAdditionalOptions'],
                 name = newID
+                
             )
 
         # Open the dialog with the dataset
@@ -276,8 +279,11 @@ class datasetTab(object):
             # Create a new row in the dataset table
             self.datasetTable = self.datasetTable.append(dataset, ignore_index = False)
 
+        # NEED TO FIGURE OUT IF WE NEED TO UPDATE THE DATA OR DELETE ANY DATASETS ? FORECASTS ? ETC
+
         # Update the display
         self.datasetTab.selectedDatasetsWidget.setDatasetTable(self.datasetTable)
+        self.datasetTab.selectedDatasetsLabel.setText("{0} datasets have been selected:".format(len(self.datasetTable)))
 
 
     def addDatasetsFromWebMap(self, datasetAdditionMessage):

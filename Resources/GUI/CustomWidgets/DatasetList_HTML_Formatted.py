@@ -144,6 +144,7 @@ class DatasetList_HTML_Formatted(QtWidgets.QListWidget):
 
         # Clear the listwidget's items
         self.clear()
+        self.buttonList = []
 
         # Iterate over datasets
         for i, dataset in self.datasetTable.iterrows():
@@ -173,17 +174,18 @@ class DatasetList_HTML_Formatted(QtWidgets.QListWidget):
             textBox.setTextFormat(QtCore.Qt.RichText)
             layout.addWidget(textBox)
             if dataset.name >= 900000:
-                self.buttonList[-1].append(QtWidgets.QPushButton("Configure"))
+                self.buttonList.append(QtWidgets.QPushButton("Configure"))
                 self.buttonList[-1].setCheckable(True)
                 self.buttonList[-1].toggled.connect(self.findSelectedButton)
                 layout.addWidget(self.buttonList[-1])
-            if self.buttonText != None:
+            elif self.buttonText != None:
                 self.buttonList.append(QtWidgets.QPushButton(self.buttonText))
                 self.buttonList[-1].setCheckable(True)
                 self.buttonList[-1].toggled.connect(self.findSelectedButton)
-                #button = QtWidgets.QPushButton(self.buttonText)
-                #button.clicked.connect(lambda x: self.buttonPressSignal.emit(i))
                 layout.addWidget(self.buttonList[-1])
+            else:
+                self.buttonList.append(QtWidgets.QPushButton(""))
+                self.buttonList[-1].setCheckable(True)
             widget = QtWidgets.QWidget()
             widget.setLayout(layout)
             widget.setStyleSheet("QWidget {border-bottom: 1px solid darkgray}")
@@ -201,7 +203,9 @@ class DatasetList_HTML_Formatted(QtWidgets.QListWidget):
     def findSelectedButton(self, dummy):
         for i, button in enumerate(self.buttonList):
             if button.isChecked():
+                print(i)
                 button.setChecked(False)
+                print(self.datasetTable)
                 self.buttonPressSignal.emit(self.datasetTable.iloc[i].name)
 
         return

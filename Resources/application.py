@@ -69,8 +69,9 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
                 'DatasetCompositeEquation', # e.g. C/100121,102331,504423/1.0,0.5,4.3/0,0,5
                 'DatasetImportFileName',    # e.g. 'C://Users//JoeDow//Dataset.CSV'
                 'DatasetAdditionalOptions'
-            ]
+            ],
         ) 
+        self.datasetTable['DatasetHUC8'] = self.datasetTable['DatasetHUC8'].astype(str)
 
         # The data table stores all of the raw data associated with the selected datasets.
         # Edited data is versioned as 1 and unedited data is versioned as 0

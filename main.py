@@ -56,7 +56,7 @@ class NextFlowProxyStyle(QtWidgets.QProxyStyle):
 
 if __name__ == '__main__':
 
-    # Print out a welcom message
+    # Print out a welcome message
     print("""
     ===========================================================
 

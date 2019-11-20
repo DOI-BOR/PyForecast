@@ -256,7 +256,7 @@ function loadDatasetCatalog(geojson_string) {
                 fillOpacity: 1
             })
         }
-    }).addTo(map);
+    });
     window.layer_group.addLayer(window.USBRAGRIMETLayer);
 
     // Load NOAA NCDC Sites
@@ -278,7 +278,7 @@ function loadDatasetCatalog(geojson_string) {
                 fillOpacity: 1
             })
         }
-    }).addTo(map);
+    });
     window.layer_group.addLayer(window.NCDCLayer);
 
     // Create Popups for point and area datasets

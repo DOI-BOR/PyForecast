@@ -1,197 +1,140 @@
-"""
-Script Name:    datasetTabMaster.py
 
-Description:    This script contains all the functionality associated with the 
-                Datasets Tab. Operations such as finding and defining datasets
-                as well as editing and deleting datasets are defined in this 
-                script. The GUI behind the datasets tab is defined in the 
-                resources.GUI.Tabs.DatasetsTab script.
-"""
-
+import pyqtgraph as pg
+from PyQt5 import QtCore, QtGui, QtWidgets
+import numpy as np
 import pandas as pd
-from PyQt5 import QtCore, QtWidgets
-from resources.modules.Miscellaneous import loggingAndErrors
-from resources.modules.DatasetTab import gisFunctions
-from resources.GUI.Dialogs import UserDefinedDatasetDialog, createCompositeDataset
-from fuzzywuzzy.fuzz import WRatio 
-import multiprocessing as mp
-import itertools
-from time import sleep
-import ast
+from datetime import datetime
+from bisect import bisect_left
 
-class datasetTab(object):
+class DataTabPlots(pg.GraphicsLayoutWidget):
     """
-    DATASETS TAB
-    The Datasets Tab contains information about the selected datasets. It allows users to select and 
-    configure datasets using the map or the search functionality.
     """
 
-    def __init__(self):
-        """
-        Initialize the tab
-        """
+    def __init__(self, parent = None):
 
-        self.connectEvents()
-        self.loadDatasetCatalog()
-        self.loadDatasetMap()
-
-        return
-
-    def connectEvents(self):
-        """
-        Connects all the signal/slot events for the dataset tab
-        """
-
-        # Buttons
-        self.datasetTab.keywordSearchButton.clicked.connect(        lambda x: self.searchForDataset(self.datasetTab.keywordSearchBox.text()))
-        #self.datasetTab.prismButton.clicked.connect(                lambda x: self.)
-
-        # CHECK THIS ONE
-        self.datasetTab.webMapView.page.java_msg_signal.connect(lambda x: self.addDatasetToSelectedDatasets(int(x.split(':')[1])) if "ID:" in x else self.addDatasetToSelectedDatasets(str(x.split(':')[1])))
-
-
-        return
-
-    def loadDatasetCatalog(self):
-        """
-        Reads the dataset catalogs located at /resources/GIS/ and loads them into 2 
-        dataframes ('additionalDatasetsTable', 'searchableDatasetsTable').
-        """
-
-        # Read the dataset catalogs into pandas dataframes
-        self.searchableDatasetsTable = pd.read_excel("resources/GIS/PointDatasets.xlsx", index_col=0)
-        self.searchableDatasetsTable.index.name = 'DatasetInternalID'
-        self.additionalDatasetsTable = pd.read_excel('resources/GIS/AdditionalDatasets.xlsx', dtype={"DatasetExternalID": str}, index_col=0)
-        self.additionalDatasetsTable.inex.name = 'DatasetInternalID'
-
-        # Also, populate the climate indices 
-        for i, dataset in self.additionalDatasetsTable[self.additionalDatasetsTable['DatasetType'] == 'CLIMATE INDICE'].iterrows():
-            self.datasetTab.climInput.insertItem(i, text = dataset['DatasetName'], userData = dataset)
+        # Instantiate the widget and create a reference to the parent
+        pg.GraphicsLayoutWidget.__init__(self, parent)
+        self.parent = parent
         
-        # Create Completers for the watershed / climate division inputs
-        self.datasetTab.prismCompleter.setModelWithDataFrame(self.additionalDatasetsTable[self.additionalDatasetsTable['DatasetAgency'] == 'PRISM'])
-        self.datasetTab.nrccCompleter.setModelWithDataFrame(self.additionalDatasetsTable[self.additionalDatasetsTable['DatasetAgency'] == 'NRCC'])
-        self.datasetTab.pdsiCompleter.setModelWithDataFrame(self.additionalDatasetsTable[self.additionalDatasetsTable['DatasetType'] == 'PDSI'])
+        # Get a reference to the datasetTable and the dataTable
+        self.datasetTable = self.parent.datasetTable
+        self.dataTable = self.parent.dataTable
 
-        
-        return
-
-    def loadDatasetMap(self):
-        """
-        Loads the dataset catalog into the leaflet map
-        """
-
-        # Create a geojson file of all the point datasets
-        geojson_ = gisFunctions.dataframeToGeoJSON(self.searchableDatasetsTable)
-
-        # Load the geojson file into the web map
-        self.datasetTab.webMapView.page.loadFinished.connect(lambda x: self.datasetTab.webMapView.page.runJavaScript("loadJSONData({0})".format(geojson_)))
-
-        return
-
-
-    def addDataset(self, datasetInternalID = None):
-        """
-        Adds the dataset defined by the datasetInternalID to the self.datasetTable table.
-        This function also updates the dataset list in the GUI.
-
-        Arguments:
-            datasetInternalID -> The DatasetInternalID associated with the dataset to add. The ID's are 
-                                 found in the dataset catalogs.
-        """
-
-        # Check to make sure that this dataset in not already in the datasetTable
-        if datasetInternalID in list(self.datasetTable.index):
-
-            # PRINT ERROR ABOUT THE DATASET ALREADY BEING ADDED
-            return
-        
-        # Find the dataset from the appropriate dataset catalog
-        if datasetInternalID > 99999        # This is a point dataset
-
-            # Get the specific dataset
-            dataset = self.searchableDatasetsTable.loc[datasetInternalID]
-            
-        else:                               # This is a HUC/CLIM/PDSI/OTHER dataset
-
-            # Get the specific dataset
-            dataset = self.additionalDatasetsTable.loc[datasetInternalID]
-        
-        # Append the dataset to the dataset table
-        self.datasetTable = self.datasetTable.append(dataset, ignore_index = False)
-
-        # Refresh the dataset list view
-        
-
-        return
+        # Instantiate the 2 plots
+        self.timeSeriesPlot = TimeSeriesLinePlot(self)
+        self.addItem(self.timeSeriesPlot)
     
-    def removeDataset(self, datasetInternalID = None):
-        """
-        Removes the dataset defined by the datasetInternalID from the self.datasetTable table.
-        This function also updates the dataset list in the GUI.
+        return
 
-        Arguments:
-            datasetInternalID -> The DatasetInternalID associated with the dataset to add. The ID's are 
-                                 found in the dataset catalogs.
-        """
+class SpaghettiPlot(pg.PlotItem):
+    """
+    """
 
-        # Provide a warning that this will delete all associated forecasts, data, etc associated with this id
+    def __init__(self, parent = None):
 
-        # Begin by removing the dataset from the datasetTable
-        self.datasetTable.drop(datasetInternalID, inplace = True)
-
-        # Next remove all data from the DataTable
-        self.dataTable.drop(datasetInternalID, level='DatasetInternalID', inplace = True)
-
-        # Update the multiIndex of the DataTable
-        self.dataTable.set_index(self.dataTable.index.remove_unused_levels(), inplace = True)
+        # Instantiate the widget and create a reference to the parent
+        pg.PlotItem.__init__(self)
+        self.parent = parent
 
         return
 
-    def searchForDataset(self, searchTerm = None):
-        """
-        Searched the default dataset list and returns any potential matches
+class TimeSeriesLinePlot(pg.PlotItem):
+    """
+    """
 
-        input:  searchTerm
-                - The keyword or keywords to search the default dataset list for.
-                  example: 'Yellowstone River Billings'
-        
-        output: results
-                - a dataframe of results which is a subset of the searchableDatasetsTable
-        """
+    def __init__(self, parent = None):
 
-        # Begin by disabling the search button while we look
-        self.datasetTab.keywordSearchButton.setEnabled(False)
+        # Instantiate the widget and create a reference to the parent
+        pg.PlotItem.__init__(self)
+        self.parent = parent
 
-        # Ensure that the search term is longer than 4 characters (the fuzzy search doesn't work well with short search terms)
-        if len(searchTerm) < 4: 
+        # Create a color cyler
+        colorCycler = ["#FF3D00", "#FFD600", "#00C853", "#FF6720", "#0091EA", "#AA00FF", "#8D6E63", "#C6FF00", "#1DE9B6", "#880E4F"]
 
-            # ADD POPUP BOX TO TELL USER ABOUT THE ERROR
-            self.datasetTab.keywordSearchButton.setEnabled(True)
-            return
-        
-        # Create a copy of the searchable dataset list
-        searchTable = self.searchableDatasetsTable.copy()
-
-        # Create a column in the searchTable containing all the keywords
-        searchTable['searchColumn'] = searchTable[['DatasetName', 'DatasetType','DatasetAgency', 'DatasetExternalID']].apply(lambda x: ' '.join(x), axis=1)
-
-        # Create a multiprocessing pool to perform the search
-        pool = mp.Pool(mp.cpu_count() - 1)
-
-        # Compute the scores (the fit score of the search term against the search column)
-        searchTable['score'] = list(pool.starmap(WRatio, zip(searchTable['searchColumn'], itertools.repeat(searchTerm, len(searchTable)))))
-
-        # Close the pool
-        pool.close()
-        pool.join()
-
-        # Order the search results by score and load the results into the listWidget
-        searchTable.sort_values(by=['score'], inplace=True, ascending=False)
-        del searchTable['score'], searchTable['searchColumn']
-        
-        # NEED TO LOAD THE DATA INTO WIDGET
-
-        self.datasetTab.keywordSearchButton.setEnabled(True)
+        # Create 10 PlotCurveItems to work with
+        self.items_ = [pg.PlotCurveItem(parent = self, pen = colorCycler[i], antialias = True) for i in range(10)]
 
         return
+
+    def displayDatasets(self, datasets):
+        """
+        datasets = [100103, 313011, ...]
+        """
+        
+        # Clear any existing datasets
+        self.clear()
+
+        # Create a new item for each dataset
+        for i, dataset in enumerate(datasets):
+
+            # Get the Dataset Title
+            d = self.parent.datasetTable.loc[dataset]
+            title = d['DatasetName'] + ': ' + d['DatasetParameter']
+
+            # Get the Data
+            x = list(self.parent.dataTable.loc[(slice(None), dataset), 'Value'].index.levels[0].astype('int64')) # Dates in seconds since epoch
+            y = self.parent.dataTable.loc[(slice(None), dataset), 'Value'].values
+
+            # Set the data for the i-th PlotCurveItem
+            self.items_[i].setData(x, y)
+
+            # Add the item to the plot
+            self.addItem(self.items_[i])
+
+        return
+
+if __name__ == '__main__':
+
+    import sys
+
+    # Debugging dataset
+    app = QtWidgets.QApplication(sys.argv)
+
+    mw = QtWidgets.QMainWindow()
+    
+    mw.datasetTable = pd.DataFrame(
+            index = pd.Index([], dtype=int, name='DatasetInternalID'),
+            columns = [
+                'DatasetType',              # e.g. STREAMGAGE, or RESERVOIR, ETC
+                'DatasetExternalID',        # e.g. "GIBR" or "06025500"
+                'DatasetName',              # e.g. Gibson Reservoir
+                'DatasetAgency',            # e.g. USGS
+                'DatasetParameter',         # e.g. Temperature
+                "DatasetParameterCode",     # e.g. avgt
+                'DatasetUnits',             # e.g. CFS
+                
+            ],
+        ) 
+    
+    mw.datasetTable.loc[100000] = ["RESERVOIR", "GIBR", "Gibson Reservoir", "USBR", "Inflow", "in", 'cfs']
+    mw.datasetTable.loc[100001] = ["STREAMGAGE", "0120332", "Sun River Near Augusta", "USGS", "Streamflow", "00060", 'cfs']
+
+    mw.dataTable =  pd.DataFrame(
+            index = pd.MultiIndex(
+                levels=[[],[],],
+                codes = [[],[],],
+                names = [
+                    'Datetime',             # E.g. 1998-10-23
+                    'DatasetInternalID'     # E.g. 100302
+                    ]
+            ),
+            columns = [
+                "Value",                    # E.g. 12.3, Nan, 0.33
+                "EditFlag"                  # E.g. True, False -> NOTE: NOT IMPLEMENTED
+                ],
+            dtype=float
+        )
+    mw.dataTable['EditFlag'] = mw.dataTable['EditFlag'].astype(bool)
+
+    for date in pd.date_range('2000-10-01', '2001-01-01', freq='D'):
+        mw.dataTable.loc[(date, 100000), 'Value'] = np.random.randint(100, 1000)
+        mw.dataTable.loc[(date, 100001), 'Value'] = np.random.randint(700, 1000)
+
+    
+    dp = DataTabPlots(mw)
+    mw.setCentralWidget(dp)
+    dp.timeSeriesPlot.displayDatasets([100000, 100001])
+    mw.show()
+    sys.exit(app.exec_())
+
+    

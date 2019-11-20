@@ -31,7 +31,7 @@ current_map_layers=
 reset_map=False
 
 [FILE OPS]
-file_name=C:\Users\kevin\untitled.fcst
+file_name=C:\Users\KFoley\untitled.fcst
 
 [DATA TAB]
 por_start=
