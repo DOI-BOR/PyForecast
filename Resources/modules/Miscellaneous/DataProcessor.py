@@ -24,7 +24,7 @@ def updateSingleComputedValue(dataTable, combinationString, onDatetime):
         elif idx == 2:
             return [float(i) for i in parseString.split(',')]
 
-    null, IDs, CFs, LGs = [parser(i, x) for i,x in enumerate(combinationString.split('/'))]
+    _, IDs, CFs, LGs = [parser(i, x) for i,x in enumerate(combinationString.split('/'))]
 
     data = pd.Series([0], index=[onDatetime])
 
@@ -164,7 +164,7 @@ def resampleDataSet(dailyData, resampleString, resampleMethod, customFunction = 
     resampleData = pd.Series([], index = pd.DatetimeIndex([]))
 
     # Get information about the daily data
-    firstDate = dailyData.index[0]
+    firstDate = dailyData.index[0][0]
 
     # Parse the resample string
     resampleList = resampleString.split('/') # Converts 'R/1978-10-01/P1M/F1Y' into ['R', '1978-10-01', 'P1M', 'F1Y']
@@ -186,7 +186,7 @@ def resampleDataSet(dailyData, resampleString, resampleMethod, customFunction = 
     periods = []
     tracker = startDate
     while tracker <= today: # >>> periods = [(datetime.datetime(1978-10-01), datetime.datetime(1978-11-01))]
-        periods.append((tracker, tracker+period))#-timedelta(1)))
+        periods.append((tracker, tracker+period))
         tracker += frequency
 
     # Parse the function
@@ -204,4 +204,4 @@ def resampleDataSet(dailyData, resampleString, resampleMethod, customFunction = 
     # Name the dataframe
     resampleData.name = dailyData.name + '_' + resampleList[1] + '_' + resampleList[2] + '_' + resampleList[3] + '_' + resampleMethod + '_' + str(customFunction)
 
-    return resampleData, 0, 'Procedure Exited Normally'
+    return resampleData

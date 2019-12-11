@@ -6,14 +6,14 @@ QMainWindow {
     font-size: 15px;
     color: #003E51
 }
-
 QMenuBar { 
-    background-color: #555555;
+    background-color: #003E51;
+    font-family: 'Segoe UI';
     color: white;
     border-bottom: 1px solid darkgray
 }
 QMenuBar::item:selected {
-    background: #a8a8a8;
+    background: #007396;
     color: white
 }
 QTabWidget {
@@ -25,4 +25,7 @@ QTabWidget {
 QLabel {
     font-family: 'Segoe UI';
     color: #003E51;
+}
+QWidget#listItemWidget {
+    border-bottom: 1px solid darkgray
 }

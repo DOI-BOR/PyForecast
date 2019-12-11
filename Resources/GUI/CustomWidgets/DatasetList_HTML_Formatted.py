@@ -186,9 +186,8 @@ class DatasetList_HTML_Formatted(QtWidgets.QListWidget):
             else:
                 self.buttonList.append(QtWidgets.QPushButton(""))
                 self.buttonList[-1].setCheckable(True)
-            widget = QtWidgets.QWidget()
+            widget = QtWidgets.QWidget(objectName = 'listItemWidget')
             widget.setLayout(layout)
-            widget.setStyleSheet("QWidget {border-bottom: 1px solid darkgray}")
             tooltipText = self.createToolTip(dataset)
             widget.setToolTip(tooltipText)
             

@@ -96,6 +96,7 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
         self.modelRunsTable = pd.DataFrame(
             index = pd.Index([], dtype=int, name='ModelRunID'),
             columns = [
+                "ModelTrainingPeriod",  # E.g. 1978-10-01/2019-09-30 (model trained on  WY1979-WY2019 data)
                 "Predictand",           # E.g. 100302 (datasetInternalID)
                 "PredictandPeriod",     # E.g. R/1978-03-01/P1M/F12M (starting in march of 1978, over a 1 month period, recurring once a year.)
                 "PredictandMethod",     # E.g. Accumulation, Average, Max, etc
@@ -103,10 +104,10 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
                 "PredictorForceFlag",   # E.g. [False, False, True, ...]
                 "PredictorPeriods",     # E.g. [R/1978-03-01/P1M/F12M, R/1978-03-01/P1M/F12M, ...]
                 "PredictorMethods",     # E.g. ['Accumulation', 'First', 'Last', ...]
-                "RegressionType",       # E.g. MLR
+                "RegressionTypes",      # E.g. ['Regr_MultipleLinearRegression', 'Regr_ZScoreRegression']
                 "CrossValidationType",  # E.g. K-Fold (10 folds)
-                "FeatureSelectionType", # E.g. Forward Selection Floating
-                "PerformanceMetric"     # E.g. Adjusted R2
+                "FeatureSelectionTypes",# E.g. ['FeatSel_SequentialFloatingSelection', 'FeatSel_GeneticAlgorithm']
+                "ScoringParameters"     # E.g. ['ADJ_R2', 'MSE']
             ]
         )
 
