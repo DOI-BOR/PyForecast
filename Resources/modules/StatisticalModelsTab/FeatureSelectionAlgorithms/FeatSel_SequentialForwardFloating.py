@@ -32,6 +32,7 @@ Description:    Sequential Forward Floating Selection is a feature
 import bitarray as ba
 import importlib
 from resources.modules.StatisticalModelsTab import ModelScoring
+import numpy as np
 
 
 class FeatureSelector(object):
@@ -58,6 +59,10 @@ class FeatureSelector(object):
         # Create variables to store the current predictors and performance
         self.numPredictors = len(self.predictorPool)
         self.currentPredictors = kwargs.get("initialModel", ba.bitarray([False] * self.numPredictors))
+
+        # Add in any forced predictors
+        self.currentPredictors = self.currentPredictors | self.parent.forcedPredictors
+        
         self.previousPredictors = self.currentPredictors.copy()
         self.currentScores = {}
 
@@ -73,10 +78,13 @@ class FeatureSelector(object):
         """
 
         # Compile the data to fit with the regression method
-        x = self.parent.x[:, list(model)]
+        x = self.parent.xTraining[:, list(model)]
+        y = self.parent.yTraining[~np.isnan(x).any(axis=1)]
+        x = x[~np.isnan(x).any(axis=1)]
+
 
         # Fit the model with the regression method and get the resulting score
-        _, _, score, _ = self.regression.fit(x, self.parent.y, crossValidate = True)
+        _, _, score, _ = self.regression.fit(x, y, crossValidate = True)
 
         return score
     
@@ -115,7 +123,7 @@ class FeatureSelector(object):
             # Check if we've added any new predictors or removed predictors
             if self.previousPredictors == self.currentPredictors:
             
-                # If the model has not changed, we're done
+                # If the model has not changed, we're done!
                 break
             
             # The model has changed, so we iterate again
@@ -204,8 +212,8 @@ class FeatureSelector(object):
         # Iterate over the predictors
         for i in range(self.numPredictors):
 
-            # Check that the predictor is currently in the model (i.e. it is '1')
-            if model[i]:
+            # Check that the predictor is currently in the model (i.e. it is '1') and it's not forced
+            if model[i] and not self.parent.forcedPredictors[i]:
                 
                 # Remove the predictor from the model
                 model[i] = False
@@ -229,6 +237,7 @@ class FeatureSelector(object):
                 if ModelScoring.scoreCompare(newScores = score, oldScores = self.currentScores):
                     self.currentScores = score
                     self.currentPredictors = model.copy()
+                    predictorRemoved = True
 
                 # Revert the model
                 model[i] = True

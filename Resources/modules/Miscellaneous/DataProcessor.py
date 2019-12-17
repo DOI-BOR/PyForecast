@@ -192,15 +192,17 @@ def resampleDataSet(dailyData, resampleString, resampleMethod, customFunction = 
     # Parse the function
     func = lambda x: np.nanmean(x) if resampleMethod == 'average' else (
         np.nansum(x) if resampleMethod == 'accumulation' else (
-            x.iloc[0][0] if resampleMethod == 'first' else (
-                x.iloc[-1][0] if resampleMethod == 'last' else (
+            x.iloc[0] if resampleMethod == 'first' else (
+                x.iloc[-1] if resampleMethod == 'last' else (
                     np.max(x) if resampleMethod == 'max' else (
                         np.min(x) if resampleMethod == 'min' else eval(customFunction))))))
 
     # Resample the data
     for idx in pd.IntervalIndex.from_tuples(periods):
-        resampleData.loc[idx.left] = ( func(dailyData.loc[idx.left:idx.right]) if (idx.right >= firstDate and today >= idx.right) else np.nan )
-
+        
+        data = dailyData.loc[idx.left:idx.right]
+        resampleData.loc[idx.left] = ( func(data) if (idx.right >= firstDate and today >= idx.right and (not data.empty)) else np.nan )
+        
     # Name the dataframe
     resampleData.name = dailyData.name + '_' + resampleList[1] + '_' + resampleList[2] + '_' + resampleList[3] + '_' + resampleMethod + '_' + str(customFunction)
 

@@ -7,10 +7,11 @@ Description:    Defines a numpy algorithm to perform Multiple Linear Regression 
 from resources.modules.StatisticalModelsTab import CrossValidationAlgorithms, ModelScoring
 import numpy as np
 import sys
+import statsmodels.api as sm
 
 class Regressor(object):
 
-    name = "Multiple Linear Regression"
+    name = "Gamma Generalized Linear Model Regression"
 
     def __init__(self, crossValidation = None, scoringParameters = None):
 
@@ -39,24 +40,20 @@ class Regressor(object):
 
     def regress(self, x, y):
         """
-        Performs the MLR/OLS regression between x and y.
-        Standard Ordinary Least Squares. Solves the
-        matrix formulation of OLS, as seen at
-        https://en.wikipedia.org/wiki/Ordinary_least_squares
+        Performs the Iterative Least Squares fit
+        to compute the coefficents of the Gamma
+        linear model fit. 
         """
 
         # Concatenate a row of 1's to the data so that we can compute an intercept
         X_ = np.concatenate((np.ones(shape=x.shape[0]).reshape(-1,1), x), 1)
 
-        try:
-            # Compute the coefficients and the intercept
-            coef_all = np.linalg.inv(X_.transpose().dot(X_)).dot(X_.transpose()).dot(y)
-            coef = coef_all[1:]
-            intercept = coef_all[0]
-        except:
-            coef_all = np.array([0]*X_.shape[1])
-            coef = coef_all[1:]
-            intercept = coef_all[0]
+        # Compute the coefficients and the intercept
+        self.model = sm.GLM(y, X_, family=sm.families.Gamma())
+        
+        self.results = self.model.fit()
+        coef = self.results.params[1:]
+        intercept = self.results.params[0]
 
         return coef, intercept
 
@@ -112,7 +109,12 @@ class Regressor(object):
         Makes a prediction on 'x'
         using the fitted model.
         """
-        return np.dot(x, self.coef) + self.intercept
+        if len(x.shape) == 1:
+            x_ = np.concatenate((np.array([1]), x))
+        else:
+            x_ = np.concatenate((np.ones(shape=x.shape[0]).reshape(-1,1), x), 1)
+        return self.results.predict(x_)
+        
 
 
     def score(self, y_obs = [], y_p = [], n_features = None):

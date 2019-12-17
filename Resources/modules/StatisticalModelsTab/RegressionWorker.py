@@ -1,34 +1,23 @@
 """
-Basic Workflow
-Predictor Pool
+Script Name:    RegressionWorker.py
 
-    ||
-    ||
-    \/
-
-FOR REGR IN REGR METHODS
-    FOR I IN NUM MODELS
-        FEAT_SEL_METHOD = FEAT_SEL_LIST [i%LEN LIST]
-        DO FEAT_SEL_METHOD TO COMPLETION 
-            -> Check if model in models (If it is either go forward or backward a set)
-        ADD MODEL TO MODEL OUTPUT
-
-    ||
-    ||
-    \/
-
-ANALYZE MODEL LIST FOR DUPLICATES, SIMILAR MODELS
-RETURN MODEL LIST
+Description:    RegressionWorker
 """
 import pandas as pd
+from tqdm import tqdm
 import numpy as np
+
+import os
+import sys
+sys.path.append(os.getcwd())
+
 from resources.modules.Miscellaneous.DataProcessor import resampleDataSet
 import multiprocessing as mp
 import importlib
 import bitarray as ba
 
 
-# Not super sure how this stucture will be set up yet.
+
 class RegressionWorker(object):
 
     def __init__(self, parent = None, modelRunTableEntry = None, *args, **kwargs):
@@ -53,6 +42,7 @@ class RegressionWorker(object):
         
         # Create X, Y arrays
         self.x = []
+        self.xTraining = []
         self.y = []
 
         # Set the start and end dates for the model training period
@@ -67,7 +57,8 @@ class RegressionWorker(object):
                 self.modelRunTableEntry['PredictorMethods'][i]
                 )
             
-            self.x.append(list(data.loc[self.trainingDates[0]: self.trainingDates[1]]))
+            self.xTraining.append(list(data.loc[self.trainingDates[0]: self.trainingDates[1]])) # Training Data
+            self.x.append(list(data)) # All Data
 
         # Compute the target data
         self.y = resampleDataSet(
@@ -75,13 +66,27 @@ class RegressionWorker(object):
             self.modelRunTableEntry['PredictandPeriod'],
             self.modelRunTableEntry['PredictandMethod']
         )
-        self.y = list(self.y.loc[self.trainingDates[0]: self.trainingDates[1]])
+        self.yTraining = list(self.y.loc[self.trainingDates[0]: self.trainingDates[1]]) # Training Data
+        self.y = list(self.y) # All Data
+
+        # Set the forced predictors
+        self.forcedPredictors = ba.bitarray(self.modelRunTableEntry['PredictorForceFlag'])
+
+        # Add any missing data for the current water year to the arrays
+        maxListLength = max([len(i) for i in self.x])
+        [i.append(np.nan) for i in self.x if len(i) < maxListLength]
 
         # Convert data lists to numpy arrays
         self.x = np.array(self.x).T
+        self.xTraining = np.array(self.xTraining).T
         self.y = np.array(self.y)
+        self.yTraining = np.array(self.yTraining)
+
+        # Compute the total number of model combinations that are possible
+        self.numPossibleModels = int('1'*self.x.shape[1], 2)
 
         return
+
 
     def run(self):
         """
@@ -95,9 +100,14 @@ class RegressionWorker(object):
             # Create a model list to store already computed models
             self.computedModels = {}
 
-            # Iterate a few times over each regression method
-            for i in range(4):
+            # Iteration tracker
+            i = 0
 
+            # Compute at least 10,000 models
+            while len(self.computedModels) < (self.numPossibleModels if self.numPossibleModels < 10000 else 10000):
+
+                print(len(self.computedModels))
+                
                 # Iterate over the feature selection methods
                 for featSel in self.featureSelectionSchemes:
 
@@ -126,6 +136,10 @@ class RegressionWorker(object):
                     # Run the feature selection algorithm
                     f.iterate()
 
+                # Iterate tracker
+                i += 1
+
+
         return
 
     
@@ -133,68 +147,131 @@ class RegressionWorker(object):
 # DEBUGGING
 if __name__ == '__main__':
 
-    from sklearn.datasets import make_regression
-    
-    # Make some regression data
-    
-    dates = pd.date_range('2000-10-01', '2018-10-01')
-    datasets = [10,20,30,40,50,60,70]
-    arrays = [(date, i) for date in dates for i in datasets]
+    from sklearn.datasets import make_regression, load_boston
+    from resources.modules.StatisticalModelsTab import PredictionIntervalBootstrap
+    from resources.modules.Miscellaneous.DataProcessor import resampleDataSet
+    import time
+    import warnings
+    warnings.filterwarnings("ignore")
 
-    x, y = make_regression(n_samples=len(dates), n_features=len(datasets)-1, n_informative=3, bias=10, noise=10, effective_rank=1, tail_strength=0.88)
-    XY = np.concatenate((x, y.reshape(-1,1)), axis=1)
-
-    # Initialize a dataset
-    df = pd.DataFrame(
-        XY.T.flatten(),
-        columns = ['Value'],
-        index = pd.MultiIndex.from_tuples(
-            arrays,
-            names=('Datetime', 'DatasetID')   
-        )
-    )
+    
+    # Load some toy data
+    df = pd.read_csv('test_blr.csv', index_col=0, parse_dates=True)
+    
+    datasets = list(df.columns)
+    num_predictors = len(datasets)
+    df = df.stack(0)
+    df.name = 'Value'
+    df = pd.DataFrame(df)
+    df.index.names = ['Datetime','DatasetID']
+    print(df)
 
     # Initialize a model run
     dm = pd.DataFrame(
             index = pd.Index([], dtype=int, name='ModelRunID'),
             columns = [
-                "ModelTrainingPeriod",  # E.g. 1978-10-01/2019-09-30 (model trained on  WY1979-WY2019 data)
-                "Predictand",           # E.g. 100302 (datasetInternalID)
-                "PredictandPeriod",     # E.g. R/1978-03-01/P1M/F12M (starting in march of 1978, over a 1 month period, recurring once a year.)
-                "PredictandMethod",     # E.g. Accumulation, Average, Max, etc
-                "PredictorPool",        # E.g. [100204, 100101, ...]
-                "PredictorForceFlag",   # E.g. [False, False, True, ...]
-                "PredictorPeriods",     # E.g. [R/1978-03-01/P1M/F12M, R/1978-03-01/P1M/F12M, ...]
-                "PredictorMethods",     # E.g. ['Accumulation', 'First', 'Last', ...]
-                "RegressionTypes",      # E.g. ['Regr_MultipleLinearRegression', 'Regr_ZScoreRegression']
-                "CrossValidationType",  # E.g. K-Fold (10 folds)
-                "FeatureSelectionTypes",# E.g. ['FeatSel_SequentialFloatingSelection', 'FeatSel_GeneticAlgorithm']
-                "ScoringParameters"     # E.g. ['ADJ_R2', 'MSE']
+                "ModelTrainingPeriod",      # E.g. 1978-10-01/2019-09-30 (model trained on  WY1979-WY2019 data)
+                "Predictand",               # E.g. 100302 (datasetInternalID)
+                "PredictandPeriod",         # E.g. R/1978-03-01/P1M/F12M (starting in march of 1978, over a 1 month period, recurring once a year.)
+                "PredictandMethod",         # E.g. Accumulation, Average, Max, etc
+                "PredictorPool",            # E.g. [100204, 100101, ...]
+                "PredictorForceFlag",       # E.g. [False, False, True, ...]
+                "PredictorPeriods",         # E.g. [R/1978-03-01/P1M/F12M, R/1978-03-01/P1M/F12M, ...]
+                "PredictorMethods",         # E.g. ['Accumulation', 'First', 'Last', ...]
+                "RegressionTypes",          # E.g. ['Regr_MultipleLinearRegression', 'Regr_ZScoreRegression']
+                "CrossValidationType",      # E.g. K-Fold (10 folds)
+                "FeatureSelectionTypes",    # E.g. ['FeatSel_SequentialFloatingSelection', 'FeatSel_GeneticAlgorithm']
+                "ScoringParameters"         # E.g. ['ADJ_R2', 'MSE']
             ]
         )
-
+    
+    # Set up predictors from toy dataset
+    predictors = ['HucPrecip'] + ['Nino3.4']*3 + datasets[2:]
+    print(predictors)
+    periodList = ["R/1990-02-01/P2M/F1Y","R/1990-02-01/P1M/F1Y","R/1990-01-01/P1M/F1Y","R/1990-03-01/P1M/F1Y",'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-03-01/P1M/F1Y', 'R/1989-10-01/P6M/F1Y', 'R/1990-03-01/P1M/F1Y']
+    methodList = ["accumulation","average","average","average",'first', 'first', 'first', 'first', 'first', 'first', 'first', 'first', 'first', 'first', 'first', 'first', 'first', 'first', 'first', 'first', 'average', 'accumulation', 'average']
+    print(len(periodList), len(predictors), len(methodList))
+    # Create a model run entry
     dm.loc[1] = [   
-                    '2000-10-01/2017-09-30', 
-                    50,
-                    'R/2001-04-01/P4M/F1Y', 
+                    '1989-10-01/2017-09-30', 
+                    datasets[0],
+                    'R/1990-04-01/P4M/F1Y', 
                     'accumulation', 
-                    [10,20,30,40,60,70],
-                    [False, False, False, False, False, False], 
-                    ['R/2001-02-01/P1M/F12M', 'R/2001-02-01/P1M/F12M', 'R/2001-02-01/P1M/F12M', 'R/2001-02-01/P1M/F12M','R/2001-02-01/P1M/F12M', 'R/2001-02-01/P1M/F12M'],
-                    ['average', 'average', 'accumulation', 'average', 'accumulation', 'average'],
-                    ['Regr_MultipleLinearRegressor'], 
+                    predictors,
+                    [False]*(len(predictors)), 
+                    periodList,
+                    methodList,
+                    ['Regr_GammaGLM'], 
                     'KFOLD_5', 
-                    ['FeatSel_BruteForce'], 
-                    ['ADJ_R2','MSE']
+                    ['FeatSel_SequentialForwardFloating'], 
+                    ['AIC']
                 ]
 
+    # Fake Parent Object
     class p(object):
         dataTable = df
 
     p_ = p()
 
-
+    # Initialize regressor
     rg = RegressionWorker(parent = p_, modelRunTableEntry=dm.loc[1])
     rg.setData()
-    print('')
-    print('')
+    print('yrange is {0} - {1}'.format(min(rg.y), max(rg.y)))
+
+    # Run RegressionWorker
+    print('There are {0} possible combinations'.format(int('1'*(len(predictors)-1),2)+1))
+    a = time.time()
+    rg.run()
+    b = time.time()
+
+    print('analyzed {0} combinations'.format(len(rg.computedModels.keys())))
+    print('ran in {0} sec'.format(b-a))
+
+    # Sort Results by score
+    d = pd.DataFrame().from_dict(rg.computedModels, orient='index')
+    d.sort_values(by=['AIC'], inplace=True, ascending=False)
+    d.index.name = 'model'
+    
+    print(d)
+
+    # # Retrieve the top model
+    # topModel = ba.bitarray(d.index[0])
+
+    # # Assemble the training data
+    # x = rg.xTraining[:, list(topModel)]
+    # y = rg.yTraining[~np.isnan(x).any(axis=1)]
+    # x = x[~np.isnan(x).any(axis=1)]
+
+    # # Get the latest X Data
+    # xNew = rg.x[:, list(topModel)][-1]
+
+    # # Get the regressor
+    # regressionName = rg.regressionSchemes[0]
+    # module = importlib.import_module("resources.modules.StatisticalModelsTab.RegressionAlgorithms.{0}".format(regressionName))
+    # regressionClass = getattr(module, 'Regressor')
+    # regression = regressionClass(crossValidation = "KFOLD_5", scoringParameters = "ADJ_R2")
+
+    # # Define a dummy preprocessor
+    # class preprocessor(object):
+
+    #     def __init__(self, data):
+
+    #         self.data = data
+
+    #     def getTransformedX(self):
+
+    #         return self.data[:, :-1]
+
+    #     def getTransformedY(self):
+
+    #         return self.data[:,-1]
+            
+    #     def transform(self, data):
+
+    #         return data
+
+    #     def inverseTransform(self, data):
+
+    #         return data
+    
+    # pre = preprocessor(x)

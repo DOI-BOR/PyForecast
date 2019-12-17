@@ -1,6 +1,10 @@
 
 import numpy as np
 from tqdm import tqdm
+import os
+import sys
+sys.path.append(os.getcwd())
+
 
 def computePredictionInterval(observations, preprocessor, regressor, crossValidator):
     """
@@ -37,7 +41,7 @@ def computePredictionInterval(observations, preprocessor, regressor, crossValida
     y = processedObservations.getTransformedY()
 
     # Initialize the regressor with the crossValidator
-    model = regressor(cv = crossValidator)
+    model = regressor(crossValidation = crossValidator)
 
     # Create a prediction using the original data
     model.fit(x[:-1],y[:-1])
@@ -85,15 +89,107 @@ def computePredictionInterval(observations, preprocessor, regressor, crossValida
 # Debugging
 if __name__ == '__main__':
 
-    from sklearn.datasets import make_regression
+    from sklearn.datasets import make_regression, load_boston, load_diabetes
     import matplotlib.pyplot as plt
+    import pandas as pd
+    import bitarray as ba
+    from resources.modules.StatisticalModelsTab.RegressionAlgorithms import Regr_GammaGLM
+    from resources.modules.Miscellaneous.DataProcessor import resampleDataSet
+    from resources.modules.StatisticalModelsTab import RegressionWorker
+    #from resources.modules.StatisticalModelsTab.PreProcessingAlgorithms import PreProc_NoPreProcessing
+    import warnings
+    warnings.filterwarnings("ignore")
+    
+
+    # Load some toy data
+    df = pd.read_csv('test_blr.csv', index_col=0, parse_dates=True)
+    datasets = list(df.columns)
+    num_predictors = len(datasets)
+    df = df.stack(0)
+    df.name = 'Value'
+    df = pd.DataFrame(df)
+    df.index.names = ['Datetime','DatasetID']
+
+    models = [ba.bitarray('11100010110001110011011'), ba.bitarray('11100010110001110011011'), ba.bitarray('11100010110001110011011')]
+
+    # Initialize a model run
+    dm = pd.DataFrame(
+            index = pd.Index([], dtype=int, name='ModelRunID'),
+            columns = [
+                "ModelTrainingPeriod",      # E.g. 1978-10-01/2019-09-30 (model trained on  WY1979-WY2019 data)
+                "Predictand",               # E.g. 100302 (datasetInternalID)
+                "PredictandPeriod",         # E.g. R/1978-03-01/P1M/F12M (starting in march of 1978, over a 1 month period, recurring once a year.)
+                "PredictandMethod",         # E.g. Accumulation, Average, Max, etc
+                "PredictorPool",            # E.g. [100204, 100101, ...]
+                "PredictorForceFlag",       # E.g. [False, False, True, ...]
+                "PredictorPeriods",         # E.g. [R/1978-03-01/P1M/F12M, R/1978-03-01/P1M/F12M, ...]
+                "PredictorMethods",         # E.g. ['Accumulation', 'First', 'Last', ...]
+                "RegressionTypes",          # E.g. ['Regr_MultipleLinearRegression', 'Regr_ZScoreRegression']
+                "CrossValidationType",      # E.g. K-Fold (10 folds)
+                "FeatureSelectionTypes",    # E.g. ['FeatSel_SequentialFloatingSelection', 'FeatSel_GeneticAlgorithm']
+                "ScoringParameters"         # E.g. ['ADJ_R2', 'MSE']
+            ]
+        )
+
+    # Set up predictors from toy dataset
+    predictors = ['HucPrecip'] + ['Nino3.4']*3 + datasets[2:]
+    periodList = ["R/1990-02-01/P2M/F1Y","R/1990-02-01/P1M/F1Y","R/1990-01-01/P1M/F1Y","R/1990-03-01/P1M/F1Y",'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-03-01/P1M/F1Y', 'R/1989-10-01/P6M/F1Y', 'R/1990-03-01/P1M/F1Y']
+    methodList = ["accumulation","average","average","average",'first', 'first', 'first', 'first', 'first', 'first', 'first', 'first', 'first', 'first', 'first', 'first', 'first', 'first', 'first', 'first', 'average', 'accumulation', 'average']
+
+    # Create a model run entry
+    dm.loc[1] = [   
+                    '1989-10-01/2017-09-30', 
+                    datasets[0],
+                    'R/1990-04-01/P4M/F1Y', 
+                    'accumulation', 
+                    predictors,
+                    [False]*(len(predictors)), 
+                    periodList,
+                    methodList,
+                    ['Regr_GammaGLM'], 
+                    'KFOLD_5', 
+                    ['FeatSel_SequentialForwardFloating'], 
+                    ['MSE']
+                ]
+
+    # Fake Parent Object
+    class p(object):
+        dataTable = df
+
+    p_ = p()
+
+    rg = RegressionWorker.RegressionWorker(parent = p_, modelRunTableEntry=dm.loc[1])
 
     # Load up some data
-    X, Y = make_regression(n_samples=35, n_features=8, n_informative=5, bias=10, noise=10, effective_rank=1, tail_strength=0.88,)
+    #X, Y = load_boston(return_X_y=True)
+    #X,Y = load_diabetes(return_X_y=True)
+    #X, Y = make_regression(n_samples=35, n_features=8, n_informative=5, bias=10, noise=10, effective_rank=1, tail_strength=0.88,)
     #X = np.random.random(X.shape)
+    #XY = np.concatenate((X, Y.reshape(-1,1)), axis=1)
+    #new = np.array([[i + np.random.rand(1)[0]/1000 for i in X[0]] + [np.nan]])
+    #XY = np.concatenate((XY, new))
+
+    rg.setData()
+
+    # Get the data back
+
+    X, Y = rg.x[:-1, list(models[1])], rg.y
+
+    Y = Y[~np.isnan(X).any(axis=1)]
+    X = X[~np.isnan(X).any(axis=1)]
+
+    rdn = list(zip(X,Y))
+    np.random.shuffle(rdn)
+
+    X = np.array([i[0] for i in rdn])
+    Y = np.array([i[1] for i in rdn])
+
+    #Y = np.append(Y, np.nan)
+    if Y.shape[0] != X.shape[0]:
+        print('ERROR')
+        input()
+
     XY = np.concatenate((X, Y.reshape(-1,1)), axis=1)
-    new = np.array([[i + np.random.rand(1)[0]/1000 for i in X[0]] + [np.nan]])
-    XY = np.concatenate((XY, new))
 
     # Define a dummy preprocessor
     class preprocessor(object):
@@ -108,7 +204,7 @@ if __name__ == '__main__':
 
         def getTransformedY(self):
 
-            return self.data[:,-1]
+            return np.log(self.data[:,-1])
             
         def transform(self, data):
 
@@ -116,7 +212,7 @@ if __name__ == '__main__':
 
         def inverseTransform(self, data):
 
-            return data
+            return np.exp(data)
     
     # Define a dummy regressor
     class regressor(object):
@@ -145,24 +241,28 @@ if __name__ == '__main__':
             for xi, bi in zip(X, coefs): p += (bi*xi)
             return np.float16(p)
 
+    
+
     # Compute a prediction interval for the new observation
-    l = computePredictionInterval(XY, preprocessor, regressor, None)
+    l = computePredictionInterval(XY, preprocessor, Regr_GammaGLM.Regressor, 'KFOLD_5')
 
     # Get the indices of the 10th and 90th percentile
     idx10 = int(len(l)/10)
     idx90 = len(l) - idx10
 
     # Plot the prediction and the interval
-    plt.hist(l, bins=30)
-    plt.vlines(np.median(l), 0, 10, colors='r')
+    n, bins, patches = plt.hist(l, bins=100)
+    print(len(n), len(bins))
+    [pa.set_ec("k") for pa in patches]
 
     print("""
+Actual:     {6}
 Prediction: {0} 
 10%:        {1} (prediction + {4})
 90%:        {2} (prediction - {5})
 
 yRange:     {3}
-    """.format(np.median(l), l[idx10], l[idx90], (min(Y), max(Y)), l[idx10] - np.median(l), np.median(l) - l[idx90] ))
-
+    """.format(np.median(l), l[idx10], l[idx90], (min(Y), max(Y)), l[idx10] - np.median(l), np.median(l) - l[idx90], Y[-1] ))
+    plt.vlines([l[idx10], l[idx90], np.median(l)], [0,0,0], [8000,8000,8000], colors='r')
     plt.show()
         

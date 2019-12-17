@@ -1,18 +1,81 @@
 import numpy as np
 
+# Dictionary to dscribe whether higher scores are better (True)
+# or lower scores are better (False)
 SCORING_RULES = {
     "ADJ_R2":   True,
-    "MSE":      False
+    "MSE":      False,
+    'AIC':      False
 }
 
+def sortScores(scores = None):
+    """
+    Sorts a list of scores in ascending order using
+    the 'scoreCompare' function below. 
 
-def scoreCompare(oldScores = None, newScores = None):
+    'scores' is a list of scores such as:
+        [{"ADJ_R2":0.553, "MSE":332.1}, {"ADJ_R2":0.43, "MSE":112.1}, ...]
+
+    Scores are sorted with a quicksort algorithm
+    taken from https://stackoverflow.com/questions/18262306/quicksort-with-python
+
+    I clearly don't understand the magic behind quicksort,
+    so i won't even begin to comment this code!
+    """
+
+    def partition(array, begin, end):
+        pivot = begin
+        for i in range(begin+1, end+1):
+            if scoreCompare(oldScores = array[i], newScores = array[begin], nested=True):
+                pivot += 1
+                array[i], array[pivot]  = array[pivot], array[i]
+        array[pivot], array[begin] = array[begin], array[pivot]
+        return pivot
+
+    def quicksort(array, begin=0, end=None):
+        if end is None:
+            end = len(array) - 1
+        def _quicksort(array, begin, end):
+            if begin >= end:
+                return
+            pivot = partition(array, begin, end)
+            _quicksort(array, begin, pivot-1)
+            _quicksort(array, pivot+1, end)
+        return _quicksort(array, begin, end)
+
+    # Perform quicksort
+    quicksort(scores)
+
+
+    return
+
+
+def scoreCompare(oldScores = None, newScores = None, nested = False):
     """
     Checks wheter all the scores in the newScores list
     are better than all the scores in the oldScores list.
     Returns False otherwise.
+
+    The 'nested' argument specifies whether the scores are nested
+    1 layer beneath the predictor strings. For example, a nested
+    score may look like this:
+    
+        {'100101011': {"ADJ_R2":0.944, "MSE":321.1}}
+    
+    while an unnested score may look like this:
+
+        {"ADJ_R2":0.844, "MSE":324.2}
+
     """
-    return np.all([(newScores[scoreName] > oldScores[scoreName]) if SCORING_RULES[scoreName] 
+    if nested:
+        
+        return np.all([(newScores[next(iter(newScores))][scoreName] > oldScores[next(iter(oldScores))][scoreName]) if SCORING_RULES[scoreName] 
+                        else (newScores[next(iter(newScores))][scoreName] < oldScores[next(iter(oldScores))][scoreName])
+                        for scoreName in next(iter(oldScores.values())).keys()])
+
+    else:
+
+        return np.all([(newScores[scoreName] > oldScores[scoreName]) if SCORING_RULES[scoreName] 
                         else (newScores[scoreName] < oldScores[scoreName]) 
                         for scoreName in oldScores.keys()])
 
@@ -29,7 +92,9 @@ def AIC(y_obs, y_prd, n_features):
 
     sse = sum((y_obs-y_prd)**2)  
     n = len(y_obs)
+
     return n*(np.log(2*np.pi) + np.log(sse) - np.log(n)) + 2*(n+n_features+1)
+
 
 def MSE(y_obs, y_prd, n_features):
     """
@@ -63,5 +128,5 @@ def ADJ_R2(y_obs, y_prd, n_features):
     r2 = 1 - (ss_res/ss_tot)                # Coefficient of Determination
     
     adj_r2 = 1 - (1 - r2)*(n_samples - 1)/(n_samples - n_features - 1)
-
+    
     return adj_r2
