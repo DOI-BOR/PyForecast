@@ -1,17 +1,20 @@
 """
-Script Name:    Regr_MultipleLinearRegressor
+Script Name:    Regr_SVM_RBF
 
-Description:    Defines a numpy algorithm to perform Multiple Linear Regression on a dataset.
+Description:    Defines an algorithm to perform
+                support vector machine regression
+                using a radial basis function kernel.
 """
 
 from resources.modules.StatisticalModelsTab import CrossValidationAlgorithms, ModelScoring
 import numpy as np
 import sys
-import statsmodels.api as sm
+from sklearn.svm import SVR
+
 
 class Regressor(object):
 
-    name = "Gamma Generalized Linear Model Regression"
+    name = "Support Vector Machine - RBF Regression"
 
     def __init__(self, crossValidation = None, scoringParameters = None):
 
@@ -24,59 +27,35 @@ class Regressor(object):
         self.y = np.array([])       # Raw Y Data
         self.y_p = np.array([])     # Model Predictions
 
-        # Fitting Parameters
-        self.coef = []
-        self.intercept = 0
-
-        # Set up cross validator and scorers
+        # Set up cross validator, and scorers
         self.scorers = [getattr(ModelScoring, param) for param in self.scoringParameters]
         self.crossValidator = getattr(CrossValidationAlgorithms, self.crossValidation)
+        
+        # Intialize dictionaries to store scores
         self.cv_scores = {}
         self.scores = {}
         self.y_p_cv = []
 
-        return
+        # Initialize the regressor
+        self.regressor = SVR(C=5.0)
 
+        return
 
     def regress(self, x, y):
         """
-        Performs the Iterative Least Squares fit
-        to compute the coefficents of the Gamma
-        linear model fit. 
         """
-
-        # Concatenate a row of 1's to the data so that we can compute an intercept
         X_ = np.concatenate((np.ones(shape=x.shape[0]).reshape(-1,1), x), 1)
+        self.regressor.fit(X_,y)
 
-        # Compute the coefficients and the intercept
-        self.model = sm.GLM(y, X_, family=sm.families.Gamma(link=sm.genmod.families.links.log))
-        
-        self.results = self.model.fit()
-        coef = self.results.params[1:]
-        intercept = self.results.params[0]
-
-        return coef, intercept
+        return np.nan, np.nan
 
 
     def fit(self, x, y, crossValidate = False):
         """
-        Fits the model with the x and y data, optionally
-        cross validates the model and stores cross validation
-        scores in the self.cv_scores variable.
         """
-
         # Set the data references
         self.x = x
         self.y = y
-
-        # Fit the model
-        self.coef, self.intercept = self.regress(self.x, self.y)
-
-        # Compute the predicted values
-        self.y_p = self.predict(self.x)
-
-        # Compute a score array
-        self.scores = self.score()
 
         # Cross Validate if necessary
         if crossValidate:
@@ -92,33 +71,36 @@ class Regressor(object):
                 
             # Compute CV Score
             self.cv_scores = self.score(self.y, self.y_p_cv, self.x.shape[1])
+        
+        # Fit the model
+        self.coef, self.intercept = self.regress(self.x, self.y)
+
+        # Compute the predicted values
+        self.y_p = self.predict(self.x)
+
+        # Compute a score array
+        self.scores = self.score()
     
         return (self.scores, self.y_p, self.cv_scores, self.y_p_cv) if crossValidate else (self.scores, self.y_p)
 
-    
-    def residuals(self):
-        """
-        Returns the residual time series 
-        from the model.
-        """
-        return self.y - self.y_p
-
 
     def predict(self, x):
-        """
-        Makes a prediction on 'x'
-        using the fitted model.
-        """
+
         if len(x.shape) == 1:
-            x_ = np.concatenate((np.array([1]), x))
+            x_ = np.array([np.concatenate((np.array([1]), x))])
         else:
             x_ = np.concatenate((np.ones(shape=x.shape[0]).reshape(-1,1), x), 1)
         
-        return np.array(self.results.predict(x_))
-        
+
+        return np.array(self.regressor.predict(x_))
+    
+    def residuals(self):
+
+        return self.y - self.y_p
 
 
     def score(self, y_obs = [], y_p = [], n_features = None):
+        
         """
         Scores the model using the supplied scorers.
         Scores y_obs against y_p. Uses the supplied
@@ -130,7 +112,14 @@ class Regressor(object):
         y_p = self.y_p if (y_p == []) else y_p
         n_features = self.x.shape[1] if (n_features == None) else n_features
 
+        # Check that the model is actually valid 
+        # that is, there are less than n-1 predictors
+        #       - There cannot be more than n-2 predictors
+        #         or else the scoring does not work. Adjusted
+        #         r2 and AICc rely on the fact that there are
+        #         less predictors than observations
         if n_features > len(y_p) - 2:
             return {self.scoringParameters[i]: np.nan for i, scorer in enumerate(self.scorers)}
 
         return {self.scoringParameters[i]: scorer(y_obs, y_p, n_features) for i, scorer in enumerate(self.scorers)}
+        

@@ -35,7 +35,7 @@ def updateSingleComputedValue(dataTable, combinationString, onDatetime):
 
     return data
 
-def combinedDataSet(dataTable, datasetTable, combinationString, newDatasetMetaData = {}, existingID = -100):
+def combinedDataSet(dataTable, datasetTable, combinationString):
     """
 
     combinationStrings are formatted as follows:
@@ -50,15 +50,13 @@ def combinedDataSet(dataTable, datasetTable, combinationString, newDatasetMetaDa
     So if you wanted a un-regulated inflow into reservoir A (inflow id 100000) which is downstream of reservoir B (inflow id 100001, outflow id 100002)
     you could write.
 
-    newDataset = combinatorialDataSet(dataTable, "C/100000,100001,100002/1,1,1/0,0,0", {"DatasetName":"Reservoir A", "DatasetParameter":"Unregulated Inflow", "DatasetUnits":"cfs"})
+    newDataset = combinedDataSet(dataTable, "C/100000,100001,100002/1,1,-1/0,0,0")
 
     Input: 
         dataTable -> The raw datatable as a pandas multi-index dataframe
         combinationString -> The format string used to combine datasets into a new dataset
-        newDatasetMetaData -> dictionary of [column name : values] for the new dataset. Only provide things that you want to define personally. The software will do it's best to define the rest. 
 
     Output:
-        datasetTableEntry -> Information about the new dataset 
         dataTableAppend -> data for the new dataset
     """
 
@@ -79,46 +77,14 @@ def combinedDataSet(dataTable, datasetTable, combinationString, newDatasetMetaDa
 
     for i, ID in enumerate(IDs):
         newData = dataTable.loc[(slice(None), ID), 'Value'].shift(LGs[i])
-        data = np.sum([data, CFs[i]*pd.Series(newData.values, index=newData.index.get_level_values(0))], axis=0)
-        
-
-
-    # Create the datasetTableEntry
-    defaults = {
-        "DatasetName": "Combo: {0}".format(', '.join([str(i) for i in datasetTable.loc[IDs].DatasetName.values])),
-        "DatasetParameter": '-'.join(set(datasetTable.loc[IDs].DatasetParameter.values)),
-        "DatasetUnits": '-'.join(set(datasetTable.loc[IDs].DatasetUnits.values)),
-        "DatasetExternalID": "Combo: {0}".format(', '.join([str(i) for i in datasetTable.loc[IDs].DatasetExternalID.values])),
-        "DatasetType": "Combined Dataset",
-        "DatasetDataloader":"COMPOSITE",
-        "DatasetAgency": '-'.join(set(datasetTable.loc[IDs].DatasetAgency.values)),
-        "DatasetAdditionalOptions": [{"CompositeString":combinationString}]
-    }
-
-    defaults.update(newDatasetMetaData)
-    datasetTableEntry = pd.DataFrame(defaults, index=[max([-1, existingID])], columns = [
-            'DatasetType', # e.g. STREAMGAGE, or RESERVOIR
-            'DatasetExternalID', # e.g. "GIBR" or "06025500"
-            'DatasetName', # e.g. Gibson Reservoir
-            'DatasetAgency', # e.g. USGS
-            'DatasetParameter', # e.g. Temperature
-            'DatasetUnits', # e.g. CFS
-            'DatasetDefaultResampling', # e.g. average 
-            'DatasetDataloader', # e.g. RCC_ACIS
-            'DatasetHUC8', # e.g. 10030104
-            'DatasetLatitude',  # e.g. 44.352
-            'DatasetLongitude', # e.g. -112.324
-            'DatasetElevation', # e.g. 3133 (in ft)
-            'DatasetPORStart', # e.g. 1/24/1993
-            'DatasetPOREnd',# e.g. 1/22/2019
-            'DatasetAdditionalOptions'])
+        data = data.add(CFs[i]*pd.Series(newData.values, index=newData.index.get_level_values(0)))
+        #data = np.sum([data, CFs[i]*pd.Series(newData.values, index=newData.index.get_level_values(0))], axis=0)
     
     # Create the dataTableAppend data
     dataTableAppend = pd.DataFrame(data, columns=['Value'], index=dates)
-    print(dataTableAppend)
+    
 
-
-    return datasetTableEntry, dataTableAppend
+    return dataTableAppend
 
 
 def resampleDataSet(dailyData, resampleString, resampleMethod, customFunction = None):
@@ -200,7 +166,7 @@ def resampleDataSet(dailyData, resampleString, resampleMethod, customFunction = 
     # Resample the data
     for idx in pd.IntervalIndex.from_tuples(periods):
         
-        data = dailyData.loc[idx.left:idx.right]
+        data = dailyData.loc[idx.left : idx.right - pd.DateOffset(1)]
         resampleData.loc[idx.left] = ( func(data) if (idx.right >= firstDate and today >= idx.right and (not data.empty)) else np.nan )
         
     # Name the dataframe

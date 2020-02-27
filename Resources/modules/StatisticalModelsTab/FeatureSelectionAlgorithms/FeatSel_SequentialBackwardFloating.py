@@ -78,8 +78,8 @@ class FeatureSelector(object):
         """
 
         # Compile the data to fit with the regression method
-        x = self.parent.xTraining[:, list(model)]
-        y = self.parent.yTraining[~np.isnan(x).any(axis=1)]
+        x = self.parent.proc_xTraining[:, list(model)]
+        y = self.parent.proc_xTraining[~np.isnan(x).any(axis=1)]
         x = x[~np.isnan(x).any(axis=1)]
 
 
@@ -110,6 +110,10 @@ class FeatureSelector(object):
         or subtracting predictors is not increasing the score
         of the model.)
         """
+
+        # Score the initial model
+        model = self.currentPredictors.copy()
+        self.currentScores = self.scoreModel(model)
 
         # Set up an iteration
         while True:

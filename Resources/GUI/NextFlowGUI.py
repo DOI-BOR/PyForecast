@@ -60,7 +60,7 @@ class UI_MainWindow(object):
         self.datasetTab = DatasetsTab.DatasetTab(self)
         tabWidget.addTab(self.datasetTab, datasetIcon, "Datasets")
 
-        self.dataTab = DataTab.DataTab()
+        self.dataTab = DataTab.DataTab(self)
         tabWidget.addTab(self.dataTab, dataIcon, "Data")
 
         #self.forecastsTab = CreateForecastsTab.CreateForecastsTab()

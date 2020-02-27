@@ -49,6 +49,7 @@ def dataLoader(stationDict, startDate, endDate):
     # Set the index to the dateTime index
     df.set_index(pd.DatetimeIndex(pd.to_datetime(df['dateTime'])), inplace = True)
     del df['dateTime'] # Delete the redundant column
+    del df['qualifiers']
 
     # Replace missing data with NaN's
     df['value'].replace(to_replace = '-999999', value = np.nan, inplace = True)
@@ -61,8 +62,7 @@ def dataLoader(stationDict, startDate, endDate):
     df = df[~df.index.isnull()]
 
     # Rename the columns
-    df.columns = ['USGS | ' + stationDict['DatasetExternalID'] + ' | Flag', 'USGS | ' + stationDict['DatasetExternalID'] + ' | Streamflow | CFS']
-    del df['USGS | ' + stationDict['DatasetExternalID'] + ' | Flag']
+    df.columns = ['USGS | ' + stationDict['DatasetExternalID'] + ' | Streamflow | CFS']
 
     # Return the data frame
     return df

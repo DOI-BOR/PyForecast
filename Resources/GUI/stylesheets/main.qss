@@ -7,14 +7,14 @@ QMainWindow {
     color: #003E51
 }
 QMenuBar { 
-    background-color: #003E51;
+    background-color: #d2d2d2;
     font-family: 'Segoe UI';
-    color: white;
+    color: black;
     border-bottom: 1px solid darkgray
 }
 QMenuBar::item:selected {
-    background: #007396;
-    color: white
+    background: #707070;
+    color: black;
 }
 QTabWidget {
     background: #e8e8e8;

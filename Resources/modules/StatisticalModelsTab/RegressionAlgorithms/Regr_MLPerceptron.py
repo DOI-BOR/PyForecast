@@ -1,17 +1,18 @@
 """
-Script Name:    Regr_MultipleLinearRegressor
+Script Name:    Regr_MLPerceptron
 
-Description:    Defines a numpy algorithm to perform Multiple Linear Regression on a dataset.
+Description:    Defines a multi-layer perceptron model to 
+                fit data...
 """
 
 from resources.modules.StatisticalModelsTab import CrossValidationAlgorithms, ModelScoring
 import numpy as np
 import sys
-import statsmodels.api as sm
+from sklearn.neural_network import MLPRegressor
 
 class Regressor(object):
 
-    name = "Gamma Generalized Linear Model Regression"
+    name = "Multi-Layer Perceptron Regression"
 
     def __init__(self, crossValidation = None, scoringParameters = None):
 
@@ -49,11 +50,11 @@ class Regressor(object):
         X_ = np.concatenate((np.ones(shape=x.shape[0]).reshape(-1,1), x), 1)
 
         # Compute the coefficients and the intercept
-        self.model = sm.GLM(y, X_, family=sm.families.Gamma(link=sm.genmod.families.links.log))
+        self.model = MLPRegressor(hidden_layer_sizes=5, solver='lbfgs', activation='logistic')
         
-        self.results = self.model.fit()
-        coef = self.results.params[1:]
-        intercept = self.results.params[0]
+        self.model.fit(X_, y)
+        coef = np.nan
+        intercept = np.nan
 
         return coef, intercept
 
@@ -114,7 +115,7 @@ class Regressor(object):
         else:
             x_ = np.concatenate((np.ones(shape=x.shape[0]).reshape(-1,1), x), 1)
         
-        return np.array(self.results.predict(x_))
+        return np.array(self.model.predict(x_))
         
 
 

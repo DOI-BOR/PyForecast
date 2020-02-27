@@ -72,6 +72,7 @@ class DatasetTab(QtWidgets.QWidget):
         self.keywordSearchBox.setPlaceholderText("e.g. Alpine Meadow")
         self.keywordSearchButton = QtWidgets.QPushButton("Search")
         self.searchResultsBox = DatasetList_HTML_Formatted.DatasetList_HTML_Formatted( buttonText = 'Add Dataset')
+        self.keywordSearchBox.returnPressed.connect(self.keywordSearchButton.click)
         layout_.addWidget(label)
         layout_.addWidget(keywordLabel)
         layout2 = QtWidgets.QHBoxLayout()

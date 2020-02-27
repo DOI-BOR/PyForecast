@@ -3,9 +3,11 @@ import numpy as np
 # Dictionary to dscribe whether higher scores are better (True)
 # or lower scores are better (False)
 SCORING_RULES = {
+    "R2":       True,
     "ADJ_R2":   True,
     "MSE":      False,
-    'AIC':      False
+    "AIC":      False,
+    "AIC_C":    False,
 }
 
 def sortScores(scores = None):
@@ -26,7 +28,7 @@ def sortScores(scores = None):
     def partition(array, begin, end):
         pivot = begin
         for i in range(begin+1, end+1):
-            if scoreCompare(oldScores = array[i], newScores = array[begin], nested=True):
+            if scoreCompare(oldScores = array[i]['Score'], newScores = array[begin]['Score'], nested=False):
                 pivot += 1
                 array[i], array[pivot]  = array[pivot], array[i]
         array[pivot], array[begin] = array[begin], array[pivot]
@@ -46,7 +48,6 @@ def sortScores(scores = None):
     # Perform quicksort
     quicksort(scores)
 
-
     return
 
 
@@ -55,6 +56,9 @@ def scoreCompare(oldScores = None, newScores = None, nested = False):
     Checks wheter all the scores in the newScores list
     are better than all the scores in the oldScores list.
     Returns False otherwise.
+
+    Note: Some models may show up with NAN scores. The non-nan
+    scoring model will always win in that situation.
 
     The 'nested' argument specifies whether the scores are nested
     1 layer beneath the predictor strings. For example, a nested
@@ -68,24 +72,61 @@ def scoreCompare(oldScores = None, newScores = None, nested = False):
 
     """
     if nested:
+
+        if np.any([(np.isnan(oldScores[next(iter(oldScores))][scoreName])) for scoreName in next(iter(oldScores.values())).keys()]):
+
+            if np.any([(np.isnan(newScores[next(iter(newScores))][scoreName])) for scoreName in next(iter(oldScores.values())).keys()]):
+                return False
+            
+            else:
+                return True
         
         return np.all([(newScores[next(iter(newScores))][scoreName] > oldScores[next(iter(oldScores))][scoreName]) if SCORING_RULES[scoreName] 
                         else (newScores[next(iter(newScores))][scoreName] < oldScores[next(iter(oldScores))][scoreName])
                         for scoreName in next(iter(oldScores.values())).keys()])
 
     else:
+        
+        if np.any([(np.isnan(oldScores[scoreName])) for scoreName in oldScores.keys()]):
+
+            if np.any([(np.isnan(newScores[scoreName])) for scoreName in oldScores.keys()]):
+                return False
+            
+            else:
+                return True
 
         return np.all([(newScores[scoreName] > oldScores[scoreName]) if SCORING_RULES[scoreName] 
                         else (newScores[scoreName] < oldScores[scoreName]) 
                         for scoreName in oldScores.keys()])
 
 
+def AIC_C(y_obs, y_prd, n_features):
+    """
+    Computes the modified Akaike information Criterion for
+    small sample sizes, specified for OLS regression.
+    https://en.wikipedia.org/wiki/Akaike_information_criterion
+
+        AICc = AIC + (2p^2 + 2p) / (n - p - 1)
+        
+        where AIC = 2p + n(ln(SSE))
+
+        where SSE = Σ (y_obs - y_prd)^2
+
+    """
+
+    aic = AIC(y_obs, y_prd, n_features)
+    n = len(y_obs)
+    
+    return aic + ((2*n_features*n_features) + 2*n_features) / (n - n_features - 1)
+
+
 def AIC(y_obs, y_prd, n_features):
     """
     Computes the Akaike Information Criterion for 
     the model. The formula is:
+    https://en.wikipedia.org/wiki/Akaike_information_criterion
 
-        AIC = n(ln(2π) + ln(SSE) - ln(n)) + 2(n+p+1)
+        AIC = 2p + n(ln(SSE))
 
         where SSE = Σ (y_obs - y_prd)^2
     """
@@ -93,7 +134,7 @@ def AIC(y_obs, y_prd, n_features):
     sse = sum((y_obs-y_prd)**2)  
     n = len(y_obs)
 
-    return n*(np.log(2*np.pi) + np.log(sse) - np.log(n)) + 2*(n+n_features+1)
+    return 2*n_features + (n*np.log(sse))
 
 
 def MSE(y_obs, y_prd, n_features):
@@ -109,6 +150,23 @@ def MSE(y_obs, y_prd, n_features):
     return (1/len(y_obs))*sum((y_obs - y_prd)**2)
 
 
+def R2(y_obs, y_prd, n_features):
+    """
+    Computes the coefficient of determination between
+    the observed Y Values and the predicted Y Values. The 
+    R2 is computed with the formula:
+
+        r2 = 1 - SS_residual / SS_Total
+           = 1 - Σ((y_obs - y_prd)^2) / Σ((y_obs - mean(y))^2)
+
+    """
+    ss_res = sum((y_obs-y_prd)**2)          # Residual sum of squares
+    ss_tot = sum((y_obs-np.mean(y_obs))**2) # Total sum of squares
+    r2 = 1 - (ss_res/ss_tot)                # Coefficient of Determination
+
+    return r2
+
+
 def ADJ_R2(y_obs, y_prd, n_features):
     """
     Computes the adjusted coefficient of determination between
@@ -121,7 +179,7 @@ def ADJ_R2(y_obs, y_prd, n_features):
         adj-r2 = 1 - (1 - r2)(n_samples - 1)/(n_samples - n_features - 1)
 
     """
-
+    
     n_samples = len(y_obs)                  # Number of samples
     ss_res = sum((y_obs-y_prd)**2)          # Residual sum of squares
     ss_tot = sum((y_obs-np.mean(y_obs))**2) # Total sum of squares

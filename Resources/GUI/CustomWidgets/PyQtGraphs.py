@@ -1,408 +1,566 @@
-"""
-Script Name:    PyQtGraphs
-Description:    This file provides plotting funcitonality for the NextFlow Application 
-                primarily by modifying the PyQtGraph library to provide interaction and
-                performance enhancements. 
-"""
 
+# Import Libraries
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtGui, QtCore
-from pyqtgraph.Point import Point
-from PyQt5 import QtWidgets
+from PyQt5 import QtCore, QtGui, QtWidgets
 import numpy as np
 import pandas as pd
 from datetime import datetime
-from pyqtgraph.graphicsItems.LegendItem import LegendItem, ItemSample, PlotDataItem
 from bisect import bisect_left
 
-def updateSize_(self):
-    if self.size is not None:
-        return
-        
-    height = 0
-    width = 0
-    for sample, label in self.items:
-        height += max(sample.boundingRect().height(), label.height()) + 3
-        width = max(width, sample.boundingRect().width()+label.width())
-    self.setGeometry(0, 0, width+60, height)
-
-def addItem_(self, item, name):
-    label = pg.LabelItem(name, justify='left')
-    if isinstance(item, ItemSample):
-        sample = item
-        sample.setFixedWidth(20)
-    else:
-        sample = ItemSample(item)     
-        sample.setFixedWidth(20)   
-    row = self.layout.rowCount()
-    self.items.append((sample, label))
-    self.layout.addItem(sample, row, 0)
-    self.layout.addItem(label, row, 1)
-    self.updateSize()
-
-def viewRangeChanged_(self):
-            self.xDisp = self.yDisp = None
-            self.updateItems()
-
-def updateItems_(self):
-        
-        curveArgs = {}
-        for k,v in [('pen','pen'), ('shadowPen','shadowPen'), ('fillLevel','fillLevel'), ('fillBrush', 'brush'), ('antialias', 'antialias'), ('connect', 'connect'), ('stepMode', 'stepMode'), ('clipToView' ,'clipToView'), ('autoDownsample', 'autoDownsample'), ('downsampleMethod', 'downsampleMethod')]:
-            curveArgs[v] = self.opts[k]
-        
-        scatterArgs = {}
-        for k,v in [('symbolPen','pen'), ('symbolBrush','brush'), ('symbol','symbol'), ('symbolSize', 'size'), ('data', 'data'), ('pxMode', 'pxMode'), ('antialias', 'antialias')]:
-            if k in self.opts:
-                scatterArgs[v] = self.opts[k]
-        
-        x,y = self.getData()
-        #scatterArgs['mask'] = self.dataMask
-        
-        if curveArgs['pen'] is not None or (curveArgs['brush'] is not None and curveArgs['fillLevel'] is not None):
-            self.curve.setData(x=x, y=y, **curveArgs)
-            self.curve.show()
-        else:
-            self.curve.hide()
-        
-        if scatterArgs['symbol'] is not None:
-            self.scatter.setData(x=x, y=y, **scatterArgs)
-            self.scatter.show()
-        else:
-            self.scatter.hide()
-
-def getData_(self):
-        if self.xData is None:
-            return (None, None)
-        
-        if self.xDisp is None:
-            x = self.xData
-            y = self.yData
-            
-            if self.opts['fftMode']:
-                x,y = self._fourierTransform(x, y)
-                # Ignore the first bin for fft data if we have a logx scale
-                if self.opts['logMode'][0]:
-                    x=x[1:]
-                    y=y[1:]                
-            if self.opts['logMode'][0]:
-                x = np.log10(x)
-            if self.opts['logMode'][1]:
-                y = np.log10(y)
-            ds = self.opts['downsample']
-            if not isinstance(ds, int):
-                ds = 1
-
-            if True: #self.opts['autoDownsample']:
-                # this option presumes that x-values have uniform spacing
-                range_ = self.viewRect()
-                if range_ is not None:
-                    dx = float(x[-1]-x[0]) / (len(x)-1)
-                    x0 = (range_.left()-x[0]) / dx
-                    x1 = (range_.right()-x[0]) / dx
-                    width = self.getViewBox().width()
-                    if width != 0.0:
-                        ds = int(max(1, int((x1-x0) / (width*self.opts['autoDownsampleFactor']))))
-                    ## downsampling is expensive; delay until after clipping.
-            
-            if True: #self.opts['clipToView']:
-
-                range_ = self.viewRect()
-                if range_ is not None and len(x) > 1:
-                    dx = float(x[-1]-x[0]) / (len(x)-1)
-                    # clip to visible region extended by downsampling value
-                    x0 = np.clip(int((range_.left()-x[0])/dx)-1*ds , 0, len(x)-1)
-                    x1 = np.clip(int((range_.right()-x[0])/dx)+2*ds , 0, len(x)-1)
-                    x = x[x0:x1]
-                    y = y[x0:x1]
-
-            if ds > 1:
-                if self.opts['downsampleMethod'] == 'subsample':
-                    x = x[::ds]
-                    y = y[::ds]
-                elif self.opts['downsampleMethod'] == 'mean':
-                    n = len(x) // ds
-                    x = x[:n*ds:ds]
-                    y = y[:n*ds].reshape(n,ds).mean(axis=1)
-                elif self.opts['downsampleMethod'] == 'peak':
-                    n = len(x) // ds
-                    x1 = np.empty((n,2))
-                    x1[:] = x[:n*ds:ds,np.newaxis]
-                    x = x1.reshape(n*2)
-                    y1 = np.empty((n,2))
-                    y2 = y[:n*ds].reshape((n, ds))
-                    y1[:,0] = y2.max(axis=1)
-                    y1[:,1] = y2.min(axis=1)
-                    y = y1.reshape(n*2)
-                
-            if self.opts["stepMode"]:
-
-                # and only if clip to view or auto-downsampling is enabled
-                if self.opts['clipToView'] or self.opts['autoDownsample']:
-                    if (x is None and y is None) or (len(x) == 0 and len(y) == 0):
-                        if self.opts["stepMode"]:
-                            x = np.array([0,0])
-                            y = np.array([0])
-                    # if there is data
-                    if x is not None:
-                        # if step mode is enabled and len(x) != len(y) + 1
-                        if len(x) == len(y):
-                            if len(x) > 2:
-                                x = np.append(x, (x[-1] - x[-2]) + x[-1])
-
-                    
-            self.xDisp = x
-            self.yDisp = y
-        return x,y 
-
-pg.setConfigOption('background', '#ffffff')
+# Set the widget options
+pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
 
-PlotDataItem.getData = getData_
-PlotDataItem.updateItems = updateItems_
-PlotDataItem.viewRangeChanged = viewRangeChanged_
+# Create a custom legend for the Spaghetti Plots
+class SpaghettiLegend(pg.LegendItem):
 
-LegendItem.addItem = addItem_
-LegendItem.updateSize = updateSize_
-LegendItem.mouseDragEvent = lambda s, e: None
+    def __init__(self, size = None, offset = None):
+        
+        # Instantiate the legend Item
+        pg.LegendItem.__init__(self, size, offset)
 
-class TimeAxisItem(pg.AxisItem):
-    """
-    """
-    def __init__(self, *args, **kwargs):
+    def removeItem(self, item):
         """
-        """
-        super(TimeAxisItem, self).__init__(*args, **kwargs)
+        Removes one item from the legend. 
 
-    def tickSpacing(self, minVal, maxVal, size):
+        ==============  ========================================================
+        **Arguments:**
+        item            The item to remove or its name.
+        ==============  ========================================================
         """
-        """
-        if maxVal - minVal >= 15*365.24*86400:
-            return [(10*365.24*86400, 0), (10*365.24*86400, 0)]
-        elif maxVal - minVal >= 6*365.24*86400:
-            return [(4*365.24*86400, 0), (4*365.24*86400, 0)]
-        elif maxVal - minVal >= 365.24*86400:
-            return [(365.24*86400, 0), (365.24*86400, 0)]
-        elif maxVal - minVal >= 45*86400:
-            return [(31*86400, 0), (31*86400, 0)]
-        elif maxVal - minVal >= 26*86400:
-            return [(20*86400, 0), (20*86400, 0)]
-        elif maxVal - minVal < 100:
-            return [(10,0), (1, 0)]
-        elif maxVal - minVal >= 15*86400:
-            return [(12*86400, 0), (12*86400, 0)]
-        elif maxVal - minVal >= 8*86400:
-            return [(4*86400, 0), (4*86400, 0)]
+        # Thanks, Ulrich!
+        # cycle for a match
+        for sample, label in self.items:
+            if sample.item is item or label.text == item:
+                self.items.remove( (sample, label) )    # remove from itemlist
+                self.layout.removeItem(sample)          # remove from layout
+                sample.close()                          # remove from drawing
+                self.layout.removeItem(label)
+                label.close()
+                self.updateSize()                       # redraq box
+                
+    
+    def addItem(self, item, name):
+
+        # Instantiate a Label Item using the supplied Name
+        label = pg.graphicsItems.LegendItem.LabelItem(name, justify='left')
+
+        # Create the sample image to place next to the legend Item
+        if isinstance(item, pg.graphicsItems.LegendItem.ItemSample):
+            sample = item
+            sample.setFixedWidth(20)
         else:
-            return [(86400,0), (86400,0)]
+            sample = pg.graphicsItems.LegendItem.ItemSample(item)     
+            sample.setFixedWidth(20)   
 
+        # Add the item to the legend and update the size
+        row = self.layout.rowCount()
+        self.items.append((sample, label))
+        self.layout.addItem(sample, row, 0)
+        self.layout.addItem(label, row, 1)
+        self.updateSize()
+    
+    def updateSize(self):
+
+        if self.size is not None:
+            return
+            
+        height = 0
+        width = 0
+
+        for sample, label in self.items:
+            height += max(sample.boundingRect().height(), label.height()) + 3
+            width = max(width, sample.boundingRect().width()+label.width())
+
+        self.setGeometry(0, 0, width+60, height)
+
+
+# Create a custom Legend for the Time Series Plots
+class TimeSeriesLegend(pg.LegendItem):
+
+    def __init__(self, size = None, offset = None):
+        
+        # Instantiate the legend Item
+        pg.LegendItem.__init__(self, size, offset)
+    
+    def addItem(self, item, name):
+
+        # Instantiate a Label Item using the supplied Name
+        label = pg.graphicsItems.LegendItem.LabelItem(name, justify='left')
+
+        # Create the sample image to place next to the legend Item
+        if isinstance(item, pg.graphicsItems.LegendItem.ItemSample):
+            sample = item
+            sample.setFixedWidth(20)
+        else:
+            sample = pg.graphicsItems.LegendItem.ItemSample(item)     
+            sample.setFixedWidth(20)   
+
+        # Add the item to the legend and update the size
+        row = self.layout.rowCount()
+        self.items.append((sample, label))
+        self.layout.addItem(sample, row, 0)
+        self.layout.addItem(label, row, 1)
+        self.updateSize()
+    
+    def updateSize(self):
+
+        if self.size is not None:
+            return
+            
+        height = 0
+        width = 0
+
+        for sample, label in self.items:
+            height += max(sample.boundingRect().height(), label.height()) + 3
+            width = max(width, sample.boundingRect().width()+label.width())
+
+        self.setGeometry(0, 0, width+60, height)
+
+
+# Create a special Axis to display below the Spaghetti plots
+class SpaghettiAxis(pg.AxisItem):
+
+    def __init__(self, *args, **kwargs):
+
+        # Instantiate the axisItem
+        pg.AxisItem.__init__(self, *args, **kwargs)
+    
+    def tickSpacing(self, minValue, maxValue, size):
+
+        # Set the tick spacing based on the current zoom level
+        spacing = max([1, int(0.1*(maxValue - minValue) + 22)])
+        return [(spacing, 0), (spacing, 0)]
+    
     def tickStrings(self, values, scale, spacing):
-        """
-        Rename the tick strings from EPOCH integers to datetime strings
-        """
+        
+        # Set the tick strings to be in the format MMM-DD (e.g. JAN-23)
+        values = [value + 273 if value < 92 else value - 91 for value in values]
+        return [datetime.strptime('2010-{:03d}'.format(int(value)), '%Y-%j').strftime("%b-%d") for value in values]
+
+
+# Create a special Axis to display below the Time Series Plots
+class DateTimeAxis(pg.AxisItem):
+
+    def __init__(self, *args, **kwargs):
+
+        # Instantiate the axisItem
+        pg.AxisItem.__init__(self, *args, **kwargs)
+
+    def tickSpacing(self, minValue, maxValue, size):
+
+        # Set the tick spacing based on the current zoom level
+        spacing = max([1, int(0.27*(maxValue - minValue) + 22)])
+        return [(spacing, 0), (spacing, 0)]
+    
+    def tickStrings(self, values, scale, spacing):
+
+        # Set the datetime display based on the zoom level
         if spacing > 7*365.24*86400:
             return [datetime.utcfromtimestamp(value).strftime('%Y-%m') for value in values]
         return [datetime.utcfromtimestamp(value).strftime('%Y-%m-%d') for value in values]
 
-class TimeSeriesSliderPlot(pg.GraphicsLayoutWidget):
-    """
-    Example taken from pyqtgraph/examples/crosshair.py
-    """
-    def __init__(self):
-        super(TimeSeriesSliderPlot, self).__init__()
-        
-        self.p1 = self.addPlot(row=0, col=0, rowspan=8, axisItems={"bottom":TimeAxisItem(orientation="bottom")})
-        self.p2 = self.addPlot(row=8, col=0, axisItems={"bottom":TimeAxisItem(orientation="bottom")})
-        
-        [self.ci.layout.setRowMinimumHeight(i, 50) for i in range(9)]
-        self.region = pg.LinearRegionItem()
-        self.region.setZValue(10)
-        self.p1.addLegend()
-        self.p2.addItem(self.region, ignoreBounds=True)
-        self.p1.setMenuEnabled(False)
-        self.p2.setMenuEnabled(False)
 
-        self.region.sigRegionChanged.connect(self.update)
-        self.p1.sigRangeChanged.connect(self.updateRegion)
-
-        self.p1.scene().sigMouseMoved.connect(self.mouseMoved)
-
-    def mouseMoved(self, event):
-        try:
-            pos = QtCore.QPoint(event.x(), event.y())
-            if self.p1.sceneBoundingRect().contains(pos):
-                mousePoint = self.p1.vb.mapSceneToView(pos)
-                x_ = mousePoint.x()
-                y_ = mousePoint.y()
-                idx = int(x_ - x_%86400)
-                ts = datetime.utcfromtimestamp(idx).strftime('%Y-%m-%d')
-                for i, item in enumerate(self.p1CurveItems):
-                    date = takeClosest(item.xDisp, idx)
-                    idx2 = np.where(item.xData==date)
-                    yval = round(item.yData[idx2][0],2)
-                    unit = self.unitList[i]
-                    self.p1.legend.items[i][1].setText(self.names[i]+' <strong>'+str(yval)+' '+unit+'</strong>')
-                    self.circleItems[i].setData([date], [yval])
-                if hasattr(self, "crossHairText"):
-                    self.crossHairText.setHtml('<strong>'+ts+'</strong>')
-                    self.crossHairText.setPos(x_, y_)
-        except Exception as e:
-            return
-
-    def update(self):
-        self.region.setZValue(10)
-        minX, maxX = self.region.getRegion()
-        self.p1.setXRange(minX, maxX, padding=0)
-        [self.p1.items[i].viewRangeChanged() for i in range(len(self.p1.items))]
+# Create a Graphics Layout Widget to display all the plots in one widget
+class DataTabPlots(pg.GraphicsLayoutWidget):
     
-    def updateRegion(self, window, viewRange):
-        rgn = viewRange[0]
-        self.region.setZValue(10)
-        self.region.setRegion(rgn)
-        [self.p1.items[i].viewRangeChanged() for i in range(len(self.p1.items))]
-    
-    def add_data_to_plots(self, dataFrame, types = None, fill_below=True, changed_col = None, datasets=None):
-        """
-        """
+    def __init__(self, parent = None):
 
-        # Check to make sure the dataframe actually contains data!
-        if np.all(pd.isnull(dataFrame.values)):
-            print("Whatcha trying to do!")
-            return
-            
+        # Instantiate the widget and create a reference to the parent
+        pg.GraphicsLayoutWidget.__init__(self, parent)
+        self.parent = parent
+        [self.ci.layout.setRowMinimumHeight(i, 30) for i in range(9)]
         
-        cc = colorCycler()
-        dataset_ids = list(set(dataFrame.index.get_level_values(1)))
-        self.dates = dataFrame.index.levels[0].astype('int64')/1000000000
-        self.names = ["{0}: {1}".format(datasets.loc[id_]['DatasetName'], datasets.loc[id_]['DatasetParameter']) for id_ in dataset_ids]
-        self.unitList = [datasets.loc[id_]['DatasetUnits'] for id_ in dataset_ids]
-        units = list(set(self.unitList))
-        units = ', '.join(units)
+        # Get a reference to the datasetTable and the dataTable
+        self.datasetTable = self.parent.parent.datasetTable
+        self.dataTable = self.parent.parent.dataTable
 
-        yMin = dataFrame.min()
-        yMax = dataFrame.max()
-        yRange = yMax - yMin
+        # Create a color cyler
+        colors = [
+            (255, 61, 0), 
+            (255, 214, 0), 
+            (0, 200, 83), 
+            (255, 103, 32), 
+            (0, 145, 234), 
+            (170, 0, 255), 
+            (141, 110, 99), 
+            (198, 255, 0), 
+            (29, 233, 182), 
+            (136, 14, 79)
+        ]
+        self.penCycler = [pg.mkPen(pg.mkColor(color), width=1.5) for color in colors]
+        self.brushCycler = [pg.mkBrush(pg.mkColor(color)) for color in colors]
 
-        xMin = min(self.dates)
-        xMax = max(self.dates)
-        xRange = xMax - xMin
+        # Instantiate the plots
+        self.timeSeriesPlot = TimeSeriesLinePlot(self)
+        self.timeSliderPlot = TimeSliderPlot(self)
+        #self.spaghettiPlot = SpaghettiPlot(self)
 
-        if not changed_col == None:
-            for col in changed_col:
-                current_bounds = self.p1.vb.viewRange()
-                y = np.array(dataFrame.loc[(slice(None), col)].values, dtype='float')
-                x = np.array(dataFrame.loc[(slice(None), col)].index, dtype='int64')/1000000000
+        # Add the plots
+        self.addItem(self.timeSeriesPlot, row=0, col=0, rowspan=7)
+        self.addItem(self.timeSliderPlot, row=7, col=0, rowspan=2)
+        #self.addItem(self.spaghettiPlot, row=9, col=0, rowspan=5)
+    
+        return
 
-                x_ = x
-                y_ = y
-                dataItemsP1 = self.p1.listDataItems()
-                dataItemsP1Names = [item.opts['name'] for item in dataItemsP1]
-                dataItemsP2 = self.p2.listDataItems()
-                dataItemsP2Names = [item.opts['name'] for item in dataItemsP2]
-                p1Item = dataItemsP1[dataItemsP1Names.index("{0}: {1}".format(datasets.loc[col]['DatasetName'], datasets.loc[col]['DatasetParameter']))]
-                p2Item = dataItemsP2[dataItemsP2Names.index("{0}: {1}".format(datasets.loc[col]['DatasetName'], datasets.loc[col]['DatasetParameter']))]
-                p1Item.setData(x_, y_, antialias=True)
-                p2Item.setData(x_, y_, antialias=True)
-                self.p1.vb.setRange(xRange = current_bounds[0], yRange = current_bounds[1])
-                self.p2.setLimits(  xMin = xMin, 
-                                xMax = xMax, 
-                                yMin = yMin, 
-                                yMax = yMax,
-                                minXRange = xRange,
-                                minYRange = yRange)
-                self.p1.setLimits(  xMin = xMin, 
-                                xMax = xMax, 
-                                yMin = min([yMin,0]), 
-                                yMax = yMax + yRange/5,
-                                maxYRange = 7*yRange/5)
-            return
+    def clearPlots(self):
+        """
+        Clears the plots of any data
+        """
+        self.timeSeriesPlot.clear()
+        self.timeSliderPlot.clear()
 
-        [self.p1.removeItem(i) for i in self.p1.listDataItems()]
-        [self.p2.removeItem(i) for i in self.p2.listDataItems()]
-        self.p1.legend.scene().removeItem(self.p1.legend)
-        if hasattr(self, "crossHairText"):
-            self.p1.removeItem(self.crossHairText)
-        self.p1.addLegend()
-        self.p2.setLimits(  xMin = xMin, 
-                            xMax = xMax, 
-                            yMin = yMin, 
-                            yMax = yMax,
-                            minXRange = xRange,
-                            minYRange = yRange)
-        self.p1.setLimits(  xMin = xMin, 
-                            xMax = xMax, 
-                            yMin = min([yMin,0]), 
-                            yMax = yMax + yRange/5,
-                            maxYRange = 7*yRange/5)
-        self.p1.setRange(yRange = [ min([yMin,0]), yMax])
+        return
 
-        self.circleItems = []
-        self.p1CurveItems = []
-        self.p2CurveItems = []
+    
+    def displayDatasets(self, datasets):
+        
+        # If there is more than one dataset, 
+        self.timeSeriesPlot.displayDatasets(datasets)
+        self.timeSliderPlot.displayDatasets(datasets)
+        #self.spaghettiPlot.displayDatasets(datasets[0])
 
-        if types == None:
-            types = [datasets.loc[i]['DatasetAdditionalOptions']['PlotType'] if (isinstance(datasets.loc[i]['DatasetAdditionalOptions'], dict) and 'PlotType' in list(datasets.loc[i]['DatasetAdditionalOptions'])) else 'line' for i in dataset_ids]
-
-        if len(types) != len(dataset_ids):
-            return
-
-        for i, col in enumerate(dataset_ids):
-            y = np.array(dataFrame.loc[(slice(None), col)].values, dtype='float')
-            x = np.array(dataFrame.loc[(slice(None), col)].index, dtype='int64')/1000000000
-            x_ = x
-            y_ = y
-            idxNum = np.where(datasets.index == col)[0][0]
-            pen = pg.mkPen(color=cc.getColorOpaque(idxNum), width=2)
-            
-            if types[i] == 'bar':
-                print("Printing a bar graph")
-                x_ = np.append(x_, x_[-1])
-                self.p1CurveItems.append(PlotDataItem(x=x_, y=y_, connect='finite', pen=pen, stepMode = True, fillLevel=0,  fillbrush=cc.getColor(idxNum), name=self.names[i], antialias=False, downsampleMethod='subsample', autoDownsample=True, autoDownsampleFactor = 0.5, clipToView=True))
-                self.p2CurveItems.append(PlotDataItem(x=x_, y=y_, connect='finite', pen=pen, stepMode = True,  brush=cc.getColor(idxNum), name=self.names[i], antialias=False, downsampleMethod='subsample', autoDownsample=True, autoDownsampleFactor = 0.5, clipToView=True))
-
-            elif types[i] == 'line' and fill_below == True:
-                self.p1CurveItems.append(PlotDataItem(x=x_, y=y_, connect='finite', pen=pen, brush=cc.getColor(idxNum), name=self.names[i], antialias=False, downsampleMethod='peak', autoDownsample=True, autoDownsampleFactor = 0.5, clipToView=True))
-                self.p2CurveItems.append(PlotDataItem(x=x_, y=y_, connect='finite', pen=pen, brush=cc.getColor(idxNum), name=self.names[i], antialias=False, downsampleMethod='peak', autoDownsample=True, autoDownsampleFactor = 0.5, clipToView=True))
-                
-            elif types[i] == 'scatter':
-                self.p1CurveItems.append(PlotDataItem(x=x_, y=y_, connect='finite', pen=pen, symbol='o', name=self.names[i], antialias=False, downsampleMethod='subsample', autoDownsample=True, autoDownsampleFactor = 0.5, clipToView=True))
-                self.p2CurveItems.append(PlotDataItem(x=x_, y=y_, connect='finite', pen=pen, symbol='o', name=self.names[i], antialias=False, downsampleMethod='subsample', autoDownsample=True, autoDownsampleFactor = 0.5, clipToView=True))
-
-            self.circleItems.append(pg.ScatterPlotItem([x_[0]], [y_[0]], pen='k', brush=cc.getColorOpaque(idxNum), size=10, alpha=1))
-
-        [self.p1.addItem(item) for item in self.p1CurveItems]
-        [self.p2.addItem(item) for item in self.p2CurveItems]
-        [self.p1.addItem(item) for item in self.circleItems]
-        self.p1.showGrid(True, True, 0.85)
-        self.region.setRegion([xMin, xMax])
-        self.region.setBounds([xMin, xMax])
-        self.region.setZValue(10)
-        self.crossHairText = pg.TextItem(anchor=(0,1), color = (45,45,45))
-        self.p1.addItem(self.crossHairText)
-        self.p1.setLabel('left', units, **{'color':'#000000', 'font-size':'14pt', 'font-family':'Arial, Helvetica, sans-serif'})
-        self.p2.setLabel('left', ' ')
         return
 
 
-class colorCycler():
-    """
-    Simple color cycler for the plots
-    """
-    def __init__(self):
-        self.colors = [
-            (55,126,184,150),
-            (228,26,28,150),
-            (77,175,74,150),
-            (152,78,163,150),
-            (255,127,0,150),
-            (255,255,51,150),
-            (166,86,40,150),
-            (247,129,191,150)]
 
-    def getColor(self, i):
-        return self.colors[i%len(self.colors)]
-    def getColorOpaque(self, i):
-        col= self.colors[i%len(self.colors)]
-        return (col[0], col[1], col[2], 250)
+# The Spaghetti Plot displays time series data as a layered spaghetti hydrograph.
+class SpaghettiPlot(pg.PlotItem):
+
+    def __init__(self, parent = None):
+
+        # Instantiate the widget and create a reference to the parent
+        pg.PlotItem.__init__(self, axisItems={"bottom":SpaghettiAxis(orientation = "bottom")})
+        self.parent = parent
+        self.setMenuEnabled(False)
+
+        # Set the Range and limits for the plot
+        self.setXRange(1, 366, padding=0)
+        self.setLimits(xMin=1, xMax=366)
+
+        # Create 10 PlotCurveItems to work with
+        self.items_ = [pg.PlotCurveItem(parent = self, pen = parent.penCycler[i%10], antialias = False, connect='finite') for i in range(100)]
+
+        return
+
+    
+    def displayDatasets(self, dataset):
+        
+        # Clear any existing datasets
+        self.clear()
+
+        # Process the Data
+        data = self.parent.parent.dataTable.loc[(slice(None), dataset), 'Value'].unstack()
+        data['Year'] = [i.year if i.month < 10 else i.year + 1 for i in data.index]
+        data['Day'] = [i.dayofyear - 273 if i.month >=10 else i.dayofyear+92 for i in data.index]
+        self.yMin = float(data[dataset].min())
+        self.yMax = float(data[dataset].max())
+        data = data.pivot_table(values=dataset, index='Day', columns='Year')
+
+        # Set the data for the i-th PlotCurveItem
+        for i, year in enumerate(data.columns):
+
+            self.items_[i].setData(list(data.index), list(data[year]))
+
+            # Add the item to the plot
+            self.addItem(self.items_[i])
+        
+        # Set the plot limits and current x range
+        self.setLimits(
+
+            xMin = 1,
+            xMax = 366,
+            yMin = self.yMin,
+            yMax = self.yMax,
+
+        )
+        self.setXRange(1, 366, padding=0)
+
+        # Show the grid
+        self.showGrid(True, True, 0.85)
+
+        return
+
+
+# The Time slider plot displays a smaller version of the Period of Record data with a Time Slider Control overlay
+class TimeSliderPlot(pg.PlotItem):
+
+    def __init__(self, parent = None):
+
+        # Instantiate the widget and create a reference to the parent
+        pg.PlotItem.__init__(self, axisItems={"bottom":DateTimeAxis(orientation = "bottom")})
+        self.parent = parent
+        self.setMenuEnabled(False)
+
+        # Create 10 PlotCurveItems to work with
+        self.items_ = [pg.PlotCurveItem(parent = self, pen = parent.penCycler[i%10], antialias = False, connect='finite') for i in range(100)]
+
+        # Create a slider region
+        self.region = pg.LinearRegionItem(brush=pg.mkBrush(100,100,100,50))
+        self.region.setZValue(10)
+
+        # Instantiate Limits
+        self.xMin = np.inf
+        self.xMax = -np.inf
+        self.yMin = np.inf
+        self.yMax = -np.inf
+        
+        # Make region interactive
+        self.region.sigRegionChanged.connect(self.updatePlot)
+        self.parent.timeSeriesPlot.sigRangeChanged.connect(self.updateRegion)
+
+        # Add the slider region
+        self.addItem(self.region)
+
+        return
+
+    
+    # Changes the bounds of the Time Series Plot when the slider is moved
+    def updatePlot(self):
+
+        self.region.setZValue(10)
+        newRegion = self.region.getRegion()
+        if not any(np.isinf(newRegion)):
+            self.parent.timeSeriesPlot.setXRange(*self.region.getRegion(), padding=0)
+            [self.parent.timeSeriesPlot.items[i].viewRangeChanged() for i in range(len(self.parent.timeSeriesPlot.items))]
+
+        return
+
+    
+    # Changes the bounds of the slider when the Time Series Plot is moved
+    def updateRegion(self, window, viewRange):
+
+        self.region.setZValue(10)
+        self.region.setRegion(viewRange[0])
+        [self.parent.timeSeriesPlot.items[i].viewRangeChanged() for i in range(len(self.parent.timeSeriesPlot.items))]
+
+        return
+
+
+    def displayDatasets(self, datasets):
+        """
+        datasets = [100103, 313011, ...]
+        """
+        
+        # Clear any existing datasets
+        self.clear()
+
+        # Re-Instantiate Limits
+        self.xMin = np.inf
+        self.xMax = -np.inf
+        self.yMin = np.inf
+        self.yMax = -np.inf
+
+        # Create a new item for each dataset
+        for i, dataset in enumerate(datasets):
+
+            # Get the Data
+            x = np.array(self.parent.parent.parent.dataTable.loc[(slice(None), dataset), 'Value'].index.get_level_values(0).astype('int64'))/1000000000 # Dates in seconds since epoch
+            y = self.parent.parent.parent.dataTable.loc[(slice(None), dataset), 'Value'].values
+
+            # Check if there is data to plot!
+            if any([x.size == 0, x.shape != y.shape]):
+                continue
+
+            # Set new limits
+            self.xMax = np.nanmax([self.xMax, np.nanmax(x)])
+            self.xMin = np.nanmin([self.xMin, np.nanmin(x)])
+            self.yMax = np.nanmax([self.yMax, np.nanmax(y)])
+            self.yMin = np.nanmin([self.yMin, np.nanmin(y)])
+
+            # Set the data for the i-th PlotCurveItem
+            self.items_[i].setData(x, y, connect='finite')
+
+            # Add the item to the plot
+            self.addItem(self.items_[i])
+
+        # Set the data limits and the current ranges and bounds
+        #print('SLIDER ',self.xMax, self.xMin, self.yMax, self.yMin)
+        if not any([np.isinf(self.xMax), np.isinf(self.xMin), np.isinf(self.yMax), np.isinf(self.yMin)]):
+            self.setLimits(
+
+                xMin = self.xMin,
+                xMax = self.xMax,
+                yMin = self.yMin,
+                yMax = self.yMax,
+                minXRange = self.xMax - self.xMin,
+                minYRange = self.yMax - self.yMin
+
+            )
+        else:
+            print(self.xMax, self.xMin, self.yMax, self.yMin)
+        self.region.setRegion([self.xMin, self.xMax])
+        self.region.setBounds([self.xMin, self.xMax])
+        self.region.setZValue(-10)
+
+        # Re-Add the region (it got deleted when we cleared ["self.clear()"])
+        self.addItem(self.region)
+
+        return
+
+
+# Time Series Plot to display Time Series Data
+class TimeSeriesLinePlot(pg.PlotItem):
+
+    def __init__(self, parent = None):
+
+        # Instantiate the widget and create a reference to the parent
+        pg.PlotItem.__init__(self, axisItems={"bottom":DateTimeAxis(orientation = "bottom")})
+        self.parent = parent
+        self.setMenuEnabled(False)
+
+        # Instantiate Limits
+        self.xMin = np.inf
+        self.xMax = -np.inf
+        self.yMin = np.inf
+        self.yMax = -np.inf
+
+        # Instantiate a legend
+        self.legend = TimeSeriesLegend(size=None, offset=(30, 30))
+        self.legend.setParentItem(self.vb)
+
+        # Set default limits
+        self.setLimits(
+
+                xMin = 0,
+                xMax = 1,
+                yMin = 0,
+                yMax = 1,
+            
+            )
+        self.setRange(
+
+                xRange = (0, 1),
+                yRange = (0, 1)
+            )
+
+        # Add a text box to instruct user how to show data
+        self.noDataTextItem = pg.TextItem(html = '<div style="color:#4e4e4e"><h1>Oops!</h1><br> Looks like there is no data to display.<br>Select a dataset from the list to view data.</div>')
+        self.addItem(self.noDataTextItem)
+        self.noDataTextItem.setPos(0.5, 0.5)
+
+        # Add interaction
+        self.parent.scene().sigMouseMoved.connect(self.mouseMoved)
+
+        # Create 10 PlotCurveItems to work with
+        self.items_ = [pg.PlotCurveItem(parent = self, pen = parent.penCycler[i%10], antialias = False, connect='finite') for i in range(100)]
+        self.circleItems_ = [pg.ScatterPlotItem(size=10, alpha=1, brush=parent.brushCycler[i%10]) for i in range(100)]
+        self.datasets = []
+
+        return
+    
+    def mouseMoved(self, event):
+
+        # Don't do anything if there are no datasets
+        if self.datasets == []:
+            return
+        
+        # Get the mouse position
+        pos = QtCore.QPoint(event.x(), event.y())
+
+        # Check that the overall widget actually contains the mouse point
+        if self.sceneBoundingRect().contains(pos):
+
+            # Get the mousepoint in relation to the plot
+            mousePoint = self.vb.mapSceneToView(pos)
+            x_ = mousePoint.x()
+
+            # Round x value to the nearest date
+            idx = int(x_ - x_%86400)
+            
+            # Iterate over the active items and display the data points in the legend
+            for i, item in enumerate(self.items_):
+                if i < len(self.datasets):
+
+                    date = takeClosest(item.xData, idx)
+                    idx2 = np.where(item.xData==date)
+                    yval = round(item.yData[idx2[0]][0],2)
+                    self.legend.items[i][1].setText(item.opts['name']+' <strong>'+str(yval) +' '+ item.units+'</strong>')
+                    self.circleItems_[i].setData([date], [yval])
+            
+        
+
+
+    def displayDatasets(self, datasets):
+        """
+        datasets = [100103, 313011, ...]
+        """
+        
+        # Clear any existing datasets
+        self.clear()
+
+        # Re-Instantiate Limits
+        self.xMin = np.inf
+        self.xMax = -np.inf
+        self.yMin = np.inf
+        self.yMax = -np.inf
+
+        # Remove the old legend
+        self.legend.scene().removeItem(self.legend)
+
+        # Instantiate a legend
+        self.legend = TimeSeriesLegend(size=None, offset=(30, 30))
+        self.legend.setParentItem(self.vb)
+
+        # Keep track of current datasets
+        self.datasets = datasets
+
+        # Create a new item for each dataset
+        for i, dataset in enumerate(datasets):
+
+            # Get the Dataset Title
+            d = self.parent.parent.parent.datasetTable.loc[dataset]
+            title = d['DatasetName'] + ': ' + d['DatasetParameter']
+
+            # Get the Data
+            x = np.array(self.parent.parent.parent.dataTable.loc[(slice(None), dataset), 'Value'].index.get_level_values(0).astype('int64'))/1000000000 # Dates in seconds since epoch
+            y = self.parent.parent.parent.dataTable.loc[(slice(None), dataset), 'Value'].values
+
+            # Check if there is data to plot!
+            if any([x.size == 0, x.shape != y.shape]):
+                continue
+
+            # Set new limits
+            self.xMax = np.nanmax([self.xMax, np.nanmax(x)])
+            self.xMin = np.nanmin([self.xMin, np.nanmin(x)])
+            self.yMax = np.nanmax([self.yMax, np.nanmax(y)])
+            self.yMin = np.nanmin([self.yMin, np.nanmin(y)])
+
+            # Set the data for the i-th PlotCurveItem
+            self.items_[i].setData(x, y, name = title, connect='finite')
+            self.items_[i].units = d['DatasetUnits']
+
+            # Add the item to the plot
+            self.addItem(self.items_[i])
+            self.addItem(self.circleItems_[i])
+        
+        
+        #print('PLOT ',self.xMax, self.xMin, self.yMax, self.yMin)
+        if not any([np.isinf(self.xMax), np.isinf(self.xMin), np.isinf(self.yMax), np.isinf(self.yMin)]):
+            self.setLimits(
+
+                xMin = self.xMin,
+                xMax = self.xMax,
+                yMin = self.yMin,
+                yMax = self.yMax,
+            
+            )
+            self.setRange(
+
+                xRange = (self.xMin, self.xMax),
+                yRange = (self.yMin, self.yMax)
+            )
+        else:
+            print(self.xMax, self.xMin, self.yMax, self.yMin)
+
+        # Show the grid
+        self.showGrid(True, True, 0.85)
+
+        return
+
+
+
+
 
 def takeClosest(myList, myNumber):
     """
@@ -410,7 +568,11 @@ def takeClosest(myList, myNumber):
 
     If two numbers are equally close, return the smallest number.
     """
+
+    # Gets the left-most closest number in the list
     pos = bisect_left(myList, myNumber)
+
+    # Return the closest number
     if pos == 0:
         return myList[0]
     if pos == len(myList):
@@ -422,15 +584,69 @@ def takeClosest(myList, myNumber):
     else:
        return before
 
+
+
+
+
 if __name__ == '__main__':
+
     import sys
-    
+
+    # Debugging dataset
     app = QtWidgets.QApplication(sys.argv)
-    mw = TimeSeriesSliderPlot()
-    df = pd.DataFrame(np.random.random((31,3)), columns=['A','B','C'], index=pd.date_range('2018-10-01','2018-10-31'))
-    df['C'] = 3*df['C']
-    df['B'] = -2*df['B']-1
-    df['A'] = -1*df['A']
-    mw.add_data_to_plots(df, types = ['scatter','line','bar'])
+
+    mw = QtWidgets.QMainWindow()
+    
+    mw.datasetTable = pd.DataFrame(
+            index = pd.Index([], dtype=int, name='DatasetInternalID'),
+            columns = [
+                'DatasetType',              # e.g. STREAMGAGE, or RESERVOIR, ETC
+                'DatasetExternalID',        # e.g. "GIBR" or "06025500"
+                'DatasetName',              # e.g. Gibson Reservoir
+                'DatasetAgency',            # e.g. USGS
+                'DatasetParameter',         # e.g. Temperature
+                "DatasetParameterCode",     # e.g. avgt
+                'DatasetUnits',             # e.g. CFS
+                
+            ],
+        ) 
+    
+    mw.datasetTable.loc[100000] = ["RESERVOIR", "GIBR", "Gibson Reservoir", "USBR", "Inflow", "in", 'cfs']
+    mw.datasetTable.loc[100001] = ["STREAMGAGE", "0120332", "Sun River Near Augusta", "USGS", "Streamflow", "00060", 'cfs']
+
+    mw.dataTable =  pd.DataFrame(
+            index = pd.MultiIndex(
+                levels=[[],[],],
+                codes = [[],[],],
+                names = [
+                    'Datetime',             # E.g. 1998-10-23
+                    'DatasetInternalID'     # E.g. 100302
+                    ]
+            ),
+            columns = [
+                "Value",                    # E.g. 12.3, Nan, 0.33
+                "EditFlag"                  # E.g. True, False -> NOTE: NOT IMPLEMENTED
+                ],
+            dtype=float
+        )
+    mw.dataTable['EditFlag'] = mw.dataTable['EditFlag'].astype(bool)
+
+    dates = pd.date_range('1999-10-01', '2001-09-30', freq='D')
+    y1 = np.sin(0.5*np.array(range(len(dates)))) + np.random.randint(-4, 5)
+    y2 = np.cos(0.2*np.array(range(len(dates))))
+
+    for i in range(len(dates)):
+        if i == 40:
+            # Test case for NaNs
+            mw.dataTable.loc[(dates[i], 100000), 'Value'] = np.nan
+        else:
+            mw.dataTable.loc[(dates[i], 100000), 'Value'] = y1[i]
+        mw.dataTable.loc[(dates[i], 100001), 'Value'] = y2[i]
+
+    dp = DataTabPlots(mw)
+    mw.setCentralWidget(dp)
+    dp.displayDatasets([100000, 100001])
     mw.show()
     sys.exit(app.exec_())
+
+    

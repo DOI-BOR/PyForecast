@@ -1,26 +1,69 @@
 """
-Script Name:    PreProc_NoPreprocessing
+Script Name:    PreProc_NoPreProcessing
+
+Description:    This Preprocessor does nothing to the 
+                input data, and returns the same data
+                as it was originally provided. Its
+                transform methods do nothing.
 """
 
-# Define a dummy preprocessor
-    class preprocessor(object):
+class preprocessor(object):
+    """
+    'preprocessor' class contains all the standard api methods
+    for NextFlow preprocessors, i.e.:
 
-        def __init__(self, data):
+        getTransformedX():
+        getTransformedY():
+        transform(data): 
+        inverseTransform(data):
+    """
 
-            self.data = data
+    FILE_NAME = 'PreProc_NoPreProcessing'
+    name = "No Preprocessing"
 
-        def getTransformedX(self):
+    def __init__(self, data):
+        """
+        Initialize the preprocessor
+        """
 
-            return self.data[:, :-1]
+        # Create a reference to the input data
+        self.data = data
 
-        def getTransformedY(self):
+        return
 
-            return self.data[:,-1]
-            
-        def transform(self, data):
+    def getTransformedX(self):
+        """
+        This method returns the original
+        x data. Remember, this script performs
+        no preprocessing
+        """
 
-            return data
+        return self.data[:, :-1]
 
-        def inverseTransform(self, data):
 
-            return data
+    def getTransformedY(self):
+        """
+        This method returns the original
+        y data. Remember, this script performs
+        no preprocessing
+        """
+
+        return self.data[:,-1]
+        
+
+    def transform(self, data):
+        """
+        Returns the data back without applying
+        any transformation.
+        """
+
+        return data
+
+
+    def inverseTransform(self, data):
+        """
+        Returns the data back without applying
+        any transformation.
+        """
+
+        return data

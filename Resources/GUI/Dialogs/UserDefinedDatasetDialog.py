@@ -4,6 +4,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 import pandas as pd
 import os
+import numpy as np
 
 
 
@@ -152,6 +153,7 @@ class CompositeEquationEditor(QtWidgets.QListWidget):
             self.datasetList[-1].addItem(subItem[0], subItem[1])
         self.coefList.append(QtWidgets.QLineEdit())
         self.coefList[-1].setText('1.0')
+        self.coefList[-1].setMaximumWidth(70)
         self.lagList.append(QtWidgets.QSpinBox())
         self.lagList[-1].setSuffix(' days')
         self.lagList[-1].setValue(0)
@@ -283,21 +285,21 @@ class EditorDialog(QtWidgets.QDialog):
         # Figure out the data source first and foremost
         if self.typeRadioGroup.checkedId() == -2:
             # Regular Dataloader
-            self.dataset['DatasetCompositeEquation'] = ''
-            self.dataset['DatasetImportFileName'] = ''
+            self.dataset['DatasetCompositeEquation'] = np.nan
+            self.dataset['DatasetImportFileName'] = np.nan
             self.dataset['DatasetDataloader'] = self.loaderEdit.currentText()
 
         elif self.typeRadioGroup.checkedId() == -3:
             # Composite Equation
             self.dataset['DatasetCompositeEquation'] = self.compEquationEditor.processEquationFromWidget()
-            self.dataset['DatasetDataloader'] = ''
-            self.dataset['DatasetImportFileName'] = ''
+            self.dataset['DatasetDataloader'] = np.nan
+            self.dataset['DatasetImportFileName'] = np.nan
 
         elif self.typeRadioGroup.checkedId() == -4:
             # import file 
             self.dataset['DatasetImportFileName'] = self.importFileName.text()
-            self.dataset['DatasetDataloader'] = ''
-            self.dataset['DatasetCompositeEquation'] = ''
+            self.dataset['DatasetDataloader'] = 'IMPORTED_FILE'
+            self.dataset['DatasetCompositeEquation'] = np.nan
 
         self.dataset['DatasetType'] = self.typeEdit.currentText()
         self.dataset['DatasetName'] = self.nameEdit.text()

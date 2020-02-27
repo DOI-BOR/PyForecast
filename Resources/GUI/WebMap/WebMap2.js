@@ -467,6 +467,11 @@ function moveToMarker(lat, lng) {
 // Function to let user select HUCS 
 function enableHUCSelect() {
 
+    // Make sure the huc layer is active and the PDSI layer is not
+    window.map.removeLayer(window.climLayer);
+    window.map.addLayer(window.hucLayer);
+
+
     // Create a list to store selected HUCS
     window.hucList = [];
 

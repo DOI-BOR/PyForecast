@@ -40,16 +40,18 @@ def computePredictionInterval(observations, preprocessor, regressor, crossValida
     x = processedObservations.getTransformedX()
     y = processedObservations.getTransformedY()
 
+    y = y[~np.isnan(x).any(axis=1)]
+    x = x[~np.isnan(x).any(axis=1)]
+
     # Initialize the regressor with the crossValidator
     model = regressor(crossValidation = crossValidator)
 
     # Create a prediction using the original data
     model.fit(x[:-1],y[:-1])
-    prediction = model.predict(x[-1])
+    prediction = model.predict(x[-1].reshape(1,-1))
 
     # Initialize a list of prediction errors
-    predictionErrors = np.empty(10000)
-    predictionErrors.fill(np.nan)
+    predictionErrors = np.full(10000, np.nan)
 
     # Function to get a prediction
     def generateBootstrap(dummy):
@@ -63,24 +65,25 @@ def computePredictionInterval(observations, preprocessor, regressor, crossValida
 
         # Generate the prediction from the bootstrapped model
         model.fit(randomX, randomY)
-        bootstrapPrediction = model.predict(x[-1])
+        bootstrapPrediction = model.predict(x[-1].reshape(1,-1))
 
         # generate the bootstrap error set
         bootstrapErrors = model.residuals()
 
         # Calculate the prediction error
-        predictionError = [prediction - bootstrapPrediction + error for error in bootstrapErrors]
+        predictionError = bootstrapErrors + prediction - bootstrapPrediction
 
         return predictionError
 
     # Iterate 10,000 times to create 10,000 possible predictions
-    allPredictionErrors = sorted([item for sublist in map(generateBootstrap, tqdm(predictionErrors)) for item in sublist], reverse = True)
+    allPredictionErrors = np.array(sorted([item for sublist in map(generateBootstrap, tqdm(predictionErrors)) for item in sublist], reverse = True))
 
     # Generate the prediction interval series
-    predictions = [prediction + error for error in allPredictionErrors]
-
+    predictions = allPredictionErrors + prediction 
+   
     # Retransform the predictions back into the real space using the preprocessor
-    predictions = processedObservations.inverseTransform(predictions)
+    predictions = np.concatenate([np.full((len(predictions), x.shape[1]), np.nan),predictions.reshape(-1,1)], axis=1)
+    predictions = processedObservations.inverseTransform(predictions)[:,-1].ravel()
 
     return predictions
 
@@ -127,6 +130,7 @@ if __name__ == '__main__':
                 "RegressionTypes",          # E.g. ['Regr_MultipleLinearRegression', 'Regr_ZScoreRegression']
                 "CrossValidationType",      # E.g. K-Fold (10 folds)
                 "FeatureSelectionTypes",    # E.g. ['FeatSel_SequentialFloatingSelection', 'FeatSel_GeneticAlgorithm']
+                "Preprocessors",            
                 "ScoringParameters"         # E.g. ['ADJ_R2', 'MSE']
             ]
         )
@@ -149,6 +153,7 @@ if __name__ == '__main__':
                     ['Regr_GammaGLM'], 
                     'KFOLD_5', 
                     ['FeatSel_SequentialForwardFloating'], 
+                    ["PreProc_YAware"],
                     ['MSE']
                 ]
 
@@ -173,7 +178,7 @@ if __name__ == '__main__':
 
     # Get the data back
 
-    X, Y = rg.x[:-1, list(models[1])], rg.y
+    X, Y = rg.xTraining[:-1, list(models[1])], rg.yTraining
 
     Y = Y[~np.isnan(X).any(axis=1)]
     X = X[~np.isnan(X).any(axis=1)]

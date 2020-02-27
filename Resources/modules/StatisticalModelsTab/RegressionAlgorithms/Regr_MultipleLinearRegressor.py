@@ -1,7 +1,14 @@
 """
 Script Name:    Regr_MultipleLinearRegressor
 
-Description:    Defines a numpy algorithm to perform Multiple Linear Regression on a dataset.
+Description:    Defines a simple numpy algorithm to perform Multiple Linear 
+                Regression on a dataset.
+
+                Multiple Linear Regression is defined in many publicly 
+                available sources. Here is one from Penn State University
+                that covers the topic extensively:
+                https://online.stat.psu.edu/stat501/lesson/5/5.4
+
 """
 
 from resources.modules.StatisticalModelsTab import CrossValidationAlgorithms, ModelScoring
@@ -13,6 +20,19 @@ class Regressor(object):
     name = "Multiple Linear Regression"
 
     def __init__(self, crossValidation = None, scoringParameters = None):
+        """
+        Class Initializer.
+
+        arguments:
+            -crossValidation:   string describing which cross validation
+                                method to use when using this regression
+                                class. As of this writing, the options are
+                                "KFOLD_5" (5 fold cross validation)
+                                "KFOLD_10" (10 fold cross validation)
+                                "LOO" (Leave-one-out AKA jacknife)
+            -scoringParameters: list of scoring metrics to score models.
+                                e.g. ['ADJ_R2', 'MSE', 'AIC_C']
+        """
 
         # Parse arguments
         self.crossValidation = crossValidation if crossValidation != None else "KFOLD_5"
@@ -27,9 +47,11 @@ class Regressor(object):
         self.coef = []
         self.intercept = 0
 
-        # Set up cross validator and scorers
+        # Set up cross validator, and scorers
         self.scorers = [getattr(ModelScoring, param) for param in self.scoringParameters]
         self.crossValidator = getattr(CrossValidationAlgorithms, self.crossValidation)
+        
+        # Intialize dictionaries to store scores
         self.cv_scores = {}
         self.scores = {}
         self.y_p_cv = []
@@ -53,7 +75,9 @@ class Regressor(object):
             coef_all = np.linalg.inv(X_.transpose().dot(X_)).dot(X_.transpose()).dot(y)
             coef = coef_all[1:]
             intercept = coef_all[0]
+
         except:
+            # Handle the case where the matrix formulation cannot be solved.
             coef_all = np.array([0]*X_.shape[1])
             coef = coef_all[1:]
             intercept = coef_all[0]
@@ -85,7 +109,7 @@ class Regressor(object):
         if crossValidate:
 
             # Create a list to store cross validated predictions
-            self.y_p_cv = np.array([], dtype=np.float16)
+            self.y_p_cv = np.array([], dtype=np.float32)
 
             # Iterate over the cross validation samples and compute regression scores
             for xsample, ysample, xtest, _ in self.crossValidator.yield_samples(X = self.x, Y = self.y):
@@ -126,5 +150,14 @@ class Regressor(object):
         y_obs = self.y if (y_obs == []) else y_obs
         y_p = self.y_p if (y_p == []) else y_p
         n_features = self.x.shape[1] if (n_features == None) else n_features
+
+        # Check that the model is actually valid 
+        # that is, there are less than n-1 predictors
+        #       - There cannot be more than n-2 predictors
+        #         or else the scoring does not work. Adjusted
+        #         r2 and AICc rely on the fact that there are
+        #         less predictors than observations
+        if n_features > len(y_p) - 2:
+            return {self.scoringParameters[i]: np.nan for i, scorer in enumerate(self.scorers)}
 
         return {self.scoringParameters[i]: scorer(y_obs, y_p, n_features) for i, scorer in enumerate(self.scorers)}

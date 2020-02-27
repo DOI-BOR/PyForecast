@@ -33,6 +33,7 @@ import bitarray as ba
 import importlib
 from resources.modules.StatisticalModelsTab import ModelScoring
 import numpy as np
+from itertools import compress
 
 
 class FeatureSelector(object):
@@ -40,10 +41,6 @@ class FeatureSelector(object):
     name = "Sequential Forward Floating Selection"
 
     def __init__(self, parent = None, **kwargs):
-        """
-        """
-
-        #
 
         # Create References to the predictors and the target
         self.predictorPool = parent.modelRunTableEntry['PredictorPool']
@@ -63,10 +60,9 @@ class FeatureSelector(object):
         # Add in any forced predictors
         self.currentPredictors = self.currentPredictors | self.parent.forcedPredictors
         
+        # Keep track of model performance with the previos predictors and the current model scores
         self.previousPredictors = self.currentPredictors.copy()
         self.currentScores = {}
-
-        # 
 
         return
     
@@ -78,18 +74,28 @@ class FeatureSelector(object):
         """
 
         # Compile the data to fit with the regression method
-        x = self.parent.xTraining[:, list(model)]
-        y = self.parent.yTraining[~np.isnan(x).any(axis=1)]
-        x = x[~np.isnan(x).any(axis=1)]
+        x = self.parent.proc_xTraining[:, list(model)]
 
+        # Check if we're using a regression model that requires non-NaN data
+        if any(map(lambda x: self.regressionName in x, ["Regr_ZScore"])):
+            y = self.parent.proc_yTraining
+
+        else:
+            y = self.parent.proc_yTraining[~np.isnan(x).any(axis=1)]
+            x = x[~np.isnan(x).any(axis=1)]
 
         # Fit the model with the regression method and get the resulting score
-        _, _, score, _ = self.regression.fit(x, y, crossValidate = True)
+        try:
+            _, _, score, _ = self.regression.fit(x, y, crossValidate = True)
+
+        except Exception as E:
+            print(E)
+            score = {self.regression.scoringParameters[i]: np.nan for i, scorer in enumerate(self.regression.scorers)}
 
         return score
     
 
-    def logCombinationResult(self, model_str = None, score = None):
+    def logCombinationResult(self, modelStr = None, score = None):
         """
         Under-defined function. Currently just adds the model to 
         the model list. Theoretically, we could use this 
@@ -97,8 +103,17 @@ class FeatureSelector(object):
         do real-time analysis of models as they are being 
         built
         """
-        self.parent.computedModels[model_str] = score
-        
+
+        # Store the score in the computed models dict 
+        self.parent.computedModels[modelStr] = score
+
+        # Store the results in the more comprehensive resultsList
+        self.parent.resultsList.append(
+            {"Model":modelStr, "Score":score, 
+             "Method":"PIPE/{0}/{1}/{2}".format(self.parent.preprocessor.FILE_NAME, 
+                                      self.regressionName,  
+                                      self.regression.crossValidation)})
+
         return
 
 
@@ -110,6 +125,10 @@ class FeatureSelector(object):
         or subtracting predictors is not increasing the score
         of the model.)
         """
+
+        # Score the initial model
+        model = self.currentPredictors.copy()
+        self.currentScores = self.scoreModel(model)
 
         # Set up an iteration
         while True:

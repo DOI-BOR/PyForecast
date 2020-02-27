@@ -34,13 +34,13 @@ class datasetTab(object):
         Initialize the tab
         """
 
-        self.connectEvents()
+        self.connectEventsDatasetTab()
         self.loadDatasetCatalog()
         self.loadDatasetMap()
 
         return
 
-    def connectEvents(self):
+    def connectEventsDatasetTab(self):
         """
         Connects all the signal/slot events for the dataset tab
         """
@@ -168,6 +168,9 @@ class datasetTab(object):
         # Refresh the dataset list view
         self.datasetTab.selectedDatasetsWidget.setDatasetTable(self.datasetTable)
         self.datasetTab.selectedDatasetsLabel.setText("{0} datasets have been selected:".format(len(self.datasetTable)))
+
+        # Also refresh the dataset lists elsewhere in the software
+        self.dataTab.datasetList.setDatasetTable(self.datasetTable)
         
 
         return
@@ -204,6 +207,11 @@ class datasetTab(object):
         # Refresh the dataset list view
         self.datasetTab.selectedDatasetsWidget.setDatasetTable(self.datasetTable)
         self.datasetTab.selectedDatasetsLabel.setText("{0} datasets have been selected:".format(len(self.datasetTable)))
+
+        # Also refresh the dataset lists elsewhere in the software
+        self.dataTab.datasetList.setDatasetTable(self.datasetTable)
+        self.dataTab.spreadsheet.model().loadDataIntoModel(self.dataTable, self.datasetTable)
+        self.dataTab.plot.clearPlots()
 
         return
 
@@ -284,6 +292,9 @@ class datasetTab(object):
         # Update the display
         self.datasetTab.selectedDatasetsWidget.setDatasetTable(self.datasetTable)
         self.datasetTab.selectedDatasetsLabel.setText("{0} datasets have been selected:".format(len(self.datasetTable)))
+
+        # Also refresh the dataset lists elsewhere in the software
+        self.dataTab.datasetList.setDatasetTable(self.datasetTable)
 
 
     def addDatasetsFromWebMap(self, datasetAdditionMessage):
@@ -443,6 +454,7 @@ class datasetTab(object):
         if len(searchTerm) < 4: 
 
             # ADD POPUP BOX TO TELL USER ABOUT THE ERROR
+            loggingAndErrors.showErrorMessage("Search term is too broad, please enter a longer search term.")
             self.datasetTab.keywordSearchButton.setEnabled(True)
             return
         

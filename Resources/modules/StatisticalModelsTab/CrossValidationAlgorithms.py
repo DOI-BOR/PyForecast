@@ -19,7 +19,7 @@ class LOO():
             x = np.concatenate((X[0:i], X[i+1:l]), axis=0)
             y = np.concatenate((Y[0:i], Y[i+1:l]))
 
-            yield x,y, np.array(X[i]), np.array(Y[i])
+            yield x,y, np.array(X[i]).reshape(1,-1), np.array(Y[i]).reshape(1,-1)
 
 
 class KFOLD_5():

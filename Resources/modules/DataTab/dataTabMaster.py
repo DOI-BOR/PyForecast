@@ -1,279 +1,228 @@
-"""
-Script Name:    dataTabMaster.py
-Description:    This script contains all the functionality behind the User interface of the Data Tab.
-"""
+
 from resources.modules.Miscellaneous import loggingAndErrors, DataProcessor
 from resources.modules.DataTab import downloadData
-from resources.GUI.Dialogs.createCompositeDataset import compositeDatasetDialog
-from resources.GUI.Dialogs import UserDefinedDatasetDialog
 from PyQt5 import QtCore
 import time
 import pandas as pd
 import numpy as np
 from datetime import datetime
 
+"""
+Script Name:    dataTabMaster.py
+
+Description:    This script contains all the functionality associated with the 
+                Data Tab. Operations such as downloading and pre-processing
+                raw data is performed on this tab. Daily datasets can be 
+                graphed and raw data can be edited or updated on this tab.
+                
+                The GUI scripting for this tab can be found in the 
+                /resources/GUI/Tabs/DataTab.py file.
+"""
+
 class dataTab(object):
+    """
+    DATA TAB
+    The Data Tab contains tools for retrieveing and editing raw data associated with the
+    datasets listed in the Datasets Tab.
+    """
 
-    def setupDataTab(self):
+    def initializeDataTab(self):
         """
-        Initializes the data tab and connect the data tab events.
+        Initializes the Tab
         """
-        self.dataTab.porT2.setText(datetime.strftime(pd.to_datetime(self.userOptionsConfig['GENERAL']['application_datetime']), '%Y'))
-        self.dataTab.downloadButton.clicked.connect(self.downloadData)
-        self.dataTab.importButton.clicked.connect(lambda x: self.createUserDefinedDataset(importDatasetFlag=True))
-        self.dataTab.compositeButton.clicked.connect(self.openCompositeDialog)
-        self.currentlyPlottedColumns = []
 
-        return
-
-    def resetDataTab(self):
-        """
-        Resets the data tab to a previous configuration based on the data in the 'userOptionsConfig'
-        """
-        if self.dataTable.empty:
-            return
-        self.displayDataInTable()
-        self.dataTab.porT2.setText(datetime.strftime(pd.to_datetime(self.userOptionsConfig['GENERAL']['application_datetime']), '%Y'))
-        self.currentlyPlottedColumns = self.userOptionsConfig['DATA TAB']['current_plotted_columns'].split(',')
-        self.plotClickedColumns(self.currentlyPlottedColumns)
-        current_bounds = self.userOptionsConfig['DATA TAB']['current_plot_bounds'].split(',')
-        self.dataTab.dataPlot.p1.vb.setRange(xRange = [float(current_bounds[0]),float(current_bounds[1])], yRange = [float(current_bounds[2]),float(current_bounds[3])])
-
-        return
-    
-
-    def storeDataTabInformation(self):
-        """
-        Stores the current settings for the plot and datetimes that the user has set. 
-        """
-        self.userOptionsConfig['DATA TAB']['por_start'] = self.dataTab.porT1.text()
-        self.userOptionsConfig['DATA TAB']['current_plotted_columns'] = ','.join([str(i) for i in self.currentlyPlottedColumns])
-        self.userOptionsConfig['DATA TAB']['current_plot_bounds'] = ','.join(str(x) for x in self.dataTab.dataPlot.p1.vb.viewRange()[0]) + ',' + ','.join(str(x) for x in self.dataTab.dataPlot.p1.vb.viewRange()[1])
+        self.connectEventsDataTab()
+        self.dataTab.spreadsheet.model().loadDataIntoModel(self.dataTable, self.datasetTable)
         
         return
     
-    def openCompositeDialog(self):
+    def connectEventsDataTab(self):
         """
-        """
-        self.compDialog = compositeDatasetDialog(self.datasetTable, self.dataTable)
-        self.compDialog.returnDatasetSignal.connect(self.addNewlyCombinedDatasetToDatastores)
-        self.compDialog.exec_()
-
-    def addNewlyCombinedDatasetToDatastores(self, datasetObj):
-        """
+        Connects all the signal/slot events for the data tab
         """
 
-        # Parse the object
-        dataset = datasetObj[0]
-        data = datasetObj[1]
+        # Buttons
+        self.dataTab.downloadButton.clicked.connect(self.downloadData)
+        self.dataTab.endYearInput.valueChanged.connect(lambda x: self.dataTab.startYearInput.setMaximum(x))
 
-        # Append the dataset to the datasetTable
-        self.addUserDefinedDatasetToSelectedDatasets(dataset)
+        # ListWidget
+        self.dataTab.datasetList.itemSelectionChanged.connect(self.plotSelectedDataset)
 
-        # Append the data to the dataTable
-        self.setDataForImportedDataset(data, composite=True)
+        # Plot
+
+        # SpreadSheet
+        self.dataTab.spreadsheet.model().dataChanged.connect(lambda x, y: self.plotSelectedDataset())
 
         return
 
     def downloadData(self):
         """
-        1. Validates the POR input.
-        2. Validates the Datasets Table
-        3. Instantiates a Progress Bar
-        4. Downloads data for each dataset in datasets table and appends to dataTable
+        Responsible for downloading datasets from web endpoints, import files (if available),
+        or combining datasets.
+
+        Proceeds as follows:
+        1 - Validate POR input, datasetTable
+        2 - Instantiate progress bar, status bar
+        3 - download web endpoint data and append to the dataTable
+            3.1 - if we're doing a fresh download, replace everything in the datatable
+            3.2 - if we're doing an update, merge new data with old datatable, preferring old data
         """
 
-        # 1. Validate POR input
-        porT1 = self.dataTab.porT1.text()
-        porT2 = self.dataTab.porT2.text()
-        try:
-            porT1 = pd.to_datetime(porT1+'-10-01')
-            porT2 = pd.to_datetime(self.userOptionsConfig['GENERAL']['application_datetime'])
-        except Exception as E:
-            loggingAndErrors.showErrorMessage(self, 'Could not parse POR input: {0}'.format(E))
+        # Validate Input
+        startWaterYear = self.dataTab.startYearInput.value()
+        endWaterYear = self.dataTab.endYearInput.value()
+        if startWaterYear > endWaterYear:
+            loggingAndErrors.showErrorMessage(self, 'Starting year must be less than ending year')
             return
 
-        # 2. Validate Dataset Table
+        # Validate datasetTable
         if self.datasetTable.empty:
-            loggingAndErrors.showErrorMessage(self, 'No datasets Selected')
+            loggingAndErrors.showErrorMessage(self, 'No datasets in file')
             return
         
-        # 3. Instantiate Progress Bar
-        self.dataTab.downloadProgressBar.show()
+        # Instantiate progress bar and status bar
+        self.dataTab.progressBar.show()
+        self.dataTab.progressBar.setValue(0)
+        self.dataTab.statusBar.show()
+
+        # Disable the download box inputs
+        self.dataTab.startYearInput.setEnabled(False)
+        self.dataTab.endYearInput.setEnabled(False)
+        self.dataTab.updateOption.setEnabled(False)
+        self.dataTab.freshDownloadOption.setEnabled(False)
         self.dataTab.downloadButton.setEnabled(False)
-
-        # 4. Download Data For each dataset and append to dataTable
-        try:
-            downloadWorker = downloadData.alternateThreadWorker(self.datasetTable, porT1, porT2, self.dataTable)
-            downloadWorker.signals.updateProgBar.connect(self.dataTab.downloadProgressBar.setValue)
-            downloadWorker.signals.returnNewData.connect(lambda x: self.postProcessNewData(x))
-            downloadWorker.signals.finished.connect(self.downloadFinished)
-            self.threadPool.start(downloadWorker)
-        except Exception as E:
-            loggingAndErrors.showErrorMessage(self, 'Could not download data: {0}'.format(E))
-            self.dataTab.downloadButton.setEnabled(True)
-            self.dataTab.downloadProgressBar.hide()
-
+        
+        # Download data for each dataset and append to or update dataTable
+        # Here we use the application's threadPool to run this process in the background
+        downloadWorker = downloadData.downloadDataThreadWorker(self)
+        downloadWorker.signals.returnDataSignal.connect(self.updateDataTableWithNewData)
+        downloadWorker.signals.finishedSignal.connect(self.finishedDownload)
+        self.threadPool.start(downloadWorker)
 
         return
 
 
-    def downloadFinished(self):
+    def finishedDownload(self):
         """
-        Hide the progress bar after the data finishes downloading
+        Re-enables the input boxes when the data is done
+        downloading.
         """
-        self.dataTab.downloadProgressBar.hide()
+
+        # Re-enable download box inputs
+        self.dataTab.progressBar.setValue(self.dataTab.progressBar.maximum())
+        self.dataTab.startYearInput.setEnabled(True)
+        self.dataTab.endYearInput.setEnabled(True)
+        self.dataTab.updateOption.setEnabled(True)
+        self.dataTab.freshDownloadOption.setEnabled(True)
         self.dataTab.downloadButton.setEnabled(True)
 
         return
 
 
-    @QtCore.pyqtSlot(object)
-    def setDataForImportedDataset(self, data, id_ = -1, composite=False):
+    def updateDataTableWithNewData(self, newData):
         """
-        Stores the data from the imported dataset into the dataTable.
-        """
-        if id_ == -1:
-            id_ = self.datasetTable.index[-1]
-        data.columns =['Value']
-        data.set_index([data.index, pd.Index(len(data)*[id_])], inplace=True)
-        data.index.names = ['Datetime','DatasetInternalID']
-        self.postProcessNewData(data, composite)
-        return
+        This function takes the output of the download data
+        function and either merges the data (update options)
+        or replaces the data (fresh download option).
 
-    def postProcessNewData(self, newDataTable, recursionFlag = False, noPlot = False):
-        """
-        This function gets the raw downloaded data from the downloadData function and merges it with the existing dataset, updating any outdated 
-        values, and detecting any merge conflicts.
+            newData = a multi-index dataTable containing
+                      new data to be added or merged into
+                      the dataTable. 
         """
 
-        # Don't bother with empty datatables
-        if newDataTable.empty:
-            return
+        # Get the data retrieval option (fresh download or update)
+        if self.dataTab.updateOption.isChecked():
+            
+            # Merge the new data into the dataTable, with a preference
+            # to keep any old data
+            mergedDataTable = pd.merge(
+                left = self.dataTable,
+                right = newData,
+                on = ["Datetime", "DatasetInternalID"],
+                suffixes = ("_old", "_new"),
+                indicator = True,
+                how= "outer"
+            )
 
-        # First create a merged dataTable
-        merged = pd.merge(left=self.dataTable, right=newDataTable, on=['Datetime','DatasetInternalID'], suffixes=('_old','_new'), indicator=True, how='outer')
-        
-        # Filter to only get the changed data
-        merged = merged[merged.Value_old != merged.Value_new]
+            # Filter the dataTable and just keep changed values
+            mergedDataTable = mergedDataTable[mergedDataTable.Value_old != mergedDataTable.Value_new]
 
-        # Add brand new data to the datatable
-        newValues = pd.DataFrame(merged[(np.isnan(merged['Value_old'])) & (merged['_merge'] == 'right_only')][['Value_new', 'EditFlag']])
-        newValues.columns = ['Value', 'EditFlag']
-        newValues['EditFlag'] = [False] * len(newValues)
-        self.dataTable = self.dataTable.append(newValues)
-        self.dataTable = self.dataTable[~self.dataTable.index.duplicated(keep='last')]
+            # Add any brand new data to the datatable
+            # New values are those where there is no old value (value_old == NaN)
+            newValues = pd.DataFrame(mergedDataTable[(np.isnan(mergedDataTable['Value_old'])) & (mergedDataTable['_merge'] == 'right_only')][['Value_new', 'EditFlag']])
+            newValues.columns = ['Value', 'EditFlag']
+            newValues['EditFlag'] = [False] * len(newValues)
+            self.dataTable = self.dataTable.append(newValues)
+            self.dataTable = self.dataTable[~self.dataTable.index.duplicated(keep='last')]
 
-        # Figure out which values are updated and don't need to be validated by the user
-        updatedValuesNew = pd.DataFrame(merged[(merged['_merge'] == 'both') & (merged['Value_new'] != merged['Value_old']) & (merged['EditFlag'] == False)][['Value_new', 'EditFlag']])
-        updatedValuesNew.columns = ['Value', 'EditFlag']
-        self.dataTable = self.dataTable.append(updatedValuesNew)
-        self.dataTable = self.dataTable[~self.dataTable.index.duplicated(keep='last')]
+            # If there are any updated values, ask the user how they want to handle it:
+            # updated values are those where there are both old and new values, but they are different
+            updatedValuesNew = pd.DataFrame(mergedDataTable[(mergedDataTable['_merge'] == 'both') & (mergedDataTable['Value_new'] != mergedDataTable['Value_old']) & (mergedDataTable['EditFlag'] == False)][['Value_new', 'EditFlag']])
+            if not updatedValuesNew.empty:
+                
+                if loggingAndErrors.displayDialogYesNo("The newly fetched data contains updates to old values. Do you want to replace the old values with the updated data? \n\n Note that any updated values will affect forecasts and model skill, though no equations will be changed."):
+                
+                    updatedValuesNew.columns = ['Value', 'EditFlag']
+                    self.dataTable = self.dataTable.append(updatedValuesNew)
+                    self.dataTable = self.dataTable[~self.dataTable.index.duplicated(keep='last')]
 
-        # find the updated values that are replacing unedited original data
-        #updatedValuesNew_need_validation = pd.DataFrame(merged[(merged['_merge'] == 'both') & (merged['Value_new'] != merged['Value_old']) & (merged['EditFlag'] == True)][['Value_old', 'Value_new', 'EditFlag']])
-        #if loggingAndErrors.displayDialog("We've downloaded data that conflicts with your edited data. Would you like to review the conflicts? If not, we'll overwrite your edits with the new data."):
-            # self.conflictReviewDialog = conflictReviewDialog(df=updatedValuesNew_need_validation, datasets = self.datasetTable)
-            # This part still needs work. Theres a lot of moving parts with checkboxes/etc. 
+            # Set the data for the spreadsheet and initialize the plots
+            self.dataTab.spreadsheet.model().loadDataIntoModel(self.dataTable, self.datasetTable)
+            self.dataTab.datasetList.setCurrentRow(0)
+            #self.dataTab.plot.displayDatasets([self.datasetTable.iloc[0].name])
 
-        #TEMPORARY
-        updatedValuesNew_need_validation = pd.DataFrame(merged[(merged['_merge'] == 'both') & (merged['Value_new'] != merged['Value_old']) & (merged['EditFlag'] == True)][['Value_new', 'EditFlag']])
-        updatedValuesNew_need_validation.columns = ['Value', 'EditFlag']
-        self.dataTable = self.dataTable.append(updatedValuesNew_need_validation)
-        self.dataTable = self.dataTable[~self.dataTable.index.duplicated(keep='last')]
+        # Otherwise, we just replace the old datatable with the new datatable
+        else:
 
-        # Update any composite datasets
-        # Regenerate any composite datasets (assuming the original datasets still exist)
-        if not recursionFlag:
-            for i, dataset in self.datasetTable.iterrows():
-                if dataset['DatasetDataloader'] == 'COMPOSITE':
-                    combinationString = dataset['DatasetAdditionalOptions']['CompositeString']
-                    reliesOn = [int(j) for j in combinationString.split('/')[1].split(',')]
-                    if np.all([j in list(self.datasetTable.index) for j in reliesOn]):
+            # Clear all existing data
+            self.dataTable.drop(self.dataTable.index, inplace=True)
 
-                        null, df = DataProcessor.combinedDataSet(self.dataTable, self.datasetTable, combinationString, newDatasetMetaData = {})
-                        df.columns =['Value']
-                        df.set_index([df.index, pd.Index(len(df)*[i])], inplace=True)
-                        df.index.names = ['Datetime', 'DatasetInternalID']
-                        self.postProcessNewData(df, True)
-                        return
-
-                    else:
-                        loggingAndErrors.showErrorMessage(self, "Composite dataset {0} ({1}) relies on a dataset that no longer exists. We did not update this dataset.".format(dataset['DatasetName'], dataset.name))
-
-        self.displayDataInTable(noPlot)
+            # recursively call this function (artifically checking the update option)
+            # to add in the new data
+            self.dataTab.updateOption.setChecked(True)
+            self.updateDataTableWithNewData(newData)
+            self.dataTab.updateOption.setChecked(False)
 
         return
 
-    
-    def displayDataInTable(self, noPlot=False):
+
+    def plotSelectedDataset(self):
         """
-        This function takes the dataTable and converts it into a spreadsheet-like datatable. 
+        This function is called when a user selects
+        one or more datasets from the left hand side list. 
+        It figures out which datasets are selected and 
+        sends those to the plot's 'displayDatasets' method
         """
+
+        # Initialize an empty dataset list
+        datasetsList = []
+
+        # Check that there is some data in the dataTable
         if self.dataTable.empty:
             return
-        self.dataTab.table.model().initialize_model_with_dataset(self.dataTable, self.datasetTable)
-        self.dataTab.table.horizontalHeader().sectionClicked.connect(lambda x: self.plotClickedColumns())
-        self.dataTab.table.model().changedDataSignal.connect(self.userChangedData)
-        if not noPlot:
-            self.plotClickedColumns([self.datasetTable.index[0]])
 
-        return
- 
+        # Iterate over the selected items in the datsetList
+        for item in self.dataTab.datasetList.selectedItems():
 
-    def userChangedData(self, dataChanges):
-        """
-        This function is triggered whenever a user changes the data in the table. 
-        It updates the global data table and triggers updates in any associated forecasts. 
+            # Make sure that the selected item has data in the datatable
+            if item.data(QtCore.Qt.UserRole).name in self.dataTable.index.levels[1]:
 
-        dataChanges: list of changed data, i.e [date, columnName, oldValue, newValue]
-        """
-        self.dataTable.loc[(dataChanges[0], dataChanges[1])] = (dataChanges[3], True)
-        
-        if dataChanges[2] == dataChanges[3]:
+                if np.all(pd.isna(self.dataTable.loc[(slice(None), item.data(QtCore.Qt.UserRole).name), 'Value'])):
+
+                    continue
+            
+                # Get the datasetID from the item
+                datasetsList.append(item.data(QtCore.Qt.UserRole).name)
+
+            else:
+
+                loggingAndErrors.showErrorMessage(self,"The selected dataset {0} does not have any data associated with it yet and cannot be plotted.\n\n Use the download/retieval options above to fetch data for this dataset.".format(item.data(QtCore.Qt.UserRole)['DatasetName']))
+
+        # Check if there are any datasets to plot
+        if datasetsList == []:
             return
 
-        changed_cols = [dataChanges[1]]
-
-        # Update any composite datasets that are based on this data
-        for i, dataset in self.datasetTable.iterrows():
-            if dataset['DatasetDataloader'] == 'COMPOSITE':
-                combinationString = dataset['DatasetAdditionalOptions']['CompositeString']
-                reliesOn = [int(j) for j in combinationString.split('/')[1].split(',')]
-                if dataChanges[1] in reliesOn:
-                    if np.all([j in list(self.datasetTable.index) for j in reliesOn]):
-                        newDataValue = DataProcessor.updateSingleComputedValue(self.dataTable, combinationString, dataChanges[0])
-                        self.dataTable.loc[(dataChanges[0], dataset.name), 'Value'] = newDataValue
-                        changed_cols.append(dataset.name)
-                        
-
-        self.plotClickedColumns(displayColumns=self.currentlyPlottedColumns, changed_col=changed_cols)
-
-        
-                        
-
-        # NOTE, NEED TO UPDATE ANY FORECASTS BASED ON THIS DATA
+        # Call the plot's displayDatasets method
+        self.dataTab.plot.displayDatasets(datasetsList)
 
         return
-
-
-    def plotClickedColumns(self, displayColumns = None, changed_col = None):
-        """
-        This function plots the columns that the user selects
-        """
-        if displayColumns != None:
-            self.currentlyPlottedColumns = displayColumns
-        else:
-            self.currentlyPlottedColumns = self.dataTab.table.getSelectedColumns()
-            if self.currentlyPlottedColumns == [] or self.currentlyPlottedColumns == None:
-                return
-        data = self.dataTable.loc[(slice(None), self.currentlyPlottedColumns), 'Value']
-        #print("Data is: ", data)
-        if isinstance(displayColumns, list) and isinstance(changed_col, list):
-            changed_col = [col for col in changed_col if col in displayColumns]
-        else:
-            changed_col = None
-        self.dataTab.dataPlot.add_data_to_plots(data, changed_col = changed_col, datasets=self.datasetTable)
-
-        return
-            

@@ -77,7 +77,7 @@ class DatasetList_HTML_Formatted(QtWidgets.QListWidget):
 
     buttonPressSignal = QtCore.pyqtSignal(int)
 
-    def __init__(self, parent=None, datasetTable = empty_dataset_list, HTML_formatting = DEFAULT_HTML_ICON_FORMAT, buttonText = None, useIcon = True):
+    def __init__(self, parent=None, datasetTable = empty_dataset_list, HTML_formatting = DEFAULT_HTML_ICON_FORMAT, buttonText = None, useIcon = True, addButtons = True):
         """
         arguments:
             datasetTable =
@@ -89,13 +89,15 @@ class DatasetList_HTML_Formatted(QtWidgets.QListWidget):
         # Create a reference to the parent, as well as to the datasetTable
         self.datasetTable = datasetTable
         self.parent = parent
-        self.HTML_formatting = HTML_formatting
+        self.HTML_formatting = HTML_formatting if HTML_formatting != "" else DEFAULT_HTML_FORMAT
         self.buttonText = buttonText
         self.useIcon = useIcon
         self.buttonList = []
+        self.addButtons = addButtons
 
         # Set the widget configuration
         self.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
+        self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
 
         # Construct the list
         self.refreshDatasetList()
@@ -123,7 +125,7 @@ class DatasetList_HTML_Formatted(QtWidgets.QListWidget):
         """
 
         # Create a context menu
-        self.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
+        self.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
 
         # Iterate over menuItems
         for item in menuItems:
@@ -133,6 +135,26 @@ class DatasetList_HTML_Formatted(QtWidgets.QListWidget):
 
             # Add the action to the listwidget
             self.addAction(getattr(self, item.replace(' ', '_') + 'Action'))
+
+        return
+
+
+    def contextMenuEvent(self, event):
+        """
+        This function constructs a context
+        menu only if the mouse if hovering 
+        over a list item
+        """
+
+        # Check if there is a model index at the mouse point
+        idx = self.indexAt(event.pos()).row()
+
+        # If we're hovering over a dataset, we'll display the context menu
+        if idx != -1:
+            self.menu = QtWidgets.QMenu(self)
+            self.menu.setLayoutDirection(QtCore.Qt.RightToLeft)
+            self.menu.addActions(self.actions())
+            self.menu.popup(self.mapToGlobal(event.pos()))
 
         return
 
@@ -173,7 +195,7 @@ class DatasetList_HTML_Formatted(QtWidgets.QListWidget):
             textBox = QtWidgets.QLabel(item.text())
             textBox.setTextFormat(QtCore.Qt.RichText)
             layout.addWidget(textBox)
-            if dataset.name >= 900000:
+            if dataset.name >= 900000 and self.addButtons:
                 self.buttonList.append(QtWidgets.QPushButton("Configure"))
                 self.buttonList[-1].setCheckable(True)
                 self.buttonList[-1].toggled.connect(self.findSelectedButton)

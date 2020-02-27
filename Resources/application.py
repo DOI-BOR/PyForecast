@@ -29,7 +29,7 @@ import configparser
 import pandas as pd
 
 
-class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMaster.datasetTab, menuBarMaster.menuBar):
+class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMaster.datasetTab, dataTabMaster.dataTab, menuBarMaster.menuBar):
     """
     GLOBAL APPLICATION INITIALIZATION
     This section of the script deals with the initialization of the software. These subroutines 
@@ -97,9 +97,12 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
             index = pd.Index([], dtype=int, name='ModelRunID'),
             columns = [
                 "ModelTrainingPeriod",  # E.g. 1978-10-01/2019-09-30 (model trained on  WY1979-WY2019 data)
+                "ForecastIssueDate",    # E.g. January 13th
                 "Predictand",           # E.g. 100302 (datasetInternalID)
                 "PredictandPeriod",     # E.g. R/1978-03-01/P1M/F12M (starting in march of 1978, over a 1 month period, recurring once a year.)
                 "PredictandMethod",     # E.g. Accumulation, Average, Max, etc
+                "PredictorGroups",      # E.g. ["SNOTEL SITES", "CLIMATE INDICES", ...]
+                "PredictorGroupMapping",# E.g. [0, 0, 0, 1, 4, 2, 1, 3, ...] maps each predictor in the pool to a predictor group
                 "PredictorPool",        # E.g. [100204, 100101, ...]
                 "PredictorForceFlag",   # E.g. [False, False, True, ...]
                 "PredictorPeriods",     # E.g. [R/1978-03-01/P1M/F12M, R/1978-03-01/P1M/F12M, ...]
@@ -107,7 +110,8 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
                 "RegressionTypes",      # E.g. ['Regr_MultipleLinearRegression', 'Regr_ZScoreRegression']
                 "CrossValidationType",  # E.g. K-Fold (10 folds)
                 "FeatureSelectionTypes",# E.g. ['FeatSel_SequentialFloatingSelection', 'FeatSel_GeneticAlgorithm']
-                "ScoringParameters"     # E.g. ['ADJ_R2', 'MSE']
+                "ScoringParameters",    # E.g. ['ADJ_R2', 'MSE']
+                "Preprocessors"         # E.g. ['PreProc_Logarithmic', 'PreProc_YAware']
             ]
         )
 
@@ -119,11 +123,11 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
                 "EquationComment",      # E.g. 'Equation Used for 2000-2010 Forecasts'
                 "EquationPredictand",   # E.g. 103011
                 "PredictandPeriod",     # R/1978-03-01/P1M/F12M (starting in march of 1978, over a 1 month period, recurring once a year.)
-                "PredictandMethod"      # E.g. Accumulation, Average, Max, etc
+                "PredictandMethod",      # E.g. Accumulation, Average, Max, etc
                 "EquationCreatedOn",    # E.g. 2019-10-04
                 "EquationIssueDate",    # E.g. 2019-02-01
-                "EquationCoefficients", # E.g. [1.2, -3.4, 202.33]
-                "EquationIntercept",    # E.g. [-223.2]
+                "EquationMethod",       # E.g. Pipeline string (e.g. PIPE/PreProc_Logistic/Regr_Gamma/KFOLD_5)
+                "EquationSkill",        # E.g. Score metric dictionary (e.g. {"AIC_C": 433, "ADJ_R2":0.32, ...})
                 "EquationPredictors",   # E.g. [100204, 100101, 500232]
                 "PredictorPeriods",     # E.g. [R/1978-03-01/P1M/F12M, R/1978-03-01/P1M/F12M, R/1978-03-01/P1M/F12M]
                 "PredictorMethods"      # E.g. ['Average', 'First', 'Max']
@@ -157,7 +161,7 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
 
         # Set-up all the tabs and menu bars
         self.initializeDatasetTab()
-        #self.setupDataTab()
+        self.initializeDataTab()
         self.setupMenuBar()
 
         # Intiate a threadpool

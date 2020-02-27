@@ -37,17 +37,22 @@ class FeatureSelector(object):
         """
 
         # Compile the data to fit with the regression method
-        x = self.parent.xTraining[:, list(model)]
-        y = self.parent.yTraining[~np.isnan(x).any(axis=1)]
+        x = self.parent.proc_xTraining[:, list(model)]
+        y = self.parent.proc_yTraining[~np.isnan(x).any(axis=1)]
         x = x[~np.isnan(x).any(axis=1)]
 
         # Fit the model with the regression method and get the resulting score
-        _, _, score, _ = self.regression.fit(x, y, crossValidate = True)
+        try:
+            _, _, score, _ = self.regression.fit(x, y, crossValidate = True)
+
+        except Exception as E:
+            print(E)
+            score = {self.regression.scoringParameters[i]: np.nan for i, scorer in enumerate(self.regression.scorers)}
 
         return score
     
 
-    def logCombinationResult(self, model_str = None, score = None):
+    def logCombinationResult(self, modelStr = None, score = None):
         """
         Under-defined function. Currently just adds the model to 
         the model list. Theoretically, we could use this 
@@ -55,8 +60,17 @@ class FeatureSelector(object):
         do real-time analysis of models as they are being 
         built
         """
-        self.parent.computedModels[model_str] = score
-        
+
+        # Store the score in the computed models dict 
+        self.parent.computedModels[modelStr] = score
+
+        # Store the results in the more comprehensive resultsList
+        self.parent.resultsList.append(
+            {"Model":modelStr, "Score":score, 
+             "Method":"PIPE/{0}/{1}/{2}".format(self.parent.preprocessor.FILE_NAME, 
+                                      self.regressionName,  
+                                      self.regression.crossValidation)})
+
         return
 
 

@@ -21,13 +21,6 @@ Description:    This threadworker script fetches data from the various web endpo
 
 """
 
-class signals(QtCore.QObject):
-
-        # Simple class to hold alternate thread's signals
-        returnDataSignal = QtCore.pyqtSignal(object)
-        finishedSignal = QtCore.pyqtSignal()
-
-
 class downloadDataThreadWorker(QtCore.QRunnable):
     """
     This QRunnable (https://doc.qt.io/qt-5/qrunnable.html) class contains the
@@ -35,12 +28,13 @@ class downloadDataThreadWorker(QtCore.QRunnable):
     main application process and downloads the data in the background. This
     frees up the main program for other tasks.
     """
-    
+
+    returnDataSignal = QtCore.pyqtSignal(object)
+    finishedSignal = QtCore.pyqtSignal()
 
     def __init__(self, parent = None):
         
-        QtCore.QRunnable.__init__(self)
-        self.signals = signals()
+        QtCore.QRunnable.__init__(self, parent)
 
         # Create a reference to the parent, the application dataset table, and the application
         # start/end dates, the progress bar, and the status bar
@@ -61,23 +55,13 @@ class downloadDataThreadWorker(QtCore.QRunnable):
         # Initialize the max value for the progress bar
         self.progressBar.setMaximum(len(self.datasetTable))
 
-        # Date Range
-        date_range = list(pd.date_range(self.startDate, self.endDate, freq='D'))
-
-        # Dataset list
-        datasetList = list(self.datasetTable.index)
-
-        # Create a multi-index dataframe to store the new data. Initialize it with NaNs
+        # Create a multi-index dataframe to store the new data
         self.dataFrame = pd.DataFrame(
-            index = pd.MultiIndex.from_product(
-                [date_range, datasetList],
-                names=['Datetime','DatasetInternalID']
-                ),
+            index = pd.MultiIndex(levels=[[],[]], codes=[[],[]], names=['Datetime','DatasetInternalID']),
             columns = ['Value']
         )
 
         return
-
 
     @QtCore.pyqtSlot()
     def run(self):
@@ -89,6 +73,7 @@ class downloadDataThreadWorker(QtCore.QRunnable):
         # Create a list of datasets to iterate over
         datasets = list(self.datasetTable.index)
         currentDataset = datasets[0]
+        completedDatasets = []
 
         # Iterate over each dataset and stop once the program sets the current dataset to -1
         # We do it this way because the program may have to dynamically re-arrange the 
@@ -103,24 +88,17 @@ class downloadDataThreadWorker(QtCore.QRunnable):
             dataset = self.datasetTable.loc[currentDataset]
 
             # Check whether the dataset is a composite dataset
-            if not pd.isnull(dataset['DatasetCompositeEquation']):
+            if dataset['DatasetCompositeEquation'] != '':
 
                 # Check whether all the datasets in the composite are available for composing
                 requiredDatasets = [int(i) for i in dataset['DatasetCompositeEquation'].split('/')[1].split(',')]
-                if set(requiredDatasets).issubset(set(datasets[:currentIndex])):
-                    
-                    # Set status bar
-                    self.statusBar.setText("Attempting to compose data for {0}".format(dataset['DatasetName']))
+                if set(requiredDatasets).issubset(set(completedDatasets)):
 
                     # Combine the datasets and get the data.
-                    data = combinedDataSet(self.dataFrame.dropna(), self.datasetTable, dataset['DatasetCompositeEquation'])
-                    data = data.astype('float64')
+                    data = combinedDataSet(self.dataFrame, self.datasetTable, dataset['DatasetCompositeEquation'])
                     data.columns =['Value']
                     data.set_index([data.index, pd.Index(len(data)*[int(currentDataset)])], inplace=True)
                     data.index.names = ['Datetime','DatasetInternalID']
-
-                    self.dataFrame = pd.concat([self.dataFrame, data])
-                    self.progressBar.setValue(self.progressBar.value() + 0.999)
 
                 # If we don't have all the data yet, move this dataset to the back of the list
                 # and come back to it later when we do have all the data.
@@ -130,9 +108,6 @@ class downloadDataThreadWorker(QtCore.QRunnable):
 
             # Download or import the data normally
             else:
-
-                # Set the status bar and progress bar
-                self.statusBar.setText("Attempting to retrieve data for {0}".format(dataset['DatasetName']))
 
                 # Get the dataloader if we haven't already gotten it
                 dataloaderModuleName = "resources.DataLoaders.{0}".format(dataset['DatasetDataloader'])
@@ -145,16 +120,14 @@ class downloadDataThreadWorker(QtCore.QRunnable):
                 try:
 
                     data = dataloader.dataLoader(dataset, self.startDate, self.endDate)
-                    data = data.astype('float64')
                     data.columns =['Value']
                     data.set_index([data.index, pd.Index(len(data)*[int(currentDataset)])], inplace=True)
                     data.index.names = ['Datetime','DatasetInternalID']
                     
-                    self.dataFrame = pd.concat([self.dataFrame, data])
-                    self.progressBar.setValue(self.progressBar.value() + 0.999)
+                    self.dataFrame = pd.concat(self.dataFrame, data)
 
                 except Exception as e:
-                    print(e)
+
                     self.statusBar.setText("Failed to get data for dataset {0}".format(currentDataset))
 
             # Move on the the next dataset in the list. If we've finished all the datasets, set the current dataset to -1
@@ -162,9 +135,6 @@ class downloadDataThreadWorker(QtCore.QRunnable):
 
                 # We've reached the end of the list
                 currentDataset = -1
-
-                # Set the status bar
-                self.statusBar.setText("Finished dataset retrieval")
 
             # We're somewhere in the middle of the list
             else:
@@ -180,9 +150,9 @@ class downloadDataThreadWorker(QtCore.QRunnable):
                     currentDataset = datasets[currentIndex]
         
         # Do some basic post-processing
-        self.dataFrame = self.dataFrame[~self.dataFrame.index.duplicated(keep='last')]
-        self.signals.returnDataSignal.emit(self.dataFrame)
-        self.signals.finishedSignal.emit()
+        self.dataFrame = self.dataFrame[~self.dataFrame.index.duplicated(keep='first')]
+        self.returnDataSignal.emit(self.dataFrame)
+        self.finishedSignal.emit()
 
         return
             
