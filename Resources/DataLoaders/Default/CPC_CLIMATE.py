@@ -8,6 +8,7 @@
 import requests
 import pandas as pd
 from io import StringIO
+from datetime import datetime
 import numpy as np
 
 def dataLoader(stationDict, startDate, endDate):
@@ -71,8 +72,6 @@ def dataLoader(stationDict, startDate, endDate):
         df = df[df.index <= endDate]
         
         # Return the correct dataset
-        print(stationNum)
-        print(df)
         if str(stationNum) == '1':
             del df['Nino3.4 ANOM | Indice | degC']
             return df
@@ -89,11 +88,21 @@ def dataLoader(stationDict, startDate, endDate):
         dataMonth.set_index(pd.DatetimeIndex(datetimes), inplace=True)
         del dataMonth['year'], dataMonth['month'], dataMonth['day']
         dataMonth = dataMonth.resample('D').mean()
+        lastDate = list(dataMonth.index)[-1]
+        if lastDate.month in [1,3,5,7,8,10,12]:
+            endDay = 31
+        elif lastDate.month == 2:
+            endDay = 28
+        else:
+            endDay = 30
+        for day in range(lastDate.day,endDay + 1):
+            dataMonth.loc[datetime(lastDate.year, lastDate.month, day)] = dataMonth.loc[lastDate]
         dataMonth = dataMonth.fillna(method='ffill')
         dataMonth = dataMonth[dataMonth.index >= startDate]
         dataMonth = dataMonth[dataMonth.index <= endDate]
         df = pd.DataFrame(index = pd.date_range(startDate, endDate))
         df = pd.concat([df, dataMonth], axis = 1)
+        
         return df
 
     elif stationNum == 4:
@@ -111,6 +120,15 @@ def dataLoader(stationDict, startDate, endDate):
         df.replace(to_replace=-99.990, value=np.nan, inplace=True)
         df = pd.DataFrame(df['value'])
         df = df.asfreq('D')
+        lastDate = list(df.index)[-1]
+        if lastDate.month in [1,3,5,7,8,10,12]:
+            endDay = 31
+        elif lastDate.month == 2:
+            endDay = 28
+        else:
+            endDay = 30
+        for day in range(lastDate.day,endDay + 1):
+            df.loc[datetime(lastDate.year, lastDate.month, day)] = df.loc[lastDate]
         df.fillna(method='ffill',inplace=True)
         df = df[df.index>=startDate]
         df = df[df.index<=endDate]
@@ -146,6 +164,15 @@ def dataLoader(stationDict, startDate, endDate):
         values = [np.nan if x == -99.99 else x for x in values]
         df = pd.DataFrame(values, index=dates, columns=['PDO'])
         df = df.asfreq('D')
+        lastDate = list(df.index)[-1]
+        if lastDate.month in [1,3,5,7,8,10,12]:
+            endDay = 31
+        elif lastDate.month == 2:
+            endDay = 28
+        else:
+            endDay = 30
+        for day in range(lastDate.day,endDay + 1):
+            df.loc[datetime(lastDate.year, lastDate.month, day)] = df.loc[lastDate]
         df.fillna(method='ffill', inplace=True)
         df = df[df.index>=startDate]
         df = df[df.index<=endDate]
@@ -185,6 +212,15 @@ def dataLoader(stationDict, startDate, endDate):
         df.replace(to_replace=-99.990, value=np.nan, inplace=True)
         df = pd.DataFrame(df['value'])
         df = df.asfreq('D')
+        lastDate = list(df.index)[-1]
+        if lastDate.month in [1,3,5,7,8,10,12]:
+            endDay = 31
+        elif lastDate.month == 2:
+            endDay = 28
+        else:
+            endDay = 30
+        for day in range(lastDate.day,endDay + 1):
+            df.loc[datetime(lastDate.year, lastDate.month, day)] = df.loc[lastDate]
         df.fillna(method='ffill',inplace=True)
         df = df[df.index>=startDate]
         df = df[df.index<=endDate]
@@ -206,6 +242,15 @@ def dataLoader(stationDict, startDate, endDate):
         df.replace(to_replace=-999.00, value=np.nan, inplace=True)
         df = pd.DataFrame(df['value'])
         df = df.asfreq('D')
+        lastDate = list(df.index)[-1]
+        if lastDate.month in [1,3,5,7,8,10,12]:
+            endDay = 31
+        elif lastDate.month == 2:
+            endDay = 28
+        else:
+            endDay = 30
+        for day in range(lastDate.day,endDay + 1):
+            df.loc[datetime(lastDate.year, lastDate.month, day)] = df.loc[lastDate]
         df.fillna(method='ffill',inplace=True)
         df = df[df.index>=startDate]
         df = df[df.index<=endDate]

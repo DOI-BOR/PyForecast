@@ -46,6 +46,15 @@ def dataLoader(stationDict, startDate, endDate):
     del df['divID'], df['year'], df['month']
     df.sort_index(inplace=True)
     df = df.asfreq('D')
+    lastDate = list(df.index)[-1]
+    if lastDate.month in [1,3,5,7,8,10,12]:
+        endDay = 31
+    elif lastDate.month == 2:
+        endDay = 28
+    else:
+        endDay = 30
+    for day in range(2,endDay + 1):
+        df.loc[datetime(lastDate.year, lastDate.month, day)] = df.loc[lastDate]
     df.fillna(method='ffill',inplace=True)
 
     return df

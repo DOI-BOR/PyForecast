@@ -56,7 +56,7 @@ def dataLoader(stationDict, startDate, endDate):
     df = df[~df.index.isnull()]
 
     # Rename the columns
-    df.columns = ['USGS | ' + stationDict['ID'] + ' | Flag', 'USGS | ' + stationDict['ID'] + ' | Streamflow | CFS']
+    df.columns = [ 'USGS | ' + stationDict['ID'] + ' | Streamflow | CFS','USGS | ' + stationDict['ID'] + ' | Flag']
     del df['USGS | ' + stationDict['ID'] + ' | Flag']
 
     print(df)
