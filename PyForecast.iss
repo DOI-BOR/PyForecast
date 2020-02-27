@@ -39,7 +39,7 @@ SetupIconFile={#bin}Resources\Fonts_Icons_Images\icon.ico
 Compression=lzma
 SolidCompression=yes
 PrivilegesRequired=lowest
-SignTool=signtool $f
+;SignTool=signtool $f
 ;signtool = "signtool.exe" sign /tr http://timestamp.digicert.com /td sha256 /fd sha256 /a $p  
 LicenseFile=.\license.txt  
 
