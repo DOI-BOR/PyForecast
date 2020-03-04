@@ -478,11 +478,8 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
 
                 """ Compute prediction interval """
                 predictorData = np.vstack([predictorData.T, np.ones(predictorData.shape[0])]).T
-                print('predictorData ', predictorData)
                 xH = np.array(currentData + [1]).reshape(-1,1)
-                print('xH ', xH)
                 j = np.linalg.inv(np.dot(np.transpose(predictorData), predictorData))
-                print('j ', j)
                 j = np.dot(np.transpose(xH), j)
                 j = np.dot(j, xH)
                 mse = fcst['Metrics']['Root Mean Squared Error']**2
@@ -662,9 +659,6 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         predictandData = predictandDataAll.loc[commonIndex]
 
         residuals = [predictandData.values[i] - fcst['Predicted'][i] for i in range(len(commonIndex))]
-        print('\n')
-        [print(i[0]) for i in residuals]
-        print('\n')
         self.summaryTab.plots.clear_plot()
         self.summaryTab.plots.add_to_plot1(fcst['Predicted'], np.array(predictandData), color='#0a85cc', marker='o', linestyle = '')
         self.summaryTab.plots.add_to_plot1(fcst['Predicted'], fcst['Predicted'], color='#203b72', marker=None, linestyle = '-')
@@ -745,7 +739,6 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         
         self.summaryTab.fcstInfoPane.forecastInfoTable.setRowCount(0)
         self.summaryTab.fcstInfoPane.forecastCurrentData.setRowCount(0)
-        print('coefs:', fcst['Coef'])
         for i, prd in enumerate(fcst['PrdIDs']):
             name = self.forecastDict['EquationPools'][equation]['PredictorPool'][prd]
             self.summaryTab.fcstInfoPane.forecastInfoTable.addRow([name, str(fcst['Coef'][i])])
@@ -836,7 +829,6 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         
         index = -1
         for i, station in enumerate(self.datasetDirectory['datasets']):
-            print(station)
             if station['PYID'] == dataID:
                 index = i
         
@@ -1180,11 +1172,8 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         for i, station in enumerate(self.datasetDirectory['datasets']):
             if colName in station['Name']:
                 index = i
-        print('The user edited entered value {0} for column {1}'.format(str(newVal), colName))
         
         pyid = self.datasetDirectory['datasets'][index]['PYID']
-
-        print('the column name has PyId: {0}'.format(pyid))
         
         ts = pd.Timestamp(dateValue, freq='D')
         self.datasetDirectory['datasets'][index]['Data'][pyid][ts] = newVal
@@ -1407,7 +1396,6 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         index = -1
         name, param, units = colName.split('\n')
         param = param.split(':')[1].strip(' ')
-        print(name, param)
         for i, station in enumerate(self.datasetDirectory['datasets']):
             if station['Name'] == name and station['Parameter'] == param:
                 index = i
@@ -1549,7 +1537,6 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
 
         predictors = self.forecastDict['EquationPools'][equation]['PredictorPool']
         for predID, predLabel in predictors.items():
-            print(predID + ' -- ' + predLabel)
             predName = predLabel.split(':')[0].strip()
             predFreq = predLabel.split(':')[1].strip()
             predictor = self.forecastDict['PredictorPool'][predName][predFreq]
@@ -1649,9 +1636,9 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
 
         self.fcstOptionsTab.optionsPane.updateButton.setEnabled(False)
         self.fcstOptionsTab.optionsPane.applyButton.setEnabled(False)
-        processWorker = ProcessDataV2.alternateThreadWorker(d)
-        processWorker.signals.returnPredictorDict.connect(self.updatePredictors)
-        self.threadPool.start(processWorker)
+        processWorker2 = ProcessDataV2.alternateThreadWorker(d)
+        processWorker2.signals.returnPredictorDict.connect(self.updatePredictors)
+        self.threadPool.start(processWorker2)
 
         return
 
@@ -1662,7 +1649,15 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         into the forecastDict and re-draws the dictionaries.
         """
 
-        self.forecastDict['PredictorPool'] = dict_[0]
+        for predictor in dict_[0].keys():
+            for timestamp in dict_[0][predictor].keys():
+                oldKey = list(dict_[0][predictor][timestamp]['Data'].keys())[0]
+                newKey = self.forecastDict['PredictorPool'][predictor][timestamp]['prdID']
+                dict_[0][predictor][timestamp]['Data'][newKey] = dict_[0][predictor][timestamp]['Data'][oldKey]
+                del dict_[0][predictor][timestamp]['Data'][oldKey]
+                self.forecastDict['PredictorPool'][predictor][timestamp]['Data'] = dict_[0][predictor][timestamp]['Data']
+
+        #self.forecastDict['PredictorPool'] = dict_[0]
         equationPools = dict_[1]
         for equation in equationPools:
             self.forecastDict['EquationPools'][equation]['Predictand']['Data'] = equationPools[equation]['Predictand']['Data']
@@ -2413,7 +2408,6 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
                 return
             #button = QtWidgets.QMessageBox.question(self, '','Not implemented for this regression type', QtWidgets.QMessageBox.Ok )
             #return
-        print(fcst)
         self.regStats = RegressionStatsGUI.regrStatsWindow(fcst)
 
         return
