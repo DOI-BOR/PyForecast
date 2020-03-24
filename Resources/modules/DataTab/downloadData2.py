@@ -31,6 +31,7 @@ class downloadDataThreadWorker(QtCore.QRunnable):
 
     returnDataSignal = QtCore.pyqtSignal(object)
     finishedSignal = QtCore.pyqtSignal()
+    updateProgressBar = QtCore.pyqtSignal(int)
 
     def __init__(self, parent = None):
         

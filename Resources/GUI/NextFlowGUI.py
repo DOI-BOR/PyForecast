@@ -18,8 +18,9 @@ from    PyQt5   import  QtWidgets, \
                         QtCore, \
                         QtGui
 from    resources.GUI.Tabs  import  DatasetsTab, DataTab
+from    resources.GUI.CustomWidgets import SVGIcon
 
-myappid = u'reclamation.NextFlow.2b'
+myappid = u'reclamation.PyForecastv3.2b'
 if platform.system() == 'Windows':
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
@@ -36,7 +37,7 @@ class UI_MainWindow(object):
         Physically lays out the application.
         """
         # Window
-        self.setWindowTitle("NextFlow - Untitled.fcst")
+        self.setWindowTitle("PyForecast - Untitled.fcst")
         self.setMinimumSize(QtCore.QSize(900,750))
 
         # Fonts
@@ -51,17 +52,22 @@ class UI_MainWindow(object):
         self.setMenuBar(self.appMenu)
 
         # Icons
-        datasetIcon = QtGui.QIcon(QtGui.QPixmap(os.path.abspath("resources/graphicalResources/icons/list-24px.svg")))
-        dataIcon = QtGui.QIcon(QtGui.QPixmap(os.path.abspath("resources/graphicalResources/icons/trending_up-24px.svg")))
+        datasetIcon = SVGIcon.SVGIcon(os.path.abspath("resources/graphicalResources/icons/list-24px.svg"), '#FFFFFF')
+        dataIcon = SVGIcon.SVGIcon(os.path.abspath("resources/graphicalResources/icons/trending_up-24px.svg"), '#FFFFFF')
+        modelsIcon = SVGIcon.SVGIcon(os.path.abspath("resources/graphicalResources/icons/assessment-24px.svg"), '#FFFFFF')
 
         # Tabs
         tabWidget = QtWidgets.QTabWidget()
+        tabWidget.setIconSize(QtCore.QSize(25,25))
 
         self.datasetTab = DatasetsTab.DatasetTab(self)
         tabWidget.addTab(self.datasetTab, datasetIcon, "Datasets")
 
         self.dataTab = DataTab.DataTab(self)
         tabWidget.addTab(self.dataTab, dataIcon, "Data")
+
+        self.modelTab = QtWidgets.QWidget()
+        tabWidget.addTab(self.modelTab, modelsIcon, 'Create Models')
 
         #self.forecastsTab = CreateForecastsTab.CreateForecastsTab()
         #tabWidget.addTab(self.forecastsTab, "Create Forecasts")
@@ -96,7 +102,7 @@ class MenuBar(QtWidgets.QMenuBar):
         self.excelAction = QtWidgets.QAction("To Excel")
         self.pdfAction = QtWidgets.QAction("To PDF")
         self.databaseAction = QtWidgets.QAction("To Database")
-        self.exitAction = QtWidgets.QAction("Exit NextFlow")
+        self.exitAction = QtWidgets.QAction("Exit PyForecast")
         self.fileMenu.addAction(self.newAction)
         self.fileMenu.addAction(self.saveAction)
         self.fileMenu.addAction(self.saveAsAction)

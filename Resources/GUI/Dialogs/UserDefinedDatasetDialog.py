@@ -22,7 +22,7 @@ class CompositeEquationEditor(QtWidgets.QListWidget):
         QtWidgets.QListWidget.__init__(self, parent)
         self.parent = parent
 
-        # Get a reference to the NextFlow dataset Table
+        # Get a reference to the PyForecast dataset Table
         self.datasetTable = self.parent.parent.datasetTable
 
         # Intanstiate some list to keep track of the buttons and inputs
@@ -38,7 +38,7 @@ class CompositeEquationEditor(QtWidgets.QListWidget):
         self.removeIcon = QtGui.QIcon(QtGui.QPixmap('resources/GraphicalResources/icons/remove_circle-24px.svg'))
 
         # Check if there is an initial equation, and load it. Otherwise, create an empty row
-        if initialEquation == "":
+        if initialEquation == "" or np.isnan(initialEquation):
             self.addNewDatasetRow()
         
         else:
@@ -311,6 +311,7 @@ class EditorDialog(QtWidgets.QDialog):
         self.dataset['DatasetLatitude'] = float(self.latEdit.text())
         self.dataset['DatasetLongitude'] = float(self.longEdit.text())
         self.dataset['DatasetElevation'] = float(self.elevEdit.text())
+        self.dataset['DatasetExternalID'] = str(self.idEdit.text())
 
         self.saveDatasetSignal.emit(self.dataset)
 
@@ -365,6 +366,7 @@ class EditorDialog(QtWidgets.QDialog):
         # Form
         self.typeEdit =     QtWidgets.QComboBox()
         self.nameEdit =     QtWidgets.QLineEdit()
+        self.idEdit =       QtWidgets.QLineEdit()
         self.agencyEdit =   QtWidgets.QLineEdit()
         self.paramEdit =    QtWidgets.QLineEdit()
         self.pcodeEdit =    QtWidgets.QLineEdit()
@@ -415,6 +417,7 @@ class EditorDialog(QtWidgets.QDialog):
         # Layout the editor
         layout_form.addRow("Dataset Type",              self.typeEdit)
         layout_form.addRow("Dataset Name",              self.nameEdit)
+        layout_form.addRow("Dataset ID",                self.idEdit)
         layout_form.addRow("Dataset Agency",            self.agencyEdit)
         layout_form.addRow("Dataset Parameter",         self.paramEdit)
         layout_form.addRow("Dataset Parameter Code",    self.pcodeEdit)

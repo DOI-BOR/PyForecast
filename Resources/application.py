@@ -5,11 +5,11 @@ Script Author:      Kevin Foley, Civil Engineer, Reclamation
 Last Modified:      Nov 13, 2018
 
 Description:        'application.py' is the main processing script for the 
-                    NextFlow application. This script loads the GUI and directs
+                    PyForecast application. This script loads the GUI and directs
                     all events and function calls. This script also handles loading
                     and saving documents, as well as exporting tables.
 
-Disclaimer:         This script, and the overall NextFlow Application have been
+Disclaimer:         This script, and the overall PyForecast Application have been
                     reviewed and the methodology has been deemed sound. However, 
                     the resulting forecasts and forecast equations generated from 
                     this program are not in any way guarnateed to be reliable or accurate, 
@@ -119,7 +119,7 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
         self.forecastEquationsTable = pd.DataFrame(
             index = pd.Index([], dtype=int, name='ForecastEquationID'),
             columns = [
-                "EquationSource",       # e.g. 'NextFlow','NRCS', 'CustomImport'
+                "EquationSource",       # e.g. 'PyForecast','NRCS', 'CustomImport'
                 "EquationComment",      # E.g. 'Equation Used for 2000-2010 Forecasts'
                 "EquationPredictand",   # E.g. 103011
                 "PredictandPeriod",     # R/1978-03-01/P1M/F12M (starting in march of 1978, over a 1 month period, recurring once a year.)

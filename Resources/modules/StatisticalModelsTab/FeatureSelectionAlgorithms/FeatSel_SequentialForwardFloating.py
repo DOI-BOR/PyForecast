@@ -103,6 +103,9 @@ class FeatureSelector(object):
         do real-time analysis of models as they are being 
         built
         """
+        # Update the visualization
+        model = [True if i == '1' else False for i in modelStr]
+        self.parent.updateViz(currentModel = model)
 
         # Store the score in the computed models dict 
         self.parent.computedModels[modelStr] = score

@@ -1,12 +1,3 @@
-
-from resources.modules.Miscellaneous import loggingAndErrors, DataProcessor
-from resources.modules.DataTab import downloadData
-from PyQt5 import QtCore
-import time
-import pandas as pd
-import numpy as np
-from datetime import datetime
-
 """
 Script Name:    dataTabMaster.py
 
@@ -31,27 +22,24 @@ class dataTab(object):
         Initializes the Tab
         """
 
-        self.connectEventsDataTab()
-        self.dataTab.spreadsheet.model().loadDataIntoModel(self.dataTable, self.datasetTable)
+        self.connectEvents()
         
         return
     
-    def connectEventsDataTab(self):
+    def connectEvents(self):
         """
         Connects all the signal/slot events for the data tab
         """
 
         # Buttons
-        self.dataTab.downloadButton.clicked.connect(self.downloadData)
+        self.dataTab.dowloadButton.clicked.connect(None)
         self.dataTab.endYearInput.valueChanged.connect(lambda x: self.dataTab.startYearInput.setMaximum(x))
 
         # ListWidget
-        self.dataTab.datasetList.itemSelectionChanged.connect(self.plotSelectedDataset)
 
         # Plot
 
         # SpreadSheet
-        self.dataTab.spreadsheet.model().dataChanged.connect(lambda x, y: self.plotSelectedDataset())
 
         return
 
@@ -83,7 +71,6 @@ class dataTab(object):
         # Instantiate progress bar and status bar
         self.dataTab.progressBar.show()
         self.dataTab.progressBar.setValue(0)
-        self.dataTab.progressBar.setMaximum(len(self.datasetTable))
         self.dataTab.statusBar.show()
 
         # Disable the download box inputs
@@ -91,32 +78,16 @@ class dataTab(object):
         self.dataTab.endYearInput.setEnabled(False)
         self.dataTab.updateOption.setEnabled(False)
         self.dataTab.freshDownloadOption.setEnabled(False)
-        self.dataTab.downloadButton.setEnabled(False)
+        self.dataTab.dowloadButton.setEnabled(False)
         
         # Download data for each dataset and append to or update dataTable
-        # Here we use the application's threadPool to run this process in the background
-        downloadWorker = downloadData.downloadDataThreadWorker(self)
-        downloadWorker.signals.returnDataSignal.connect(self.updateDataTableWithNewData)
-        downloadWorker.signals.finishedSignal.connect(self.finishedDownload)
-        downloadWorker.signals.updateProgressBar.connect(self.dataTab.progressBar.setValue)
-        self.threadPool.start(downloadWorker)
-
-        return
-
-
-    def finishedDownload(self):
-        """
-        Re-enables the input boxes when the data is done
-        downloading.
-        """
 
         # Re-enable download box inputs
-        self.dataTab.progressBar.setValue(self.dataTab.progressBar.maximum())
         self.dataTab.startYearInput.setEnabled(True)
         self.dataTab.endYearInput.setEnabled(True)
         self.dataTab.updateOption.setEnabled(True)
         self.dataTab.freshDownloadOption.setEnabled(True)
-        self.dataTab.downloadButton.setEnabled(True)
+        self.dataTab.dowloadButton.setEnabled(True)
 
         return
 
@@ -159,19 +130,15 @@ class dataTab(object):
 
             # If there are any updated values, ask the user how they want to handle it:
             # updated values are those where there are both old and new values, but they are different
-            updatedValuesNew = pd.DataFrame(mergedDataTable[(mergedDataTable['_merge'] == 'both') & (mergedDataTable['Value_new'] != mergedDataTable['Value_old']) & (mergedDataTable['EditFlag'] == False)][['Value_new', 'EditFlag']])
+            updatedValuesNew = pd.DataFrame(merged[(merged['_merge'] == 'both') & (merged['Value_new'] != merged['Value_old']) & (merged['EditFlag'] == False)][['Value_new', 'EditFlag']])
             if not updatedValuesNew.empty:
                 
-                if loggingAndErrors.displayDialogYesNo("The newly fetched data contains updates to old values. Do you want to replace the old values with the updated data? \n\n Note that any updated values will affect forecasts and model skill, though no equations will be changed."):
+                if loggingAndErrors.displayDialogYesNo("The newly fetched data contains updates to old values. Do you want to replace the old values with the updated data? \n\n Note that any updated values will affect forecasts and model skill, though no equations will be changed.")
                 
                     updatedValuesNew.columns = ['Value', 'EditFlag']
                     self.dataTable = self.dataTable.append(updatedValuesNew)
                     self.dataTable = self.dataTable[~self.dataTable.index.duplicated(keep='last')]
 
-            # Set the data for the spreadsheet and initialize the plots
-            self.dataTab.spreadsheet.model().loadDataIntoModel(self.dataTable, self.datasetTable)
-            self.dataTab.datasetList.setCurrentRow(0)
-            #self.dataTab.plot.displayDatasets([self.datasetTable.iloc[0].name])
 
         # Otherwise, we just replace the old datatable with the new datatable
         else:
@@ -186,45 +153,4 @@ class dataTab(object):
             self.dataTab.updateOption.setChecked(False)
 
         return
-
-
-    def plotSelectedDataset(self):
-        """
-        This function is called when a user selects
-        one or more datasets from the left hand side list. 
-        It figures out which datasets are selected and 
-        sends those to the plot's 'displayDatasets' method
-        """
-
-        # Initialize an empty dataset list
-        datasetsList = []
-
-        # Check that there is some data in the dataTable
-        if self.dataTable.empty:
-            return
-
-        # Iterate over the selected items in the datsetList
-        for item in self.dataTab.datasetList.selectedItems():
-
-            # Make sure that the selected item has data in the datatable
-            if item.data(QtCore.Qt.UserRole).name in self.dataTable.index.levels[1]:
-
-                if np.all(pd.isna(self.dataTable.loc[(slice(None), item.data(QtCore.Qt.UserRole).name), 'Value'])):
-
-                    continue
-            
-                # Get the datasetID from the item
-                datasetsList.append(item.data(QtCore.Qt.UserRole).name)
-
-            else:
-
-                loggingAndErrors.showErrorMessage(self,"The selected dataset {0} does not have any data associated with it yet and cannot be plotted.\n\n Use the download/retieval options above to fetch data for this dataset.".format(item.data(QtCore.Qt.UserRole)['DatasetName']))
-
-        # Check if there are any datasets to plot
-        if datasetsList == []:
-            return
-
-        # Call the plot's displayDatasets method
-        self.dataTab.plot.displayDatasets(datasetsList)
-
-        return
+        

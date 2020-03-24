@@ -11,6 +11,49 @@ from bisect import bisect_left
 pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
 
+# Create a custom legend for the Spaghetti Plots
+class SpaghettiLegend(pg.LegendItem):
+
+    def __init__(self, size = None, offset = None):
+        
+        # Instantiate the legend Item
+        pg.LegendItem.__init__(self, size, offset)
+    
+    def addItem(self, item, name):
+
+        # Instantiate a Label Item using the supplied Name
+        label = pg.graphicsItems.LegendItem.LabelItem(name, justify='left')
+
+        # Create the sample image to place next to the legend Item
+        if isinstance(item, pg.graphicsItems.LegendItem.ItemSample):
+            sample = item
+            sample.setFixedWidth(20)
+        else:
+            sample = pg.graphicsItems.LegendItem.ItemSample(item)     
+            sample.setFixedWidth(20)   
+
+        # Add the item to the legend and update the size
+        row = self.layout.rowCount()
+        self.items.append((sample, label))
+        self.layout.addItem(sample, row, 0)
+        self.layout.addItem(label, row, 1)
+        self.updateSize()
+    
+    def updateSize(self):
+
+        if self.size is not None:
+            return
+            
+        height = 0
+        width = 0
+
+        for sample, label in self.items:
+            height += max(sample.boundingRect().height(), label.height()) + 3
+            width = max(width, sample.boundingRect().width()+label.width())
+
+        self.setGeometry(0, 0, width+60, height)
+
+
 # Create a custom Legend for the Time Series Plots
 class TimeSeriesLegend(pg.LegendItem):
 
@@ -105,7 +148,7 @@ class DataTabPlots(pg.GraphicsLayoutWidget):
         # Instantiate the widget and create a reference to the parent
         pg.GraphicsLayoutWidget.__init__(self, parent)
         self.parent = parent
-        [self.ci.layout.setRowMinimumHeight(i, 30) for i in range(15)]
+        [self.ci.layout.setRowMinimumHeight(i, 30) for i in range(9)]
         
         # Get a reference to the datasetTable and the dataTable
         self.datasetTable = self.parent.datasetTable
@@ -128,12 +171,12 @@ class DataTabPlots(pg.GraphicsLayoutWidget):
         # Instantiate the plots
         self.timeSeriesPlot = TimeSeriesLinePlot(self)
         self.timeSliderPlot = TimeSliderPlot(self)
-        self.spaghettiPlot = SpaghettiPlot(self)
+        #self.spaghettiPlot = SpaghettiPlot(self)
 
         # Add the plots
         self.addItem(self.timeSeriesPlot, row=0, col=0, rowspan=6)
         self.addItem(self.timeSliderPlot, row=6, col=0, rowspan=2)
-        self.addItem(self.spaghettiPlot, row=9, col=0, rowspan=5)
+        #self.addItem(self.spaghettiPlot, row=9, col=0, rowspan=5)
     
         return
     
@@ -142,7 +185,7 @@ class DataTabPlots(pg.GraphicsLayoutWidget):
         # If there is more than one dataset, 
         self.timeSeriesPlot.displayDatasets(datasets)
         self.timeSliderPlot.displayDatasets(datasets)
-        self.spaghettiPlot.displayDatasets(datasets[0])
+        #self.spaghettiPlot.displayDatasets(datasets[0])
 
         return
 
@@ -164,10 +207,6 @@ class SpaghettiPlot(pg.PlotItem):
 
         # Create 10 PlotCurveItems to work with
         self.items_ = [pg.PlotCurveItem(parent = self, pen = (*parent.colorCycler[i%10],150), antialias = True) for i in range(100)]
-        #self.circleItems_ = [pg.ScatterPlotItem(size=10, alpha=1, brush=parent.colorCycler[i%10]) for i in range(100)]
-
-        # Set the alphas for the plotcurveitems
-        #[item.setAlpha(0.3) for item in self.items_]
 
         return
 
@@ -497,8 +536,8 @@ if __name__ == '__main__':
     mw.dataTable['EditFlag'] = mw.dataTable['EditFlag'].astype(bool)
 
     dates = pd.date_range('1999-10-01', '2001-09-30', freq='D')
-    y1 = np.sin(range(len(dates))) + np.random.randint(-4, 5)
-    y2 = np.cos(range(len(dates)))
+    y1 = np.sin(0.5*np.array(range(len(dates)))) + np.random.randint(-4, 5)
+    y2 = np.cos(0.2*np.array(range(len(dates))))
 
     for i in range(len(dates)):
         if i == 40:

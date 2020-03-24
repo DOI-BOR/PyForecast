@@ -48,9 +48,6 @@ class menuBar(object):
             
             if '.' not in fname:
                 fname = fname + '.fcst'
-            
-        self.storeMapInformation()
-        self.storeDataTabInformation()
 
         with open('resources/temp/user_options.txt', 'w') as configfile:
             self.userOptionsConfig.write(configfile)

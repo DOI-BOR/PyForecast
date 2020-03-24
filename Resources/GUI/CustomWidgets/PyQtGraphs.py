@@ -176,20 +176,20 @@ class DataTabPlots(pg.GraphicsLayoutWidget):
         self.dataTable = self.parent.parent.dataTable
 
         # Create a color cyler
-        colors = [
+        self.colors = [
             (255, 61, 0), 
+            (0, 145, 234),
             (255, 214, 0), 
             (0, 200, 83), 
             (255, 103, 32), 
-            (0, 145, 234), 
             (170, 0, 255), 
             (141, 110, 99), 
             (198, 255, 0), 
             (29, 233, 182), 
             (136, 14, 79)
         ]
-        self.penCycler = [pg.mkPen(pg.mkColor(color), width=1.5) for color in colors]
-        self.brushCycler = [pg.mkBrush(pg.mkColor(color)) for color in colors]
+        self.penCycler = [pg.mkPen(pg.mkColor(color), width=1.5) for color in self.colors]
+        self.brushCycler = [pg.mkBrush(pg.mkColor(color)) for color in self.colors]
 
         # Instantiate the plots
         self.timeSeriesPlot = TimeSeriesLinePlot(self)

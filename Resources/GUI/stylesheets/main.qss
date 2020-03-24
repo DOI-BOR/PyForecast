@@ -1,7 +1,5 @@
 QMainWindow {
-    background: #ededed;
-    margin: 0;
-    padding: 0;
+    background: #007396;
     font-family: 'Segoe UI';
     font-size: 15px;
     color: #003E51
@@ -16,16 +14,205 @@ QMenuBar::item:selected {
     background: #707070;
     color: black;
 }
+QTabBar {
+    color: #d6d6d6;
+    font-family: 'Segoe UI Semibold';
+}
+
+QTabBar::tab {
+    background: #007396;
+    min-width: 10ex;
+    padding: 5px;
+    border-style: inset;
+    border-left: 1px solid #003E51;
+}
+QTabBar::tab:first {
+    border-left: 0px;
+}
+QTabBar::tab:last {
+    border-right: 1px solid #003E51;
+}
+QTabWidget[objectName="datasetTabPane"] QTabBar::tab {
+    background: #007396;
+    min-width: 10ex;
+    padding-top: 15px;
+    border-style: inset;
+    border-top: 1px solid #003E51;
+    border-left: 0px;
+    border-right: 1px solid #003E51
+}
+QTabWidget[objectName="datasetTabPane"] QTabBar::tab:first {
+    border-top: 0px solid #003E51;
+}
+QTabWidget[objectName="datasetTabPane"] QTabBar::tab:last {
+    border-bottom: 1px solid #003E51;
+}
+QTabWidget[objectName="datasetTabPane"]::pane {
+    background: #f0f0f0;
+    border-right: 1px solid #003E51;
+    border-top: 0px;
+}
+QTabWidget[objectName="datasetTabPane"] QTabBar::tab::selected {
+    color: #ffffff;
+    background: #003E51;
+    border-right: 3px solid #ffffff;
+}
+
+QTabBar::tab:hover{
+    color: #ffffff;
+}
+QTabBar::tab:selected {
+    color: #ffffff;
+    background: #003E51;
+    
+    border-top: 3px solid #ffffff;
+}
+QTabWidget::pane {
+    background: #dddddd;
+    border-top: 1px solid #003E51;
+}
+
 QTabWidget {
     background: #e8e8e8;
     font-family: 'Segoe UI';
     font-size: 15px;
-    color: #003E51
+    color: #003E51;
+}
+
+QSplitter {
+    border: 0px;
+    width:1px;
+}
+QSplitter::handle:horizontal {
+    background: #555555;
+    width: 1px;
 }
 QLabel {
-    font-family: 'Segoe UI';
+    font-family: 'Open Sans Regular', "Open Sans SemiBold", "Open Sans";
     color: #003E51;
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+QListWidget {
+    border: 0px;
+    border-top: 1px solid darkgray;
 }
 QWidget#listItemWidget {
     border-bottom: 1px solid darkgray
+}
+QWidget#listItemWidget QLabel {
+    padding: 2px;
+}
+QLineEdit {
+    font-family: 'Open Sans Light', "Open Sans Regular", "Open Sans", "Arial";
+    border: 0px;
+    margin-left: 5px;
+    margin-right: 5px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    padding: 5px;
+}
+QPushButton {
+    margin-left: 4px;
+    margin-right: 4px;
+    margin-bottom: 2px;
+    padding: 5px;
+}
+QComboBox {
+    margin-left: 5px;
+    margin-right: 5px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    border: 1px solid gray;
+    border-radius: 0px;
+    padding: 1px 18px 1px 3px;
+    min-width: 6em;
+    font-family: 'Open Sans Light', "Open Sans Regular", "Open Sans", "Arial";
+}
+QSpinBox {
+    margin-left: 5px;
+    margin-right: 5px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    border: 1px solid gray;
+    border-radius: 0px;
+    padding: 1px 18px 1px 3px;
+    min-width: 6em;
+    font-family: 'Open Sans Light', "Open Sans Regular", "Open Sans", "Arial";
+}
+QComboBox:editable {
+    background: white;
+}
+QComboBox:!editable, QComboBox::drop-down:editable {
+     background: #D8D8D8;
+}
+QComboBox:on { /* shift the text when the popup opens */
+    padding-top: 3px;
+    padding-left: 4px;
+}
+
+QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    border-left-width: 1px;
+    border-left-color: darkgray;
+    border-left-style: solid; /* just a single line */
+    border-top-right-radius: 0px; /* same radius as the QComboBox */
+    border-bottom-right-radius: 0px;
+}
+QComboBox QAbstractItemView {
+    border: 1px solid gray;
+    margin-left: 5px;
+}
+QComboBox::drop-down:hover {
+    background: #bbbbbb;
+}
+QComboBox::down-arrow {
+    image: url(resources/GraphicalResources/icons/keyboard_arrow_down-24px.svg);
+}
+QSpinBox::up-arrow {
+    image: url(resources/GraphicalResources/icons/keyboard_arrow_up-24px.svg);
+}
+QSpinBox::up-button {
+    subcontrol-origin: border;
+    subcontrol-position: top right;
+    margin: 0px;
+    padding: 12px;
+    border: 1px solid darkgray;
+    background: #D8D8D8;
+}
+QSpinBox::down-button {
+    subcontrol-origin: border;
+    subcontrol-position: bottom right;
+    margin: 0px;
+    padding: 12px;
+    border: 1px solid darkgray;
+    background: #D8D8D8;
+}
+QSpinBox::down-button:hover {
+    background: #bbbbbb;
+}
+QSpinBox::up-button:hover {
+    background: #bbbbbb;
+}
+
+QSpinBox::down-arrow {
+    image: url(resources/GraphicalResources/icons/keyboard_arrow_down-24px.svg);
+}
+
+QComboBox::down-arrow:on { /* shift the arrow when popup is open */
+    top: 1px;
+    left: 1px;
+}
+QProgressBar {
+    font-family: "Open Sans Regular", "Open Sans", "Arial";
+    margin-left: 5px;
+    margin-right: 5px;
+    text-align: center;
+    color: #000000;
+}
+QProgressBar::chunk {
+    background:#007396 ;   
 }

@@ -1,7 +1,7 @@
 """
 Script Name:        DataTab.py
 
-Description:        'DataTab.py' is a PyQt5 GUI for the NextFlow application. 
+Description:        'DataTab.py' is a PyQt5 GUI for the PyForecast application. 
                     The GUI includes all the visual aspects of the Data Tab (menus,
                     plots, tables, buttons, webmaps, etc.) as well as the functionality
                     to add data to the plots, tables, and webmaps.
@@ -11,6 +11,7 @@ from    PyQt5   import  QtWidgets, \
                         QtCore, \
                         QtGui
 from resources.GUI.CustomWidgets.DatasetList_HTML_Formatted import DatasetList_HTML_Formatted
+from resources.GUI.CustomWidgets import SVGIcon
 from resources.GUI.CustomWidgets.PyQtGraphs import DataTabPlots
 from resources.GUI.CustomWidgets.SpreadSheet import SpreadSheetView
 import  sys
@@ -28,6 +29,7 @@ class DataTab(QtWidgets.QWidget):
 
         # Initialize the Layouts
         overallLayout = QtWidgets.QHBoxLayout()
+        overallLayout.setContentsMargins(0,0,0,0)
         splitter = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
         leftPaneLayout = QtWidgets.QVBoxLayout()
         downUpdateBoxLayout = QtWidgets.QFormLayout()
@@ -48,7 +50,8 @@ class DataTab(QtWidgets.QWidget):
         self.updateOption = QtWidgets.QRadioButton("Update with new data")
         self.freshDownloadOption.setChecked(True)
 
-        self.downloadButton = QtWidgets.QPushButton("Retrieve Data")
+        icon = SVGIcon.SVGIcon(os.path.abspath("resources/graphicalResources/icons/get_app-24px.svg"), "#333333")
+        self.downloadButton = QtWidgets.QPushButton(icon, "Retrieve Data")
         self.progressBar = QtWidgets.QProgressBar()
         self.progressBar.hide()
         self.statusBar = QtWidgets.QLabel("") # Maybe change this to a textEdit
@@ -72,28 +75,26 @@ class DataTab(QtWidgets.QWidget):
         self.spreadsheet = SpreadSheetView(self)
 
         # Create a stackedWidget to store the plots and spreadsheet
-        self.stackWidget = QtWidgets.QStackedWidget()
-        self.stackWidget.addWidget(self.plot)
-        self.stackWidget.addWidget(self.spreadsheet)
+        self.stackWidget = QtWidgets.QTabWidget(objectName = 'datasetTabPane')
+        self.stackWidget.setTabPosition(QtWidgets.QTabWidget.East)
+        self.stackWidget.setIconSize(QtCore.QSize(25,25))
+        icon = SVGIcon.SVGIcon(os.path.abspath("resources/graphicalResources/icons/timeline-24px.svg"), '#FFFFFF', 270, (100,100))
+        self.stackWidget.addTab(self.plot, icon, "")
+        icon = SVGIcon.SVGIcon(os.path.abspath("resources/graphicalResources/icons/border_all-24px.svg"), '#FFFFFF', 270, (100,100))
+        self.stackWidget.addTab(self.spreadsheet, icon, "")
         self.stackWidget.setCurrentIndex(0)
-
-        # Switch Button
-        self.switchViewButton = QtWidgets.QPushButton("View Spreadsheet")
-        self.switchViewButton.pressed.connect(self.switchView)
-        buttonLayout = QtWidgets.QHBoxLayout()
-        buttonLayout.addSpacerItem(QtWidgets.QSpacerItem(100,10,QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Minimum))
-        buttonLayout.addWidget(self.switchViewButton)
 
         # Build the overall page
         widgetLeft = QtWidgets.QWidget()
         leftPaneLayout.addLayout(downUpdateBoxLayout)
         leftPaneLayout.addWidget(self.datasetList)
+        leftPaneLayout.setContentsMargins(0,0,0,0)
         widgetLeft.setMaximumWidth(330)
         widgetLeft.setLayout(leftPaneLayout)
         widgetRight = QtWidgets.QWidget()
         rightSideLayout = QtWidgets.QVBoxLayout()
+        rightSideLayout.setContentsMargins(0,0,0,0)
         rightSideLayout.addWidget(self.stackWidget)
-        rightSideLayout.addLayout(buttonLayout)
         widgetRight.setLayout(rightSideLayout)
         splitter.addWidget(widgetLeft)
         splitter.addWidget(widgetRight)

@@ -26,6 +26,7 @@ class signals(QtCore.QObject):
         # Simple class to hold alternate thread's signals
         returnDataSignal = QtCore.pyqtSignal(object)
         finishedSignal = QtCore.pyqtSignal()
+        updateProgressBar = QtCore.pyqtSignal(int)
 
 
 class downloadDataThreadWorker(QtCore.QRunnable):
@@ -120,7 +121,8 @@ class downloadDataThreadWorker(QtCore.QRunnable):
                     data.index.names = ['Datetime','DatasetInternalID']
 
                     self.dataFrame = pd.concat([self.dataFrame, data])
-                    self.progressBar.setValue(self.progressBar.value() + 0.999)
+                    print("progress bar is at {0} of max {1}".format(self.progressBar.value(), self.progressBar.maximum()))
+                    self.signals.updateProgressBar.emit(round(self.progressBar.value() + 0.999))
 
                 # If we don't have all the data yet, move this dataset to the back of the list
                 # and come back to it later when we do have all the data.
@@ -151,7 +153,8 @@ class downloadDataThreadWorker(QtCore.QRunnable):
                     data.index.names = ['Datetime','DatasetInternalID']
                     
                     self.dataFrame = pd.concat([self.dataFrame, data])
-                    self.progressBar.setValue(self.progressBar.value() + 0.999)
+                    print("progress bar is at {0} of max {1}".format(self.progressBar.value(), self.progressBar.maximum()))
+                    self.signals.updateProgressBar.emit(round(self.progressBar.value() + 0.999))
 
                 except Exception as e:
                     print(e)

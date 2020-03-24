@@ -1,7 +1,7 @@
 """
 Script Name:        ModelCreationTab.py
 
-Description:        'ModelCreationTab.py' is a PyQt5 GUI for the NextFlow application. 
+Description:        'ModelCreationTab.py' is a PyQt5 GUI for the PyForecast application. 
                     The GUI includes all the visual aspects of the Model Creation Tab (menus,
                     plots, tables, buttons, webmaps, etc.) as well as the functionality
                     to add data to the plots, tables, and webmaps.
@@ -26,29 +26,127 @@ import numpy as np
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib
+from matplotlib.colors import ListedColormap
 matplotlib.use('Qt5Agg')
 from matplotlib import patches
 import matplotlib.pyplot as plt
+plt.ion()
+
 
 class PredictorCurrentGraph(FigureCanvas):
     
-    def __init__(self, parent=None, width=5, height=4, dpi=100):
+    def __init__(self, parent=None, width=8, height=8, dpi=100):
 
-        fig = Figure(figsize=(width, height), dpi=dpi)
-        self.axes1 = fig.add_subplot(211)
+        self.fig = Figure(figsize=(width, height), dpi=dpi)
+        self.axes1 = self.fig.add_subplot(211)
         self.axes1.grid(which='major', lw=2, color='k')
         self.axes1.tick_params(labelbottom=False, direction='in', labelleft=False)
         self.axes1.set_title("Current Model", loc='left', fontsize=9, fontfamily='consolas')
-        self.axes2 = fig.add_subplot(212)
+        self.axes2 = self.fig.add_subplot(212)
         self.axes2.grid(which='major', lw=2, color='k')
         self.axes2.tick_params(labelbottom=False, direction='in', labelleft=False)
         self.axes2.set_title("All Models", loc='left', fontsize=9, fontfamily='consolas')
 
-        FigureCanvas.__init__(self, fig)
+        # Colormaps
+        self.axes1_colormap = ListedColormap(["white", "black"])
+
+        FigureCanvas.__init__(self, self.fig)
         self.setParent(parent)
         FigureCanvas.setSizePolicy(self, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
+        
         self.draw()
+
+        # Create legend elements
+        self.legendElements1 = [patches.Patch(edgecolor='k', facecolor='k', label="On"),patches.Patch(edgecolor='k', facecolor='w', label="Off"), patches.Patch(hatch="**", edgecolor='k', facecolor='grey', label="Forced On")]
+        self.legendElements2 = [patches.Patch(edgecolor='k', facecolor='w', label="Unused"),patches.Patch(edgecolor='k', facecolor='k', label="Very used"), patches.Patch(hatch="**", edgecolor='k', facecolor='grey', label="Forced On")]
+        self.axes1.legend(handles=self.legendElements1, handlelength=1, handleheight=1, fancybox=False, loc="upper left", bbox_to_anchor=(1,1), frameon=False)
+        self.axes2.legend(handles=self.legendElements2, handlelength=1, handleheight=1, fancybox=False, loc="upper left", bbox_to_anchor=(1,1), frameon=False)
+
+        # Create an annotation to display predictor properties
+        self.annot = self.axes1.annotate("", xy=(1,0), xycoords='axes fraction')
+        self.annot2 = self.axes2.annotate("", xy=(1,0), xycoords='axes fraction')
+
+        # Create a hover box
+        self.hoverBox = patches.Rectangle((0,0), 1, 1, linewidth=4, edgecolor='r', fill=False, zorder=1000)
+        self.hoverBox.set_alpha(0)
+        self.axes1.add_patch(self.hoverBox)
+
+        self.hoverBox2 = patches.Rectangle((0,0), 1, 1, linewidth=4, edgecolor='r', fill=False, zorder=1000)
+        self.hoverBox2.set_alpha(0)
+        self.axes2.add_patch(self.hoverBox2)
+
+        self.mpl_connect("motion_notify_event", self.hover)
+        self.frameBuffer = 0
+
+        return
+
+
+    def hover(self, event):
+
+        if event.inaxes == self.axes1:
+
+            #row = event.ydata
+            #col = event.xdata
+
+            row, col = list(map(lambda x: int(round(x)), [event.ydata, event.xdata]))
+
+            predictor = self.pixelsToPredictors[row, col]
+
+            if np.isnan(predictor):
+                self.annot.set_text('')
+                self.hoverBox.set_alpha(0)
+
+                return
+
+            predictorIdx = self.predictorPool.index(predictor)
+            period = self.predictorPeriods[predictorIdx]
+
+            self.annot.set_text(""" Predictor: {0}\n Period: {1}\n Method: {2}""".format(int(predictor), "4-Month", "Average"))
+            self.hoverBox.set_alpha(1)
+            self.hoverBox.set_xy((col-0.5, row-0.5))
+
+            predictorIdx = self.predictorPool.index(predictor)
+            period = self.predictorPeriods[predictorIdx]
+            count = self.currentCount[row, col] 
+
+            self.annot2.set_text(""" Predictor: {0}\n Count: {1}""".format(int(predictor), int(count) if not np.isnan(count) else "Forced"))
+            self.hoverBox2.set_alpha(1)
+            self.hoverBox2.set_xy((col-0.5, row-0.5))
+
+
+        elif event.inaxes == self.axes2:
+
+            row, col = list(map(lambda x: int(round(x)), [event.ydata, event.xdata]))
+
+            predictor = self.pixelsToPredictors[row, col]
+
+            if np.isnan(predictor):
+                self.annot2.set_text('')
+                self.hoverBox2.set_alpha(0)
+
+                return
+
+            predictorIdx = self.predictorPool.index(predictor)
+            period = self.predictorPeriods[predictorIdx]
+            count = self.currentCount[row, col]
+
+            self.annot2.set_text(""" Predictor: {0}\n Count: {1}""".format(int(predictor), int(count) if not np.isnan(count) else "Forced"))
+            self.hoverBox2.set_alpha(1)
+            self.hoverBox2.set_xy((col-0.5, row-0.5))
+
+            predictorIdx = self.predictorPool.index(predictor)
+            period = self.predictorPeriods[predictorIdx]
+
+            self.annot.set_text(""" Predictor: {0}\n Period: {1}\n Method: {2}""".format(int(predictor), "4-Month", "Average"))
+            self.hoverBox.set_alpha(1)
+            self.hoverBox.set_xy((col-0.5, row-0.5))
+
+
+            pass
+            
+        self.draw()
+        #self.parent().repaint()
 
         return
 
@@ -94,18 +192,19 @@ class PredictorCurrentGraph(FigureCanvas):
         # Don't count forced predictors in the currentCount array and plot hatched areas over them in graph 2
         for i, forceFlag in enumerate(self.predictorForceFlags):
             if forceFlag:
+
+                # Hatched areas and text for plot 1
                 self.axes1.text(i%square-0.4, int(i/square)+0.4, 'F', fontweight='bold', horizontalalignment='left', verticalalignment='bottom', fontfamily='consolas', color='w')
+                self.axes1.add_patch(patches.Rectangle(((i%square)-0.5,int(i/square)-0.5), 1, 1, hatch='**', fill=True, snap=False, facecolor='grey'))
+
+                # Hatched areas and text for plot 2
                 self.currentCount[int(i/square), i%square] = np.nan
-                self.axes2.add_patch(patches.Rectangle(((i%square)-0.5,int(i/square)-0.5), 1, 1, hatch='**', fill=True, snap=False, facecolor='g'))
-                
-                self.axes2.text(i%square-0.4, int(i/square)+0.4, 'F', fontweight='bold', horizontalalignment='left', verticalalignment='bottom', fontfamily='consolas', color='k')
-                self.axes2.text(i%square-0.42, int(i/square)+0.42, 'F', fontweight='bold', horizontalalignment='left', verticalalignment='bottom', fontfamily='consolas', color='r')
+                self.axes2.add_patch(patches.Rectangle(((i%square)-0.5,int(i/square)-0.5), 1, 1, hatch='**', fill=True, snap=False, facecolor='grey'))
                 self.axes2.text(i%square-0.44, int(i/square)+0.44, 'F', fontweight='bold', horizontalalignment='left', verticalalignment='bottom', fontfamily='consolas', color='w')
 
-
         # Plot the current status
-        self.pixels1 = self.axes1.imshow(self.currentStatus, interpolation='nearest', cmap='binary', vmax=1)
-        self.pixels2 = self.axes2.imshow(self.currentCount, interpolation='nearest', cmap='binary', vmax=1)
+        self.pixels1 = self.axes1.imshow(self.currentStatus, interpolation='nearest', cmap=self.axes1_colormap, vmax=1)
+        self.pixels2 = self.axes2.imshow(self.currentCount, interpolation='nearest', cmap='Greys', vmax=1)
 
         # Set the major grid
         self.axes1.xaxis.set_ticks(np.arange(-0.5, self.numRows+0.5, 1))
@@ -115,16 +214,22 @@ class PredictorCurrentGraph(FigureCanvas):
 
         # Draw the plot
         self.draw()
+        #self.parent().repaint()
 
         return
 
-    def updateGrid(self, currentModel = None):
+    def updateGrid(self, currentModel = None, lastStatus=None):
         """
         """
+        if self.frameBuffer != 100 and not lastStatus:
+            self.frameBuffer += 1
+            return
+        else:
+            self.frameBuffer = 0
 
         for i, p in enumerate(currentModel):
             if self.predictorForceFlags[i] == True:
-                self.currentStatus[int(i/self.numRows), i%self.numCols] = 0.5
+                self.currentStatus[int(i/self.numRows), i%self.numCols] = 0
             elif p==1:
                 self.currentStatus[int(i/self.numRows), i%self.numCols] = 1
                 self.currentCount[int(i/self.numRows), i%self.numCols] += 1
@@ -134,11 +239,115 @@ class PredictorCurrentGraph(FigureCanvas):
         self.pixels1.set_data(self.currentStatus)
         self.pixels2.set_clim(vmax = np.nanmax(self.currentCount), vmin = np.nanmin(self.currentCount))
         self.pixels2.set_data(self.currentCount)
-
+        
         self.draw()
+        self.parent().repaint()
 
         return
 
+class ModelCreationTab_(QtWidgets.QWidget):
+    """
+    This class defines the GUI layout of the Model Creation Tab
+    """
+
+    def __init__(self, parent=None):
+
+        QtWidgets.QWidget.__init__(self)
+
+        # Create a few layouts that we'll end up using
+        self.overallLayout = QtWidgets.QHBoxLayout()
+        self.leftPaneLayout = QtWidgets.QVBoxLayout()
+        self.rightPaneLayout = QtWidgets.QVBoxLayout()
+        self.genStatusLayout = QtWidgets.QHBoxLayout()
+
+        # Build the Left Pane Layout
+        title = QtWidgets.QLabel('<b style="font-size: 17px">Generate Models</b>')
+        title.setTextFormat(QtCore.Qt.RichText)
+
+        # Settings Radio selection
+        self.settingsLoadPreviousRadio = QtWidgets.QRadioButton("Load previous settings", self)
+        self.settingsLoadPreviousDropDown = QtWidgets.QComboBox()
+        self.settingsNewSettingsRadio = QtWidgets.QRadioButton("Specify new settings", self)
+        
+        # Separator
+        hline = QtWidgets.QFrame()
+        hline.setFrameShape(QtWidgets.QFrame.HLine)
+
+        # Settings Specification
+        fcstTargetLabel = QtWidgets.QLabel("Forecast Target")
+        self.fcstTargetDropDown = QtWidgets.QComboBox()
+        fcstPeriodLabel = QtWidgets.QLabel("Forecast Period")
+        self.fcstPeriodStart = QtWidgets.QDateTimeEdit()
+        self.fcstPeriodStart.setCalendarPopup(True)
+        self.fcstPeriodStart.setDisplayFormat("MMMM d")
+        currentDate = QtCore.QDate.currentDate()
+        self.fcstPeriodStart.setMinimumDate(QtCore.QDate(currentDate.year(), 1, 1))
+        self.fcstPeriodStart.setMaximumDate(QtCore.QDate(currentDate.year(), 12, 31))
+        self.fcstPeriodEnd = QtWidgets.QDateTimeEdit()
+        self.fcstPeriodEnd.setCalendarPopup(True)
+        self.fcstPeriodEnd.setDisplayFormat("MMMM d")
+        self.fcstPeriodEnd.setMinimumDate(QtCore.QDate(currentDate.year(), 1, 1))
+        self.fcstPeriodEnd.setMaximumDate(QtCore.QDate(currentDate.year(), 12, 31))
+        fcstMethodLabel = QtWidgets.QLabel("Resampling Method")
+        self.fcstResampleMethod = QtWidgets.QComboBox()
+        predictorsLabel = QtWidgets.QLabel("Predictors")
+        self.predictorSpecButton = QtWidgets.QPushButton("Specify Predictors")
+        preprocessorsLabel = QtWidgets.QLabel("Preprocessors")
+        self.preprocGroup = QtWidgets.QButtonGroup()
+        self.preprocGroup.setExclusive(False)
+        self.NoPreProcButton = QtWidgets.QCheckBox("No Preprocessing")
+        self.LogYButton = QtWidgets.QCheckBox("Logarithmic Y Preprocessing")
+        self.LogXButton = QtWidgets.QCheckBox("Logarithmic X Preprocessing")
+        self.MinMaxButton = QtWidgets.QCheckBox("Min / Max Preprocessing")
+        self.YAwareButton = QtWidgets.QCheckBox("Y-Aware Preprocessing")
+        self.preprocGroup.addButton(self.NoPreProcButton)
+        self.preprocGroup.addButton(self.LogYButton)
+        self.preprocGroup.addButton(self.LogXButton)
+        self.preprocGroup.addButton(self.MinMaxButton)
+        self.preprocGroup.addButton(self.YAwareButton)
+        featureSelectionLabel = QtWidgets.QLabel("Feature Selection")
+        self.featSelGroup = QtWidgets.QButtonGroup()
+        self.featSelGroup.setExclusive(False)
+        self.SFFSButton = QtWidgets.QCheckBox("Sequential Forward")
+        self.SBFSButton = QtWidgets.QCheckBox("Sequential Backward")
+        self.GeneticButton = QtWidgets.QCheckBox("Genetic Algorithm")
+        self.BruteForceButton = QtWidgets.QCheckBox("Brute Force")
+        self.featSelGroup.addButton(self.SFFSButton, 1)
+        self.featSelGroup.addButton(self.SFFSButton, 2)
+        self.featSelGroup.addButton(self.GeneticButton, 3)
+        self.featSelGroup.addButton(self.BruteForceButton, 4)
+
+        # Layout the left side pane
+        self.leftPaneLayout.addWidget(title)
+        self.leftPaneLayout.addWidget(self.settingsLoadPreviousRadio)
+        self.leftPaneLayout.addWidget(self.settingsLoadPreviousDropDown)
+        self.leftPaneLayout.addWidget(self.settingsNewSettingsRadio)
+        self.leftPaneLayout.addWidget(hline)
+        self.leftPaneLayout.addWidget(fcstTargetLabel)
+        self.leftPaneLayout.addWidget(self.fcstTargetDropDown)
+        self.leftPaneLayout.addWidget(fcstPeriodLabel)
+        self.leftPaneLayout.addWidget(self.fcstPeriodStart)
+        self.leftPaneLayout.addWidget(self.fcstPeriodEnd)
+        self.leftPaneLayout.addWidget(fcstMethodLabel)
+        self.leftPaneLayout.addWidget(self.fcstResampleMethod)
+        self.leftPaneLayout.addWidget(predictorsLabel)
+        self.leftPaneLayout.addWidget(self.predictorSpecButton)
+        self.leftPaneLayout.addWidget(featureSelectionLabel)
+        self.leftPaneLayout.addWidget(self.SFFSButton)
+        self.leftPaneLayout.addWidget(self.SBFSButton)
+        self.leftPaneLayout.addWidget(self.GeneticButton)
+        self.leftPaneLayout.addWidget(self.BruteForceButton)
+        self.leftPaneLayout.addWidget(preprocessorsLabel)
+        self.leftPaneLayout.addWidget(self.NoPreProcButton)
+        self.leftPaneLayout.addWidget(self.LogYButton)
+        self.leftPaneLayout.addWidget(self.LogXButton)
+        self.leftPaneLayout.addWidget(self.MinMaxButton)
+        self.leftPaneLayout.addWidget(self.YAwareButton)
+
+        # Set the widget layout
+        self.setLayout(self.leftPaneLayout)
+
+        self.show()
 
 class ModelCreationTab(QtWidgets.QWidget):
     """
@@ -152,13 +361,14 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.layout = QtWidgets.QVBoxLayout()
         self.layout.addWidget(self.grid)
         self.button = QtWidgets.QPushButton("Run")
-        self.button.pressed.connect(self.run1)
+        
         self.layout.addWidget(self.button)
         self.setLayout(self.layout)
         self.qtimer = QtCore.QTimer()
         self.qtimer.setInterval(5)
         self.qtimer.timeout.connect(self.run1)
-        self.qtimer.start()
+        self.button.pressed.connect(self.qtimer.start)
+        
         self.show()        
         
         return
@@ -173,6 +383,7 @@ if __name__ == '__main__':
     import sys
     import os
     import pandas as pd
+
 
     app = QtWidgets.QApplication(sys.argv)
 
@@ -199,7 +410,7 @@ if __name__ == '__main__':
             ]
         )
     
-    numPredictors = 13
+    numPredictors = 32
 
     modelRunsTable.loc[0] = [
         "",
@@ -210,8 +421,8 @@ if __name__ == '__main__':
         [],
         [],
         [int(10000*np.random.random()) for i in range(numPredictors)],
-        [[True, False][1 if np.random.randint(0,11)<9 else 0] for i in range(numPredictors)],
-        ["" for i in range(numPredictors)],
+        [[True, False][1 if np.random.randint(0,11)<10 else 0] for i in range(numPredictors)],
+        ["SFEFSF" for i in range(numPredictors)],
         ["" for i in range(numPredictors)],
         [],
         "",

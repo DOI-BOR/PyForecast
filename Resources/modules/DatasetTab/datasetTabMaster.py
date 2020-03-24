@@ -167,7 +167,7 @@ class datasetTab(object):
 
         # Refresh the dataset list view
         self.datasetTab.selectedDatasetsWidget.setDatasetTable(self.datasetTable)
-        self.datasetTab.selectedDatasetsLabel.setText("{0} datasets have been selected:".format(len(self.datasetTable)))
+        self.datasetTab.selectedDatasetsLabel.setText("{0} DATASETS HAVE BEEN SELECTED:".format(len(self.datasetTable)))
 
         # Also refresh the dataset lists elsewhere in the software
         self.dataTab.datasetList.setDatasetTable(self.datasetTable)
@@ -206,7 +206,7 @@ class datasetTab(object):
 
         # Refresh the dataset list view
         self.datasetTab.selectedDatasetsWidget.setDatasetTable(self.datasetTable)
-        self.datasetTab.selectedDatasetsLabel.setText("{0} datasets have been selected:".format(len(self.datasetTable)))
+        self.datasetTab.selectedDatasetsLabel.setText("{0} DATASETS HAVE BEEN SELECTED:".format(len(self.datasetTable)))
 
         # Also refresh the dataset lists elsewhere in the software
         self.dataTab.datasetList.setDatasetTable(self.datasetTable)
@@ -291,7 +291,7 @@ class datasetTab(object):
 
         # Update the display
         self.datasetTab.selectedDatasetsWidget.setDatasetTable(self.datasetTable)
-        self.datasetTab.selectedDatasetsLabel.setText("{0} datasets have been selected:".format(len(self.datasetTable)))
+        self.datasetTab.selectedDatasetsLabel.setText("{0} DATASETS HAVE BEEN SELECTED:".format(len(self.datasetTable)))
 
         # Also refresh the dataset lists elsewhere in the software
         self.dataTab.datasetList.setDatasetTable(self.datasetTable)

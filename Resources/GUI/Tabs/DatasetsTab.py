@@ -1,14 +1,14 @@
 """
 Script Name:        DatasetsTab.py
 
-Description:        'DatasetsTab.py' is a PyQt5 GUI for the NextFlow application. 
+Description:        'DatasetsTab.py' is a PyQt5 GUI for the PyForecast application. 
                     The GUI includes all the visual aspects of the Datasets Tab (menus,
                     plots, tables, buttons, webmaps, etc.) as well as the functionality
                     to add data to the plots, tables, and webmaps.
 """
 
 from PyQt5 import  QtWidgets, QtCore, QtGui
-from resources.GUI.CustomWidgets import DatasetList_HTML_Formatted
+from resources.GUI.CustomWidgets import DatasetList_HTML_Formatted, SVGIcon
 from resources.GUI.WebMap import webMapView
 
 import sys
@@ -16,7 +16,7 @@ import os
 
 class DatasetTab(QtWidgets.QWidget):
     """
-    This subclass of QWidget describes the layout of the NextFlow
+    This subclass of QWidget describes the layout of the PyForecast
     applicaiton's Datasets Tab. For the functionality of the Datasets Tab, 
     see the 'DatasetTab' section of 'application.py'
     """
@@ -35,8 +35,10 @@ class DatasetTab(QtWidgets.QWidget):
 
         # Layout Elements
         layout = QtWidgets.QVBoxLayout()
+        layout.setContentsMargins(0,0,0,0)
         splitter = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
-        tabPane = QtWidgets.QTabWidget()
+        tabPane = QtWidgets.QTabWidget(objectName = 'datasetTabPane')
+        tabPane.setIconSize(QtCore.QSize(25,25))
         tabPane.setTabPosition(QtWidgets.QTabWidget.East)
 
         # Left hand side web view
@@ -46,31 +48,37 @@ class DatasetTab(QtWidgets.QWidget):
         # Right hand side tab pane - DatasetListTab
         DatasetListTab = QtWidgets.QWidget()
         layout_ = QtWidgets.QVBoxLayout()
-        label = QtWidgets.QLabel('<b style="font-size: 17px">Selected Datasets</b>')
+        layout_.setContentsMargins(0,0,0,0)
+        layout_.setSpacing(0)
+        label = QtWidgets.QLabel('<p style="font-size: 20px">Selected Datasets</p>')
         label.setTextFormat(QtCore.Qt.RichText)
-        self.selectedDatasetsLabel = QtWidgets.QLabel("0 datasets have been selected:")
+        label2 = QtWidgets.QLabel('Use the map to the left to browse and select datasets to use in this forecast. Selected datasets can be managed from the list below.')
+        
+        label2.setWordWrap(True)
+        self.selectedDatasetsLabel = QtWidgets.QLabel("0 DATASETS HAVE BEEN SELECTED:")
         self.selectedDatasetsWidget = DatasetList_HTML_Formatted.DatasetList_HTML_Formatted(datasetTable=self.parent.datasetTable)
         self.selectedDatasetsWidget.defineContextMenu(menuItems=['Remove Dataset'])
         layout_.addWidget(label)
+        layout_.addWidget(label2)
         layout_.addWidget(self.selectedDatasetsLabel)
         layout_.addWidget(self.selectedDatasetsWidget)
         DatasetListTab.setLayout(layout_)
-        icon = QtGui.QPixmap(os.path.abspath("resources/graphicalResources/icons/playlist_add_check-24px.svg"))
-        matrix_ = QtGui.QTransform()
-        matrix_.rotate(270)
-        icon = QtGui.QIcon(icon.transformed(matrix_))
+        icon = SVGIcon.SVGIcon(os.path.abspath("resources/graphicalResources/icons/playlist_add_check-24px.svg"), '#FFFFFF', 270, (100,100))
         tabPane.addTab(DatasetListTab, icon, "")
         tabPane.setTabToolTip(0, "Selected Dataset List")
 
         # Right hand side tab pane - SearchTab
         SearchTab = QtWidgets.QWidget()
         layout_ = QtWidgets.QVBoxLayout()
-        label = QtWidgets.QLabel('<b style="font-size: 20px">Search Datasets</b>')
+        layout_.setContentsMargins(0,0,0,0)
+        layout_.setSpacing(0)
+        label = QtWidgets.QLabel('<p style="font-size: 20px">Search Datasets</p>')
         label.setTextFormat(QtCore.Qt.RichText)
-        keywordLabel = QtWidgets.QLabel("Search for Keyword:")
+        keywordLabel = QtWidgets.QLabel("LOCATE DATASETS BY KEYWORD:")
         self.keywordSearchBox = QtWidgets.QLineEdit()
         self.keywordSearchBox.setPlaceholderText("e.g. Alpine Meadow")
-        self.keywordSearchButton = QtWidgets.QPushButton("Search")
+        icon = SVGIcon.SVGIcon(os.path.abspath("resources/graphicalResources/icons/search-24px.svg"), "#333333")
+        self.keywordSearchButton = QtWidgets.QPushButton(icon, "")
         self.searchResultsBox = DatasetList_HTML_Formatted.DatasetList_HTML_Formatted( buttonText = 'Add Dataset')
         self.keywordSearchBox.returnPressed.connect(self.keywordSearchButton.click)
         layout_.addWidget(label)
@@ -81,19 +89,20 @@ class DatasetTab(QtWidgets.QWidget):
         layout_.addLayout(layout2)
         layout_.addWidget(self.searchResultsBox)
         SearchTab.setLayout(layout_)
-        icon = QtGui.QPixmap(os.path.abspath("resources/graphicalResources/icons/search-24px.svg"))
-        matrix_ = QtGui.QTransform()
-        matrix_.rotate(270)
-        icon = QtGui.QIcon(icon.transformed(matrix_))
+        icon = SVGIcon.SVGIcon(os.path.abspath("resources/graphicalResources/icons/search-24px.svg"), '#FFFFFF', 270, (100,100))
         tabPane.addTab(SearchTab, icon, "")
         tabPane.setTabToolTip(1, "Dataset Search")
 
         # Right hand side tab pane - box/huc search
         boxHucSearchTab = QtWidgets.QWidget()
         layout_ = QtWidgets.QVBoxLayout()
-        label = QtWidgets.QLabel('<b style="font-size: 20px">Browse Map</b><p>Search for stations within watersheds or a bounding box</p>')
+        layout_.setSpacing(0)
+        layout_.setContentsMargins(0,0,0,0)
+        label = QtWidgets.QLabel('<p style="font-size: 20px">Browse Map</p>')
         label.setTextFormat(QtCore.Qt.RichText)
+        label2 = QtWidgets.QLabel('SEARCH FOR DATASETS WITHIN SELECTED MAP AREAS:')
         layout_.addWidget(label)
+        layout_.addWidget(label2)
         self.boundingBoxButton = QtWidgets.QPushButton("Draw Bounding Box")
         self.hucSelectionButton = QtWidgets.QPushButton("Select Watersheds")
         self.boxHucSearchButton = QtWidgets.QPushButton("Search Selected Areas")
@@ -106,10 +115,7 @@ class DatasetTab(QtWidgets.QWidget):
         layout_.addWidget(self.boxHucSearchButton)
         layout_.addWidget(self.boxHucResultsBox)
         boxHucSearchTab.setLayout(layout_)
-        icon = QtGui.QPixmap(os.path.abspath("resources/graphicalResources/icons/image_search-24px.svg"))
-        matrix_ = QtGui.QTransform()
-        matrix_.rotate(270)
-        icon = QtGui.QIcon(icon.transformed(matrix_))
+        icon = SVGIcon.SVGIcon(os.path.abspath("resources/graphicalResources/icons/image_search-24px.svg"), '#FFFFFF', 270, (100,100))
         tabPane.addTab(boxHucSearchTab, icon, "")
         tabPane.setTabToolTip(1, "Area Search")
 
@@ -117,6 +123,8 @@ class DatasetTab(QtWidgets.QWidget):
         # Right hand side tab pane - AdditionalDatasetTab
         AdditionalDatasetTab = QtWidgets.QWidget()
         layout_ = QtWidgets.QVBoxLayout()
+        layout_.setContentsMargins(0,0,0,0)
+        layout_.setSpacing(0)
         label = QtWidgets.QLabel('<b style="font-size: 20px">Additional Datasets</b>')
         label.setTextFormat(QtCore.Qt.RichText)
         prismLabel = QtWidgets.QLabel("PRISM Temperature/Precipitation")
@@ -125,7 +133,8 @@ class DatasetTab(QtWidgets.QWidget):
         prismInfo.setToolTip("Returns watershed averaged temperature and precipitation data from the PRISM dataset")
         self.prismInput = QtWidgets.QLineEdit()
         self.prismInput.setPlaceholderText("Start typing a watershed:")
-        self.prismButton = QtWidgets.QPushButton("Add")
+        icon = SVGIcon.SVGIcon(os.path.abspath("resources/graphicalResources/icons/playlist_add-24px.svg"), "#333333")
+        self.prismButton = QtWidgets.QPushButton(icon, "")
         self.prismButton.setFixedWidth(100)
 
         nrccLabel = QtWidgets.QLabel("NRCC Temperature/Precipitation")
@@ -134,7 +143,7 @@ class DatasetTab(QtWidgets.QWidget):
         nrccInfo.setToolTip("Returns watershed averaged temperature and precipitation data from the NRCC dataset")
         self.nrccInput = QtWidgets.QLineEdit()
         self.nrccInput.setPlaceholderText("Start typing a watershed:")
-        self.nrccButton = QtWidgets.QPushButton("Add")
+        self.nrccButton = QtWidgets.QPushButton(icon, "")
         self.nrccButton.setFixedWidth(100)
 
         pdsiLabel = QtWidgets.QLabel("Palmer Drought Severity Index / Standardized Precipitation Index")
@@ -143,9 +152,9 @@ class DatasetTab(QtWidgets.QWidget):
         pdsiInfo.setToolTip("Returns climate-division averaged Palmer Drought Severity Index / SPI data from the CPC.")
         self.pdsiInput = QtWidgets.QLineEdit()
         self.pdsiInput.setPlaceholderText("Start typing a State or division number:")
-        self.pdsiButton = QtWidgets.QPushButton("Add PDSI")
+        self.pdsiButton = QtWidgets.QPushButton(icon, "PDSI")
         self.pdsiButton.setFixedWidth(70)
-        self.spiButton = QtWidgets.QPushButton("Add SPI")
+        self.spiButton = QtWidgets.QPushButton(icon, "SPEI")
         self.spiButton.setFixedWidth(70)
 
         climLabel = QtWidgets.QLabel("Climate Indices")
@@ -153,14 +162,14 @@ class DatasetTab(QtWidgets.QWidget):
         climInfo.setPixmap(self.infoIcon)
         climInfo.setToolTip("Returns various climate indices data from the CPC.")
         self.climInput = QtWidgets.QComboBox()
-        self.climButton = QtWidgets.QPushButton("Add")
+        self.climButton = QtWidgets.QPushButton(icon, "")
         self.climButton.setFixedWidth(100)
 
         addiLabel = QtWidgets.QLabel("User Defined Dataset")
         addiInfo = QtWidgets.QLabel()
         addiInfo.setPixmap(self.infoIcon)
         addiInfo.setToolTip("")
-        self.addiButton = QtWidgets.QPushButton("Add Dataset")
+        self.addiButton = QtWidgets.QPushButton(icon, "Add Custom")
         self.addiButton.setFixedWidth(100)
         
         blank = QtWidgets.QLabel()
@@ -218,10 +227,7 @@ class DatasetTab(QtWidgets.QWidget):
 
         #layout_.addWidget(blank)
         AdditionalDatasetTab.setLayout(layout_)
-        icon = QtGui.QPixmap(os.path.abspath("resources/graphicalResources/icons/public-24px.svg"))
-        matrix_ = QtGui.QTransform()
-        matrix_.rotate(270)
-        icon = QtGui.QIcon(icon.transformed(matrix_))
+        icon = SVGIcon.SVGIcon(os.path.abspath("resources/graphicalResources/icons/public-24px.svg"), '#FFFFFF', 270, (100,100))
         tabPane.addTab(AdditionalDatasetTab, icon, "")
         tabPane.setTabToolTip(2, "Additional Datasets")
 

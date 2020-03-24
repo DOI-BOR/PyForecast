@@ -10,11 +10,11 @@ from datetime import datetime, date
 
 def dataframeToGeoJSON(df):
     """
-    This function reads a formatted dataframe (formatted by NextFlow application) and 
+    This function reads a formatted dataframe (formatted by PyForecast application) and 
     returns a geojson featureCollection of point features. 
 
     Input:  dataframe
-            - a NextFlow 'datasetTable' dataframe
+            - a PyForecast 'datasetTable' dataframe
     
     Output: geojson string of features.
     """

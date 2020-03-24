@@ -119,7 +119,7 @@ window.climLayer.eachLayer(function(layer) {
 // FUNCTIONS
 //
 
-// Function to load raw geojson from the NextFLOW application into the map. 
+// Function to load raw geojson from the PyForecast application into the map. 
 //      Reads the 'geojson_string' (which is actually an object)
 //      into the web map as a set of layers.
 function loadDatasetCatalog(geojson_string) {

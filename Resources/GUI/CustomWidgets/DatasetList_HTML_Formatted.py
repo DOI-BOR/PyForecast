@@ -4,7 +4,7 @@ Author:         Kevin Foley
 
 Description:    This file contains the class definition for the
                 dataset list that is used on the datasets tab
-                and in other places in the NextFlow software.
+                and in other places in the PyForecast software.
 """
 
 # Import Libraries
@@ -71,7 +71,7 @@ empty_dataset_list = pd.DataFrame(
 
 class DatasetList_HTML_Formatted(QtWidgets.QListWidget):
     """
-    This subclass of the QListWidget displays dataset from the NextFlow DatasetTable
+    This subclass of the QListWidget displays dataset from the PyForecast DatasetTable
     using a user_formatted HTML string. It also includes context menu functionality.
     """
 
@@ -180,9 +180,12 @@ class DatasetList_HTML_Formatted(QtWidgets.QListWidget):
             svg = ''
             if self.useIcon:
                 parameterName = dataset['DatasetParameter']
-                for key, value in datasetIcons.items():
-                    if key in parameterName.lower():
-                        svg = value
+                if "SNOTEL" in dataset['DatasetType']:
+                    svg = os.path.abspath("resources/graphicalResources/icons/terrain-24px.svg")
+                else:
+                    for key, value in datasetIcons.items():
+                        if key in parameterName.lower():
+                            svg = value
 
             htmlString = htmlString.format(svg)
 

@@ -21,7 +21,7 @@ from resources.modules.Miscellaneous.DataProcessor import updateSingleComputedVa
 
 class SpreadSheetModel(QtCore.QAbstractItemModel):
     """
-    The SpeadsheetModel is a Qt model that works on top of NextFlow's
+    The SpeadsheetModel is a Qt model that works on top of PyForecast's
     DataTable to display data in the SpreadsheetView.
     """
 
@@ -37,7 +37,7 @@ class SpreadSheetModel(QtCore.QAbstractItemModel):
 
     def loadDataIntoModel(self, dataTable, datasetTable):
         """
-        Loads a NextFlow DataTable into the model.
+        Loads a PyForecast DataTable into the model.
 
 
 

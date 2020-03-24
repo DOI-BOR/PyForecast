@@ -3,7 +3,7 @@ Script Name:        main.py
 Script Author:      Kevin Foley, Civil Engineer, Reclamation
 Last Modified:      Jan 1, 2019
 
-Description:        NextFlow is a statistical modeling tool useful in predicting season 
+Description:        PyForecast is a statistical modeling tool useful in predicting season 
                     inflows and streamflows. The tool collects meterological and hydrologic 
                     datasets, analyzes hundreds to thousands of predictor subsets, and returns 
                     well-performing statistical regressions between predictors and streamflows.
@@ -22,7 +22,7 @@ Description:        NextFlow is a statistical modeling tool useful in predicting
                     This script is merely the entry point for the application. See
                     'resources.application.py' for the main processing and GUI functionality.
 
-Disclaimer:         This script, and the overall NextFlow Application have not been
+Disclaimer:         This script, and the overall PyForecast Application have not been
                     reviewed for scientific rigor or accuracy. The resulting forecasts
                     and forecast equations generated from this program are not in any
                     way guarnateed to be reliable or accurate. 
@@ -41,7 +41,7 @@ from PyQt5 import QtGui, QtWidgets, QtCore
 
 
 # Custom application style to make the tooltip behavior a bit more tolerable.
-class NextFlowProxyStyle(QtWidgets.QProxyStyle):
+class PyForecastProxyStyle(QtWidgets.QProxyStyle):
 
     def __init__(self):
         QtWidgets.QProxyStyle.__init__(self)
@@ -60,7 +60,7 @@ if __name__ == '__main__':
     print("""
     ===========================================================
 
-    STARTING NextFlow SOFTWARE
+    STARTING PyForecast SOFTWARE
 
     logs and print statements will be printed in this terminal
 
@@ -71,7 +71,7 @@ if __name__ == '__main__':
     # Begin loading the application
     app = QtWidgets.QApplication(sys.argv)
     app.setWindowIcon(QtGui.QIcon('resources/GraphicalResources/icons/icon.ico'))
-    app.style_ = NextFlowProxyStyle()
+    app.style_ = PyForecastProxyStyle()
     app.setStyle(app.style_)
 
     import resources.application as application

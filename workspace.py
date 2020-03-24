@@ -1,5 +1,13 @@
 """
-Basic Spreadsheet model and view to display NextFlow table based data.
+Script Name:    SpreadSheet.py
+
+Description:    Implements Spreadsheet functionality for displaying
+                data from the dataTable. 
+
+                API:
+                    SpreadsheetView:
+                        model() = access to SpreadSheetModel
+                        
 """
 
 from PyQt5 import QtWidgets, QtCore, QtGui
