@@ -11,6 +11,7 @@ import pandas as pd
 import numpy as np
 import requests
 from datetime import datetime
+from io import StringIO
 
 def dataLoader(dataset, startDate, endDate):
     """
@@ -70,7 +71,6 @@ def dataLoader(dataset, startDate, endDate):
     # ---- PN REGION ------
     elif region == 'PN':
 
-
         # Download instructions for PN data:
         syear = datetime.strftime(startDate, '%Y')
         smonth = datetime.strftime(startDate, '%m')
@@ -84,17 +84,17 @@ def dataLoader(dataset, startDate, endDate):
         # Download the data and check for a valid response
         response = requests.get(url)
         if response.status_code == 200:
-            pass
+            response = response.text
         else:
             return pd.DataFrame()
         
         # Parse the data into a dataframe
-        df = pd.read_csv(url, parse_dates=['DateTime']) # Read the data into a dataframe
+        df = pd.read_csv(StringIO(response), parse_dates=['DateTime'])  # Read the data into a dataframe
         df.set_index(pd.DatetimeIndex(pd.to_datetime(df['DateTime'])), inplace=True) # Set the index to the datetime column
         del df['DateTime'] # Delete the redundant datetime column
         df = df[~df.index.duplicated(keep='first')] # Remove duplicates from the dataset
         df = df[~df.index.isnull()]
-        df.columns = [stationID]
+        df.columns = ['USBR | ' + stationID + ' | Inflow | CFS']
 
         # Return the dataframe
         return df.round(3)

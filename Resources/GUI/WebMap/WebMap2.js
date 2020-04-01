@@ -367,7 +367,7 @@ function createPopups() {
         var num = e.layer.feature.properties.HUC8;
         var popHTML = "<strong>HUC8: " + num + "</strong><p><strong>Name: <strong>" + name;
         popHTML = popHTML + `</br><select id='param'>`;
-        popHTML = popHTML + `<option value='PRISM'>PRSIM Temperature & Precipitation</option><option value='NRCC'>NRCC Temperature & Precipitation</option></select></p>`;
+        popHTML = popHTML + `<option value='PRISM'>PRISM Temperature & Precipitation</option><option value='NRCC'>NRCC Temperature & Precipitation</option></select></p>`;
         popHTML = popHTML + '<button type="button" onclick="HUCPress()">Add Temp/Precip</button>' + `<p hidden id="hucNum" style="margin:0">${num}</p>` ;
         var pop = L.popup().setLatLng(coordinates).setContent(popHTML).addTo(window.map);
 
@@ -554,7 +554,7 @@ function getSelectedHUCs() {
             var num = layer.feature.properties.HUC8;
             var popHTML = "<strong>HUC8: " + num + "</strong><p><strong>Name: <strong>" + name;
             popHTML = popHTML + `</br><select id='param'>`;
-            popHTML = popHTML + `<option value='PRISM'>PRSIM Temperature & Precipitation</option><option value='NRCC'>NRCC Temperature & Precipitation</option></select></p>`;
+            popHTML = popHTML + `<option value='PRISM'>PRISM Temperature & Precipitation</option><option value='NRCC'>NRCC Temperature & Precipitation</option></select></p>`;
             popHTML = popHTML + '<button type="button" onclick="HUCPress()">Add Temp/Precip</button>' + `<p hidden id="hucNum" style="margin:0">${num}</p>` ;
             var pop = L.popup().setLatLng(coordinates).setContent(popHTML).addTo(window.map);
         })

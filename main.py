@@ -35,9 +35,8 @@ import warnings
 warnings.filterwarnings('ignore')
 import time
 import argparse
-from PyQt5 import QtWebEngineWidgets
 from datetime import datetime
-from PyQt5 import QtGui, QtWidgets, QtCore
+from PyQt5 import QtGui, QtWidgets, QtCore, QtWebEngineWidgets
 
 
 # Custom application style to make the tooltip behavior a bit more tolerable.
