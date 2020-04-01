@@ -23,13 +23,14 @@ from resources.GUI import NextFlowGUI
 from resources.modules.DatasetTab import datasetTabMaster 
 from resources.modules.DataTab import dataTabMaster
 from resources.modules.MenuBar import menuBarMaster
+from resources.modules.StatisticalModelsTab import StatisticalModelsTabMaster
 from resources.modules.Miscellaneous import initUserOptions
 from datetime import datetime
 import configparser
 import pandas as pd
 
 
-class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMaster.datasetTab, dataTabMaster.dataTab, menuBarMaster.menuBar):
+class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMaster.datasetTab, dataTabMaster.dataTab, menuBarMaster.menuBar, StatisticalModelsTabMaster.statisticalModelsTab):
     """
     GLOBAL APPLICATION INITIALIZATION
     This section of the script deals with the initialization of the software. These subroutines 
@@ -157,11 +158,11 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
         self.userOptionsConfig.read('resources/temp/user_options.txt')
 
         self.setUI()
-        pd.set_option('display.max_rows', 25)
 
         # Set-up all the tabs and menu bars
         self.initializeDatasetTab()
         self.initializeDataTab()
+        self.initializeStatisticalModelsTab()
         self.setupMenuBar()
 
         # Intiate a threadpool

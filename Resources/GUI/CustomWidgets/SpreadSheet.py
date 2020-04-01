@@ -558,7 +558,7 @@ if __name__ == '__main__':
 
     datasetTable.loc[100101] = {'DatasetType': "STREAMGAGE",              # e.g. STREAMGAGE, or RESERVOIR
             'DatasetExternalID':"GIBR",        # e.g. "GIBR" or "06025500"
-            'DatasetName':"GIBSON RESERVOIR, A RESRVOIR IN THE STATE OF MONTANA, IN THE SOVEREIGN NATION OF THE UNITED STATES",              # e.g. Gibson Reservoir
+            'DatasetName':"GIBSON RESERVOIR, A RESERVOIR IN THE STATE OF MONTANA, IN THE SOVEREIGN NATION OF THE UNITED STATES",              # e.g. Gibson Reservoir
             'DatasetAgency':"USBR",            # e.g. USGS
             'DatasetParameter':"TEMPER",         # e.g. Temperature
             'DatasetUnits':"DEG",             # e.g. CFS

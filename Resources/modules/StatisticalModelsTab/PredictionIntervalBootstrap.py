@@ -96,7 +96,7 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     import pandas as pd
     import bitarray as ba
-    from resources.modules.StatisticalModelsTab.RegressionAlgorithms import Regr_GammaGLM
+    from resources.modules.StatisticalModelsTab.RegressionAlgorithms import Regr_GammaGLM, Regr_MultipleLinearRegressor
     from resources.modules.Miscellaneous.DataProcessor import resampleDataSet
     from resources.modules.StatisticalModelsTab import RegressionWorker
     #from resources.modules.StatisticalModelsTab.PreProcessingAlgorithms import PreProc_NoPreProcessing
@@ -150,10 +150,10 @@ if __name__ == '__main__':
                     [False]*(len(predictors)), 
                     periodList,
                     methodList,
-                    ['Regr_GammaGLM'], 
+                    ['Regr_MultipleLinearRegressor'], 
                     'KFOLD_5', 
                     ['FeatSel_SequentialForwardFloating'], 
-                    ["PreProc_YAware"],
+                    ["PreProc_NoPreProcessing"],
                     ['MSE']
                 ]
 
@@ -178,7 +178,7 @@ if __name__ == '__main__':
 
     # Get the data back
 
-    X, Y = rg.xTraining[:-1, list(models[1])], rg.yTraining
+    X, Y = rg.xTraining, rg.yTraining
 
     Y = Y[~np.isnan(X).any(axis=1)]
     X = X[~np.isnan(X).any(axis=1)]
@@ -249,7 +249,7 @@ if __name__ == '__main__':
     
 
     # Compute a prediction interval for the new observation
-    l = computePredictionInterval(XY, preprocessor, Regr_GammaGLM.Regressor, 'KFOLD_5')
+    l = computePredictionInterval(XY, preprocessor, Regr_MultipleLinearRegressor.Regressor, 'KFOLD_5')
 
     # Get the indices of the 10th and 90th percentile
     idx10 = int(len(l)/10)

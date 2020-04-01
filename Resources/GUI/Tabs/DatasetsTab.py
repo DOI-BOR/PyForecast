@@ -146,10 +146,10 @@ class DatasetTab(QtWidgets.QWidget):
         self.nrccButton = QtWidgets.QPushButton(icon, "")
         self.nrccButton.setFixedWidth(100)
 
-        pdsiLabel = QtWidgets.QLabel("Palmer Drought Severity Index / Standardized Precipitation Index")
+        pdsiLabel = QtWidgets.QLabel("Palmer Drought Severity Index / Standardized Precipitation Evapotranspiration Index")
         pdsiInfo = QtWidgets.QLabel()
         pdsiInfo.setPixmap(self.infoIcon)
-        pdsiInfo.setToolTip("Returns climate-division averaged Palmer Drought Severity Index / SPI data from the CPC.")
+        pdsiInfo.setToolTip("Returns climate-division averaged Palmer Drought Severity Index / SPEI data from the Western Regional Climate Center.")
         self.pdsiInput = QtWidgets.QLineEdit()
         self.pdsiInput.setPlaceholderText("Start typing a State or division number:")
         self.pdsiButton = QtWidgets.QPushButton(icon, "PDSI")

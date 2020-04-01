@@ -171,7 +171,7 @@ class datasetTab(object):
 
         # Also refresh the dataset lists elsewhere in the software
         self.dataTab.datasetList.setDatasetTable(self.datasetTable)
-        
+        self.modelTab.datasetList.setDatasetTable(self.datasetTable)
 
         return
     
@@ -211,6 +211,7 @@ class datasetTab(object):
         # Also refresh the dataset lists elsewhere in the software
         self.dataTab.datasetList.setDatasetTable(self.datasetTable)
         self.dataTab.spreadsheet.model().loadDataIntoModel(self.dataTable, self.datasetTable)
+        self.modelTab.datasetList.setDatasetTable(self.datasetTable)
         self.dataTab.plot.clearPlots()
 
         return

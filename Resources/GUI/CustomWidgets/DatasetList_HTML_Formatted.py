@@ -68,7 +68,6 @@ empty_dataset_list = pd.DataFrame(
             ]
         ) 
 
-
 class DatasetList_HTML_Formatted(QtWidgets.QListWidget):
     """
     This subclass of the QListWidget displays dataset from the PyForecast DatasetTable
@@ -77,14 +76,14 @@ class DatasetList_HTML_Formatted(QtWidgets.QListWidget):
 
     buttonPressSignal = QtCore.pyqtSignal(int)
 
-    def __init__(self, parent=None, datasetTable = empty_dataset_list, HTML_formatting = DEFAULT_HTML_ICON_FORMAT, buttonText = None, useIcon = True, addButtons = True):
+    def __init__(self, parent=None, datasetTable = empty_dataset_list, HTML_formatting = DEFAULT_HTML_ICON_FORMAT, buttonText = None, useIcon = True, addButtons = True, objectName = None):
         """
         arguments:
             datasetTable =
             HTML_formatting = 
             buttonText = 
         """
-        QtWidgets.QListWidget.__init__(self)
+        QtWidgets.QListWidget.__init__(self, objectName = objectName)
 
         # Create a reference to the parent, as well as to the datasetTable
         self.datasetTable = datasetTable
@@ -169,11 +168,18 @@ class DatasetList_HTML_Formatted(QtWidgets.QListWidget):
         self.buttonList = []
 
         # Iterate over datasets
-        for i, dataset in self.datasetTable.iterrows():
+        if isinstance(self.datasetTable, pd.DataFrame):
+            iterator = list(self.datasetTable.iterrows())
+        elif isinstance(self.datasetTable, pd.Series):
+            iterator = [(0, self.datasetTable)]
+
+        for i, dataset in iterator:
             
             # Create a new item for the widget and assign the dataset to the item's userRole
             item = QtWidgets.QListWidgetItem()
             item.setData(QtCore.Qt.UserRole, dataset)
+
+            
             
             # set the item's text to the HTML formatted version of the dataset
             htmlString = self.substituteFormatString(item.data(QtCore.Qt.UserRole))
@@ -215,6 +221,10 @@ class DatasetList_HTML_Formatted(QtWidgets.QListWidget):
             widget.setLayout(layout)
             tooltipText = self.createToolTip(dataset)
             widget.setToolTip(tooltipText)
+
+            # Set a displayrole for combo boxes
+            itemComboBoxText = "{0}: {3} - {1} ({2})".format(dataset['DatasetExternalID'], dataset['DatasetName'], dataset['DatasetParameter'], dataset['DatasetType'])
+            item.setData(QtCore.Qt.DisplayRole, itemComboBoxText)
             
 
             # Add the item to the listwidget

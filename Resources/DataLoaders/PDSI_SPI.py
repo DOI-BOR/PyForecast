@@ -1,8 +1,11 @@
 import pandas as pd
 import numpy as np
 import requests
+from io import StringIO
 from datetime import datetime
 from html.parser import HTMLParser
+
+URL = "https://wrcc.dri.edu/wwdt/time/regionsAll/?region={REGION}&variable={VARIABLE}"
 
 """
 This dataloader loads Palmer Drought Severity Index data from the CPC.
@@ -19,22 +22,35 @@ def dataLoader(stationDict, startDate, endDate):
     climate prediction center. The only parameter that must be specified
     is the "DatasetExternalID". Valid parameter options are 3-digit or 4-digit 
     climate division numbers. 
-
-    For SPI: The default averaging period if 3 months. Also available
-    to be entered into the parameter code box is:
-       01mon
-       02mon
-       03mon
-       06mon
-       09mon
-       12mon
-       24mon
-    DEFAULT OPTIONS
     """
 
     # Get the info
     stationID = stationDict['DatasetExternalID']
     datasetType = stationDict['DatasetType']
+
+    def PDSILoader2(stationID, startDate, endDate, var):
+        
+        if len(stationID) == 4:
+            stationID = stationID[:2] + '00' + stationID[-2:]
+
+        url = URL.format(REGION=stationID, VARIABLE=var)
+        r = requests.get(url)
+        text = r.text.replace("</div>\n        \n          <div>", "\n")
+        text = text[text.index("__\n")+3:text.index("</div")]
+        text = StringIO(text)
+        df = pd.read_csv(text)
+        df = df.melt(id_vars=['Year'])
+        df.index = pd.DatetimeIndex(pd.to_datetime(df['Year'].astype(str) + df['variable']))
+        del df['Year']
+        del df['variable']
+        df = df.replace(to_replace = -9999, value = np.nan)
+        df = df.sort_index()
+        df = df.asfreq('D')
+        df.fillna(method='ffill',inplace=True)
+        df = df[df.index >= startDate]
+        df = df[df.index <= endDate]
+        print(df)
+        return df
 
     def PDSILoader(stationID, startDate, endDate):
         # Find the correct link
@@ -90,9 +106,9 @@ def dataLoader(stationDict, startDate, endDate):
 
     # Load PDSI or SPI data
     if datasetType == 'PDSI':
-        data = PDSILoader(stationID, startDate, endDate)
+        data = PDSILoader2(stationID, startDate, endDate, var=7)
     else:
         avgPeriod = stationDict['DatasetParameterCode']
-        data = SPILoader(stationID, avgPeriod, startDate, endDate)
+        data = PDSILoader2(stationID, startDate, endDate, var=4)
 
     return data

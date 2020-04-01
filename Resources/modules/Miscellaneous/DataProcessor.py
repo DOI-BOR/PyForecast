@@ -104,14 +104,14 @@ def resampleDataSet(dailyData, resampleString, resampleMethod, customFunction = 
 
     R/1978-03-01/P1M/F12M
 
-    Or if you wanted a period in February that always left out February 29th, you could specify:
+    Or if you wanted a period average in February that always left out February 29th, you could specify:
     
     R/1984-02-01/P28D/F1Y    (Note the frequency F12M is the same as frequency F1Y)
 
     Input: 
         dailyData -> pandas Series of daily-intervaled data
         resampleString -> ISO8601 formatted resampling string (e.g. R/1978-02-01/P1M/F1Y)
-        resampleMethod -> One of 'accumulation', 'accumulation_cfs_kaf', 'average', 'first', 'last', 'max', 'min', 'custom'
+        resampleMethod -> One of 'accumulation', 'accumulation_cfs_kaf', 'average', 'first', 'last', 'max', 'min', 'custom', 'median'
 
         customFunction (optional) ->  if 'resampleMethod' is 'custom', you can enter a custom written 
                                       python function (as a string) to be applied to the series. Use 
@@ -140,8 +140,8 @@ def resampleDataSet(dailyData, resampleString, resampleMethod, customFunction = 
         return resampleData, 1, 'Invalid Resample String. Format should be similar to R/1978-10-01/P1M/F1Y'
     
     # Validate the resample method
-    if resampleMethod not in ['accumulation', 'accumulation_cfs_kaf', 'average', 'first', 'last', 'max', 'min', 'custom']:
-        return resampleData, 1, "Invalid resampling method. Provide one of 'accumulation', 'accumulation_cfs_kaf', 'average', 'first', 'last', 'max', 'min', 'custom'"
+    if resampleMethod not in ['accumulation', 'accumulation_cfs_kaf', 'average', 'first', 'last', 'max', 'min', 'custom', 'median']:
+        return resampleData, 1, "Invalid resampling method. Provide one of 'accumulation', 'accumulation_cfs_kaf', 'average', 'first', 'last', 'max', 'min', 'custom', 'median'"
 
     # Parse into values
     startDate = datetime.strptime(resampleList[1], '%Y-%m-%d') # >>> datetime.date(1978, 10, 1)
@@ -161,8 +161,9 @@ def resampleDataSet(dailyData, resampleString, resampleMethod, customFunction = 
             86400*(1/43560000)*np.nansum(x) if resampleMethod == 'accumulation_cfs_kaf' else (
                 x.iloc[0] if resampleMethod == 'first' else (
                     x.iloc[-1] if resampleMethod == 'last' else (
-                        np.max(x) if resampleMethod == 'max' else (
-                            np.min(x) if resampleMethod == 'min' else eval(customFunction)))))))
+                        np.nanmedian(x) if resampleMethod == 'median' else (
+                            np.nanmax(x) if resampleMethod == 'max' else (
+                                np.nanmin(x) if resampleMethod == 'min' else eval(customFunction))))))))
 
     # Resample the data
     for idx in pd.IntervalIndex.from_tuples(periods):

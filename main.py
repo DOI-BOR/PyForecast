@@ -98,4 +98,5 @@ if __name__ == '__main__':
     mw = application.mainWindow()
     if no_splash == 'True':
         splash.finish(mw)
+    
     sys.exit(app.exec_())

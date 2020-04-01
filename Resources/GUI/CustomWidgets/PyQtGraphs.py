@@ -5,6 +5,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import numpy as np
 import pandas as pd
 from datetime import datetime
+from resources.modules.Miscellaneous.DataProcessor import resampleDataSet
 from bisect import bisect_left
 
 # Set the widget options
@@ -160,6 +161,46 @@ class DateTimeAxis(pg.AxisItem):
             return [datetime.utcfromtimestamp(value).strftime('%Y-%m') for value in values]
         return [datetime.utcfromtimestamp(value).strftime('%Y-%m-%d') for value in values]
 
+class DateTimeAxis_years(pg.AxisItem):
+
+    def __init__(self, *args, **kwargs):
+
+        pg.AxisItem.__init__(self, *args, **kwargs)
+
+    def tickStrings(self, values, scale, spacing):
+
+        return [datetime.utcfromtimestamp(value).strftime('%Y') for value in values]
+
+# Create a graphics layout for the ModelTab graphs
+class ModelTabPlots(pg.GraphicsLayoutWidget):
+
+    def __init__(self, parent = None, objectName = None):
+
+        pg.GraphicsLayoutWidget.__init__(self, parent)
+        self.parent = parent
+
+        # Get a reference to the datasetTable and the dataTable
+        self.datasetTable = self.parent.parent.datasetTable
+        self.dataTable = self.parent.parent.dataTable
+
+        self.plot = dataReductionPlot(self)
+
+        self.addItem(self.plot, 0, 0)
+    
+    def clearPlots(self):
+        """
+        Clears the plots of any data
+        """
+        self.plot.clear()
+
+        return
+
+    def displayDatasets(self, datasets, period, method, customFunction):
+        
+        # If there is more than one dataset, 
+        self.plot.displayDataset(datasets, period, method, customFunction)
+
+        return
 
 # Create a Graphics Layout Widget to display all the plots in one widget
 class DataTabPlots(pg.GraphicsLayoutWidget):
@@ -223,6 +264,183 @@ class DataTabPlots(pg.GraphicsLayoutWidget):
         return
 
 
+# Create a flow histogram
+class dataReductionPlot(pg.PlotItem):
+
+    def __init__(self, parent=None):
+
+        # Instantiate the widget
+        pg.PlotItem.__init__(self)
+        self.b_axis = self.getAxis('bottom')
+        self.b_axis.enableAutoSIPrefix(enable=False)
+        self.b_axis.setLabel("Year")
+
+        self.parent = parent
+        self.setMenuEnabled(False)
+
+        self.legend = TimeSeriesLegend(size=None, offset=(30,30))
+        self.legend.setParentItem(self.vb)
+
+        # Create a plot line to show the data
+        self.line = pg.PlotCurveItem(parent=self, pen = pg.mkPen("#FF0000", width=3), antialias=False, connect='finite', symbol='o', symbolBrush = pg.mkBrush("#FF0000"), symbolPen = pg.mkPen("#000000"))
+        self.dots = pg.ScatterPlotItem(parent = self, pen = pg.mkPen("#000000", width=2), antialias=False, symbol='o', symbolBrush = pg.mkBrush("#FF0000"), brush = pg.mkBrush("#FF0000"))
+        
+        self.medianBar = pg.PlotCurveItem(parent = self, pen = pg.mkPen((28, 217, 151,140), width=7),antialias=False, connect='finite')
+        self.averageBar = pg.PlotCurveItem(parent = self, pen = pg.mkPen((25, 134, 212,140), width=7),antialias=False, connect='finite')
+
+        # Add interaction
+        self.parent.scene().sigMouseMoved.connect(self.mouseMoved)
+
+        # Set default limits
+        self.setLimits(
+
+                xMin = 0,
+                xMax = 1,
+                yMin = 0,
+                yMax = 1,
+            
+            )
+        self.setRange(
+
+                xRange = (0, 1),
+                yRange = (0, 1)
+            )
+
+
+        # Add a text box to instruct user how to show data
+        self.noDataTextItem = pg.TextItem(html = '<div style="color:#4e4e4e"><h1>Oops!</h1><br> Looks like there is no data to display.<br>Select a dataset from the list to view data.</div>')
+        self.addItem(self.noDataTextItem)
+        self.noDataTextItem.setPos(0.5, 0.5)
+
+        self.highlightCircleItem = pg.ScatterPlotItem(parent = self, pen = pg.mkPen("#000000", width=4), antialias=False, symbol='o', symbolBrush = pg.mkBrush("FFF000"), brush = pg.mkBrush("FFF000"))
+
+        self.isThereData = False
+
+        return
+
+    def mouseMoved(self, event):
+        if self.isThereData:
+            # Get the mouse position
+            pos = QtCore.QPoint(event.x(), event.y())
+
+            # Check that the overall widget actually contains the mouse point
+            if self.sceneBoundingRect().contains(pos):
+
+                 # Get the mousepoint in relation to the plot
+                mousePoint = self.vb.mapSceneToView(pos)
+                x_ = mousePoint.x()
+
+                # Round x value to the nearest date
+                idx = int(x_ - x_%86400)
+                date = takeClosest(self.x, idx)
+                idx2 = np.where(self.x==date)
+                yval = round(self.y[idx2[0]][0],2)
+                self.legend.items[0][1].setText(self.line.opts['name']+' <strong>'+str(yval) + ' ' + self.units + '</strong>')
+                self.highlightCircleItem.setData([date], [yval], size=10)
+
+    def displayDataset(self, dataset, period, method, customFunction):
+        """
+        """
+        # Clear any existing data
+        self.clear()
+
+        self.isThereData = False
+
+        # Make sure there's actually data to display
+        if dataset not in self.parent.parent.parent.dataTable.index.levels[1]:
+            self.addItem(self.noDataTextItem)
+            self.noDataTextItem.setPos(0.5, 0.5)
+            return
+        data = self.parent.parent.parent.dataTable.loc[(slice(None), dataset), 'Value']
+
+        if data.empty:
+            self.addItem(self.noDataTextItem)
+            self.noDataTextItem.setPos(0.5, 0.5)
+            
+            return
+        self.isThereData = True
+
+         # Remove the old legend
+        self.legend.scene().removeItem(self.legend)
+
+        # Instantiate a legend
+        self.legend = TimeSeriesLegend(size=None, offset=(30, 30))
+        self.legend.setParentItem(self.vb)
+        
+
+
+        self.xMin = np.inf
+        self.xMax = -np.inf
+        self.yMin = np.inf
+        self.yMax = -np.inf
+
+        # Process the Data
+        self.data = resampleDataSet(
+            data,
+            period,
+            method,
+            customFunction
+        )
+        self.data = self.data.dropna()
+
+        
+
+        # Update the line data
+        x = np.array(self.data.index.astype('int64'))/1000000000
+        self.x = x
+        y = self.data.values
+        self.y = y
+        median = np.nanmedian(y)
+        average = np.nanmean(y)
+        
+        self.b_axis.setTicks([[(i, datetime.utcfromtimestamp(i).strftime('%Y')) for i in x], [(i, datetime.utcfromtimestamp(i).strftime('%Y')) for i in x]])
+
+        self.xMax = np.nanmax([self.xMax, np.nanmax(x)])
+        self.xMin = np.nanmin([self.xMin, np.nanmin(x)])
+        self.yMax = np.nanmax([self.yMax, np.nanmax(y)])
+        self.yMin = np.nanmin([self.yMin, np.nanmin(y)])
+
+        self.line.setData(x, y, name="Aggregated Data")
+        self.dots.setData(x, y)
+        self.medianBar.setData(x, len(x)*[median], name = 'Median')
+        self.averageBar.setData(x, len(x)*[average], name = 'Average')
+
+        if not any([np.isinf(self.xMax), np.isinf(self.xMin), np.isinf(self.yMax), np.isinf(self.yMin)]):
+            self.yrange = self.yMax - self.yMin
+
+            self.setLimits(
+
+                xMin = self.xMin,
+                xMax = self.xMax,
+                yMin = self.yMin - self.yrange/10,
+                yMax = self.yMax + self.yrange/10,
+            
+            )
+            self.setRange(
+
+                xRange = (self.xMin, self.xMax),
+                yRange = (self.yMin  - self.yrange/10, self.yMax  + self.yrange/10)
+            )
+        else:
+            print(self.xMax, self.xMin, self.yMax, self.yMin)
+
+        # Show the grid
+        self.showGrid(True, True, 0.85)
+
+        self.addItem(self.medianBar)
+        self.addItem(self.averageBar)
+        self.addItem(self.line)
+        self.addItem(self.dots)
+        self.addItem(self.highlightCircleItem)
+
+        self.units = self.getAxis("left").labelText
+
+        self.legend.items[1][1].setText(self.medianBar.opts['name']+' <strong>'+str(round(median,2)) + ' ' + self.units + '</strong>')
+        self.legend.items[2][1].setText(self.averageBar.opts['name']+' <strong>'+str(round(average,2)) + ' ' + self.units + '</strong>')
+
+        return
+
+        
 
 # The Spaghetti Plot displays time series data as a layered spaghetti hydrograph.
 class SpaghettiPlot(pg.PlotItem):

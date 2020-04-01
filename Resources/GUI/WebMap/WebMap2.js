@@ -24,6 +24,9 @@ var terrainMap =  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/servi
 var streetMap =  L.tileLayer('https://{s}.tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png', {
 	maxZoom: 18,
     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'});
+var imageryMap = L.tileLayer('https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 18,    
+    attribution: 'U.S. Geologic Survey'});
 
 
 // Create an initial map using the terrain basemap
@@ -36,7 +39,8 @@ var map = L.map('map',
 // Store the basemaps in a dict
 var baseMaps = {'Terrain': terrainMap,
                 'Grayscale': grayMap, 
-                'Streets': streetMap};
+                'Streets': streetMap,
+                'Satellite': imageryMap};
 
 // Create map panes
 map.createPane("HUCPane")
@@ -376,7 +380,7 @@ function createPopups() {
         var name = e.layer.feature.properties.NAME;
         var num = e.layer.feature.properties.CLIMDIV;
         var popHTML = "<strong>NAME: " + name + "</strong><p><strong>Number: <strong>" + num;
-        popHTML = popHTML + `</br><select id='param'><option value='PDSI'>Palmer Drought Severity Index</option><option value='SPI'>Standardized Precipitation Index</option></select></p>`;
+        popHTML = popHTML + `</br><select id='param'><option value='PDSI'>Palmer Drought Severity Index</option><option value='SPEI'>Standardized Precipitation Evapotranspiration Index</option></select></p>`;
         popHTML = popHTML + '<button type="button" onclick="PDSIPress()">Add Drought Index</button>' + `<p hidden id="pdsiNum" style="margin:0">${num}</p>` ;
         var pop = L.popup().setLatLng(coordinates).setContent(popHTML).addTo(window.map);
 

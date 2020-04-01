@@ -1,0 +1,18 @@
+<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg">
+
+ <g>
+  <title>background</title>
+  <rect fill="none" id="canvas_background" height="402" width="582" y="-1" x="-1"/>
+ </g>
+ <g>
+  <title>Layer 1</title>
+  <path stroke="null" id="svg_1" d="m4.110883,18.014374l11.835729,0l0,2l-11.835729,0l0,-2z"/>
+  <rect transform="rotate(-90 5.018481731414795,3.866658210754394) " stroke="#000000" id="svg_4" height="1.930184" width="11.950717" y="2.942635" x="-11.059544" stroke-width="0" fill="#000000"/>
+  <rect stroke="#000000" id="svg_5" height="1.930184" width="11.950717" y="7.911833" x="4.094459" stroke-width="0" fill="#000000"/>
+  <rect stroke="#000000" transform="rotate(-90 15.0800838470459,13.948789596557619) " id="svg_6" height="1.930184" width="11.991785" y="12.983697" x="9.084191" stroke-width="0" fill="#000000"/>
+  <rect stroke="#000000" id="svg_8" height="1.930184" width="11.950717" y="4.626413" x="7.585218" stroke-width="0" fill="#000000"/>
+  <rect transform="rotate(-90 18.61190986633301,10.601770401000978) " stroke="#000000" id="svg_9" height="1.930184" width="11.950717" y="9.636679" x="12.636552" stroke-width="0" fill="#000000"/>
+  <rect stroke="#000000" transform="rotate(-90 8.509242057800295,7.069942474365235) " id="svg_10" height="1.930184" width="4.804927" y="6.104851" x="6.106778" stroke-width="0" fill="#000000"/>
+  <rect stroke="#000000" id="svg_12" height="1.930184" width="4.353183" y="14.688013" x="15.182753" stroke-width="0" fill="#000000"/>
+ </g>
+</svg>

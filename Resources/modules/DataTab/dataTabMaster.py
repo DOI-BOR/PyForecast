@@ -173,6 +173,9 @@ class dataTab(object):
             self.dataTab.datasetList.setCurrentRow(0)
             #self.dataTab.plot.displayDatasets([self.datasetTable.iloc[0].name])
 
+            
+
+
         # Otherwise, we just replace the old datatable with the new datatable
         else:
 
@@ -184,6 +187,9 @@ class dataTab(object):
             self.dataTab.updateOption.setChecked(True)
             self.updateDataTableWithNewData(newData)
             self.dataTab.updateOption.setChecked(False)
+
+        # Try and recompute any plots or data elsewhere in the software
+        self.plotTarget()
 
         return
 
