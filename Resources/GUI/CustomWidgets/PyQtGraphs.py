@@ -335,7 +335,7 @@ class dataReductionPlot(pg.PlotItem):
                 date = takeClosest(self.x, idx)
                 idx2 = np.where(self.x==date)
                 yval = round(self.y[idx2[0]][0],2)
-                self.legend.items[0][1].setText(self.line.opts['name']+' <strong>'+str(yval) + ' ' + self.units + '</strong>')
+                self.legend.items[2][1].setText(self.line.opts['name']+' <strong>'+str(yval) + ' ' + self.units + '</strong>')
                 self.highlightCircleItem.setData([date], [yval], size=10)
 
     def displayDataset(self, dataset, period, method, customFunction):
@@ -435,8 +435,8 @@ class dataReductionPlot(pg.PlotItem):
 
         self.units = self.getAxis("left").labelText
 
-        self.legend.items[1][1].setText(self.medianBar.opts['name']+' <strong>'+str(round(median,2)) + ' ' + self.units + '</strong>')
-        self.legend.items[2][1].setText(self.averageBar.opts['name']+' <strong>'+str(round(average,2)) + ' ' + self.units + '</strong>')
+        self.legend.items[0][1].setText(self.medianBar.opts['name']+' <strong>'+str(round(median,2)) + ' ' + self.units + '</strong>')
+        self.legend.items[1][1].setText(self.averageBar.opts['name']+' <strong>'+str(round(average,2)) + ' ' + self.units + '</strong>')
 
         return
 

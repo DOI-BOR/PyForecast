@@ -81,6 +81,7 @@ class statisticalModelsTab(object):
 
         # Get the forecast method. If the method is 'custom', get the custom method as well
         method = str(self.modelTab.methodCombo.currentData())
+        methodText = str(self.modelTab.methodCombo.currentText()).split('(')[0]
 
         # Get the units
         units = 'KAF' if 'KAF' in method.upper() else dataset['DatasetUnits']
@@ -124,7 +125,7 @@ class statisticalModelsTab(object):
         self.modelTab.dataPlot.displayDatasets(datasetID, period, method, function)
 
         # Set a title for the plot
-        self.modelTab.dataPlot.plot.setTitle('<strong style="font-family: Open Sans, Arial;">{4} {0} - {1} {2} {3}</strong>'.format(start_dt.strftime("%b %d"), end_dt.strftime("%b %d"), method.title(), dataset['DatasetParameter'], dataset['DatasetName'] ))
+        self.modelTab.dataPlot.plot.setTitle('<strong style="font-family: Open Sans, Arial;">{4} {0} - {1} {2} {3}</strong>'.format(start_dt.strftime("%b %d"), end_dt.strftime("%b %d"), methodText.title(), dataset['DatasetParameter'], dataset['DatasetName'] ))
 
         return
 

@@ -153,13 +153,18 @@ class ModelCreationTab(QtWidgets.QWidget):
         layout.addRow("Period Calculation", self.methodCombo)
 
         self.customMethodSpecEdit = QtWidgets.QLineEdit()
-        self.customMethodSpecEdit.setPlaceholderText("Define a custom python function here. The variable 'x' represents the periodic dataset. E.g. np.nanstd(x)")
+        self.customMethodSpecEdit.setPlaceholderText("Define a custom python function here. The variable 'x' represents the periodic dataset [pandas series]. Specify a unit (optional) with '|'. E.g. np.nansum(x)/12 | Feet ")
         layout.addWidget(self.customMethodSpecEdit)
         self.customMethodSpecEdit.hide()
         
         widg.setLayout(layout)
         targetSelectLayout.addWidget(widg, 0, 0, 1, 1)
         targetSelectLayout.addWidget(self.dataPlot, 1, 0, 1, 1)
+        
+        
+        
+        
+        
         overallLayout.addWidget(self.workflowWidget)
         overallLayout.addLayout(targetSelectLayout)
         self.setLayout(overallLayout)
