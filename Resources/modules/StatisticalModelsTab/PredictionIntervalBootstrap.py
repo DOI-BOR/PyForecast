@@ -51,13 +51,15 @@ def computePredictionInterval(observations, preprocessor, regressor, crossValida
     prediction = model.predict(x[-1].reshape(1,-1))
 
     # Initialize a list of prediction errors
-    predictionErrors = np.full(10000, np.nan)
+    predictionErrors = np.full(1000, np.nan)
 
     # Function to get a prediction
     def generateBootstrap(dummy):
 
         # Generate a random list of indices to sample from the original data
         randomIndices = np.random.randint(low = 0, high = len(x) - 2, size = len(x) - 1)
+        while len(np.unique(randomIndices)) < len(x)/5:
+            randomIndices = np.random.randint(low = 0, high = len(x) - 2, size = len(x) - 1)
 
         # Generate random cases from random indices
         randomX = x[randomIndices]

@@ -381,8 +381,11 @@ class dataReductionPlot(pg.PlotItem):
             method,
             customFunction
         )
+        print("before")
+        print(self.data)
         self.data = self.data.dropna()
-
+        print('after')
+        print(self.data)
         
 
         # Update the line data

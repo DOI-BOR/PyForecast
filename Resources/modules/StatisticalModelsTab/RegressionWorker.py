@@ -209,248 +209,114 @@ class RegressionWorker(QtCore.QRunnable):
 # DEBUGGING
 if __name__ == '__main__':
 
-    from sklearn.datasets import make_regression, load_boston
     from resources.modules.StatisticalModelsTab import PredictionIntervalBootstrap
-    from resources.modules.Miscellaneous.DataProcessor import resampleDataSet
     import time
     import warnings
+    import random
     warnings.filterwarnings("ignore")
     
     import matplotlib.pyplot as plt
-    plt.ion()
+    #plt.ion()
     import sys
+    from scipy.stats import iqr
+    from sklearn.neighbors import KernelDensity
+    import matplotlib.colors as mc
+    COLORS = list(mc.CSS4_COLORS.keys())
+    random.shuffle(COLORS)
 
     from PyQt5 import QtWidgets,QtCore
-    from resources.GUI.Tabs.ModelCreationTab import PredictorCurrentGraph
-    app = QtWidgets.QApplication(sys.argv)
-    
-    
-    
-
     
     # Load some toy data
-    df = pd.read_csv('test_blr.csv', index_col=0, parse_dates=True)
-    df.columns = [i for i in range(len(df.columns))]
-    datasets = list(df.columns)
-    num_predictors = len(datasets)
-    df = df.stack(0)
-    df.name = 'Value'
-    df = pd.DataFrame(df)
-    df.index.names = ['Datetime','DatasetID']
-    
-    print('\n')
-    print('dataframe is \n')
-    print(df)
-    print('\n')
-
-    # Initialize a model run
-    dm = pd.DataFrame(
-            index = pd.Index([], dtype=int, name='ModelRunID'),
-            columns = [
-                "ModelTrainingPeriod",      # E.g. 1978-10-01/2019-09-30 (model trained on  WY1979-WY2019 data)
-                "Predictand",               # E.g. 100302 (datasetInternalID)
-                "PredictandPeriod",         # E.g. R/1978-03-01/P1M/F12M (starting in march of 1978, over a 1 month period, recurring once a year.)
-                "PredictandMethod",         # E.g. Accumulation, Average, Max, etc
-                "PredictorPool",            # E.g. [100204, 100101, ...]
-                "PredictorForceFlag",       # E.g. [False, False, True, ...]
-                "PredictorPeriods",         # E.g. [R/1978-03-01/P1M/F12M, R/1978-03-01/P1M/F12M, ...]
-                "PredictorMethods",         # E.g. ['Accumulation', 'First', 'Last', ...]
-                "RegressionTypes",          # E.g. ['Regr_MultipleLinearRegression', 'Regr_ZScoreRegression']
-                "CrossValidationType",      # E.g. K-Fold (10 folds)
-                "FeatureSelectionTypes",    # E.g. ['FeatSel_SequentialFloatingSelection', 'FeatSel_GeneticAlgorithm']
-                "Preprocessors",    
-                "ScoringParameters"         # E.g. ['ADJ_R2', 'MSE']
-            ]
-        )
-
-    # Model results table
-    de = pd.DataFrame(
-        index = pd.Index([], dtype=int, name='ForecastEquationID'),
-        columns = [
-                "EquationSource",       # e.g. 'PyForecast','NRCS', 'CustomImport'
-                "EquationComment",      # E.g. 'Equation Used for 2000-2010 Forecasts'
-                "EquationPredictand",   # E.g. 103011
-                "PredictandPeriod",     # R/1978-03-01/P1M/F12M (starting in march of 1978, over a 1 month period, recurring once a year.)
-                "PredictandMethod",      # E.g. Accumulation, Average, Max, etc
-                "EquationCreatedOn",    # E.g. 2019-10-04
-                "EquationIssueDate",    # E.g. 2019-02-01
-                "EquationMethod",       # E.g. Pipeline string (e.g. PIPE/PreProc_Logistic/Regr_Gamma/KFOLD_5)
-                "EquationSkill",        # E.g. Score metric dictionary (e.g. {"AIC_C": 433, "ADJ_R2":0.32, ...})
-                "EquationPredictors",   # E.g. [100204, 100101, 500232]
-                "PredictorPeriods",     # E.g. [R/1978-03-01/P1M/F12M, R/1978-03-01/P1M/F12M, R/1978-03-01/P1M/F12M]
-                "PredictorMethods"      # E.g. ['Average', 'First', 'Max']
-            ]
-    )
-    
-    # Set up predictors from toy dataset
-    
-    predictors = ['18'] + [1]*3 + datasets[2:]
-    predictors = datasets[1:]
-    #predictors = [i for i in range(len(predictors))]
-    
-    
-    print('predictors are \n')
-    print(predictors)
-    print('\n')
-    periodList = ["R/1990-02-01/P2M/F1Y","R/1990-02-01/P1M/F1Y","R/1990-01-01/P1M/F1Y","R/1990-03-01/P1M/F1Y",'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-04-01/P1D/F1Y', 'R/1990-03-01/P1M/F1Y', 'R/1989-10-01/P6M/F1Y', 'R/1990-03-01/P1M/F1Y']
-    methodList = ["accumulation","average","average","average",'first', 'first', 'first', 'first', 'first', 'first', 'first', 'first', 'first', 'first', 'first', 'first', 'first', 'first', 'first', 'average', 'accumulation', 'average']
-    
-    performance_metrics = ["ADJ_R2", "MSE"]
-    cross_validation = 'KFOLD_10'
-    regressionName = 'Regr_MultipleLinearRegressor'
-
-    dm.loc[1] = [   
-                        '1989-10-01/2018-09-30', # Training Period
-                        datasets[0],             # forecast target
-                        'R/1990-04-01/P4M/F1Y',  # forecast target period
-                        'accumulation',          # forecast target method
-                        predictors,              # predictor list
-                        [False]*(len(predictors)), # forced predictors
-                        periodList,              # Predictor Periods
-                        methodList,              # Predictor Methods
-                        [regressionName],        # regressions
-                        cross_validation, 
-                        ['FeatSel_SequentialForwardFloating'], # Feature Selection
-                        ['PreProc_NoPreProcessing'], # Preprocessor
-                        performance_metrics
-                    ]
+    datasetTable = pd.read_pickle("toyDatasets.pkl")
+    dataTable = pd.read_pickle("toyData.pkl")
+    modelInit = pd.read_pickle("toyModelInit.pkl")
     
     # Fake Parent Object
-    class p(QtWidgets.QWidget):
-        def __init__(self, df=None, de = None, dm=None):
-            QtWidgets.QWidget.__init__(self)
-            self.thread = QtCore.QThreadPool()
+    class p(object):
+        def __init__(self, dataTable=None, modelInit = None, datasetTable=None):
+            #QtWidgets.QWidget.__init__(self)
+            #self.thread = QtCore.QThreadPool()
             
-            self.dataTable = df
-            self.dm = dm
-            self.forecastEquationsTable = de
-            self.rg = RegressionWorker(self, modelRunTableEntry=self.dm.loc[1])
-            
-            self.forecastIssueDate = '2019-04-01'
-            self.widg = PredictorCurrentGraph(self)
-            self.rg.signals.currentModel.connect(self.widg.updateGrid)
-            layout = QtWidgets.QVBoxLayout()
-            layout.addWidget(self.widg)
-            pushbutton = QtWidgets.QPushButton("Run")
-            layout.addWidget(pushbutton)
-            #self.thread.started.connect(self.rg.run)
-            pushbutton.pressed.connect(lambda: self.thread.start(self.rg))
-            pbutton2=QtWidgets.QPushButton("tester")
-            layout.addWidget(pbutton2)
-            self.setLayout(layout)
-            self.show()
+            self.dataTable = dataTable
+            self.modelInit = modelInit
+            self.datasetTable = datasetTable
     
-    p_ = p(df, de, dm)
+            self.rg = RegressionWorker(self, modelRunTableEntry=self.modelInit.iloc[0])
+            
+            self.forecastIssueDate = pd.to_datetime('2019-04-01')
+     
+    
+    p_ = p(dataTable, modelInit, datasetTable)
 
-    p_.widg.setPredictorGrid(dm.loc[1], None)
-    # Initialize regressor
-    #rg = RegressionWorker(parent = p_, modelRunTableEntry=dm.loc[1])
+    # Initialize regression worker
     p_.rg.setData()
-
-    # Run RegressionWorker
-    print('There are {0} possible combinations\n'.format(int('1'*(len(predictors)),2)+1))
-    print("running...")
     
-    #a = time.time()
-    #rg.run()
-    #b = time.time()
+    # Run the regression worker
+    a = time.time()
+    p_.rg.run()
+    b = time.time()
 
-#     print('analyzed {0} combinations'.format(len(rg.computedModels.keys())))
-#     print('ran in {0} sec\n'.format(b-a))
+    # Print results
+    [print(f) for f in p_.rg.resultsList[:30]]
 
-#     # Sort Results by score
-#     d = pd.DataFrame().from_dict(rg.computedModels, orient='index')
-#     d.sort_values(by=performance_metrics, inplace=True, ascending=True)
-#     d.index.name = 'model'
+    # Do a prediction with the best equation
+    best_equation = p_.rg.resultsList[0]
+    preproc = best_equation['Method'].split("/")[1]
+    regr = best_equation['Method'].split("/")[2]
+    cval = best_equation['Method'].split("/")[3]
+    xt, yt = p_.rg.xTraining, p_.rg.yTraining
 
-#     print("""============================
-#     The best model is:
-#     """)
-#     model = [bool(int(i)) for i in rg.resultsList[0]['Model']]
-#     #model = [bool(int(i)) for i in d.iloc[0].name]
-#     print("model is ", model)
-#     print([predictors[i] if m else None for i,m in enumerate(model)])
-#     x = rg.proc_xTraining[:, list(model)]
-#     y = rg.proc_yTraining[~np.isnan(x).any(axis=1)]
-#     x = x[~np.isnan(x).any(axis=1)]
+    # put the observations in the right format
+    XY = np.hstack((xt, yt))
+    lastRow = np.full((1, XY.shape[1]), np.nan)
 
+    for i in range(xt.shape[1]):
+
+        data = resampleDataSet(
+            dataTable.loc[(slice(None), modelInit.iloc[0]['PredictorPool'][i]), 'Value'],
+            modelInit.iloc[0]['PredictorPeriods'][i],
+            modelInit.iloc[0]['PredictorMethods'][i]
+        )
+        data = data.loc[data.index.year == p_.forecastIssueDate.year]
+        lastRow[0][i] = data
     
-#     module = importlib.import_module("resources.modules.StatisticalModelsTab.RegressionAlgorithms.{0}".format(regressionName))
-#     regressionClass = getattr(module, 'Regressor')
-#     regression = regressionClass(crossValidation = cross_validation, scoringParameters = performance_metrics)
+    #lastRow = lastRow.flatten()
+    XY = np.vstack((XY, lastRow))
 
-#     import matplotlib.pyplot as plt
-#     regression.fit(x,y)
-#     plt.plot(regression.predict(x), y, 'ro')
-#     plt.show()
-#     plt.plot([i for i in range(len(y))], regression.residuals(), 'ro')
-#     plt.xlabel("Year")
-#     plt.ylabel("Residual")
-#     plt.show()
+    def plot_forecast(equation, XY, i):
+        preproc = equation['Method'].split('/')[1]
+        regr = equation['Method'].split("/")[2]
+        cval = equation['Method'].split("/")[3]
+        model = [True if i == '1' else False for i in equation['Model']] + [True]
+        XY_ = XY[:, model]
+        preproc_ = importlib.import_module("resources.modules.StatisticalModelsTab.PreProcessingAlgorithms.{0}".format(preproc))
+        regressor_ = importlib.import_module("resources.modules.StatisticalModelsTab.RegressionAlgorithms.{0}".format(regr))
+        results = PredictionIntervalBootstrap.computePredictionInterval(XY_, preproc_.preprocessor, regressor_.Regressor, cval)
 
-#     # Bootstrap a prediction
-#     trainStart, trainEnd = rg.trainingDates
-#     observations = np.concatenate([rg.xTraining, rg.yTraining], axis=1)
-#     xxx = np.full(rg.xTraining.shape[1], np.nan)
-#     for i in range(len(rg.modelRunTableEntry['PredictorPool'])):
+        # Histogram up that prediction!
+        total_number = len(results)
+        p90 = results[int(total_number/10)]
+        p50 = results[int(total_number/2)]
+        p10 = results[total_number - int(total_number/10)]
 
-#             data = resampleDataSet(
-#                 rg.parent.dataTable.loc[(slice(None), rg.modelRunTableEntry['PredictorPool'][i]), 'Value'],
-#                 rg.modelRunTableEntry['PredictorPeriods'][i],
-#                 rg.modelRunTableEntry['PredictorMethods'][i]
-#                 )
-#             data = data.loc[data.index[0]:pd.to_datetime(p_.forecastIssueDate)]
-#             xxx[i] = data.values[-1] # Training Data
-            
+        iqr_ = iqr(results)
+        std_ = np.std(results)
+        h = 0.9*(min(iqr_, std_))*pow(total_number, -1/5)
+
+        # Compute KDE
+        kde = KernelDensity(bandwidth=h).fit(results.reshape(-1,1))
+        xs = np.linspace(p10 - 800, p90 + 800, 1000)
+        log_dens = kde.score_samples(xs.reshape(-1,1))
+
+        idx = int(equation['Model'], 2)
+
+        plt.hist(results, bins=int(len(results)/30), normed=True, facecolor = COLORS[i], alpha = 0.6)
+        plt.plot(xs, np.exp(log_dens), color=COLORS[i])
     
-#     # Compute the target data
-#     yyy = resampleDataSet(
-#         rg.parent.dataTable.loc[(slice(None), rg.modelRunTableEntry['Predictand']), 'Value'],
-#         rg.modelRunTableEntry['PredictandPeriod'],
-#         rg.modelRunTableEntry['PredictandMethod']
-#     )
-#     yyy = yyy.loc[yyy.index[0]:pd.to_datetime(p_.forecastIssueDate)]
-#     yyy = yyy.values[-1]
+    for i, mod in enumerate(p_.rg.resultsList[0:100:10]):
+        print(mod['Model'])
+        plot_forecast(mod, XY, i)
 
-#     lastrow = np.concatenate([xxx, np.array([yyy])])
-    
-#     observations = np.concatenate([observations, np.array([lastrow])])
-    
-#     preprocessor = rg.preprocessors[0].preprocessor
+    plt.xlim((0, 1500))
 
-#     observations = observations[:, list(model)+[True]]
-#     print("Prediction Year Data: ", observations[-1])
-
-#     l = PredictionIntervalBootstrap.computePredictionInterval(observations, preprocessor, regressionClass, 'LOO')
-#     print(l)
-#     l = l*86400/43560000
-#     # Get the indices of the 10th and 90th percentile
-#     idx10 = int(len(l)/10)
-#     idx90 = len(l) - idx10
-
-#     # Plot the prediction and the interval
-#     #from scipy import stats
-#     #from sklearn.neighbors import KernelDensity
-#     #bandw = 1.06*min(stats.iqr(l)/1.34, np.nanstd(l))*pow(len(l),-0.2)
-#     #x_ = np.linspace(max(int(np.nanmin(l)), np.nanmin(rg.y)), min(int(np.nanmax(l)), np.nanmax(rg.y)), 1000)[:, np.newaxis]
-#     #kde = KernelDensity(bandwidth=bandw).fit(l.reshape(-1,1))
-#     #log_dens = kde.score_samples(x_)
-#     #plt.fill(x_[:, 0], np.exp(log_dens), fc="#AAAAFF")
-#     n, bins, patches = plt.hist(l, bins=100)
-#     print(len(n), len(bins))
-#     [pa.set_ec("k") for pa in patches]
-#     #mm = max(np.exp(log_dens))
-#     sc = 0.0019834710743801653
-#     print("""
-# Actual:     {6}
-# POR Median: {7}
-# Prediction: {0} 
-# 10%:        {1} (prediction + {4})
-# 90%:        {2} (prediction - {5})
-
-# yRange:     {3} - {8}
-#     """.format(np.median(l), l[idx10], l[idx90], sc*np.nanmin(rg.y), l[idx10] - np.median(l), np.median(l) - l[idx90], sc*lastrow[-1], sc*np.nanmedian(rg.y), sc*np.nanmax(rg.y)))
-#     plt.vlines([l[idx10], l[idx90], np.median(l)], [0,0,0], [8000,8000,8000], colors='r')
-#     plt.show()
-
-    sys.exit(app.exec_())
+    plt.show()

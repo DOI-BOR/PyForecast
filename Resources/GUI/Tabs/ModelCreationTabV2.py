@@ -76,6 +76,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         overallLayout = QtWidgets.QHBoxLayout()
         overallLayout.setContentsMargins(0,0,0,0)
         overallLayout.setSpacing(0)
+        self.overallStackWidget = QtWidgets.QStackedWidget()
         targetSelectLayout = QtWidgets.QGridLayout()
         predictorLayout = QtWidgets.QVBoxLayout()
         optionsLayout = QtWidgets.QVBoxLayout()
@@ -160,13 +161,15 @@ class ModelCreationTab(QtWidgets.QWidget):
         widg.setLayout(layout)
         targetSelectLayout.addWidget(widg, 0, 0, 1, 1)
         targetSelectLayout.addWidget(self.dataPlot, 1, 0, 1, 1)
-        
+        widg = QtWidgets.QWidget()
+        widg.setLayout(targetSelectLayout)
+        self.overallStackWidget.addWidget(widg)
         
         
         
         
         overallLayout.addWidget(self.workflowWidget)
-        overallLayout.addLayout(targetSelectLayout)
+        overallLayout.addWidget(self.overallStackWidget)
         self.setLayout(overallLayout)
 
     

@@ -186,6 +186,10 @@ QDateTimeEdit::drop-down {
     border-top-right-radius: 0px; /* same radius as the QComboBox */
     border-bottom-right-radius: 0px;
 }
+QGraphicsView {
+    border-radius: 10px;
+    border: 1px solid darkgray;
+}
 
 QTableView {
     border: 0px;

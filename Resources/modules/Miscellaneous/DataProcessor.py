@@ -156,14 +156,14 @@ def resampleDataSet(dailyData, resampleString, resampleMethod, customFunction = 
         tracker += frequency
 
     # Parse the function
-    func = lambda x: np.nanmean(x) if resampleMethod == 'average' else (
+    func = lambda x: np.nan if x.isnull().all() else (np.nanmean(x) if resampleMethod == 'average' else (
         np.nansum(x) if resampleMethod == 'accumulation' else (
             86400*(1/43560000)*np.nansum(x) if resampleMethod == 'accumulation_cfs_kaf' else (
                 x.iloc[0] if resampleMethod == 'first' else (
                     x.iloc[-1] if resampleMethod == 'last' else (
                         np.nanmedian(x) if resampleMethod == 'median' else (
                             np.nanmax(x) if resampleMethod == 'max' else (
-                                np.nanmin(x) if resampleMethod == 'min' else eval(customFunction))))))))
+                                np.nanmin(x) if resampleMethod == 'min' else eval(customFunction)))))))))
 
     # Resample the data
     for idx in pd.IntervalIndex.from_tuples(periods):
