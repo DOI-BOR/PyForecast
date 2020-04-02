@@ -354,7 +354,7 @@ function createPopups() {
             // Add a button to add the dataset
             popHTML = popHTML + '<button type="button" onclick="buttonPress()">Add Dataset</button>' + `<p hidden id="ids" style="margin:0">${hiddenID}</p>` ;
             
-            var pop = L.popup().setLatLng(e.latlng).setContent(popHTML).addTo(window.map);
+            window.pop = L.popup().setLatLng(e.latlng).setContent(popHTML).addTo(window.map);
             
         });
     });
@@ -369,8 +369,8 @@ function createPopups() {
         popHTML = popHTML + `</br><select id='param'>`;
         popHTML = popHTML + `<option value='PRISM'>PRISM Temperature & Precipitation</option><option value='NRCC'>NRCC Temperature & Precipitation</option></select></p>`;
         popHTML = popHTML + '<button type="button" onclick="HUCPress()">Add Temp/Precip</button>' + `<p hidden id="hucNum" style="margin:0">${num}</p>` ;
-        var pop = L.popup().setLatLng(coordinates).setContent(popHTML).addTo(window.map);
-
+        window.pop = L.popup().setLatLng(coordinates).setContent(popHTML).addTo(window.map);
+        
     });
 
     // Create popups for climate division layer
@@ -382,14 +382,50 @@ function createPopups() {
         var popHTML = "<strong>NAME: " + name + "</strong><p><strong>Number: <strong>" + num;
         popHTML = popHTML + `</br><select id='param'><option value='PDSI'>Palmer Drought Severity Index</option><option value='SPEI'>Standardized Precipitation Evapotranspiration Index</option></select></p>`;
         popHTML = popHTML + '<button type="button" onclick="PDSIPress()">Add Drought Index</button>' + `<p hidden id="pdsiNum" style="margin:0">${num}</p>` ;
-        var pop = L.popup().setLatLng(coordinates).setContent(popHTML).addTo(window.map);
-
+        window.pop = L.popup().setLatLng(coordinates).setContent(popHTML).addTo(window.map);
+        
     });
 }
-
 function createLayerControlOverlay() {
     // Creates a layer control using the grouped overlay add-on to Leaflet
+    window.NEXRADLayer =  new L.tileLayer.wms("http://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi", {
+            layers: 'nexrad-n0r',
+            format: 'image/png',
+            transparent: true,
+            attribution: "Weather data &copy; 2015 IEM Nexrad"
+            });
+    SWE_URL = "https://climate.arizona.edu/Maps/SNODAS_SWE_a/{yr}_{mo}_{dy}_SNODAS_SWE_a/{z}/{x}/{y}.png";
+    dt = new Date();
+    dt = new Date(dt - 24*60*60*1000);
+    var yr = dt.getFullYear().toString();
+    var mo = (dt.getMonth()+1).toString();
+    var dy = dt.getDate().toString();
+    if (mo.length < 2) {mo = "0" + mo;}
+    if (dy.length < 2) {dy = "0" + dy;}
+    SWE_URL = SWE_URL.replace('{yr}',yr).replace('{mo}',mo).replace('{dy}',dy)
+    window.SWELayer = L.tileLayer.wms(SWE_URL, {
+        format: 'image/png',
+        transparent: true,
+        opacity: 0.8,
+        attribution: 'Map data from the <a target="_blank" rel="noreferrer" href="https://www.nohrsc.noaa.gov/">National Operational Hydrologic Remote Sensing Center</a>.  Tiles created by <a target="_blank" rel="noreferrer" href="mailto:broxtopd@email.arizona.edu>Patrick Broxton"</a>.'
+    });
+    window.QPFLayer7Day = L.esri.featureLayer({
+        url:"https://idpgis.ncep.noaa.gov/arcgis/rest/services/NWS_Forecasts_Guidance_Warnings/wpc_qpf/MapServer/11",
+    });
+    window.QPFLayer6Hour = L.esri.featureLayer({
+        url:"https://idpgis.ncep.noaa.gov/arcgis/rest/services/NWS_Forecasts_Guidance_Warnings/wpc_qpf/MapServer/7",
+        opacity: 1
+    });
+    window.QPFLayer3Day = L.esri.featureLayer({
+        url:"https://idpgis.ncep.noaa.gov/arcgis/rest/services/NWS_Forecasts_Guidance_Warnings/wpc_qpf/MapServer/9",
+    });
+    window.QPFLayer7Day.setStyle(QPFStyle);
+    window.QPFLayer6Hour.setStyle(QPFStyle);
+    window.QPFLayer3Day.setStyle(QPFStyle);
     
+
+
+
     // Create Grouped Overlays
     var groupedOverlays = {
         "Stations":{
@@ -404,13 +440,20 @@ function createLayerControlOverlay() {
         "Areas":{
             "Watersheds":           window.hucLayer,
             "Climate Divisions":    window.climLayer
+        },
+        "Current Weather":{
+            "NEXRAD Radar": window.NEXRADLayer,
+            "SNODAS SWE": window.SWELayer,
+            "QPF (6-hour)": window.QPFLayer6Hour,
+            "QPF (3-Day)": window.QPFLayer3Day,
+            "QPF (7-Day)": window.QPFLayer7Day,
         }
     };
 
     // Create a layer control overlay with options
     var layer_control_options = {
         exclusiveGroups: ["Areas"],
-        groupCheckboxes: false
+        groupCheckboxes: true
     };
 
     L.control.groupedLayers(baseMaps, groupedOverlays, layer_control_options).addTo(window.map);
@@ -441,8 +484,9 @@ function buttonPress() {
         console.log('ID:'+id);
     } else {
         console.log('ID:'+id);
-    }
-    
+    };
+    // close the popup
+    window.pop._close();
 };
 
 // Function to print a formatted message to the console 
@@ -452,7 +496,8 @@ function HUCPress() {
     var option  = document.getElementById('param').value;
    
     console.log('HUC:'+id+':PARAM:'+option);
-   
+    // close the popup
+    window.pop._close();
 }
 
 // Function to print a formatted message to the console 
@@ -461,6 +506,8 @@ function PDSIPress() {
     var id = document.getElementById('pdsiNum').innerHTML;
     var option  = document.getElementById('param').value;
     console.log('PDSI:'+id+':PARAM:'+option);
+    // close the popup
+    window.pop._close();
 }
 
 // Function to move the map to the specified location
@@ -647,3 +694,89 @@ function loadJSON(filename, callback) {
     xobj.send(null);  
 };
 
+function QPFStyle(feature){
+    switch(feature.properties.qpf) {
+        case 20:
+          color1 = "#ffc0b7";
+          width1 = 0;
+          break;
+        case 15:
+          color1 = "#ffff00";
+          width1 = 0;
+          break;
+        case 10:
+          color1 = "#ffd700";
+          width1 = 0;
+          break;
+        case 7:
+          color1 = "#ce8500";
+          width1 = 0;
+          break;
+        case 5:
+          color1 = "#ff7f00";
+          width1 = 0;
+          break;
+        case 4:
+            color1 = "#ee4000";
+            width1 = 0;
+            break;
+        case 3:
+          color1 = "#ff0000";
+          width1 = 0;
+          break;
+        case 2.5:
+          color1 = "#8b0000";
+          width1 = 0;
+          break;
+          case 2:
+          color1 = "#8b008b";
+          width1 = 0;
+          break;
+          case 1.75:
+          color1 = "#912cee";
+          width1 = 0;
+          break;
+          case 1.5:
+          color1 = "#8968cd";
+          width1 = 0;
+          break;
+          case 1.25:
+          color1 = "#00eeee";
+          width1 = 0;
+          break;
+          case 1:
+          color1 = "#00b2ee";
+          width1 = 0;
+          break;
+          case 0.75:
+          color1 = "#1e90ff";
+          width1 = 0;
+          break;
+          case 0.5:
+          color1 = "#104e8b";
+          width1 = 0;
+          break;
+          case 0.25:
+          color1 = "#088b00";
+          width1 = 0;
+          break;
+          case 0.1:
+          color1 = "#00ff00";
+          width1 = 0;
+          break;
+          case 0.01:
+          color1 = "#7fff00";
+          width1 = 0;
+          break;
+
+
+        default:
+            color1 = "#00FF00";
+            width1 = 0;
+            break;
+      }
+    return {
+      fillColor: color1,
+      fillOpacity: 1,
+      stroke: false,
+    };};

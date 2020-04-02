@@ -68,8 +68,10 @@ class datasetTab(object):
         self.datasetTab.searchResultsBox.buttonPressSignal.connect(                     self.addDataset)
         self.datasetTab.boxHucResultsBox.buttonPressSignal.connect(                     self.addDataset)
         self.datasetTab.selectedDatasetsWidget.buttonPressSignal.connect(               self.openUserDefinedDatasetEditor)
-        self.datasetTab.selectedDatasetsWidget.Remove_DatasetAction.triggered.connect(  lambda x: self.removeDataset(self.datasetTab.selectedDatasetsWidget.currentItem().data(QtCore.Qt.UserRole).name))
+        #self.datasetTab.selectedDatasetsWidget.Remove_DatasetAction.triggered.connect(  lambda x: self.removeDataset(self.datasetTab.selectedDatasetsWidget.currentItem().data(QtCore.Qt.UserRole).name))
 
+        self.datasetTab.selectedDatasetsWidget.Remove_DatasetAction.triggered.connect(  lambda x: self.removeDataset([i.data(QtCore.Qt.UserRole).name for i in self.datasetTab.selectedDatasetsWidget.selectedItems()]))
+                
 
 
         return
@@ -183,26 +185,37 @@ class datasetTab(object):
         Arguments:
             datasetInternalID -> The DatasetInternalID associated with the dataset to add. The ID's are 
                                  found in the dataset catalogs.
+                                 Can be a list of datasets
         """
 
         # Provide a warning that this will delete all associated forecasts, data, etc associated with this id
         ret = loggingAndErrors.displayDialogYesNo("This action will remove any associated data using this dataset (e.g. forecasts, forecast equations, composite datasets). Continue?")
         if ret == False:
             return
+
+        # Function to remove dataset
+        def remove_(id_):
+            # Begin by removing the dataset from the datasetTable
+            self.datasetTable.drop(id_, inplace = True)
+
+            # Next remove all data from the DataTable
+            self.dataTable.drop(id_, level='DatasetInternalID', inplace = True)
+
+            # Update the multiIndex of the DataTable
+            self.dataTable.set_index(self.dataTable.index.remove_unused_levels(), inplace = True)
+
+            # Next, remove any datasets that depend on this dataset (i.e. composite datasets)
+            for i, dataset in self.datasetTable.iterrows():
+                if str(id_) in str(dataset['DatasetCompositeEquation']):
+                    self.removeDataset(dataset.name)
+
         
-        # Begin by removing the dataset from the datasetTable
-        self.datasetTable.drop(datasetInternalID, inplace = True)
-
-        # Next remove all data from the DataTable
-        self.dataTable.drop(datasetInternalID, level='DatasetInternalID', inplace = True)
-
-        # Update the multiIndex of the DataTable
-        self.dataTable.set_index(self.dataTable.index.remove_unused_levels(), inplace = True)
-
-        # Next, remove any datasets that depend on this dataset (i.e. composite datasets)
-        for i, dataset in self.datasetTable.iterrows():
-            if str(datasetInternalID) in str(dataset['DatasetCompositeEquation']):
-                self.removeDataset(dataset.name)
+        # Check if it's a list or a single integer
+        if isinstance(datasetInternalID, list):
+            for id_ in datasetInternalID:
+                remove_(id_)
+        else:
+            remove_(datasetInternalID)
 
         # Refresh the dataset list view
         self.datasetTab.selectedDatasetsWidget.setDatasetTable(self.datasetTable)

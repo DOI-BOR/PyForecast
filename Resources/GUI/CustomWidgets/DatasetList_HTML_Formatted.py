@@ -188,6 +188,8 @@ class DatasetList_HTML_Formatted(QtWidgets.QListWidget):
                 parameterName = dataset['DatasetParameter']
                 if "SNOTEL" in dataset['DatasetType']:
                     svg = os.path.abspath("resources/graphicalResources/icons/terrain-24px.svg")
+                elif 'OTHER' in dataset['DatasetType']:
+                    svg = os.path.abspath("resources/graphicalResources/icons/language-24px.svg")
                 else:
                     for key, value in datasetIcons.items():
                         if key in parameterName.lower():
