@@ -515,9 +515,7 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
                     self.summaryTab.fcstTree.setExpanded(index, True)
 
             else:
-                print(currentData)
                 button = QtWidgets.QMessageBox.question(self, 'No data..','There is not enough current water year data to generate a forecast.', QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
-                print('current data incomplete')
 
                 return
 
@@ -538,15 +536,10 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             forecast = float(np.dot(currentData2, pcoefs)) + pint
             
             predictorData = np.vstack([predictorData.T, np.ones(predictorData.shape[0])]).T
-            print('predictor ', predictorData)
             xH = np.array(list(currentData2) + [1]).reshape(-1,1)
-            print('xH ', xH)
             j = np.linalg.inv(np.dot(np.transpose(predictorData), predictorData))
-            print('j1 ', j)
             j = np.dot(np.transpose(xH), j)
-            print('j2 ', j)
             j = np.dot(j, xH)
-            print('j3 ', j)
             mse = fcst['Metrics']['Root Mean Squared Error']**2
             se_yh = np.sqrt(mse * j)
             se_pred = np.sqrt(mse + se_yh**2)

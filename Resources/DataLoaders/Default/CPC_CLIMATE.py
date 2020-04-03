@@ -81,27 +81,36 @@ def dataLoader(stationDict, startDate, endDate):
 
     # Otherwise, we'll grab the PNA dataset
     elif stationNum == 3:
-        url = "http://www.cpc.ncep.noaa.gov/products/precip/CWlink/pna/norm.pna.monthly.b5001.current.ascii"
-        dataMonth = pd.read_csv(url, names = ['year','month','PNA | Indice'], sep='\s+')
-        dataMonth['day'] = len(dataMonth.index)*[1]
-        datetimes = pd.to_datetime(dataMonth[['year','month','day']])
-        dataMonth.set_index(pd.DatetimeIndex(datetimes), inplace=True)
-        del dataMonth['year'], dataMonth['month'], dataMonth['day']
-        dataMonth = dataMonth.resample('D').mean()
-        lastDate = list(dataMonth.index)[-1]
-        if lastDate.month in [1,3,5,7,8,10,12]:
-            endDay = 31
-        elif lastDate.month == 2:
-            endDay = 28
-        else:
-            endDay = 30
-        for day in range(lastDate.day,endDay + 1):
-            dataMonth.loc[datetime(lastDate.year, lastDate.month, day)] = dataMonth.loc[lastDate]
-        dataMonth = dataMonth.fillna(method='ffill')
-        dataMonth = dataMonth[dataMonth.index >= startDate]
-        dataMonth = dataMonth[dataMonth.index <= endDate]
+
+        url = "ftp://ftp.cpc.ncep.noaa.gov/cwlinks/norm.daily.pna.index.b500101.current.ascii"
+        dataDaily = pd.read_csv(url, names = ['year','month','day','PNA'], sep='\s+', error_bad_lines=False, converters={"year":int, "month":int, "day":lambda x: int(x[:2]) if '*' in x else int(x)})
+        dataDaily.index = pd.to_datetime(dataDaily[['year', 'month', 'day']])
+        del dataDaily['year'], dataDaily['month'], dataDaily['day']
+        #url = "http://www.cpc.ncep.noaa.gov/products/precip/CWlink/pna/norm.pna.monthly.b5001.current.ascii"
+        #dataMonth = pd.read_csv(url, names = ['year','month','PNA | Indice'], sep='\s+')
+        #dataMonth['day'] = len(dataMonth.index)*[1]
+        #datetimes = pd.to_datetime(dataMonth[['year','month','day']])
+        #dataMonth.set_index(pd.DatetimeIndex(datetimes), inplace=True)
+        #del dataMonth['year'], dataMonth['month'], dataMonth['day']
+        #dataMonth = dataMonth.resample('D').mean()
+        #lastDate = list(dataMonth.index)[-1]
+        #if lastDate.month in [1,3,5,7,8,10,12]:
+        #    endDay = 31
+        #elif lastDate.month == 2:
+        #    endDay = 28
+        #else:
+        #    endDay = 30
+        #for day in range(lastDate.day,endDay + 1):
+        #    dataMonth.loc[datetime(lastDate.year, lastDate.month, day)] = dataMonth.loc[lastDate]
+        #dataMonth = dataMonth.fillna(method='ffill')
+        dataDaily = dataDaily.fillna(method='ffill')
+        #dataMonth = dataMonth[dataMonth.index >= startDate]
+        #dataMonth = dataMonth[dataMonth.index <= endDate]
+        dataDaily = dataDaily[dataDaily.index >= startDate]
+        dataDaily = dataDaily[dataDaily.index <= endDate]
         df = pd.DataFrame(index = pd.date_range(startDate, endDate))
-        df = pd.concat([df, dataMonth], axis = 1)
+        df = pd.concat([df, dataDaily], axis=1)
+        #df = pd.concat([df, dataMonth], axis = 1)
         
         return df
 
