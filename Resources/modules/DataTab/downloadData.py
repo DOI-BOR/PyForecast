@@ -119,6 +119,7 @@ class downloadDataThreadWorker(QtCore.QRunnable):
                     data.columns =['Value']
                     data.set_index([data.index, pd.Index(len(data)*[int(currentDataset)])], inplace=True)
                     data.index.names = ['Datetime','DatasetInternalID']
+                    data.sort_index(level=['Datetime'], inplace=True)
 
                     self.dataFrame = pd.concat([self.dataFrame, data])
                     print("progress bar is at {0} of max {1}".format(self.progressBar.value(), self.progressBar.maximum()))
@@ -151,6 +152,7 @@ class downloadDataThreadWorker(QtCore.QRunnable):
                     data.columns =['Value']
                     data.set_index([data.index, pd.Index(len(data)*[int(currentDataset)])], inplace=True)
                     data.index.names = ['Datetime','DatasetInternalID']
+                    data.sort_index(level=['Datetime'], inplace=True)
                     
                     self.dataFrame = pd.concat([self.dataFrame, data])
                     print("progress bar is at {0} of max {1}".format(self.progressBar.value(), self.progressBar.maximum()))

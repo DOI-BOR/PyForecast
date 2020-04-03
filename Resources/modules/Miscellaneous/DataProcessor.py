@@ -123,6 +123,9 @@ def resampleDataSet(dailyData, resampleString, resampleMethod, customFunction = 
         resampledData -> data resampled based on format string
     """
 
+    # Make sure the index is sorted
+    dailyData.sort_index(level='Datetime', inplace=True)
+
     # Get today's date
     today = datetime.now()
 
@@ -167,8 +170,12 @@ def resampleDataSet(dailyData, resampleString, resampleMethod, customFunction = 
 
     # Resample the data
     for idx in pd.IntervalIndex.from_tuples(periods):
-        
-        data = dailyData.loc[idx.left : idx.right - pd.DateOffset(1)]
+        try:
+            data = dailyData.loc[idx.left : idx.right]
+        except Exception as e:
+            print("idx is: ", idx)
+            print("data is: ", dailyData)
+            raise ValueError("ERROR: ", e)
         resampleData.loc[idx.left] = ( func(data) if (idx.right >= firstDate and today >= idx.right and (not data.empty)) else np.nan )
         
     # Name the dataframe
