@@ -417,7 +417,7 @@ class alternateThreadWorker(QtCore.QRunnable):
             else:
                 continue
         
-        return sum_
+        return sum_ if sum_ != 0 else np.nan
 
      # This function generates a dictionary for a passed predictor
     def predictorDicts(self, mean = False, sample = False, accum = False, accumStart = None):

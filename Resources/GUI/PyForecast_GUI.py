@@ -2307,7 +2307,7 @@ class UI_MainWindow(object):
         self.summaryTab.fcstSelectionPane.header.setFrameStyle(QtWidgets.QFrame.NoFrame)
         self.summaryTab.fcstSelectionPane.header.setMaximumHeight(90)
 
-        self.summaryTab.fcstTree = CustomTreeView(self, menuFunctions=["GENCURRENT","DELETE"], dragFrom=False, dropTo=False)
+        self.summaryTab.fcstTree = CustomTreeView(self, menuFunctions=["GENCURRENT","DELETE", "GENALLFCST"], dragFrom=False, dropTo=False)
         self.summaryTab.fcstTree.setFrameStyle(QtWidgets.QFrame.NoFrame)
 
         self.summaryTab.fcstSelectionPane.layout.addWidget(self.summaryTab.fcstSelectionPane.header)

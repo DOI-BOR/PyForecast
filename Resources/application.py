@@ -390,14 +390,19 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         """
         self.summaryTab.fcstTree.delAction.triggered.connect(self.deleteForecast)
         self.summaryTab.fcstTree.genAction.triggered.connect(self.genForecastButtonClicked)
-        #self.summaryTab.fcstTree.genAllAction.triggered.connect(self.genAllForecastsButtonClicked)
+        self.summaryTab.fcstTree.genAllAction.triggered.connect(self.genAllForecastsButtonClicked)
         self.summaryTab.fcstTree.clicked.connect(self.fcstSelectedToView)
         
         return
 
 
     def genAllForecastsButtonClicked(self):
-        pass
+        # fcst = self.forecastDict['EquationPools'][equation]['ForecastEquations'][fcstID]
+        for equation in list(self.forecastDict['EquationPools'].keys()):
+            print("On Equation: ", equation)
+            for fcstID in list(self.forecastDict['EquationPools'][equation]['ForecastEquations'].keys()):
+                print("\tOn FcstID: ", fcstID)
+                self.genForecastButtonClicked(gen_all=True, idx_to_gen=[equation, fcstID])
         
         #self.genForecastButtonClicked(gen_all=True, idx_to_gen=i)
 
@@ -424,8 +429,8 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
                 return
         
         else:
-            index = idx_to_gen
-            fcst = self.fcstSelectedToView(index, returnFcstOnly=True)
+            index = None
+            fcst = self.fcstSelectedToView(index, returnFcstOnly=True, specificForecast=idx_to_gen)
             if fcst == None:
                 return
         
@@ -701,20 +706,27 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
         return
 
 
-    def fcstSelectedToView(self, index, returnFcstOnly=False):
-        item = self.summaryTab.fcstTree.model.itemFromIndex(index)
-        parent = item.parent()
-        if parent == None:
-            return None
-        if parent.text() == 'ForecastEquations':
-            fcstID = item.text()
-            grandParent = parent.parent()
-            equation = grandParent.text()
+    def fcstSelectedToView(self, index, returnFcstOnly=False, specificForecast=None):
+        if specificForecast != None:
+            equation = specificForecast[0]
+            fcstID = specificForecast[1]
             fcst = self.forecastDict['EquationPools'][equation]['ForecastEquations'][fcstID]
             if returnFcstOnly:
                 return fcst
         else:
-            return None
+            item = self.summaryTab.fcstTree.model.itemFromIndex(index)
+            parent = item.parent()
+            if parent == None:
+                return None
+            if parent.text() == 'ForecastEquations':
+                fcstID = item.text()
+                grandParent = parent.parent()
+                equation = grandParent.text()
+                fcst = self.forecastDict['EquationPools'][equation]['ForecastEquations'][fcstID]
+                if returnFcstOnly:
+                    return fcst
+            else:
+                return None
 
         currentMonth = current_date().month
         if currentMonth >= 10:

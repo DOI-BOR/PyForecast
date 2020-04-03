@@ -132,6 +132,7 @@ class alternateThreadWorker(QRunnable):
         """ Get the predictand Data"""
         self.predictandData = pd.DataFrame().from_dict(self.equationDict['Predictand']['Data'], orient='columns')
         self.predictandData.columns = ['Predictand']
+        self.predictandData = self.predictandData.dropna()
         if self.dist != 'Normal':
             self.predictandData = np.log(self.predictandData)
 
@@ -176,7 +177,6 @@ class alternateThreadWorker(QRunnable):
 
         while iterCounter <= len(self.predictorDataNames):
 
-            print(iterCounter / (len(self.predictorDataNames)))
             iterCounter = iterCounter + 1
 
             """ Iterate through each model and perform 1 iteration of Sequential Floating Selection """
@@ -378,7 +378,6 @@ class alternateThreadWorker(QRunnable):
 
         while iterCounter <= len(self.predictorDataNames):
 
-            print(iterCounter / (len(self.predictorDataNames)))
             iterCounter = iterCounter + 1
 
             """ Iterate through each model and perform 1 iteration of Sequential Floating Selection """
@@ -582,8 +581,6 @@ class alternateThreadWorker(QRunnable):
         allSignificantOriginalSetting = readConfig('allsignificantoverride')
         writeConfig('allsignificantoverride','True')
         for predComboIdx in range(len(predCombos)):
-
-            print(predComboIdx / len(predCombos))
 
             """ Set some variables for this iteration """
             #self.searchDictList[i]['prdIDs'] = predCombos[i]
