@@ -170,13 +170,9 @@ def resampleDataSet(dailyData, resampleString, resampleMethod, customFunction = 
 
     # Resample the data
     for idx in pd.IntervalIndex.from_tuples(periods):
-        try:
-            data = dailyData.loc[idx.left : idx.right]
-        except Exception as e:
-            print("idx is: ", idx)
-            print("data is: ", dailyData)
-            raise ValueError("ERROR: ", e)
-        resampleData.loc[idx.left] = ( func(data) if (idx.right >= firstDate and today >= idx.right and (not data.empty)) else np.nan )
+        data = dailyData.loc[idx.left : idx.right]
+        data.isMostlyThere = len(data) > int(0.95*(idx.right-idx.left).days) # Check to make sure 95% of data is there!
+        resampleData.loc[idx.left] = ( func(data) if (idx.right >= firstDate and today >= idx.right and (data.isMostlyThere)) else np.nan )
         
     # Name the dataframe
     resampleData.name = dailyData.name + '_' + resampleList[1] + '_' + resampleList[2] + '_' + resampleList[3] + '_' + resampleMethod + '_' + str(customFunction)

@@ -426,6 +426,7 @@ function createLayerControlOverlay() {
 
     window.emptyLayer = L.tileLayer("").addTo(window.map);
     window.hucNone = L.tileLayer("");
+    
 
     window.QPFLayer7Day.setStyle(QPFStyle);
     window.QPFLayer6Hour.setStyle(QPFStyle);
@@ -441,15 +442,20 @@ function createLayerControlOverlay() {
     })
     window.QPFLayer3Day.on("load", function() {
         addLegend(window.QPFLayer3Day);
+        reorderLayer(window.QPFLayer3Day);
     });
     window.QPFLayer7Day.on("load", function() {
         addLegend(window.QPFLayer7Day);
+        reorderLayer(window.QPFLayer7Day);
+        
     });
     window.QPFLayer6Hour.on("load", function() {
         addLegend(window.QPFLayer6Hour);
+        reorderLayer(window.QPFLayer6Hour);
     });
     window.emptyLayer.on("load", function() {
         addLegend(window.emptyLayer);
+        
     })
 
     // Create Grouped Overlays
@@ -486,6 +492,28 @@ function createLayerControlOverlay() {
 
     L.control.groupedLayers(baseMaps, groupedOverlays, layer_control_options).addTo(window.map);
 };
+
+
+function reorderLayer(layer) {
+    // Reorders the QPF layer so the the 
+    // higher precip values are always on top
+    var sublayers = Array();
+    layer.eachFeature(function(sublayer){
+        sublayers.push(sublayer);
+    });
+    sublayers.sort(function(a,b){
+        return a.feature.properties.qpf - b.feature.properties.qpf;
+    });
+    sublayers.forEach(function(sublayer){
+        sublayer.bringToFront();
+        //layer.resetStyle(feature.id)
+        //layer.setFeatureStyle(feature.id, QPFStyle);
+    });
+    //layer.resetStyle();
+    //;
+
+
+}
 
 // Function to update the POR in the popup 
 // depending on the selected dataset
@@ -797,9 +825,23 @@ function addLegend(layer) {
 }
 
 function padCenter(string, length, char) {
-    string =  string.padStart(string.length + Math.floor((length - string.length) / 2), '@').padEnd(length, '@');
+    var padCharsLeft = Array(1 + string.length + Math.floor((length - string.length) / 2)).join('@');
+    var padCharsRight =  Array(length+1).join('@');
+    string = pad(padCharsLeft, string, true);
+    string = pad(padCharsRight, string, false);
+    //string =  string.padStart(string.length + Math.floor((length - string.length) / 2), '@').padEnd(length, '@');
     return string.replace(/@/g, char);
 }
+
+function pad(pad, str, padLeft) {
+    if (typeof str === 'undefined') 
+      return pad;
+    if (padLeft) {
+      return (pad + str).slice(-pad.length);
+    } else {
+      return (str + pad).substring(0, pad.length);
+    }
+  }
 
 function QPFStyle(feature){
     switch(feature.properties.qpf) {
@@ -884,6 +926,7 @@ function QPFStyle(feature){
       }
     return {
       fillColor: color1,
+      width: 1,
       fillOpacity: 0.73,
       stroke: false,
     };};
