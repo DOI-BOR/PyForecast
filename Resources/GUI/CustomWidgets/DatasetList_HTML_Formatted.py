@@ -239,9 +239,7 @@ class DatasetList_HTML_Formatted(QtWidgets.QListWidget):
     def findSelectedButton(self, dummy):
         for i, button in enumerate(self.buttonList):
             if button.isChecked():
-                print(i)
                 button.setChecked(False)
-                print(self.datasetTable)
                 self.buttonPressSignal.emit(self.datasetTable.iloc[i].name)
 
         return

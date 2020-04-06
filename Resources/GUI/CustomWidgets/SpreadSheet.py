@@ -498,7 +498,7 @@ class SpreadSheetView(QtWidgets.QTableView):
         """
         This function returns the selected dataset ID numbers 
         """
-        cols = [self.model().datasetIndexedList[i.column()] for i in self.selectedIndexes()]
+        cols = [self.model().datasetIndexedList[idx.column()] for idx in self.selectionModel().selectedColumns()]
         
         return list(set(cols))  
 

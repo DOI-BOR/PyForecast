@@ -14,6 +14,9 @@ var rect1 = null;
 var hucList = null;
 var loaded = false;
 
+//window.legend = false;
+
+
 
 // Define Basemaps
 var grayMap = L.tileLayer('http://{s}.tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png', {
@@ -391,6 +394,7 @@ function createLayerControlOverlay() {
     window.NEXRADLayer =  new L.tileLayer.wms("http://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi", {
             layers: 'nexrad-n0r',
             format: 'image/png',
+            opacity: 0.8,
             transparent: true,
             attribution: "Weather data &copy; 2015 IEM Nexrad"
             });
@@ -419,12 +423,34 @@ function createLayerControlOverlay() {
     window.QPFLayer3Day = L.esri.featureLayer({
         url:"https://idpgis.ncep.noaa.gov/arcgis/rest/services/NWS_Forecasts_Guidance_Warnings/wpc_qpf/MapServer/9",
     });
+
+    window.emptyLayer = L.tileLayer("").addTo(window.map);
+    window.hucNone = L.tileLayer("");
+
     window.QPFLayer7Day.setStyle(QPFStyle);
     window.QPFLayer6Hour.setStyle(QPFStyle);
     window.QPFLayer3Day.setStyle(QPFStyle);
     
 
-
+    // Events
+    window.NEXRADLayer.on('load', function(){
+        addLegend(window.NEXRADLayer);
+    })
+    window.SWELayer.on('load', function(){
+        addLegend(window.SWELayer);
+    })
+    window.QPFLayer3Day.on("load", function() {
+        addLegend(window.QPFLayer3Day);
+    });
+    window.QPFLayer7Day.on("load", function() {
+        addLegend(window.QPFLayer7Day);
+    });
+    window.QPFLayer6Hour.on("load", function() {
+        addLegend(window.QPFLayer6Hour);
+    });
+    window.emptyLayer.on("load", function() {
+        addLegend(window.emptyLayer);
+    })
 
     // Create Grouped Overlays
     var groupedOverlays = {
@@ -439,9 +465,11 @@ function createLayerControlOverlay() {
         },
         "Areas":{
             "Watersheds":           window.hucLayer,
-            "Climate Divisions":    window.climLayer
+            "Climate Divisions":    window.climLayer,
+            "None":                 window.hucNone
         },
         "Current Weather":{
+            "None": window.emptyLayer,
             "NEXRAD Radar": window.NEXRADLayer,
             "SNODAS SWE": window.SWELayer,
             "QPF (6-hour)": window.QPFLayer6Hour,
@@ -452,7 +480,7 @@ function createLayerControlOverlay() {
 
     // Create a layer control overlay with options
     var layer_control_options = {
-        exclusiveGroups: ["Areas"],
+        exclusiveGroups: ["Areas", 'Current Weather'],
         groupCheckboxes: true
     };
 
@@ -694,6 +722,85 @@ function loadJSON(filename, callback) {
     xobj.send(null);  
 };
 
+var NEXRADMap = {
+    levels: [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75],
+    colors: ["#646464", "#04e9e7",  "#019ff4", "#0300f4", "#02fd02", "#01c501", "#008e00", "#fdf802", "#e5bc00", "#fd9500", "#fd0000", "#d40000", "#bc0000", "#f800fd", "#9854c6", "#fdfdfd" ]
+};
+
+var QPFMap = {
+    levels: [0, 0.01, .1, .25, .5, .75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5, 7, 10, 15, 20],
+    colors: ["#FFFFFF", '#7fff00', "#00ff00", "#088b00", "#104e8b", "#1e90ff", "#00b2ee", "#00eeee", "#8968cd", "#912cee", "#8b008b", "#8b0000", "#ff0000", "#ee4000", "#ff7f00", "#ce8500", "#ffd700", "#ffff00", "#ffc0b7"]
+};
+
+var SNODASMap = {
+    levels: [0.0, 0.01, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 7.5, 10.0, 20.0, 40.0],
+    colors: ['#ffffff', '#f7fdfd', '#dbfffb', '#bfd0f6', '#6167bc', '#5b40b7', '#731cc1', '#af2dd4', '#e24fdb', '#ef70c2', '#e99eba', '#fae3dd']
+};
+
+function addLegend(layer) {
+    // Adds a legend for the overlay raster layer
+
+    // Check if empty layer
+    if (layer == window.emptyLayer) {
+        L.DomUtil.remove(window.divElem);
+        window.map.removeControl(window.legend);
+        return
+    }
+
+    
+    // Delete any old legends
+    if (typeof window.legend != "undefined") {
+        L.DomUtil.remove(window.divElem);
+        window.map.removeControl(window.legend);
+    }
+    window.legend = L.control({position: 'bottomright'});
+    window.divElem = L.DomUtil.create('div', 'info legend');
+    
+
+    window.legend.onAdd = function(map) {
+        // Get the color map
+        if ([window.QPFLayer3Day, window.QPFLayer6Hour, window.QPFLayer7Day].includes(layer)) {
+            cmap = window.QPFMap;
+            title = 'Accumulated Precip (inches)';
+        } else if (layer == window.SWELayer) {
+            cmap = window.SNODASMap;
+            title = 'Snow Water Equiv. (inches)';
+        } else {
+            cmap = window.NEXRADMap;
+            title = 'Base Reflectivity (dBz)';
+        };
+        // Create the legend
+        
+        
+        labels = ['<strong style="font-family: Open Sans, Arial">'+title+"</strong><br>"];
+        categories = cmap.levels;
+        colors = cmap.colors;
+
+        for (var i=0; i < categories.length; i++) {
+            labels.push(
+                '<h5>'+padCenter(categories[i].toString(), 5, '&nbsp;')+'</h5>'
+            );
+            }
+        labels.push('<br>');
+        for (var i=0; i < categories.length; i++) {
+            labels.push(
+                '<i style="background:' + colors[i] + '"></i>'
+            );
+        }
+
+        window.divElem.innerHTML = labels.join("");
+        return window.divElem;
+    }
+
+    
+    window.legend.addTo(window.map);
+}
+
+function padCenter(string, length, char) {
+    string =  string.padStart(string.length + Math.floor((length - string.length) / 2), '@').padEnd(length, '@');
+    return string.replace(/@/g, char);
+}
+
 function QPFStyle(feature){
     switch(feature.properties.qpf) {
         case 20:
@@ -777,6 +884,6 @@ function QPFStyle(feature){
       }
     return {
       fillColor: color1,
-      fillOpacity: 1,
+      fillOpacity: 0.73,
       stroke: false,
     };};

@@ -49,7 +49,6 @@ def dataLoader(stationDict, startDate, endDate):
         df.fillna(method='ffill',inplace=True)
         df = df[df.index >= startDate]
         df = df[df.index <= endDate]
-        print(df)
         return df
 
     def PDSILoader(stationID, startDate, endDate):

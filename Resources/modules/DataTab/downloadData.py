@@ -122,7 +122,6 @@ class downloadDataThreadWorker(QtCore.QRunnable):
                     data.sort_index(level=['Datetime'], inplace=True)
 
                     self.dataFrame = pd.concat([self.dataFrame, data])
-                    print("progress bar is at {0} of max {1}".format(self.progressBar.value(), self.progressBar.maximum()))
                     self.signals.updateProgressBar.emit(round(self.progressBar.value() + 0.999))
 
                 # If we don't have all the data yet, move this dataset to the back of the list
@@ -155,7 +154,6 @@ class downloadDataThreadWorker(QtCore.QRunnable):
                     data.sort_index(level=['Datetime'], inplace=True)
                     
                     self.dataFrame = pd.concat([self.dataFrame, data])
-                    print("progress bar is at {0} of max {1}".format(self.progressBar.value(), self.progressBar.maximum()))
                     self.signals.updateProgressBar.emit(round(self.progressBar.value() + 0.999))
 
                 except Exception as e:

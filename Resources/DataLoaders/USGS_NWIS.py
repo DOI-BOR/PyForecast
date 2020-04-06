@@ -63,7 +63,5 @@ def dataLoader(stationDict, startDate, endDate):
 
     # Rename the columns
     df.columns = ['USGS | ' + stationDict['DatasetExternalID'] + ' | Streamflow | CFS']
-    print("DATA IS: ")
-    print(df)
     # Return the data frame
     return df.sort_index()

@@ -52,6 +52,7 @@ class dataTab(object):
 
         # SpreadSheet
         self.dataTab.spreadsheet.model().dataChanged.connect(lambda x, y: self.plotSelectedDataset())
+        self.dataTab.spreadsheet.horizontalHeader().selectionModel().selectionChanged.connect(lambda newSelection, oldSelection: self.plotSelectedDataset(specificSelection = self.dataTab.spreadsheet.getSelectedColumns()))
 
         return
 
@@ -194,12 +195,17 @@ class dataTab(object):
         return
 
 
-    def plotSelectedDataset(self):
+    def plotSelectedDataset(self, specificSelection = None):
         """
         This function is called when a user selects
         one or more datasets from the left hand side list. 
         It figures out which datasets are selected and 
-        sends those to the plot's 'displayDatasets' method
+        sends those to the plot's 'displayDatasets' method.
+
+        The 'specificSelection' argument (optional) will programatically
+        select datasets in the dataset list before plotting. 
+
+        -> specificSelection: list of datasetInternalIDs. e.g. [10123, 101123, ...]
         """
 
         # Initialize an empty dataset list
@@ -208,6 +214,26 @@ class dataTab(object):
         # Check that there is some data in the dataTable
         if self.dataTable.empty:
             return
+
+        # Check if there are specific datasets to plot from the function call
+        if specificSelection != None:
+
+            print(specificSelection)
+            if specificSelection != []:
+                
+
+                # Iterate over datasets in the list
+                for i in range(self.dataTab.datasetList.count()):
+
+                    # Select the specific datasets
+                    if self.dataTab.datasetList.item(i).data(QtCore.Qt.UserRole).name in specificSelection:
+
+                        self.dataTab.datasetList.item(i).setSelected(True)
+                    
+                    else:
+
+                        self.dataTab.datasetList.item(i).setSelected(False)
+
 
         # Iterate over the selected items in the datsetList
         for item in self.dataTab.datasetList.selectedItems():

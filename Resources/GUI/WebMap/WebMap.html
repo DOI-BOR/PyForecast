@@ -30,6 +30,44 @@ Description:        WebMap.html provides the HTML code for the station
         <link href='WebMap.css' rel='stylesheet' />
         <link href='leaflet_shades/src/css/leaflet-shades.css' rel='stylesheet'>
     </head>
+    <style>
+        .info {
+            padding: 6px 8px;
+            font: 14px Open Sans, sans-serif;
+            background: white;
+            background: rgba(255,255,255,0.9);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            border-radius: 5px;
+        }
+        h5 {
+            padding:0;
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 10px;
+            color:black;
+            display:inline;
+        }
+        .info h4 {
+            margin: 0 0 5px;
+            color: rgb(75, 75, 75);
+        }
+        .legend {
+            line-height: 18px;
+            color: rgb(59, 59, 59);
+        }
+        .legend i {
+            box-shadow: inset 0 0 0px 1px rgb(37, 37, 37);
+            font-size: 10px;
+            width: 3.0em;
+            height: 18px;
+            float: left;
+            margin-right: 0px;
+            opacity: 0.9;
+        }
+        .leaflet-control-layers-expanded {
+            font-family: Open Sans, Arial, san-serif;
+        }
+    </style>
 
     <body>
         <script>
