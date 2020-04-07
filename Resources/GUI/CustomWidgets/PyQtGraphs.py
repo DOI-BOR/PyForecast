@@ -715,7 +715,7 @@ class TimeSeriesLinePlot(pg.PlotItem):
                 
                 # Set the data for the i-th PlotCurveItem
                 self.items_[i].setData(x, y, name = title, connect='finite')
-                self.items_[i].units = unitsEquivalent[1]
+                self.items_[i].units = unitsEquivalent[1].lower()
                 self.items_[i].isActive = True
                 
             else:
@@ -726,7 +726,7 @@ class TimeSeriesLinePlot(pg.PlotItem):
 
                 # set the data for the i-th second axis item
                 self.items_axis2[i].setData(x, y, name = title, connect='finite')
-                self.items_axis2[i].units = sameUnits(d['DatasetUnits'], d['DatasetUnits'])[1]
+                self.items_axis2[i].units = sameUnits(d['DatasetUnits'], d['DatasetUnits'])[1].lower()
                 self.items_axis2[i].isActive = True
                 y2UnitList.append(self.items_axis2[i].units)
 
@@ -746,8 +746,8 @@ class TimeSeriesLinePlot(pg.PlotItem):
                 self.legend.addItem(item, item.name())
         
         # Set the axis labels
-        self.getAxis('left').setLabel(primaryUnits)
-        self.getAxis('right').setLabel(' '.join(list(set(y2UnitList))))
+        self.getAxis('left').setLabel(primaryUnits.lower())
+        self.getAxis('right').setLabel(' '.join(list(set(y2UnitList))).lower())
         
         #print('PLOT ',self.xMax, self.xMin, self.yMax, self.yMin)
         if not any([np.isinf(self.xMax), np.isinf(self.xMin), np.isinf(self.yMax), np.isinf(self.yMin)]):
