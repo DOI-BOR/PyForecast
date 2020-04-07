@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 import importlib
+from resources.GUI.CustomWidgets import PyQtGraphOverrides
 from resources.modules.Miscellaneous.DataProcessor import resampleDataSet
 from bisect import bisect_left
 
@@ -14,18 +15,13 @@ pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
 
 
+pg.PlotItem.clear = PyQtGraphOverrides.PLOTITEM_clear_
+pg.InfiniteLine.setMouseHover = PyQtGraphOverrides.INFINITELINE_setMouseHover_
+pg.InfiniteLine.mouseDragEvent = PyQtGraphOverrides.INFINITELINE_mouseDragEvent_
 
-def clear_(self):
-        """
-        Remove all items from the ViewBox.
-        """
-        for i in self.items[:]:
-            self.removeItem(i)
-            if hasattr(i, 'isActive'):
-                i.isActive = False
-        self.avgCurves = {}
-
-pg.PlotItem.clear = clear_
+# NEEDS SOME WORK
+#pg.LinearRegionItem.hoverEvent = PyQtGraphOverrides.LINEARREGION_hoverEvent_
+#pg.LinearRegionItem.mouseDragEvent = PyQtGraphOverrides.LINEARREGION_mouseDragEvent_
 
 EQUIVALENCY_LISTS = [
     ["INCHES", "INCH", "IN", "IN.", '"'],
@@ -801,6 +797,10 @@ class TimeSeriesLinePlot(pg.PlotItem):
             )
 
         # Show the grid
+        if len(y2UnitList) == 0:
+            self.hideAxis('right')
+        else:
+            self.showAxis('right')
         self.showGrid(True, True, 0.85)
 
         return
