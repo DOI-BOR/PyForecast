@@ -29,6 +29,9 @@ from datetime import datetime
 import configparser
 import pandas as pd
 
+# DEBUGGING
+import pickle
+
 
 class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMaster.datasetTab, dataTabMaster.dataTab, menuBarMaster.menuBar, StatisticalModelsTabMaster.statisticalModelsTab):
     """
@@ -92,6 +95,8 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
             dtype=float
         )
         self.dataTable['EditFlag'] = self.dataTable['EditFlag'].astype(bool)
+        self.datasetTable = pd.read_pickle("toyDatasets.pkl")
+        self.dataTable = pd.read_pickle("toyData.pkl")
         
         # This table will keep track of all the model runs initial conditions
         self.modelRunsTable = pd.DataFrame(
