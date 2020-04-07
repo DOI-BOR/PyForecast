@@ -14,7 +14,7 @@ pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-hos
 ECHO OOOO
 pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org pandas -U --user
 ECHO OOOOO
-pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org sklearn -U --user
+pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org scikit-learn -U --user
 ECHO OOOOOO
 pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org matplotlib -U --user
 ECHO OOOOOOO
@@ -35,6 +35,8 @@ ECHO OOOOOOOOOOOOOO
 pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org geojson -U --user
 ECHO OOOOOOOOOOOOOOO
 pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org fuzzywuzzy -U --user
+ECHO OOOOOOOOOOOOOOOO
+pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org bitarray -U --user
 ECHO OOOOOOOOOOOOOOOO
 ECHO.
 ECHO Press any key to exit
