@@ -164,7 +164,7 @@ class RegressionWorker(QtCore.QRunnable):
                         # see all models from this initialization
                         if i == 0:
                             
-                            #print("i 0")
+                            print("i 0")
 
                             # Initialize the feature selection scheme with the scheme's default model
                             f = featSel.FeatureSelector(    
@@ -176,7 +176,7 @@ class RegressionWorker(QtCore.QRunnable):
 
                         # Otherwise, generate a random model.
                         else:
-                            #print('i 1')
+                            print('i 1')
 
                             # Generate a random model
                             model = ba.bitarray(list(np.random.randint(0, 2, self.xTraining.shape[1])))
@@ -230,6 +230,9 @@ if __name__ == '__main__':
     datasetTable = pd.read_pickle("toyDatasets.pkl")
     dataTable = pd.read_pickle("toyData.pkl")
     modelInit = pd.read_pickle("toyModelInit.pkl")
+
+    modelInit.loc[100]['FeatureSelectionTypes'] = ['FeatSel_BruteForce']
+    
     
     # Fake Parent Object
     class p(object):
@@ -313,7 +316,7 @@ if __name__ == '__main__':
         plt.hist(results, bins=int(len(results)/30), normed=True, facecolor = COLORS[i], alpha = 0.6)
         plt.plot(xs, np.exp(log_dens), color=COLORS[i])
     
-    for i, mod in enumerate(p_.rg.resultsList[0:100:10]):
+    for i, mod in enumerate(p_.rg.resultsList[0:1]):
         print(mod['Model'])
         plot_forecast(mod, XY, i)
 

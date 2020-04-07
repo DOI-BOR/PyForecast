@@ -103,6 +103,8 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.buttons = [self.targetWidgetButton, self.predictorWidgetButton, self.optionsWidgetButton, self.summaryWidgetButton]
         self.workflowWidget.setLayout(workflowLayout)
 
+        # ===================================================================================================================
+
         # Layout the Target Selection Widget
         widg = QtWidgets.QWidget()
         layout = QtWidgets.QFormLayout()
@@ -164,9 +166,17 @@ class ModelCreationTab(QtWidgets.QWidget):
         widg = QtWidgets.QWidget()
         widg.setLayout(targetSelectLayout)
         self.overallStackWidget.addWidget(widg)
+
+        # ===================================================================================================================
+
+        # Layout the predictor selector widget
+
+
         
         
-        
+        # ====================================================================================================================
+
+        # Layout the overall page
         
         overallLayout.addWidget(self.workflowWidget)
         overallLayout.addWidget(self.overallStackWidget)

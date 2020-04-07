@@ -38,8 +38,14 @@ class FeatureSelector(object):
 
         # Compile the data to fit with the regression method
         x = self.parent.proc_xTraining[:, list(model)]
-        y = self.parent.proc_yTraining[~np.isnan(x).any(axis=1)]
-        x = x[~np.isnan(x).any(axis=1)]
+
+        # Check if we're using a regression model that requires non-NaN data
+        if any(map(lambda x: self.regressionName in x, ["Regr_ZScore"])):
+            y = self.parent.proc_yTraining
+
+        else:
+            y = self.parent.proc_yTraining[~np.isnan(x).any(axis=1)]
+            x = x[~np.isnan(x).any(axis=1)]
 
         # Fit the model with the regression method and get the resulting score
         try:
@@ -60,6 +66,9 @@ class FeatureSelector(object):
         do real-time analysis of models as they are being 
         built
         """
+        # Update the visualization
+        model = [True if i == '1' else False for i in modelStr]
+        self.parent.updateViz(currentModel = model)
 
         # Store the score in the computed models dict 
         self.parent.computedModels[modelStr] = score
