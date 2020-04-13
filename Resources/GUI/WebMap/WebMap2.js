@@ -730,14 +730,14 @@ function HUCPress() {
     //iterate over the checked boxes
     var datasetList = Array();
     var parameterList = document.getElementsByClassName("HUC_SELECT");
-    console.log(parameterList)
     for (i=0; i<parameterList.length; i++) {
         item = parameterList[i];
         if (item.checked){
+            if (item.id != "SELECT_ALL"){
             datasetList.push(item.id);
+            }
         }
     }
-    console.log(datasetList)
     datasetList.forEach(function(dataset){
         if (dataset == 'PRISM') {
             console.log("HUC:" + window.num + ":PARAM:" + dataset);
