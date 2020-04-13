@@ -11,7 +11,7 @@ from    PyQt5   import  QtWidgets, \
                         QtCore, \
                         QtGui
 from resources.GUI.CustomWidgets.DatasetList_HTML_Formatted import DatasetList_HTML_Formatted
-from resources.GUI.CustomWidgets import SVGIcon
+from resources.GUI.CustomWidgets import SVGIcon, customTabs
 from resources.GUI.CustomWidgets.PyQtGraphs import DataTabPlots
 from resources.GUI.CustomWidgets.SpreadSheet import SpreadSheetView
 import  sys
@@ -24,7 +24,7 @@ class DataTab(QtWidgets.QWidget):
 
     def __init__(self, parent = None):
 
-        QtWidgets.QWidget.__init__(self)
+        QtWidgets.QWidget.__init__(self, objectName = 'tabPage')
         self.parent = parent
 
         # Initialize the Layouts
@@ -75,14 +75,24 @@ class DataTab(QtWidgets.QWidget):
         self.spreadsheet = SpreadSheetView(self)
 
         # Create a stackedWidget to store the plots and spreadsheet
-        self.stackWidget = QtWidgets.QTabWidget(objectName = 'datasetTabPane')
-        self.stackWidget.setTabPosition(QtWidgets.QTabWidget.East)
-        self.stackWidget.setIconSize(QtCore.QSize(25,25))
-        icon = SVGIcon.SVGIcon(os.path.abspath("resources/graphicalResources/icons/timeline-24px.svg"), '#FFFFFF', 270, (100,100))
-        self.stackWidget.addTab(self.plot, icon, "")
-        icon = SVGIcon.SVGIcon(os.path.abspath("resources/graphicalResources/icons/border_all-24px.svg"), '#FFFFFF', 270, (100,100))
-        self.stackWidget.addTab(self.spreadsheet, icon, "")
-        self.stackWidget.setCurrentIndex(0)
+        self.stackWidget = customTabs.EnhancedTabWidget(self, "above", "vertical", eastTab=True, tint=True)
+
+        #self.stackWidget = QtWidgets.QTabWidget(objectName = 'datasetTabPane')
+        #self.stackWidget.setTabPosition(QtWidgets.QTabWidget.East)
+        #self.stackWidget.setIconSize(QtCore.QSize(25,25))
+        #icon = SVGIcon.SVGIcon(os.path.abspath("resources/graphicalResources/icons/chart_areaspline-24px.svg"), '#FFFFFF', 270, (100,100))
+        #self.stackWidget.addTab(self.plot, icon, "")
+        #icon = SVGIcon.SVGIcon(os.path.abspath("resources/graphicalResources/icons/border_all-24px.svg"), '#FFFFFF', 270, (100,100))
+        #self.stackWidget.addTab(self.spreadsheet, icon, "")
+        #self.stackWidget.setCurrentIndex(0)
+
+        self.stackWidget.addTab(self.plot, "GRAPH", "resources/graphicalResources/icons/chart_areaspline-24px.svg", "#FFFFFF", iconSize=(25,25))
+        self.stackWidget.addTab(self.spreadsheet, "TABLE", "resources/graphicalResources/icons/border_all-24px.svg", "#FFFFFF", iconSize=(25,25))
+
+        # Configuration Widget
+        widg = QtWidgets.QWidget()
+        self.stackWidget.addTabBottom(widg, "CONFIGURE", "resources/graphicalResources/icons/settings-24px.svg", "#FFFFFF", iconSize=(20,20) )
+
 
         # Build the overall page
         widgetLeft = QtWidgets.QWidget()

@@ -99,7 +99,7 @@ class FeatureSelector(object):
         return score
     
 
-    def logCombinationResult(self, modelStr = None, score = None):
+    def logCombinationResult(self, model = None, score = None):
         """
         Under-defined function. Currently just adds the model to 
         the model list. Theoretically, we could use this 
@@ -108,8 +108,10 @@ class FeatureSelector(object):
         built
         """
         # Update the visualization
-        model = [True if i == '1' else False for i in modelStr]
         self.parent.updateViz(currentModel = model)
+
+        # Get the model string
+        modelStr = model.to01()
 
         # Store the score in the computed models dict 
         self.parent.computedModels[modelStr] = score
@@ -189,13 +191,13 @@ class FeatureSelector(object):
 
                 # Add the predictor to the model
                 model[i] = True
-                model_str = model.to01()
+                modelStr = model.to01()
 
                 # Check that we haven't already computed this model combination
-                if model_str in self.parent.computedModels:
+                if modelStr in self.parent.computedModels:
                 
                     # Get the score from the list of models
-                    score = self.parent.computedModels[model_str]
+                    score = self.parent.computedModels[modelStr]
                     
                 else:
                 
@@ -203,7 +205,7 @@ class FeatureSelector(object):
                     score = self.scoreModel(model)
 
                     # Log the model results so that we don't try it again if we can avoid it
-                    self.logCombinationResult(model_str, score)
+                    self.logCombinationResult(model, score)
 
                 # Check if this model has a higher score than the current model
                 if ModelScoring.scoreCompare(newScores = score, oldScores = self.currentScores):
@@ -251,13 +253,13 @@ class FeatureSelector(object):
                 
                 # Remove the predictor from the model
                 model[i] = False
-                model_str = model.to01()
+                modelStr = model.to01()
 
                  # Check that we haven't already computed this model combination
-                if model_str in self.parent.computedModels:
+                if modelStr in self.parent.computedModels:
                 
                     # Get the score from the list of models
-                    score = self.parent.computedModels[model_str]
+                    score = self.parent.computedModels[modelStr]
                     
                 else:
                 
@@ -265,7 +267,7 @@ class FeatureSelector(object):
                     score = self.scoreModel(model)
 
                     # Log the model results so that we don't try it again if we can avoid it
-                    self.logCombinationResult(model_str, score)
+                    self.logCombinationResult(model, score)
 
                 # Check if this model has a higher score than the current model
                 if ModelScoring.scoreCompare(newScores = score, oldScores = self.currentScores):

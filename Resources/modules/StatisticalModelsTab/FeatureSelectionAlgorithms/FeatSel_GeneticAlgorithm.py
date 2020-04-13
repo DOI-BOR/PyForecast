@@ -96,7 +96,7 @@ class FeatureSelector(object):
         self.population = [ba.bitarray(list(np.random.randint(0, 2, self.numPredictors))) for i in range(self.populationSize)]
     
 
-    def logCombinationResult(self, modelStr = None, score = None):
+    def logCombinationResult(self, model = None, score = None):
         """
         Under-defined function. Currently just adds the model to 
         the model list. Theoretically, we could use this 
@@ -105,8 +105,10 @@ class FeatureSelector(object):
         built
         """
         # Update the visualization
-        model = [True if i == '1' else False for i in modelStr]
         self.parent.updateViz(currentModel = model)
+
+        # Get the model string
+        modelStr = model.to01()
 
         # Store the score in the computed models dict 
         self.parent.computedModels[modelStr] = score
@@ -204,7 +206,7 @@ class FeatureSelector(object):
                     # Compute the scores and append the score to the master list of models
                     score = self.scoreModel(model)
                     self.scores.append({model_str: score})
-                    self.logCombinationResult(model_str, score)
+                    self.logCombinationResult(model, score)
             
             # Rank this generation's models
             ranks = self.rankModels()

@@ -8,7 +8,7 @@ Description:        'DatasetsTab.py' is a PyQt5 GUI for the PyForecast applicati
 """
 
 from PyQt5 import  QtWidgets, QtCore, QtGui
-from resources.GUI.CustomWidgets import DatasetList_HTML_Formatted, SVGIcon
+from resources.GUI.CustomWidgets import DatasetList_HTML_Formatted, SVGIcon, customTabs
 from resources.GUI.WebMap import webMapView
 
 import sys
@@ -29,7 +29,7 @@ class DatasetTab(QtWidgets.QWidget):
         Keyword Arguments:
         parent -- The parent widget of this tab. Not used.
         """
-        QtWidgets.QWidget.__init__(self)
+        QtWidgets.QWidget.__init__(self, objectName = 'tabPage')
 
         self.parent = parent
 
@@ -37,13 +37,14 @@ class DatasetTab(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0,0,0,0)
         splitter = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
-        tabPane = QtWidgets.QTabWidget(objectName = 'datasetTabPane')
-        tabPane.setIconSize(QtCore.QSize(25,25))
-        tabPane.setTabPosition(QtWidgets.QTabWidget.East)
+        tabPane = customTabs.EnhancedTabWidget(self, 'above', 'vertical', eastTab=True, tint=True)
+        #tabPane = QtWidgets.QTabWidget(objectName = 'datasetTabPane')
+        #tabPane.setIconSize(QtCore.QSize(25,25))
+        #tabPane.setTabPosition(QtWidgets.QTabWidget.East)
 
         # Left hand side web view
         self.webMapView = webMapView.webMapView()
-        splitter.addWidget(self.webMapView)
+        
 
         # Right hand side tab pane - DatasetListTab
         DatasetListTab = QtWidgets.QWidget()
@@ -63,9 +64,10 @@ class DatasetTab(QtWidgets.QWidget):
         layout_.addWidget(self.selectedDatasetsLabel)
         layout_.addWidget(self.selectedDatasetsWidget)
         DatasetListTab.setLayout(layout_)
-        icon = SVGIcon.SVGIcon(os.path.abspath("resources/graphicalResources/icons/playlist_add_check-24px.svg"), '#FFFFFF', 270, (100,100))
-        tabPane.addTab(DatasetListTab, icon, "")
-        tabPane.setTabToolTip(0, "Selected Dataset List")
+        #icon = SVGIcon.SVGIcon(os.path.abspath("resources/graphicalResources/icons/playlist_add_check-24px.svg"), '#FFFFFF', 270, (100,100))
+        #tabPane.addTab(DatasetListTab, icon, "")
+        #tabPane.setTabToolTip(0, "Selected Dataset List")
+        tabPane.addTab(DatasetListTab, "SELECTED<br>DATASETS", "resources/graphicalResources/icons/playlist_add_check-24px.svg", "#FFFFFF", iconSize=(25,25))
 
         # Right hand side tab pane - SearchTab
         SearchTab = QtWidgets.QWidget()
@@ -89,9 +91,10 @@ class DatasetTab(QtWidgets.QWidget):
         layout_.addLayout(layout2)
         layout_.addWidget(self.searchResultsBox)
         SearchTab.setLayout(layout_)
-        icon = SVGIcon.SVGIcon(os.path.abspath("resources/graphicalResources/icons/search-24px.svg"), '#FFFFFF', 270, (100,100))
-        tabPane.addTab(SearchTab, icon, "")
-        tabPane.setTabToolTip(1, "Dataset Search")
+        #icon = SVGIcon.SVGIcon(os.path.abspath("resources/graphicalResources/icons/search-24px.svg"), '#FFFFFF', 270, (100,100))
+        #tabPane.addTab(SearchTab, icon, "")
+        #tabPane.setTabToolTip(1, "Dataset Search")
+        tabPane.addTab(SearchTab, "KEYWORD<br>SEARCH", "resources/graphicalResources/icons/search-24px.svg", "#FFFFFF", iconSize=(25,25))
 
         # Right hand side tab pane - box/huc search
         boxHucSearchTab = QtWidgets.QWidget()
@@ -115,9 +118,10 @@ class DatasetTab(QtWidgets.QWidget):
         layout_.addWidget(self.boxHucSearchButton)
         layout_.addWidget(self.boxHucResultsBox)
         boxHucSearchTab.setLayout(layout_)
-        icon = SVGIcon.SVGIcon(os.path.abspath("resources/graphicalResources/icons/image_search-24px.svg"), '#FFFFFF', 270, (100,100))
-        tabPane.addTab(boxHucSearchTab, icon, "")
-        tabPane.setTabToolTip(1, "Area Search")
+        #icon = SVGIcon.SVGIcon(os.path.abspath("resources/graphicalResources/icons/image_search-24px.svg"), '#FFFFFF', 270, (100,100))
+        #tabPane.addTab(boxHucSearchTab, icon, "")
+        #tabPane.setTabToolTip(1, "Area Search")
+        tabPane.addTab(boxHucSearchTab, "AREA<br>SEARCH", "resources/graphicalResources/icons/image_search-24px.svg", "#FFFFFF", iconSize=(25,25))
 
 
         # Right hand side tab pane - AdditionalDatasetTab
@@ -227,12 +231,18 @@ class DatasetTab(QtWidgets.QWidget):
 
         #layout_.addWidget(blank)
         AdditionalDatasetTab.setLayout(layout_)
-        icon = SVGIcon.SVGIcon(os.path.abspath("resources/graphicalResources/icons/public-24px.svg"), '#FFFFFF', 270, (100,100))
-        tabPane.addTab(AdditionalDatasetTab, icon, "")
-        tabPane.setTabToolTip(2, "Additional Datasets")
+        #icon = SVGIcon.SVGIcon(os.path.abspath("resources/graphicalResources/icons/public-24px.svg"), '#FFFFFF', 270, (100,100))
+        #tabPane.addTab(AdditionalDatasetTab, icon, "")
+        #tabPane.setTabToolTip(2, "Additional Datasets")
+        tabPane.addTab(AdditionalDatasetTab, "ADDITIONAL<br>DATASETS", "resources/graphicalResources/icons/public-24px.svg", "#FFFFFF", iconSize=(25,25))
+
+        widg = QtWidgets.QWidget()
+        tabPane.addTabBottom(widg, "CONFIGURE", "resources/graphicalResources/icons/settings-24px.svg", "#FFFFFF", iconSize=(20,20))
 
         self.webMapView.sizePolicy().setHorizontalStretch(4)
         tabPane.sizePolicy().setHorizontalStretch(0)
+        splitter.addWidget(self.webMapView)
         splitter.addWidget(tabPane)
+        
         layout.addWidget(splitter)
         self.setLayout(layout)

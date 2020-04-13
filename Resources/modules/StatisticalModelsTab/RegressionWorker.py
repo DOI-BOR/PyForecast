@@ -22,6 +22,14 @@ import bitarray as ba
 from resources.modules.StatisticalModelsTab.ModelScoring import sortScores
 from operator import itemgetter
 
+REGRESSION_STOP_ITERATIONS = {
+    "Regr_MultipleLinearRegressor": 20000,
+    "Regr_PCARegressor": 10000,
+    "Regr_ZScore":20000,
+    "Regr_SVM_RBF":4000,
+    "Regr_MLPerceptron":500
+}
+
 class RegressionWorkerSignals(QtCore.QObject):
     """
     supported signals are:
@@ -34,7 +42,7 @@ class RegressionWorkerSignals(QtCore.QObject):
     """
 
     finished = QtCore.pyqtSignal()
-    currentModel = QtCore.pyqtSignal(list)
+    currentModel = QtCore.pyqtSignal(object)
 
 
 class RegressionWorker(QtCore.QRunnable):
@@ -152,9 +160,9 @@ class RegressionWorker(QtCore.QRunnable):
                 # Iteration tracker
                 i = 0
 
-                # Compute at least 10,000 models
-                while len(self.computedModels) < (self.numPossibleModels if self.numPossibleModels < 10000 else 10000):
-                    print(len(self.computedModels))
+                # Compute models
+                while len(self.computedModels) < (self.numPossibleModels if self.numPossibleModels <  REGRESSION_STOP_ITERATIONS[regression] else REGRESSION_STOP_ITERATIONS[regression]):
+
                     # Iterate over the feature selection methods
                     for featSel in self.featureSelectionSchemes:
 
@@ -164,8 +172,6 @@ class RegressionWorker(QtCore.QRunnable):
                         # see all models from this initialization
                         if i == 0:
                             
-                            print("i 0")
-
                             # Initialize the feature selection scheme with the scheme's default model
                             f = featSel.FeatureSelector(    
                                         parent = self, 
@@ -176,7 +182,6 @@ class RegressionWorker(QtCore.QRunnable):
 
                         # Otherwise, generate a random model.
                         else:
-                            print('i 1')
 
                             # Generate a random model
                             model = ba.bitarray(list(np.random.randint(0, 2, self.xTraining.shape[1])))
@@ -225,6 +230,9 @@ if __name__ == '__main__':
     random.shuffle(COLORS)
 
     from PyQt5 import QtWidgets,QtCore
+    from workspace_2 import PredictorGrid
+
+    app = QtWidgets.QApplication(sys.argv)
     
     # Load some toy data
     datasetTable = pd.read_pickle("toyDatasets.pkl")
@@ -247,7 +255,6 @@ if __name__ == '__main__':
             self.rg = RegressionWorker(self, modelRunTableEntry=self.modelInit.iloc[0])
             
             self.forecastIssueDate = pd.to_datetime('2019-04-01')
-     
     
     p_ = p(dataTable, modelInit, datasetTable)
 
@@ -316,7 +323,7 @@ if __name__ == '__main__':
         plt.hist(results, bins=int(len(results)/30), normed=True, facecolor = COLORS[i], alpha = 0.6)
         plt.plot(xs, np.exp(log_dens), color=COLORS[i])
     
-    for i, mod in enumerate(p_.rg.resultsList[0:1]):
+    for i, mod in enumerate(p_.rg.resultsList[0:100:10]):
         print(mod['Model'])
         plot_forecast(mod, XY, i)
 

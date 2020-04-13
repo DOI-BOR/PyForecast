@@ -14,6 +14,61 @@ QMenuBar::item:selected {
     background: #707070;
     color: black;
 }
+QStackedWidget {
+    background: #e8e8e8;
+}
+QWidget#EnhancedTabWidget {
+    background: #003E51;
+    font-family: 'Segoe UI';
+    font-size: 15px;
+}
+QWidget#EnhancedTabWidget_tint {
+    background: #002b39;
+    font-family: 'Segoe UI';
+    font-size: 15px;
+}
+QWidget#EnhancedTabWidget QWidget#TabLabel {
+    padding: 0px;
+    margin: 0px;
+    background: #003E51;
+    color: #b6b6b6;
+    border: 0px solid #007396;
+    border-color: #007396;
+}
+QWidget#EnhancedTabWidget_tint QWidget#TabLabel {
+    padding: 0px;
+    margin: 0px;
+    background: #002b39;
+    color: #b6b6b6;
+    border: 0px solid #007396;
+    border-color: #007396;
+}
+QWidget#EnhancedTabWidget QLabel#LabelText {
+    padding: 0px;
+    border-width: 0px;
+    background: #003E51;
+    font-size: 12px;
+    color: #b6b6b6;
+}
+QWidget#EnhancedTabWidget_tint QLabel#LabelText {
+    padding: 0px;
+    border-width: 0px;
+    background: #002b39;
+    font-size: 12px;
+    color: #b6b6b6;
+}
+QWidget#EnhancedTabWidget QLabel#LabelIcon {
+    padding: 0px;
+    border-width: 0px;
+    background: #003E51;
+    color: #b6b6b6;
+}
+QWidget#EnhancedTabWidget_tint QLabel#LabelIcon {
+    padding: 0px;
+    border-width: 0px;
+    background: #002b39;
+    color: #b6b6b6;
+}
 QTabBar {
     color: #d6d6d6;
     font-family: 'Segoe UI Semibold';
@@ -84,20 +139,20 @@ QSplitter {
     width:1px;
 }
 QSplitter::handle:horizontal {
-    background: #555555;
-    width: 1px;
+    width: 0px;
 }
 QLabel {
     font-family: 'Open Sans Regular', "Open Sans SemiBold", "Open Sans";
     color: #003E51;
-    padding-left: 5px;
-    padding-right: 5px;
-    padding-top: 2px;
-    padding-bottom: 2px;
+    padding-left: 7px;
+    padding-right: 7px;
+    padding-top: 4px;
+    padding-bottom: 4px;
 }
 QListWidget {
     border: 0px;
     border-top: 1px solid darkgray;
+    background: #FFFFFF;
 }
 QWidget#listItemWidget {
     border-bottom: 1px solid darkgray
@@ -106,7 +161,7 @@ QWidget#listItemWidget QLabel {
     padding: 2px;
 }
 QListWidget#ModelTargetList {
-    border-radius: 10px;
+    border-radius: 2px;
     border: 1px solid darkgray;
 }
 QLineEdit {
@@ -117,6 +172,7 @@ QLineEdit {
     margin-top: 5px;
     margin-bottom: 5px;
     padding: 5px;
+    background: #FFFFFF;
 }
 
 QPushButton {
@@ -135,6 +191,7 @@ QComboBox {
     padding: 1px 18px 1px 3px;
     min-width: 6em;
     font-family: 'Open Sans Light', "Open Sans Regular", "Open Sans", "Arial";
+    background: #F0F0F0;
 }
 QSpinBox {
     margin-left: 5px;
@@ -146,6 +203,7 @@ QSpinBox {
     padding: 1px 18px 1px 3px;
     min-width: 6em;
     font-family: 'Open Sans Light', "Open Sans Regular", "Open Sans", "Arial";
+    background: #F0F0F0;
 }
 QComboBox:editable {
     background: white;

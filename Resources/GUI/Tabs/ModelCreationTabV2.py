@@ -12,53 +12,8 @@ from    PyQt5   import  QtWidgets, \
 
 from resources.GUI.CustomWidgets.DatasetList_HTML_Formatted import DatasetList_HTML_Formatted
 from resources.GUI.CustomWidgets.PyQtGraphs import ModelTabPlots
+from resources.GUI.CustomWidgets.customTabs import EnhancedTabWidget
 import pandas as pd
-
-
-class hoverLabel(QtWidgets.QLabel):
-    """
-    This is the label that is used on the left hand side of the tab
-    to change between the model creation sub-pages. It subclasses
-    a regular QLabel, but add's hover and click functionality.
-
-    Unfortunately, we have to style this label in this
-    function and cannot style it in the application
-    stylesheet.
-    """
-    changeTabSignal = QtCore.pyqtSignal(int)
-
-    def __init__(self, text, objectName, idx):
-        QtWidgets.QLabel.__init__(self, text = text, objectName = objectName)
-        self.selectedTab = False
-        self.idx = idx
-    
-    def mousePressEvent(self, event):
-        QtWidgets.QLabel.mousePressEvent(self, event)
-        self.onSelect()
-
-    def onSelect(self):
-        self.selectedTab = True
-        self.changeTabSignal.emit(self.idx)
-        self.setStyleSheet("""
-        QLabel {border-left: 3px solid white; color: white}
-        """)
-
-    def onDeselect(self):
-        self.selectedTab = False
-        self.setStyleSheet("""
-        QLabel {border-left: 3px solid #4e4e4e; color: #d8d8d8}
-        """)
-
-    def enterEvent(self, event):
-        if not self.selectedTab:
-            self.setStyleSheet("""
-            QLabel {border-left: 3px solid #4e4e4e; color: white}
-            """)
-    def leaveEvent(self, event):
-        if not self.selectedTab:
-            self.setStyleSheet("""
-            QLabel {border-left: 3px solid #4e4e4e; color: #d8d8d8}
-            """)
 
 
 class ModelCreationTab(QtWidgets.QWidget):
@@ -68,7 +23,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
     def __init__(self, parent=None):
 
-        QtWidgets.QWidget.__init__(self, parent)
+        QtWidgets.QWidget.__init__(self, parent, objectName = 'tabPage')
         
         self.parent = parent
 
@@ -83,25 +38,9 @@ class ModelCreationTab(QtWidgets.QWidget):
         summaryLayout = QtWidgets.QVBoxLayout()
         workflowLayout = QtWidgets.QVBoxLayout()
 
-        # Left Side workflow Widget
-        self.workflowWidget = QtWidgets.QWidget()
-        workflowLayout.setContentsMargins(0,0,0,0)
-        workflowLayout.setSpacing(0)
-        self.targetWidgetButton = hoverLabel('<p style="font-size: 20px; margin:0px; padding: 0px;">Specify</p>FORECAST TARGET', objectName='workflowLabel', idx = 0)
-        self.targetWidgetButton.setTextFormat(QtCore.Qt.RichText)
-        self.targetWidgetButton.onSelect()
-        workflowLayout.addWidget(self.targetWidgetButton)
-        self.predictorWidgetButton = hoverLabel('<p style="font-size: 20px; margin:0px; padding: 0px;">Select</p>PREDICTORS', objectName='workflowLabel', idx = 1)
-        self.predictorWidgetButton.setTextFormat(QtCore.Qt.RichText)
-        workflowLayout.addWidget(self.predictorWidgetButton)
-        self.optionsWidgetButton = hoverLabel('<p style="font-size: 20px; margin:0px; padding: 0px;">Set</p>FORECAST OPTIONS', objectName='workflowLabel', idx = 2)
-        self.optionsWidgetButton.setTextFormat(QtCore.Qt.RichText)
-        workflowLayout.addWidget(self.optionsWidgetButton)
-        self.summaryWidgetButton = hoverLabel('<p style="font-size: 20px; margin:0px; padding: 0px;">Summary</p>BUILD MODELS', objectName='workflowLabel', idx = 3)
-        self.summaryWidgetButton.setTextFormat(QtCore.Qt.RichText)
-        workflowLayout.addWidget(self.summaryWidgetButton)
-        self.buttons = [self.targetWidgetButton, self.predictorWidgetButton, self.optionsWidgetButton, self.summaryWidgetButton]
-        self.workflowWidget.setLayout(workflowLayout)
+
+        self.workflowWidget = EnhancedTabWidget(self, 'above', 'vertical', True, False, True)
+
 
         # ===================================================================================================================
 
@@ -165,21 +104,39 @@ class ModelCreationTab(QtWidgets.QWidget):
         targetSelectLayout.addWidget(self.dataPlot, 1, 0, 1, 1)
         widg = QtWidgets.QWidget()
         widg.setLayout(targetSelectLayout)
-        self.overallStackWidget.addWidget(widg)
+        self.workflowWidget.addTab(widg, "FORECAST<br>TARGET", "resources/GraphicalResources/icons/target-24px.svg", "#FFFFFF", iconSize=(66,66))
 
         # ===================================================================================================================
 
         # Layout the predictor selector widget
 
-
+        widg = QtWidgets.QWidget()
+        self.workflowWidget.addTab(widg, "PREDICTORS", "resources/GraphicalResources/icons/bullseye-24px.svg", "#FFFFFF", iconSize=(66,66))
         
         
         # ====================================================================================================================
 
-        # Layout the overall page
+        # Layout the Forecast Settings widget
+        widg = QtWidgets.QWidget()
+        self.workflowWidget.addTab(widg, "OPTIONS", "resources/GraphicalResources/icons/tune-24px.svg", "#FFFFFF", iconSize=(66,66))
+
+        # ====================================================================================================================
+
+        # Lay out the summary widget
+        widg = QtWidgets.QWidget()
+        self.workflowWidget.addTab(widg, "SUMMARY", "resources/GraphicalResources/icons/clipboard-24px.svg", "#FFFFFF", iconSize=(66,66))
+
+        # ====================================================================================================================
+
+        # Layout the results widget
+        widg = QtWidgets.QWidget()
+        self.workflowWidget.addTab(widg, "RESULTS", "resources/GraphicalResources/icons/run-24px.svg", "#FFFFFF", iconSize=(66,66))
+
+
+        
         
         overallLayout.addWidget(self.workflowWidget)
-        overallLayout.addWidget(self.overallStackWidget)
+        #overallLayout.addWidget(self.overallStackWidget)
         self.setLayout(overallLayout)
 
     

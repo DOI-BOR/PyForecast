@@ -95,7 +95,7 @@ class FeatureSelector(object):
         return score
     
 
-    def logCombinationResult(self, modelStr = None, score = None):
+    def logCombinationResult(self, model = None, score = None):
         """
         Under-defined function. Currently just adds the model to 
         the model list. Theoretically, we could use this 
@@ -104,8 +104,10 @@ class FeatureSelector(object):
         built
         """
         # Update the visualization
-        model = [True if i == '1' else False for i in modelStr]
         self.parent.updateViz(currentModel = model)
+
+        # Get the model string
+        modelStr = model.to01()
 
         # Store the score in the computed models dict 
         self.parent.computedModels[modelStr] = score
@@ -196,7 +198,7 @@ class FeatureSelector(object):
                     score = self.scoreModel(model)
 
                     # Log the model results so that we don't try it again if we can avoid it
-                    self.logCombinationResult(model_str, score)
+                    self.logCombinationResult(model, score)
 
                 # Check if this model has a higher score than the current model
                 if ModelScoring.scoreCompare(newScores = score, oldScores = self.currentScores):
@@ -253,7 +255,7 @@ class FeatureSelector(object):
                     score = self.scoreModel(model)
 
                     # Log the model results so that we don't try it again if we can avoid it
-                    self.logCombinationResult(model_str, score)
+                    self.logCombinationResult(model, score)
 
                 # Check if this model has a higher score than the current model
                 if ModelScoring.scoreCompare(newScores = score, oldScores = self.currentScores):

@@ -39,7 +39,14 @@ class SVGIcon(QtGui.QIcon):
         if icon_size != (None, None):
 
             # Change the height and width attributes to the new size
-            self.xmlDom.childNodes[0].attributes['width'].value = str(icon_size[0])
+            if self.xmlDom.childNodes[0].hasAttribute("width"):
+                self.xmlDom.childNodes[0].attributes['width'].value = str(icon_size[0])
+            else:
+                self.xmlDom.childNodes[0].setAttribute("width", str(icon_size[0]))
+            if self.xmlDom.childNodes[0].hasAttribute("height"):
+                self.xmlDom.childNodes[0].attributes['height'].value = str(icon_size[1])
+            else:
+                self.xmlDom.childNodes[0].setAttribute("height", str(icon_size[0]))
             self.xmlDom.childNodes[0].attributes['height'].value = str(icon_size[1])
         
         # Read the xml into an image
@@ -50,6 +57,9 @@ class SVGIcon(QtGui.QIcon):
         QtGui.QIcon.__init__(self, self.pixmap.transformed(matrix_))
 
         return
+
+    def XML(self):
+        return self.xmlDom.toxml()
 
 if __name__ == '__main__':
     import sys

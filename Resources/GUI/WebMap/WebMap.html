@@ -35,6 +35,48 @@ Description:        WebMap.html provides the HTML code for the station
         <link href='leaflet_shades/src/css/leaflet-shades.css' rel='stylesheet'>
     </head>
     <style>
+        .dropdown-check-list {
+        display: inline-block;
+        min-width: 200px;
+        margin:0;
+        padding:0;
+        }
+        .dropdown-check-list .anchor_HUC {
+        position: relative;
+        cursor: pointer;
+        display: inline-block;
+        min-width: 220px;
+        padding: 5px 50px 5px 10px;
+        border: 1px solid #ccc;
+        }
+        .dropdown-check-list .anchor_HUC:after {
+        position: absolute;
+        content: "";
+        border-left: 2px solid black;
+        border-top: 2px solid black;
+        padding: 5px;
+        right: 10px;
+        top: 20%;
+        -moz-transform: rotate(-135deg);
+        -ms-transform: rotate(-135deg);
+        -o-transform: rotate(-135deg);
+        -webkit-transform: rotate(-135deg);
+        transform: rotate(-135deg);
+        }
+        .dropdown-check-list .anchor_HUC:active:after {
+        right: 8px;
+        top: 21%;
+        }
+        .dropdown-check-list ul.items_HUC {
+        padding: 2px;
+        display: block;
+        margin: 0;
+        border: 1px solid #ccc;
+        border-top: none;
+        }
+        .dropdown-check-list ul.items_HUC li {
+        list-style: none;
+        }
         .info {
             padding: 6px 8px;
             font: 14px Open Sans, sans-serif;
@@ -79,6 +121,28 @@ Description:        WebMap.html provides the HTML code for the station
             </script>
         <div id='map'></div>
         <script src='WebMap2.js'></script>
+        <script type="text/javascript">
+            var checkList = document.getElementById('list1');
+            var items = document.getElementById('items');
+                    checkList.getElementsByClassName('anchor')[0].onclick = function (evt) {
+                        if (items.classList.contains('visible')){
+                            items.classList.remove('visible');
+                            items.style.display = "none";
+                        }
+                        
+                        else{
+                            items.classList.add('visible');
+                            items.style.display = "block";
+                        }
+                        
+                        
+                    }
+            
+                    items.onblur = function(evt) {
+                        items.classList.remove('visible');
+                    }
+                </script>
+            
         
     </body>
 

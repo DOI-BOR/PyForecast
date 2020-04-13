@@ -298,10 +298,80 @@ function loadDatasetCatalog(geojson_string) {
 // Creates Popup windows when users click on circle markers and
 // area polygons. Creates the 'add dataset' buttons
 function createPopups() {
+    var colorDict = {"STREAMGAGE":"#23ff27",
+                    "SNOTEL":"#4cffed",
+                    "SNOWCOURSE":"#00beff",
+                    "SCAN":"#ffcc6f",
+                    "RESERVOIR":"#5263fe",
+                    "AGRIMET":"#f47251",
+                    "NCDC":"#c0c0c0"}
+    window.hucDict = {};
+
+    window.hucLayer.eachLayer( function(sublayer) {
+        var huc = sublayer.feature.properties.HUC8;
+        if (window.hucDict[huc] == undefined) {
+            window.hucDict[huc] = new Object;
+            window.hucDict[huc].ids = Array();
+            window.hucDict[huc].colors = Array();
+            window.hucDict[huc].names = Array();
+            window.hucDict[huc].ids.push('PRISM');
+            window.hucDict[huc].names.push('PRISM Temperature & Precipitation');
+            window.hucDict[huc].colors.push("#a83273");
+        }   
+    })
     
     // Iterate over the layers in the 'layer_group'
     window.layer_group.eachLayer(function (layer) {
 
+        layer.eachLayer( function(sublayer){
+            var huc = sublayer.feature.properties.DatasetHUC8;
+            var type = sublayer.feature.properties.DatasetType;
+            var hiddenID = String(sublayer.feature.properties.DatasetInternalID);
+            var name = sublayer.feature.properties.DatasetName;
+            var param = sublayer.feature.properties.DatasetParameter;
+
+            if (window.hucDict[huc] == undefined) {
+                window.hucDict[huc] = new Object;
+                window.hucDict[huc].ids = Array();
+                window.hucDict[huc].names = Array();
+                window.hucDict[huc].colors = Array();
+                window.hucDict[huc].ids.push('PRISM');
+                window.hucDict[huc].names.push('PRISM Temperature & Precipitation');
+                window.hucDict[huc].colors.push("#a83273");
+            }   
+
+            if (hiddenID.includes("|")){
+                var hiddenIDs = hiddenID.split('|');
+                var params = param.split('|');
+                hiddenIDs.forEach(function(id, idx){
+                    window.hucDict[huc].ids.push(id);
+                    if (colorDict.hasOwnProperty(type)){
+                        window.hucDict[huc].colors.push(colorDict[type]);
+                    } else {
+                        window.hucDict[huc].colors.push("#AAAAAA");
+                    }
+                    
+                    if (name.length > 15) {var name2 = name.substr(0,15)+'...'} else {var name2 = name};
+                    if (params[idx].length > 10) {var param2 = params[idx].substr(0,10) + '...'} else {var param2 = params[idx]};
+    
+                    window.hucDict[huc].names.push('[' +name2 + ']' + param2)
+                })
+            } else {
+                window.hucDict[huc].ids.push(hiddenID);
+                if (colorDict.hasOwnProperty(type)){
+                    window.hucDict[huc].colors.push(colorDict[type]);
+                } else {
+                    window.hucDict[huc].colors.push("#AAAAAA");
+                }
+                if (name.length > 15) {var name2 = name.substr(0,15)+'...'} else {var name2 = name};
+                if (param.length > 10) {var param2 = param.substr(0,10) + '...'} else {var param2 = param};
+    
+                window.hucDict[huc].names.push('[' +name2 + ']' + param2)
+            }
+           
+
+        })
+        
         // For each layer, create a popup on click
         layer.on("click", function(e) {
 
@@ -312,6 +382,8 @@ function createPopups() {
             var name = e.layer.feature.properties.DatasetName;
             var param = e.layer.feature.properties.DatasetParameter;
             var elev = e.layer.feature.properties.DatasetElevation;
+           
+            
 
             var popHTML = `<strong>${agency} ${typ}</strong>` + 
                             `<p><strong>Name:</strong> ${name}` + 
@@ -365,14 +437,53 @@ function createPopups() {
     // Create popups for watershed layers
     window.hucLayer.on('click', function(e) {
 
+        //Try to do drop down checkboxes
         var coordinates = getCenter(e.layer.feature, e);
         var name = e.layer.feature.properties.NAME;
         var num = e.layer.feature.properties.HUC8;
+        window.num = num;
+
+        // get a list of all the datasets in this huc
+
         var popHTML = "<strong>HUC8: " + num + "</strong><p><strong>Name: <strong>" + name;
-        popHTML = popHTML + `</br><select id='param'>`;
-        popHTML = popHTML + `<option value='PRISM'>PRISM Temperature & Precipitation</option><option value='NRCC'>NRCC Temperature & Precipitation</option></select></p>`;
-        popHTML = popHTML + '<button type="button" onclick="HUCPress()">Add Temp/Precip</button>' + `<p hidden id="hucNum" style="margin:0">${num}</p>` ;
+
+        
+        popHTML = popHTML + `</p><div id="list1_HUC" class="dropdown-check-list" tabindex="100">
+            <span class="anchor_HUC" style="background:#eaeaea; color: black">Select Datasets</span>
+            <ul id="items_HUC" class="items_HUC visible" style="background: #cacaca">
+            `
+        popHTML = popHTML + `<li><label style="color: black; font-family: 'Open Sans'; font-weight: bold"><input class="HUC_SELECT" type="checkbox" id="SELECT_ALL" onchange="hucSelectAll()"/>Select All</label></li>`
+        window.hucDict[num].ids.forEach(function(id, idx){
+            color = window.hucDict[num].colors[idx];
+            popHTML = popHTML + `<li><label style="color: black; font-family: monospace"><input class="HUC_SELECT" type="checkbox" id="` + id + `" /><span style="display:inline-block;height:10px;width:10px;border: 1px solid black;border-radius:50%;background:` + color + `"></span>` + window.hucDict[num].names[idx] +`</label></li>`
+        });
+        popHTML = popHTML + `</ul></div></br>`;
+
+        //popHTML = popHTML + `</br><select id='param'>`;
+        //popHTML = popHTML + `<option value='PRISM'>PRISM Temperature & Precipitation</option><option value='NRCC'>NRCC Temperature & Precipitation</option></select></p>`;
+        popHTML = popHTML + '<button type="button" onclick="HUCPress()">Add Datasets</button>' ;
         window.pop = L.popup().setLatLng(coordinates).setContent(popHTML).addTo(window.map);
+
+        var checkList = document.getElementById('list1_HUC');
+        var items = document.getElementById('items_HUC');
+                checkList.getElementsByClassName('anchor_HUC')[0].onclick = function (evt) {
+                    if (items.classList.contains('visible')){
+                        items.classList.remove('visible');
+                        items.style.display = "none";
+                    }
+                    
+                    else{
+                        items.classList.add('visible');
+                        items.style.display = "block";
+                    }
+                    
+                    
+                }
+
+                items.onblur = function(evt) {
+                    items.classList.remove('visible');
+                }
+
         
     });
 
@@ -389,6 +500,26 @@ function createPopups() {
         
     });
 }
+
+function hucSelectAll(){
+    var selectAllBox = document.getElementById("SELECT_ALL");
+    if (selectAllBox.checked) {
+        var items = document.getElementsByClassName("HUC_SELECT");
+        for(i=0; i<items.length; i++){
+            if (items[i].id != 'SELECT_ALL'){
+                items[i].checked = true;
+            }
+        }
+    } else {
+        var items = document.getElementsByClassName("HUC_SELECT");
+        for(i=0; i<items.length; i++){
+            if (items[i].id != 'SELECT_ALL'){
+                items[i].checked = false;
+            }
+        }
+    }
+}
+
 function createLayerControlOverlay() {
     // Creates a layer control using the grouped overlay add-on to Leaflet
     window.NEXRADLayer =  new L.tileLayer.wms("http://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi", {
@@ -445,20 +576,65 @@ function createLayerControlOverlay() {
     window.QPFLayer3Day.on("load", function() {
         addLegend(window.QPFLayer3Day);
         reorderLayer(window.QPFLayer3Day);
+        window.QPFLayer3Day.eachFeature(function(sublayer){
+            sublayer.on("mouseover", function(e){
+                var val = sublayer.feature.properties.qpf;
+                var infoIcon = document.getElementById("legend_"+val);
+                infoIcon.style.boxShadow = "inset 0 0 0px 5px rgb(0,0,0)"
+            });
+            sublayer.on("mouseout", function(e){
+                var val = sublayer.feature.properties.qpf;
+                var infoIcon = document.getElementById("legend_"+val);
+                infoIcon.style.boxShadow = "inset 0 0 0px 1px rgb(37,37,37)"
+            });
+          
+        })
     });
     window.QPFLayer7Day.on("load", function() {
         addLegend(window.QPFLayer7Day);
         reorderLayer(window.QPFLayer7Day);
+        window.QPFLayer7Day.eachFeature(function(sublayer){
+            sublayer.on("mouseover", function(e){
+                var val = sublayer.feature.properties.qpf;
+                var infoIcon = document.getElementById("legend_"+val);
+                infoIcon.style.boxShadow = "inset 0 0 0px 5px rgb(0,0,0)"
+            });
+            sublayer.on("mouseout", function(e){
+                var val = sublayer.feature.properties.qpf;
+                var infoIcon = document.getElementById("legend_"+val);
+                infoIcon.style.boxShadow = "inset 0 0 0px 1px rgb(37,37,37)"
+            });
+          
+        })
         
     });
     window.QPFLayer6Hour.on("load", function() {
         addLegend(window.QPFLayer6Hour);
         reorderLayer(window.QPFLayer6Hour);
+        window.QPFLayer6Hour.eachFeature(function(sublayer){
+            sublayer.on("mouseover", function(e){
+                var val = sublayer.feature.properties.qpf;
+                var infoIcon = document.getElementById("legend_"+val);
+                infoIcon.style.boxShadow = "inset 0 0 0px 5px rgb(0,0,0)"
+            });
+            sublayer.on("mouseout", function(e){
+                var val = sublayer.feature.properties.qpf;
+                var infoIcon = document.getElementById("legend_"+val);
+                infoIcon.style.boxShadow = "inset 0 0 0px 1px rgb(37,37,37)"
+            });
+          
+        })
+        
     });
     window.emptyLayer.on("load", function() {
         addLegend(window.emptyLayer);
         
     })
+
+
+    
+
+
 
     // Create Grouped Overlays
     var groupedOverlays = {
@@ -550,10 +726,26 @@ function buttonPress() {
 // Function to print a formatted message to the console 
 // when users click the 'Add Dataset' button on watersheds
 function HUCPress() {
-    var id = document.getElementById('hucNum').innerHTML;
-    var option  = document.getElementById('param').value;
-   
-    console.log('HUC:'+id+':PARAM:'+option);
+
+    //iterate over the checked boxes
+    var datasetList = Array();
+    var parameterList = document.getElementsByClassName("HUC_SELECT");
+    console.log(parameterList)
+    for (i=0; i<parameterList.length; i++) {
+        item = parameterList[i];
+        if (item.checked){
+            datasetList.push(item.id);
+        }
+    }
+    console.log(datasetList)
+    datasetList.forEach(function(dataset){
+        if (dataset == 'PRISM') {
+            console.log("HUC:" + window.num + ":PARAM:" + dataset);
+        } else {
+            console.log("ID:" + dataset)
+        }
+    })
+
     // close the popup
     window.pop._close();
 }
@@ -767,6 +959,10 @@ var SNODASMap = {
     colors: ['#ffffff', '#f7fdfd', '#dbfffb', '#bfd0f6', '#6167bc', '#5b40b7', '#731cc1', '#af2dd4', '#e24fdb', '#ef70c2', '#e99eba', '#fae3dd']
 };
 
+function highlightLegend(){
+    return
+}
+
 function addLegend(layer) {
     // Adds a legend for the overlay raster layer
 
@@ -814,7 +1010,7 @@ function addLegend(layer) {
         labels.push('<br>');
         for (var i=0; i < categories.length; i++) {
             labels.push(
-                '<i style="background:' + colors[i] + '"></i>'
+                '<i id="legend_' + categories[i] + '" style="background:' + colors[i] + '"></i>'
             );
         }
 
@@ -929,6 +1125,6 @@ function QPFStyle(feature){
     return {
       fillColor: color1,
       width: 1,
-      fillOpacity: 0.73,
+      fillOpacity: 0.63,
       stroke: false,
     };};

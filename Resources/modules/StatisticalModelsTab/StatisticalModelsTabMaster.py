@@ -25,11 +25,6 @@ class statisticalModelsTab(object):
         Connects all the signal/slot events for the dataset tab
         """
 
-        self.modelTab.targetWidgetButton.changeTabSignal.connect(self.changedTabsStatisticalModelsPage)
-        self.modelTab.predictorWidgetButton.changeTabSignal.connect(self.changedTabsStatisticalModelsPage)
-        self.modelTab.optionsWidgetButton.changeTabSignal.connect(self.changedTabsStatisticalModelsPage)
-        self.modelTab.summaryWidgetButton.changeTabSignal.connect(self.changedTabsStatisticalModelsPage)
-
         self.modelTab.datasetList.itemPressed.connect(lambda x: self.modelTab.targetSelect.setCurrentIndex(self.modelTab.datasetList.row(x)))
         self.modelTab.targetSelect.currentIndexChanged.connect(lambda x: self.modelTab.targetSelect.hidePopup())
         self.modelTab.targetSelect.currentIndexChanged.connect(lambda x: self.plotTarget() if x >= 0 else None)

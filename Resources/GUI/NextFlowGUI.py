@@ -18,7 +18,7 @@ from    PyQt5   import  QtWidgets, \
                         QtCore, \
                         QtGui
 from    resources.GUI.Tabs  import  DatasetsTab, DataTab, ModelCreationTabV2
-from    resources.GUI.CustomWidgets import SVGIcon
+from    resources.GUI.CustomWidgets import SVGIcon, customTabs
 
 myappid = u'reclamation.PyForecastv3.2b'
 if platform.system() == 'Windows':
@@ -51,24 +51,18 @@ class UI_MainWindow(object):
         self.appMenu = MenuBar()
         self.setMenuBar(self.appMenu)
 
-        # Icons
-        datasetIcon = SVGIcon.SVGIcon(os.path.abspath("resources/graphicalResources/icons/list-24px.svg"), '#FFFFFF')
-        dataIcon = SVGIcon.SVGIcon(os.path.abspath("resources/graphicalResources/icons/trending_up-24px.svg"), '#FFFFFF')
-        modelsIcon = SVGIcon.SVGIcon(os.path.abspath("resources/graphicalResources/icons/assessment-24px.svg"), '#FFFFFF')
-
         # Tabs
-        tabWidget = QtWidgets.QTabWidget()
-        tabWidget.setIconSize(QtCore.QSize(25,25))
+        tabWidget = customTabs.EnhancedTabWidget(self, 'left', 'horizontal')
 
         self.datasetTab = DatasetsTab.DatasetTab(self)
-        tabWidget.addTab(self.datasetTab, datasetIcon, "Datasets")
+        tabWidget.addTab(self.datasetTab, "Datasets", "resources/graphicalResources/icons/list-24px.svg", "#FFFFFF", iconSize = (24,24) )
 
         self.dataTab = DataTab.DataTab(self)
-        tabWidget.addTab(self.dataTab, dataIcon, "Data")
+        tabWidget.addTab(self.dataTab, "Data", "resources/graphicalResources/icons/trending_up-24px.svg", "#FFFFFF", iconSize = (24,24) )
 
         #self.modelTab = QtWidgets.QWidget()
         self.modelTab = ModelCreationTabV2.ModelCreationTab(self)
-        tabWidget.addTab(self.modelTab, modelsIcon, 'Create Models')
+        tabWidget.addTab(self.modelTab, "Create Models", "resources/graphicalResources/icons/assessment-24px.svg", "#FFFFFF", iconSize = (24,24) )
 
         #self.forecastsTab = CreateForecastsTab.CreateForecastsTab()
         #tabWidget.addTab(self.forecastsTab, "Create Forecasts")
