@@ -239,7 +239,8 @@ def dataLoader(stationDict, startDate, endDate):
         """
         Multivariate ENSO Index (MEI) 
         """
-        url = "https://www.esrl.noaa.gov/psd/enso/mei/data/meiv2.data"
+        #https://psl.noaa.gov/enso/mei/data/meiv2.data
+        url = "https://psl.noaa.gov/enso/mei/data/meiv2.data"
         df = pd.read_csv(url, skiprows=1, names=['year','1','2','3','4','5','6','7','8','9','10','11','12'], sep='\s+')
         lastRow = df.index[df['year']=='Multivariate'].tolist()[0] -1
         df = df[df.index<lastRow]
