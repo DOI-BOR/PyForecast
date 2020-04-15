@@ -106,8 +106,8 @@ def downloadDataset(dataset, update, interp, por):
         lastDate = data.index[-1]
         lastDate = pd.to_datetime(lastDate)
 
-        # Set the start date of the download function to be 10 days before the last date
-        startDate = lastDate - pd.DateOffset(days=10)
+        # Set the start date of the download function to be 1 year before the last date
+        startDate = lastDate - pd.DateOffset(days=365)
 
         # Set the end date to yesterday's date
         #endDate = pd.to_datetime('today') - pd.DateOffset(days=1)

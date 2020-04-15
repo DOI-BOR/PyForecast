@@ -1658,9 +1658,15 @@ class mainWindow(QtWidgets.QMainWindow, PyForecast_GUI.UI_MainWindow):
             for timestamp in dict_[0][predictor].keys():
                 oldKey = list(dict_[0][predictor][timestamp]['Data'].keys())[0]
                 newKey = self.forecastDict['PredictorPool'][predictor][timestamp]['prdID']
-                dict_[0][predictor][timestamp]['Data'][newKey] = dict_[0][predictor][timestamp]['Data'][oldKey]
-                del dict_[0][predictor][timestamp]['Data'][oldKey]
-                self.forecastDict['PredictorPool'][predictor][timestamp]['Data'] = dict_[0][predictor][timestamp]['Data']
+
+                if newKey == oldKey:
+                    self.forecastDict['PredictorPool'][predictor][timestamp]['Data'] = dict_[0][predictor][timestamp]['Data']
+                else:
+                
+                    dict_[0][predictor][timestamp]['Data'][newKey] = dict_[0][predictor][timestamp]['Data'][oldKey]
+                    del dict_[0][predictor][timestamp]['Data'][oldKey]
+                    self.forecastDict['PredictorPool'][predictor][timestamp]['Data'] = dict_[0][predictor][timestamp]['Data']
+                #print("{0}\n  {1}     {2}\n\n".format(predictor, timestamp, str(self.forecastDict['PredictorPool'][predictor][timestamp]['Data'])[:100]))
 
         #self.forecastDict['PredictorPool'] = dict_[0]
         equationPools = dict_[1]

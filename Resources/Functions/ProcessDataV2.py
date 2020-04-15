@@ -411,7 +411,7 @@ class alternateThreadWorker(QtCore.QRunnable):
                     if remapMonth(arr.index[i].month, wateryearStart= self.forecastDict['Options']['wateryearStart']) == remapMonth(startDate.month, wateryearStart= self.forecastDict['Options']['wateryearStart']) and arr.index[i].day < startDate.day:
                         continue 
                     else:
-                        sum_ += (86400 * arr[i] / 43559.9) #Add in units of acre-feet
+                        sum_ += (86400 * arr[i] / 43560) #Add in units of acre-feet
                 else:
                     continue
             else:
