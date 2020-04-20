@@ -531,7 +531,7 @@ function createLayerControlOverlay() {
             });
     SWE_URL = "https://climate.arizona.edu/Maps/SNODAS_SWE_a/{yr}_{mo}_{dy}_SNODAS_SWE_a/{z}/{x}/{y}.png";
     dt = new Date();
-    dt = new Date(dt - 24*60*60*1000);
+    dt = new Date(dt - 7*60*60*1000);
     var yr = dt.getFullYear().toString();
     var mo = (dt.getMonth()+1).toString();
     var dy = dt.getDate().toString();

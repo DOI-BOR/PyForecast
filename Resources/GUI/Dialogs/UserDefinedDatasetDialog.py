@@ -227,7 +227,10 @@ class EditorDialog(QtWidgets.QDialog):
         self.populateForm(dataset)
 
         # If there is a import file, store the input file directory location
-        self.fileLocation = os.path.dirname(self.dataset['DatasetImportFileName'])
+        if not np.isnan(self.dataset['DatasetImportFileName']):
+            self.fileLocation = os.path.dirname(self.dataset['DatasetImportFileName'])
+        else:
+            self.fileLocation = os.path.dirname("")
 
         # Show the dialog
         self.show()
@@ -265,14 +268,15 @@ class EditorDialog(QtWidgets.QDialog):
         self.importFileButton.setEnabled(False)
         self.compEquationEditor.setEnabled(False)
 
-        if dataset['DatasetCompositeEquation'] != '':
+        if not np.isnan(dataset['DatasetCompositeEquation']):
             self.compRadio.setChecked(True)
             self.loaderEdit.setCurrentText('No Loader')
             self.compEquationEditor.processEquationIntoWidget(dataset['DatasetCompositeEquation'])
         
-        if dataset['DatasetImportFileName'] != '':
+        if not np.isnan(dataset['DatasetImportFileName']):
             self.importRadio.setChecked(True)
-            self.loaderEdit.setCurrentText('No Loader')
+            self.loaderEdit.setCurrentText('IMPORTED_FILE')
+            self.loaderEdit.setEnabled(False)
             self.importFileName.setText(dataset['DatasetImportFileName'])
 
         return
@@ -336,7 +340,7 @@ class EditorDialog(QtWidgets.QDialog):
             self.compEquationEditor.setEnabled(True)
         
         if buttonIndex == -4:
-            self.loaderEdit.setCurrentText('No Loader')
+            self.loaderEdit.setCurrentText('IMPORTED_FILE')
             self.loaderEdit.setEnabled(False)
             self.importFileButton.setEnabled(True)
             self.compEquationEditor.setEnabled(False)

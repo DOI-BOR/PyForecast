@@ -23,17 +23,20 @@ from resources.GUI import NextFlowGUI
 from resources.modules.DatasetTab import datasetTabMaster 
 from resources.modules.DataTab import dataTabMaster
 from resources.modules.MenuBar import menuBarMaster
+from resources.modules.ForecastsTab import forecastTabMaster
 from resources.modules.StatisticalModelsTab import StatisticalModelsTabMaster
 from resources.modules.Miscellaneous import initUserOptions
 from datetime import datetime
 import configparser
 import pandas as pd
+import os, inspect
+import importlib
 
 # DEBUGGING
 import pickle
 
 
-class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMaster.datasetTab, dataTabMaster.dataTab, menuBarMaster.menuBar, StatisticalModelsTabMaster.statisticalModelsTab):
+class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMaster.datasetTab, dataTabMaster.dataTab, menuBarMaster.menuBar, StatisticalModelsTabMaster.statisticalModelsTab, forecastTabMaster.forecastsTab):
     """
     GLOBAL APPLICATION INITIALIZATION
     This section of the script deals with the initialization of the software. These subroutines 
@@ -127,14 +130,16 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
                 "EquationComment",      # E.g. 'Equation Used for 2000-2010 Forecasts'
                 "EquationPredictand",   # E.g. 103011
                 "PredictandPeriod",     # R/1978-03-01/P1M/F12M (starting in march of 1978, over a 1 month period, recurring once a year.)
-                "PredictandMethod",      # E.g. Accumulation, Average, Max, etc
+                "PredictandMethod",     # E.g. Accumulation, Average, Max, etc
                 "EquationCreatedOn",    # E.g. 2019-10-04
                 "EquationIssueDate",    # E.g. 2019-02-01
                 "EquationMethod",       # E.g. Pipeline string (e.g. PIPE/PreProc_Logistic/Regr_Gamma/KFOLD_5)
                 "EquationSkill",        # E.g. Score metric dictionary (e.g. {"AIC_C": 433, "ADJ_R2":0.32, ...})
                 "EquationPredictors",   # E.g. [100204, 100101, 500232]
                 "PredictorPeriods",     # E.g. [R/1978-03-01/P1M/F12M, R/1978-03-01/P1M/F12M, R/1978-03-01/P1M/F12M]
-                "PredictorMethods"      # E.g. ['Average', 'First', 'Max']
+                "PredictorMethods",     # E.g. ['Average', 'First', 'Max']
+                "DirectEquation"        # E.g. Mainly for import equations where we don't want to compute models on the fly
+                                        #      e.g. "DIRECT/Regr_MultipleLinearRegressor/3.4,2.2,-1.33/133.2" 
             ]
         )
 
@@ -146,12 +151,12 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
                 names=[
                     'ForecastEquationID',   # E.g. 1010010 (999999 for user imported forecast)
                     'Year',                 # E.g. 2019
-                    'ForecastIssuedOn'      # E.g. 2019-04-02
+                    'ForecastExceedance'    # e.g. 0.30 (for 30% exceedence)
                     ]
             ),
             columns = [
-                "ForecastExceedanceKey",    # e.g. [0.01, 0.02, ..., 0.98, 0.99]
                 "ForecastValues",           # in order of 0-100% exceedance
+                "ForecastMagnitude",        # either ['low', 'mid', 'high']
                 ],
         )
         
@@ -160,12 +165,62 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
         self.userOptionsConfig = configparser.ConfigParser()
         self.userOptionsConfig.read('resources/temp/user_options.txt')
 
+        # Create dictionaries to store info about the regression, feature selection, preprocessing, cross validation modules
+        self.preProcessors = {}
+        self.regressors = {}
+        self.featureSelectors = {}
+        self.crossValidators = {}
+        self.scorers = {}
+        
+        # Load the modules
+        for file_ in os.listdir("resources/modules/StatisticalModelsTab/RegressionAlgorithms"):
+            if '.py' in file_:
+                scriptName = file_[:file_.index(".py")]
+                mod = importlib.import_module("resources.modules.StatisticalModelsTab.RegressionAlgorithms.{0}".format(scriptName))
+                self.regressors[scriptName] = {}
+                self.regressors[scriptName]["module"] = getattr(mod, "Regressor")
+                self.regressors[scriptName]["name"] = self.regressors[scriptName]["module"].NAME
+                self.regressors[scriptName]['website'] = self.regressors[scriptName]["module"].WEBSITE
+
+        for file_ in os.listdir("resources/modules/StatisticalModelsTab/PreProcessingAlgorithms"):
+            if '.py' in file_:
+                scriptName = file_[:file_.index(".py")]
+                mod = importlib.import_module("resources.modules.StatisticalModelsTab.PreProcessingAlgorithms.{0}".format(scriptName))
+                self.preProcessors[scriptName] = {}
+                self.preProcessors[scriptName]["module"] = getattr(mod, "preprocessor")
+                self.preProcessors[scriptName]["name"] = self.preProcessors[scriptName]["module"].NAME
+        
+        for file_ in os.listdir("resources/modules/StatisticalModelsTab/FeatureSelectionAlgorithms"):
+            if '.py' in file_:
+                scriptName = file_[:file_.index(".py")]
+                mod = importlib.import_module("resources.modules.StatisticalModelsTab.FeatureSelectionAlgorithms.{0}".format(scriptName))
+                self.featureSelectors[scriptName] = {}
+                self.featureSelectors[scriptName]["module"] = getattr(mod, "FeatureSelector")
+                self.featureSelectors[scriptName]["name"] = self.featureSelectors[scriptName]["module"].NAME
+        
+        mod = importlib.import_module("resources.modules.StatisticalModelsTab.CrossValidationAlgorithms")
+        for cv, class_ in inspect.getmembers(mod, inspect.isclass):
+            self.crossValidators[cv] = {}
+            self.crossValidators[cv]["module"] = class_
+            self.crossValidators[cv]["name"] = class_.NAME
+        
+        mod = importlib.import_module("resources.modules.StatisticalModelsTab.ModelScoring")
+        self.scorers["class"] = getattr(mod, "Scorers")
+        self.scorers['info'] = self.scorers["class"].INFO
+        self.scorers["module"] = mod
+        for scorer, scorerFunc in inspect.getmembers(self.scorers['class'], inspect.isfunction):
+            self.scorers[scorer] = scorerFunc
+        
+
+
+        # Load up the GUI
         self.setUI()
 
         # Set-up all the tabs and menu bars
         self.initializeDatasetTab()
         self.initializeDataTab()
         self.initializeStatisticalModelsTab()
+        self.initializeForecastsTab()
         self.setupMenuBar()
 
         # Intiate a threadpool

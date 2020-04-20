@@ -6,7 +6,7 @@ import numpy as np
 
 class LOO():
 
-    name = 'Leave One Out Cross Validation'
+    NAME = 'Leave One Out Cross Validation'
 
     def yield_samples(X, Y):
 
@@ -24,7 +24,7 @@ class LOO():
 
 class KFOLD_5():
     
-    name = "5-Fold Cross Validation"
+    NAME = "5-Fold Cross Validation"
 
     def yield_samples(X, Y):
 
@@ -42,7 +42,7 @@ class KFOLD_5():
 
 class KFOLD_10():
 
-    name = "10-Fold Cross Validation"
+    NAME = "10-Fold Cross Validation"
 
     def yield_samples(X, Y):
 

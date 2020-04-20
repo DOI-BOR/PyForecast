@@ -1,4 +1,3 @@
-import importlib
 from resources.modules.StatisticalModelsTab import ModelScoring
 import bitarray as ba
 import numpy as np
@@ -6,7 +5,7 @@ import numpy as np
 
 class FeatureSelector(object):
 
-    name = "Brute Force Selection"
+    NAME = "Brute Force Selection"
 
     def __init__(self, parent = None, **kwargs):
         """
@@ -18,9 +17,10 @@ class FeatureSelector(object):
 
         # Set up the Regression and Cross Validation
         self.regressionName = kwargs.get("regression", "Regr_MultipleLinearRegressor")
-        module = importlib.import_module("resources.modules.StatisticalModelsTab.RegressionAlgorithms.{0}".format(self.regressionName))
-        regressionClass = getattr(module, 'Regressor')
-        self.regression = regressionClass(crossValidation = kwargs.get("crossValidation", None), scoringParameters = kwargs.get("scoringParameters", None))
+        regressionClass = self.parent.parent.regressors[self.regressionName]['module']
+        self.regression = regressionClass(  parent = self.parent, 
+                                            crossValidation = kwargs.get("crossValidation", None), 
+                                            scoringParameters = kwargs.get("scoringParameters", None))
         
         # Create variables to store the current predictors and performance
         self.numPredictors = len(self.predictorPool)

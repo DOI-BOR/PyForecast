@@ -86,8 +86,8 @@ class DataTab(QtWidgets.QWidget):
         #self.stackWidget.addTab(self.spreadsheet, icon, "")
         #self.stackWidget.setCurrentIndex(0)
 
-        self.stackWidget.addTab(self.plot, "GRAPH", "resources/graphicalResources/icons/chart_areaspline-24px.svg", "#FFFFFF", iconSize=(25,25))
-        self.stackWidget.addTab(self.spreadsheet, "TABLE", "resources/graphicalResources/icons/border_all-24px.svg", "#FFFFFF", iconSize=(25,25))
+        self.stackWidget.addTab(self.plot, "GRAPH", "resources/GraphicalResources/icons/chart_areaspline-24px.svg", "#FFFFFF", iconSize=(25,25))
+        self.stackWidget.addTab(self.spreadsheet, "TABLE", "resources/GraphicalResources/icons/border_all-24px.svg", "#FFFFFF", iconSize=(25,25))
 
         # Configuration Widget
         widg = QtWidgets.QWidget()

@@ -1,105 +1,63 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
+from datetime import datetime
+import sys
+import os
+sys.path.append(r"C:\Users\KFoley\Documents\NextFlow")
+from resources.modules.Miscellaneous.truncateHtml import truncate
+import isodate
+
 FF = """<style>
-div {
-border: 1px solid red;
+div {{
 color: #003E51;
 margin: 0px;
 padding: 0px;
 font-family: 'Open Sans', Arial, sans-serif, monospace;
-font-size: 17px;
-}
-td img{
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-    border: 1px solid blue;
+font-size: 12px;
+vertical-align: middle;
+}}
 
-}
 </style>
-
 <div>
-
-
-<table border="0">
+<table border="0" width="100px">
 	<tr >
-	<td>
-    <img style=" border:0px solid blue" src="resources/GraphicalResources/icons/high.png" width="24" height="24"/>
+	<td style="padding-top:5px">
+    <img src="resources/GraphicalResources/icons/{magnitude}" width="18" height="18" style="vertical-align:top; top:4px;"/>
     </td>
-	<td><p style="color: #007396; font-size: 20px"><strong style="color: #007396; font-size: 20px">800 KAF </strong>(100 KAF - 1200 KAF)</p></td>
+	<td><p style="color: #007396; font-size: 15px; vertical-align: middle"><strong style="color: #007396; vertical-align: middle; font-size: 15px">{fcstMid} {units} </strong>({fcstLow} {units} to {fcstHigh} {units})</p></td>
 	</tr>
 	<tr>
 	<td>
-    <img src="resources/GraphicalResources/icons/flag_checkered-24px.svg" width="24" height="24"/>
+    <img src="resources/GraphicalResources/icons/flag_checkered-24px.svg" width="18" height="18"/>
 	</td>
-	<td><p style="vertical-align: middle"><strong>R<sup>2</sup>:</strong> 0.54</p></td>
+	<td><p style="vertical-align: bottom">{skill}</p></td>
 	</tr>
     <tr>
 	<td>
-    <img src="resources/GraphicalResources/icons/target-24px.svg" width="24" height="24"/>
+    <img src="resources/GraphicalResources/icons/build-24px.svg" width="18" height="18"/>
 	</td>
-	<td><p style="vertical-align: middle">Buffalo Bill April 01 - July 31 Inflow</p></td>
+	<td><p style="vertical-align: bottom">{pipe}</p></td>
+	</tr>
+    <tr>
+	<td>
+    <img style="vertical-align: top" src="resources/GraphicalResources/icons/target-24px.svg" width="18" height="18"/>
+	</td>
+	<td style="padding-top:4px"><p style="vertical-align: middle;">{target}</p></td>
 	</tr>
     <tr >
 	<td >
-    <img src="resources/GraphicalResources/icons/bullseye-24px.svg" width="24" height="24"/>
+    <img src="resources/GraphicalResources/icons/bullseye-24px.svg" width="18" height="18"/>
 	</td>
-	<td ><p style="vertical-align: middle">PDSI, Antecedent Flow, SNOTEL, SST</p></td>
+	<td ><p style="vertical-align: bottom">{predictors}</p></td>
 	</tr>
+    <tr>
+    </tr>
+    <tr>
+    <td>{modelIDImg}</td>
+    <td style="text-align:right; color: #8c9f9d">{modelIDNum}</td>
+    </tr>
 
 </table>
-
-
 </div>"""
-HTML_FORMAT = """
-<style>
-p {{
-color: #003E51;
-vertical-align: center;
-line-height: 18px;
-margin: 0px;
-padding: 0px;
-margin-left: 1em;
-font-family: 'Open Sans', Arial, sans-serif, monospace;
-font-size: 17px;
-}}
-.high {{
-    display: inline-block;
-    background-color: #00e690;
-    border: 2px solid blue;
-    padding: 10px;
-    width: 100px;
-    border-radius: 50%
-}}
-.mid {{
-    background-color: #e6d9a9;
-    border: 2px solid blue;
-    padding: 10px;
-}}
-.low {{
-    background-color: #ff7070;
-    border: 2px solid blue;
-}}
-</style>
-
-<p style="color: #007396;font-size: 18px"><div class="{range}"></div><span style="font-weight:bold">&nbsp;&nbsp;{fcst} {units}</span> ({fcstLow} {units} - {fcstHigh} {units})</p>
-
-<p style=" margin:0; margin-left: 1.0em;padding:0;font-family:'Open Sans', Arial; font-size:17px;line-height: 18px;">
-<img style="vertical-align:bottom" src="resources/GraphicalResources/icons/flag_checkered-24px.svg" width="20" height="20"/>
-<!--
-<svg style="width:20px;height:20px; vertical-align:bottom" viewBox="0 0 24 24">
-    <path fill="black" d="M14.4,6H20V16H13L12.6,14H7V21H5V4H14L14.4,6M14,14H16V12H18V10H16V8H14V10L13,8V6H11V8H9V6H7V8H9V10H7V12H9V10H11V12H13V10L14,12V14M11,10V8H13V10H11M14,10H16V12H14V10Z" />
-</svg>-->
-<span style="font-weight:bold">{skill}</p>
-
-<p style="vertical-align:center; line-height: 18px; margin:0; margin-left: 1.0em;padding:0;font-family:'Open Sans', Arial; font-size:17px;">
-<img style="vertical-align:bottom" src="resources/GraphicalResources/icons/target-24px.svg" width="20" height="20"/>
-<!--<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="vertical-align:bottom" version="1.1" width="20" height="20" viewBox="0 0 24 24"><path d="M11,2V4.07C7.38,4.53 4.53,7.38 4.07,11H2V13H4.07C4.53,16.62 7.38,19.47 11,19.93V22H13V19.93C16.62,19.47 19.47,16.62 19.93,13H22V11H19.93C19.47,7.38 16.62,4.53 13,4.07V2M11,6.08V8H13V6.09C15.5,6.5 17.5,8.5 17.92,11H16V13H17.91C17.5,15.5 15.5,17.5 13,17.92V16H11V17.91C8.5,17.5 6.5,15.5 6.08,13H8V11H6.09C6.5,8.5 8.5,6.5 11,6.08M12,11A1,1 0 0,0 11,12A1,1 0 0,0 12,13A1,1 0 0,0 13,12A1,1 0 0,0 12,11Z" /></svg>-->&nbsp;{target}</p>
-
-<p style="vertical-align:center; margin:0; margin-left: 1.0em;padding:0;font-family:'Open Sans', Arial; font-size:17px;line-height: 18px;">
-<img style="vertical-align:bottom" src="resources/GraphicalResources/icons/bullseye-24px.svg" width="20" height="20"/>
-<!--<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" style="vertical-align:bottom" width="20" height="20" viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12C22,10.84 21.79,9.69 21.39,8.61L19.79,10.21C19.93,10.8 20,11.4 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4C12.6,4 13.2,4.07 13.79,4.21L15.4,2.6C14.31,2.21 13.16,2 12,2M19,2L15,6V7.5L12.45,10.05C12.3,10 12.15,10 12,10A2,2 0 0,0 10,12A2,2 0 0,0 12,14A2,2 0 0,0 14,12C14,11.85 14,11.7 13.95,11.55L16.5,9H18L22,5H19V2M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12H16A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8V6Z" /></svg>-->&nbsp;{predictors}</p>
-<p style="vertical-align:center; margin:0; margin-left: 1.5em;padding:0;font-family:'Open Sans', Arial;line-height: 18px; font-size:17px; text-align:right; color: darkgray">{id}</p>
-"""
 
 
 class forecastList_HTML(QtWidgets.QTreeWidget):
@@ -108,32 +66,299 @@ class forecastList_HTML(QtWidgets.QTreeWidget):
 
         QtWidgets.QTreeWidget.__init__(self)
         self.setColumnCount(1)
+        self.setIndentation(14)
+        self.parent = parent
+        self.font_ = QtGui.QFont()
+        self.font_.setBold(True)
         self.setHeaderLabels(["Forecasts"])
-        for i in range(2):
-            ii = QtWidgets.QTreeWidgetItem(self, ["Forecast Period April " + str(i)])
-            for j in range(4):
-                jj = QtWidgets.QTreeWidgetItem(ii, ["Issue Date " + str(j)])
-                for k in range(3):
-                    item = QtWidgets.QTreeWidgetItem(jj, 0)
-                    label = QtWidgets.QLabel(HTML_FORMAT.format(target = "Buffalo Bill April 01 - July 31 Inflow", predictors = "PDSI, Antecedant Inflow, SNOTEL, SST",skill = "R2: 0.5", range="high", id="101101", fcst="800", fcstLow="405", fcstHigh="1211", units="KAF"))
-                    
-                    print(label.text())
-                    label.setTextFormat(QtCore.Qt.RichText)
-                    label.show()
-                    self.setItemWidget(item,0, label)
-        self.show()
+        self.setForecastTable()
+        #self.setMaximumWidth(400)
+        
+        #self.expandAll()
+
+    def expandTopLevel(self):
+        return
+
+    def setForecastTable(self):
+
+        for i, (idx, forecastEquation) in enumerate(self.parent.forecastEquationsTable.iterrows()):
+
+            # Get the target and predictor datasets
+            predictand = self.parent.datasetTable.loc[forecastEquation['EquationPredictand']]
+            predictors = [
+                self.parent.datasetTable.loc[predictorID] for predictorID in forecastEquation['EquationPredictors']
+            ]
+            targetText1 = truncate('<strong style="vertical-align:middle">{0}</strong><br/>'.format(predictand['DatasetName']), 50, ellipsis='...')
+            targetText2 = truncate('{0} {1}'.format(predictand['DatasetParameter'], forecastEquation['PredictandMethod'].title()), 50, ellipsis='...')
+            targetText =  targetText1 + targetText2
+            predictorsText = ", ".join([predictor['DatasetParameter'] for predictor in predictors])
+            
+
+            # Parse the source
+            source = forecastEquation['EquationSource']
+            if source == 'USACE':
+                modelImg = '<img style="vertical-align:bottom" src="resources/GraphicalResources/icons/USACE.png" width="20", height="20"/>'
+                modelNumText = '<strong>USACE</strong>' + str(idx)
+            elif source == 'NRCS':
+                modelImg = '<img style="vertical-align:bottom" src="resources/GraphicalResources/icons/NRCS.svg" width="20", height="20"/>'
+                modelNumText = '<strong>NRCS</strong>' + str(idx)
+            elif source != 'PyForecast':
+                modelImg = ""
+                modelNumText = '<strong>{0}</strong>'.format(source) + str(idx)
+            else:
+                modelImg = ""
+                modelNumText = idx
+
+            # Parse the equation method into human readable format
+            equationMethod = forecastEquation['EquationMethod'].split('/')
+            equationMethod[1] = self.parent.preprocessorsDict[equationMethod[1]]
+            equationMethod[2] = self.parent.regressorsDict[equationMethod[2]]
+            pipeText = "<strong>{1}</strong> ({0}, {2})".format(*equationMethod[1:])
+
+            # Get the forecasts
+            if idx in self.parent.forecastsTable.index.get_level_values(0):
+                fcstMid = int(round(self.parent.forecastsTable.loc[(idx, 2020, 0.5), "ForecastValues"]))
+                fcstLow = int(round(self.parent.forecastsTable.loc[(idx, 2020, 0.9), "ForecastValues"]))
+                fcstHigh= int(round(self.parent.forecastsTable.loc[(idx, 2020, 0.1), "ForecastValues"]))
+                mag = self.parent.forecastsTable.loc[(idx, 2020, 0.5), "ForecastMagnitude"] + ".png"
+            else:
+                fcstMid = "[MISSING PREDICTOR DATA] ?"
+                fcstLow = "?"
+                fcstHigh= "?"
+                mag = 'warning-24px.svg'
+            
+            # Skill
+            skillText = ', '.join(["<strong>{0}</strong>: {1}".format(key, value) for key, value in forecastEquation['EquationSkill'].items()])
+
+            # Check if the period equals the last period
+            if (i != 0) and (forecastEquation['PredictandPeriod'] == self.parent.forecastEquationsTable.iloc[i-1]['PredictandPeriod']):
+                
+                # check if the issue date equals the last issue date
+                if forecastEquation['EquationIssueDate'] == issueDate:
+                    forecastItem = QtWidgets.QTreeWidgetItem(issueDateItem, 0)
+                    label = QtWidgets.QLabel(FF.format(
+                            units= predictand['DatasetUnits'] if 'KAF' not in forecastEquation['PredictandMethod'] else 'KAF',
+                            magnitude=mag,
+                            fcstMid = fcstMid,
+                            fcstLow = fcstLow,
+                            fcstHigh= fcstHigh,
+                            target = targetText,
+                            pipe = truncate(pipeText, 50, ellipsis = '...'),
+                            skill = truncate(skillText,50, ellipsis = '...'),
+                            predictors = truncate(predictorsText, 50, ellipsis = '...'),
+                            modelIDNum = modelNumText,
+                            modelIDImg = modelImg
+                        ))
+                    forecastItem.setData(0, QtCore.Qt.UserRole, idx)       
+                    label.setTextFormat(QtCore.Qt.RichText)  
+                    self.setItemWidget(forecastItem,0, label)
+
+
+                else:
+
+                    issueDate = forecastEquation['EquationIssueDate']
+                    issueDateItem = QtWidgets.QTreeWidgetItem(periodItem, ["Issued on {0}".format(issueDate.strftime("%b %d"))])
+                    forecastItem = QtWidgets.QTreeWidgetItem(issueDateItem, 0)
+                    label = QtWidgets.QLabel(FF.format(
+                            units= predictand['DatasetUnits'] if 'KAF' not in forecastEquation['PredictandMethod'] else 'KAF',
+                            magnitude=mag,
+                            fcstMid = fcstMid,
+                            fcstLow = fcstLow,
+                            fcstHigh= fcstHigh,
+                            target = targetText,
+                            pipe = truncate(pipeText, 50, ellipsis = '...'),
+                            skill = truncate(skillText,50, ellipsis = '...'),
+                            predictors = truncate(predictorsText, 50, ellipsis = '...'),
+                            modelIDNum = modelNumText,
+                            modelIDImg = modelImg
+                        ))
+                    forecastItem.setData(0, QtCore.Qt.UserRole, idx)       
+                    label.setTextFormat(QtCore.Qt.RichText)  
+                    self.setItemWidget(forecastItem,0, label)
+
+
+            # Create a new parent
+            else:
+                period = forecastEquation['PredictandPeriod'].split('/')
+                periodStart = datetime.strptime(period[1], "%Y-%m-%d")
+                duration = isodate.parse_duration(period[2])
+                periodEnd = periodStart + duration - isodate.duration.Duration(1)
+                issueDate = forecastEquation['EquationIssueDate']
+                periodItem = QtWidgets.QTreeWidgetItem(self, ["Forecast Period {0} - {1}".format(periodStart.strftime("%b %d"), periodEnd.strftime("%b %d"))])
+                periodItem.setFont(0,self.font_)
+                issueDateItem = QtWidgets.QTreeWidgetItem(periodItem, ["Issued on {0}".format(issueDate.strftime("%b %d"))])
+                forecastItem = QtWidgets.QTreeWidgetItem(issueDateItem, 0)
+                label = QtWidgets.QLabel(FF.format(
+                        units= predictand['DatasetUnits'] if 'KAF' not in forecastEquation['PredictandMethod'] else 'KAF',
+                        magnitude=mag,
+                        fcstMid = fcstMid,
+                        fcstLow = fcstLow,
+                        fcstHigh= fcstHigh,
+                        target = targetText,
+                        pipe = truncate(pipeText, 50),
+                        skill = truncate(skillText,50),
+                        predictors = truncate(predictorsText, 50),
+                        modelIDNum = modelNumText,
+                        modelIDImg = modelImg
+                    ))
+                forecastItem.setData(0, QtCore.Qt.UserRole, idx)       
+                label.setTextFormat(QtCore.Qt.RichText)
+                self.setItemWidget(forecastItem,0, label)           
+     
 
 if __name__ == '__main__':
     import sys
+    import pandas as pd
+    import pickle
+    import importlib
+    import os
+    sys.path.append(r"C:\Users\KFoley\Documents\NextFlow")
+
+    regr = {}
+    cv = {}
+    pp = {}
+    for file_ in os.listdir("resources/modules/StatisticalModelsTab/RegressionAlgorithms"):
+        if '.py' in file_:
+            mod = importlib.import_module("resources.modules.StatisticalModelsTab.RegressionAlgorithms.{0}".format(file_[:file_.index(".py")]))
+            regr[file_[:file_.index(".py")]] = getattr(mod, "Regressor").NAME
+    for file_ in os.listdir("resources/modules/StatisticalModelsTab/PreProcessingAlgorithms"):
+        if '.py' in file_:
+            mod = importlib.import_module("resources.modules.StatisticalModelsTab.PreProcessingAlgorithms.{0}".format(file_[:file_.index(".py")]))
+            pp[file_[:file_.index(".py")]] = getattr(mod, "preprocessor").NAME
+    
+
+
     app = QtWidgets.QApplication(sys.argv)
+    for fontFile in os.listdir("resources/GraphicalResources/fonts"):
+            QtGui.QFontDatabase.addApplicationFont("resources/GraphicalResources/fonts/{0}".format(fontFile))
     widg = QtWidgets.QWidget()
-    label = QtWidgets.QLabel(FF)
-    #label = QtWidgets.QLabel(HTML_FORMAT.format(target = "Buffalo Bill April 01 - July 31 Inflow", predictors = "PDSI, Antecedant Inflow, SNOTEL, SST",skill = "R2: 0.5", range="high", id="101101", fcst="800", fcstLow="405", fcstHigh="1211", units="KAF"))
-    label.setTextFormat(QtCore.Qt.RichText)
-    #print(label.text())
+    widg.datasetTable = pd.read_pickle("toyDatasets.pkl")
+    widg.regressorsDict = regr
+    widg.preprocessorsDict = pp
     layout = QtWidgets.QVBoxLayout()
-    layout.addWidget(label)
+    #widg.setFixedHeight(300)
+    widg.setFixedWidth(500)
+    widg.setMinimumHeight(700)
+
+    widg.forecastEquationsTable = pd.DataFrame(
+            index = pd.Index([], dtype=int, name='ForecastEquationID'),
+            columns = [
+                "EquationSource",       # e.g. 'PyForecast','NRCS', 'CustomImport'
+                "EquationComment",      # E.g. 'Equation Used for 2000-2010 Forecasts'
+                "EquationPredictand",   # E.g. 103011
+                "PredictandPeriod",     # R/1978-03-01/P1M/F12M (starting in march of 1978, over a 1 month period, recurring once a year.)
+                "PredictandMethod",      # E.g. Accumulation, Average, Max, etc
+                "EquationCreatedOn",    # E.g. 2019-10-04
+                "EquationIssueDate",    # E.g. 2019-02-01
+                "EquationMethod",       # E.g. Pipeline string (e.g. PIPE/PreProc_Logistic/Regr_Gamma/KFOLD_5)
+                "EquationSkill",        # E.g. Score metric dictionary (e.g. {"AIC_C": 433, "ADJ_R2":0.32, ...})
+                "EquationPredictors",   # E.g. [100204, 100101, 500232]
+                "PredictorPeriods",     # E.g. [R/1978-03-01/P1M/F12M, R/1978-03-01/P1M/F12M, R/1978-03-01/P1M/F12M]
+                "PredictorMethods"      # E.g. ['Average', 'First', 'Max']
+            ]
+        )
+
+    widg.forecastsTable = pd.DataFrame(
+            index = pd.MultiIndex(
+                levels=[[],[],[]],
+                codes= [[],[],[]],
+                names=[
+                    'ForecastEquationID',   # E.g. 1010010 (999999 for user imported forecast)
+                    'Year',                 # E.g. 2019
+                    'ForecastExceedance'    # e.g. 0.30 (for 30% exceedence)
+                    ]
+            ),
+            columns = [
+                "ForecastValues",           # in order of 0-100% exceedance
+                ],
+        )
+    widg.forecastEquationsTable.loc[10110] = [
+        "PyForecast",
+        "",
+        106162,
+        "R/1900-04-01/P4M/F12M",
+        "accumulation",
+        pd.to_datetime("2019-01-22"),
+        pd.to_datetime("2019-02-01"),
+        "PIPE/PreProc_NoPreProcessing/Regr_PCARegressor/KFOLD_10",
+        {"AIC_C":422, "ADJ_R2":0.55},
+        [100194, 14000, 106162, 14132],
+        ["R/1900-02-01/P1D/F12M", "R/1900-01-01/P1M/F12M", "R/1900-01-01/P1M/F12M", "R/1900-01-01/P1M/F12M" ],
+        ["first", "average", "average", "average"]
+    ]
+    widg.forecastEquationsTable.loc[10033] = [
+        "NRCS",
+        "",
+        106162,
+        "R/1900-04-01/P4M/F12M",
+        "accumulation",
+        pd.to_datetime("2019-01-22"),
+        pd.to_datetime("2019-02-01"),
+        "PIPE/PreProc_YAware/Regr_ZScore/KFOLD_10",
+        {"AIC_C":422, "ADJ_R2":0.55},
+        [100194, 14000, 106162, 14132],
+        ["R/1900-02-01/P1D/F12M", "R/1900-01-01/P1M/F12M", "R/1900-01-01/P1M/F12M", "R/1900-01-01/P1M/F12M" ],
+        ["first", "average", "average", "average"]
+    ]
+    
+    widg.forecastEquationsTable.loc[10036] = [
+        "USACE",
+        "",
+        106162,
+        "R/1900-04-01/P4M/F12M",
+        "accumulation",
+        pd.to_datetime("2019-01-22"),
+        pd.to_datetime("2019-03-01"),
+        "PIPE/PreProc_Logarithmic_X/Regr_GammaGLM/KFOLD_10",
+        {"AIC_C":422, "ADJ_R2":0.55},
+        [100194, 14000, 106162, 14132],
+        ["R/1900-02-01/P1D/F12M", "R/1900-01-01/P1M/F12M", "R/1900-01-01/P1M/F12M", "R/1900-01-01/P1M/F12M" ],
+        ["first", "average", "average", "average"]
+    ]
+    widg.forecastEquationsTable.loc[10026] = [
+        "PyForecast",
+        "",
+        106162,
+        "R/1900-05-01/P3M/F12M",
+        "accumulation",
+        pd.to_datetime("2019-01-22"),
+        pd.to_datetime("2019-05-01"),
+        "PIPE/PreProc_MinMaxScaler/Regr_SVM_RBF/KFOLD_5",
+        {"AIC_C":422, "ADJ_R2":0.55},
+        [100194, 14000, 106162, 14132],
+        ["R/1900-02-01/P1D/F12M", "R/1900-01-01/P1M/F12M", "R/1900-01-01/P1M/F12M", "R/1900-01-01/P1M/F12M" ],
+        ["first", "average", "average", "average"]
+    ]
+    
+    for i in range(1, 100):
+        widg.forecastsTable.loc[(10110, 2020,i/100), "ForecastValues"] = (i+43)*100/(i+1)
+        widg.forecastsTable.loc[(10033, 2020, i/100), "ForecastValues"] = (i)*88
+        widg.forecastsTable.loc[(10026, 2020, i/100), "ForecastValues"] = (i)*88
+    widg.forecastsTable.loc[(10110, 2020,.5), "ForecastMagnitude"] = 'high'
+    widg.forecastsTable.loc[(10033, 2020,.5), "ForecastMagnitude"] = 'mid'
+    widg.forecastsTable.loc[(10026, 2020,.5), "ForecastMagnitude"] = 'low'
+    mm = forecastList_HTML(widg)
+    layout.addWidget(mm)
     widg.setLayout(layout)
+    widg.setStyleSheet("""
+    QLabel {
+        border: 0px solid darkgray;
+        border-bottom-width: 1px;
+        padding: 10px;
+    }
+
+QTreeView::branch:!has-children:selected{
+        background: #FFFFFF;
+}
+QTreeView::item:!has-children:selected{
+        background: #d1e1ed;
+}
+QTreeView::item:!has-children{
+        background: #f4f1ec;
+}
+
+
+    """)
     widg.show()
     #mw = forecastList_HTML()
     sys.exit(app.exec_())

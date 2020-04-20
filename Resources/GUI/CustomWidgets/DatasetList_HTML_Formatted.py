@@ -39,8 +39,8 @@ datasetIcons = {
     "inflow":           os.path.abspath("resources/graphicalResources/icons/waves-24px.svg"),
     "snow":             os.path.abspath("resources/graphicalResources/icons/ac_unit-24px.svg"),
     "temperature":      os.path.abspath("resources/graphicalResources/icons/temperature_fahrenheit-24px.svg"),
-    "precipitation":    os.path.abspath("resources/graphicalResources/icons/opacity-24px.svg"),
-    "index":            os.path.abspath("resources/graphicalResources/icons/scatter_plot-24px.svg"),
+    "precipitation":    os.path.abspath("resources/graphicalResources/icons/weather_pouring-24px.svg"),
+    "index":            os.path.abspath("resources/graphicalResources/icons/radio_tower-24px.svg"),
     "soil":             os.path.abspath("resources/graphicalResources/icons/sprout-24px.svg"),
 }
 
@@ -183,10 +183,10 @@ class DatasetList_HTML_Formatted(QtWidgets.QListWidget):
             
             # set the item's text to the HTML formatted version of the dataset
             htmlString = self.substituteFormatString(item.data(QtCore.Qt.UserRole))
-            svg = ''
+            svg = 'resources/graphicalResources/icons/cactus-24px.svg'
             if self.useIcon:
                 parameterName = dataset['DatasetParameter']
-                if "SNOTEL" in dataset['DatasetType']:
+                if "SNOTEL" in dataset['DatasetType'] and 'snow' in parameterName.lower():
                     svg = os.path.abspath("resources/graphicalResources/icons/terrain-24px.svg")
                 elif 'OTHER' in dataset['DatasetType']:
                     svg = os.path.abspath("resources/graphicalResources/icons/language-24px.svg")

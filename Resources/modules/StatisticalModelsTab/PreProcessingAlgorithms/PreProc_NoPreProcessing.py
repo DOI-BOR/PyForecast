@@ -19,7 +19,7 @@ class preprocessor(object):
     """
 
     FILE_NAME = 'PreProc_NoPreProcessing'
-    name = "No Preprocessing"
+    NAME = "No Preprocessing"
 
     def __init__(self, data):
         """

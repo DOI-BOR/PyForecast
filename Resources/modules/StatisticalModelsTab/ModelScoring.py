@@ -99,92 +99,169 @@ def scoreCompare(oldScores = None, newScores = None, nested = False):
                         else (newScores[scoreName] < oldScores[scoreName]) 
                         for scoreName in oldScores.keys()])
 
-
-def AIC_C(y_obs, y_prd, n_features):
+class Scorers(object):
     """
-    Computes the modified Akaike information Criterion for
-    small sample sizes, specified for OLS regression.
-    https://en.wikipedia.org/wiki/Akaike_information_criterion
+    Class to contain all the different model scorers,
+    and information about the scorers
+    """
 
-        AICc = AIC + (2p^2 + 2p) / (n - p - 1)
+    # Information dictionary
+    INFO = {
+        "AIC_C":{
+            "NAME":"Akaike Information Criterion (Small sample size)",
+            "WEBSITE":"https://en.wikipedia.org/wiki/Akaike_information_criterion#Modification_for_small_sample_size",
+            "HTML":"<strong>AIC<sub>C</sub></strong>"
+        },
+        "AIC":{
+            "NAME":"Akaike Information Criterion",
+            "WEBSITE":"https://en.wikipedia.org/wiki/Akaike_information_criterion",
+            "HTML":"<strong>AIC</strong>"
+        },
+        "RMSE":{
+            "NAME":"Root Mean Squared Error",
+            "WEBSITE":"https://en.wikipedia.org/wiki/Root-mean-square_deviation",
+            "HTML":"<strong>RMSE</strong>"
+        },
+        "MSE":{
+            "NAME":"Mean Squared Error",
+            "WEBSITE":"https://en.wikipedia.org/wiki/Mean_squared_error",
+            "HTML":"<strong>MSE</strong>"
+        },
+        "MAE":{
+            "NAME":"Mean Absolute Error",
+            "WEBSITE":"https://en.wikipedia.org/wiki/Mean_absolute_error",
+            "HTML":"<strong>MAE</strong>"
+        },
+        "R2":{
+            "NAME":"Coefficient of Determination",
+            "WEBSITE":"https://en.wikipedia.org/wiki/Coefficient_of_determination",
+            "HTML":"<strong>R<sup>2</sup></strong>"
+        },
+        "ADJ_R2":{
+            "NAME":"Adjusted Coefficient of Determination",
+            "WEBSITE":"https://en.wikipedia.org/wiki/Coefficient_of_determination#Adjusted_R2",
+            "HTML":"<strong>R<sup>2</sup><sub>adj</sub></strong>"
+        }
+    }
+
+    def __init__(self):
+        """
+        Initialize the scorers class
+        """
+
+        return
+
+
+    def AIC_C(self, y_obs, y_prd, n_features):
+        """
+        Computes the modified Akaike information Criterion for
+        small sample sizes, specified for OLS regression.
+        https://en.wikipedia.org/wiki/Akaike_information_criterion
+
+            AICc = AIC + (2p^2 + 2p) / (n - p - 1)
+            
+            where AIC = 2p + n(ln(SSE))
+
+            where SSE = Σ (y_obs - y_prd)^2
+
+        """
+
+        aic = self.AIC(y_obs, y_prd, n_features)
+        n = len(y_obs)
         
-        where AIC = 2p + n(ln(SSE))
-
-        where SSE = Σ (y_obs - y_prd)^2
-
-    """
-
-    aic = AIC(y_obs, y_prd, n_features)
-    n = len(y_obs)
-    
-    return aic + ((2*n_features*n_features) + 2*n_features) / (n - n_features - 1)
+        return aic + ((2*n_features*n_features) + 2*n_features) / (n - n_features - 1)
 
 
-def AIC(y_obs, y_prd, n_features):
-    """
-    Computes the Akaike Information Criterion for 
-    the model. The formula is:
-    https://en.wikipedia.org/wiki/Akaike_information_criterion
+    def AIC(self, y_obs, y_prd, n_features):
+        """
+        Computes the Akaike Information Criterion for 
+        the model. The formula is:
+        https://en.wikipedia.org/wiki/Akaike_information_criterion
 
-        AIC = 2p + n(ln(SSE))
+            AIC = 2p + n(ln(SSE))
 
-        where SSE = Σ (y_obs - y_prd)^2
-    """
+            where SSE = Σ (y_obs - y_prd)^2
+        """
 
-    sse = sum((y_obs-y_prd)**2)  
-    n = len(y_obs)
+        sse = sum((y_obs-y_prd)**2)  
+        n = len(y_obs)
 
-    return 2*n_features + (n*np.log(sse))
-
-
-def MSE(y_obs, y_prd, n_features):
-    """
-    Computes the Mean Squared Error of the Predictions
-    versus the observations. If the predictions
-    are cross validated, then this is equivalent to the
-    mean-squared prediction error. The formula is:
-
-        MSE = 1/n Σ (y_obs - y_prd)^2
-    """
-
-    return (1/len(y_obs))*sum((y_obs - y_prd)**2)
+        return 2*n_features + (n*np.log(sse))
 
 
-def R2(y_obs, y_prd, n_features):
-    """
-    Computes the coefficient of determination between
-    the observed Y Values and the predicted Y Values. The 
-    R2 is computed with the formula:
+    def MAE(self, y_obs, y_prd, n_features):
+        """
+        Computes the Mean Absolute Error of the predictions
+        versus the observed values. The formula is:
 
-        r2 = 1 - SS_residual / SS_Total
-           = 1 - Σ((y_obs - y_prd)^2) / Σ((y_obs - mean(y))^2)
+            MAE = 1/n Σ |(y_obs - y_prd)|
+        """
 
-    """
-    ss_res = sum((y_obs-y_prd)**2)          # Residual sum of squares
-    ss_tot = sum((y_obs-np.mean(y_obs))**2) # Total sum of squares
-    r2 = 1 - (ss_res/ss_tot)                # Coefficient of Determination
-
-    return r2
+        return (1/len(y_obs))*sum(np.abs(y_obs - y_prd))
 
 
-def ADJ_R2(y_obs, y_prd, n_features):
-    """
-    Computes the adjusted coefficient of determination between
-    the observed Y Values and the predicted Y Values. The adjusted
-    R2 is computed with the formula:
+    def RMSE(self, y_obs, y_prd, n_features):
+        """
+        Computes the Root Mean Squared Error of the Predictions
+        versus the observations. If the predictions
+        are cross validated, then this is equivalent to the
+        mean-squared prediction error. The formula is:
 
-        r2 = 1 - SS_residual / SS_Total
-           = 1 - Σ((y_obs - y_prd)^2) / Σ((y_obs - mean(y))^2)
+            MSE = 1/n Σ (y_obs - y_prd)^2
+            RMSE = sqrt(MSE)
+        """
 
-        adj-r2 = 1 - (1 - r2)(n_samples - 1)/(n_samples - n_features - 1)
+        return np.sqrt(self.MSE(y_obs, y_prd, n_features))
 
-    """
-    
-    n_samples = len(y_obs)                  # Number of samples
-    ss_res = sum((y_obs-y_prd)**2)          # Residual sum of squares
-    ss_tot = sum((y_obs-np.mean(y_obs))**2) # Total sum of squares
-    r2 = 1 - (ss_res/ss_tot)                # Coefficient of Determination
-    
-    adj_r2 = 1 - (1 - r2)*(n_samples - 1)/(n_samples - n_features - 1)
-    
-    return adj_r2
+
+    def MSE(self, y_obs, y_prd, n_features):
+        """
+        Computes the Mean Squared Error of the Predictions
+        versus the observations. If the predictions
+        are cross validated, then this is equivalent to the
+        mean-squared prediction error. The formula is:
+
+            MSE = 1/n Σ (y_obs - y_prd)^2
+        """
+
+        return (1/len(y_obs))*sum((y_obs - y_prd)**2)
+
+
+    def R2(self, y_obs, y_prd, n_features):
+        """
+        Computes the coefficient of determination between
+        the observed Y Values and the predicted Y Values. The 
+        R2 is computed with the formula:
+
+            r2 = 1 - SS_residual / SS_Total
+            = 1 - Σ((y_obs - y_prd)^2) / Σ((y_obs - mean(y))^2)
+
+        """
+        ss_res = sum((y_obs-y_prd)**2)          # Residual sum of squares
+        ss_tot = sum((y_obs-np.mean(y_obs))**2) # Total sum of squares
+        r2 = 1 - (ss_res/ss_tot)                # Coefficient of Determination
+
+        return r2
+
+
+    def ADJ_R2(self, y_obs, y_prd, n_features):
+        """
+        Computes the adjusted coefficient of determination between
+        the observed Y Values and the predicted Y Values. The adjusted
+        R2 is computed with the formula:
+
+            r2 = 1 - SS_residual / SS_Total
+            = 1 - Σ((y_obs - y_prd)^2) / Σ((y_obs - mean(y))^2)
+
+            adj-r2 = 1 - (1 - r2)(n_samples - 1)/(n_samples - n_features - 1)
+
+        """
+        
+        n_samples = len(y_obs)                  # Number of samples
+        ss_res = sum((y_obs-y_prd)**2)          # Residual sum of squares
+        ss_tot = sum((y_obs-np.mean(y_obs))**2) # Total sum of squares
+        r2 = 1 - (ss_res/ss_tot)                # Coefficient of Determination
+        
+        adj_r2 = 1 - (1 - r2)*(n_samples - 1)/(n_samples - n_features - 1)
+        
+        return adj_r2

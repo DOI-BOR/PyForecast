@@ -17,7 +17,6 @@ from PyQt5 import QtWidgets, QtCore
 sys.path.append(os.getcwd())
 from resources.modules.Miscellaneous.DataProcessor import resampleDataSet
 import multiprocessing as mp
-import importlib
 import bitarray as ba
 from resources.modules.StatisticalModelsTab.ModelScoring import sortScores
 from operator import itemgetter
@@ -61,12 +60,12 @@ class RegressionWorker(QtCore.QRunnable):
         # reference to run time
         self.currentDate = pd.Timestamp.today().strftime("%Y-%m-%d")
 
-        # Initialize lists of regression schemes, etc.
+        # Initialize the regression schemes, feature selectors, cross validators, and preprocessors
         self.regressionSchemes = modelRunTableEntry['RegressionTypes']
-        self.featureSelectionSchemes = [importlib.import_module("resources.modules.StatisticalModelsTab.FeatureSelectionAlgorithms.{0}".format(f)) for f in modelRunTableEntry['FeatureSelectionTypes']]
+        self.featureSelectionSchemes = [self.parent.featureSelectors[featSel]['module'] for featSel in modelRunTableEntry['FeatureSelectionTypes']]
         self.crossValidationScheme = modelRunTableEntry['CrossValidationType']
         self.scoringParameters = modelRunTableEntry['ScoringParameters']
-        self.preprocessors = [importlib.import_module("resources.modules.StatisticalModelsTab.PreProcessingAlgorithms.{0}".format(p)) for p in modelRunTableEntry['Preprocessors']]
+        self.preprocessors = [self.parent.preProcessors[preproc]['module'] for preproc in modelRunTableEntry['Preprocessors']]
         
         return
 
@@ -144,7 +143,7 @@ class RegressionWorker(QtCore.QRunnable):
         for preprocessor in self.preprocessors:
 
             # Initialize the preprocesser
-            self.preprocessor = preprocessor.preprocessor(np.concatenate([self.xTraining, self.yTraining], axis=1))
+            self.preprocessor = preprocessor(np.concatenate([self.xTraining, self.yTraining], axis=1))
 
             # Compute the preprocessed dataset
             self.proc_xTraining = self.preprocessor.getTransformedX()

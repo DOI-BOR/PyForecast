@@ -251,7 +251,7 @@ class datasetTab(object):
             else:
                 newID = max(self.datasetTable.index) + 1 if max(self.datasetTable.index) >= 900000 else 900000
             dataset = pd.Series(
-                data = ['OTHER','','','','','','','average','','',np.nan, np.nan, np.nan, '','','','',{}],
+                data = ['OTHER','','','','','','','average','','',np.nan, np.nan, np.nan, '','',np.nan,np.nan,{}],
                 index = [
                         'DatasetType',              # e.g. STREAMGAGE, or RESERVOIR
                         'DatasetExternalID',        # e.g. "GIBR" or "06025500"
@@ -309,6 +309,7 @@ class datasetTab(object):
 
         # Also refresh the dataset lists elsewhere in the software
         self.dataTab.datasetList.setDatasetTable(self.datasetTable)
+        self.modelTab.datasetList.setDatasetTable(self.datasetTable)
 
 
     def addDatasetsFromWebMap(self, datasetAdditionMessage):

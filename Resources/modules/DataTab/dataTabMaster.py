@@ -43,7 +43,7 @@ class dataTab(object):
 
         # Buttons
         self.dataTab.downloadButton.clicked.connect(self.downloadData)
-        self.dataTab.endYearInput.valueChanged.connect(lambda x: self.dataTab.startYearInput.setMaximum(x))
+        self.dataTab.endYearInput.valueChanged.connect(lambda x: self.dataTab.startYearInput.setMaximum(x-1))
 
         # ListWidget
         self.dataTab.datasetList.itemSelectionChanged.connect(self.plotSelectedDataset)

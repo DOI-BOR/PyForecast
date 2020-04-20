@@ -14,11 +14,13 @@ from sklearn.svm import SVR
 
 class Regressor(object):
 
-    name = "Support Vector Machine - RBF Regression"
+    NAME = "Support Vector Machine - RBF Regression"
+    WEBSITE = "https://en.wikipedia.org/wiki/Support-vector_machine"
 
-    def __init__(self, crossValidation = None, scoringParameters = None):
+    def __init__(self, parent = None, crossValidation = None, scoringParameters = None):
 
         # Parse arguments
+        self.parent = parent
         self.crossValidation = crossValidation if crossValidation != None else "KFOLD_5"
         self.scoringParameters = scoringParameters if scoringParameters != None else ["ADJ_R2"]
 
@@ -28,8 +30,9 @@ class Regressor(object):
         self.y_p = np.array([])     # Model Predictions
 
         # Set up cross validator, and scorers
-        self.scorers = [getattr(ModelScoring, param) for param in self.scoringParameters]
-        self.crossValidator = getattr(CrossValidationAlgorithms, self.crossValidation)
+        self.scorerClass = self.parent.parent.scorers['class']()
+        self.scorers = [getattr(self.scorerClass, self.parent.parent.scorers[scorer]) for scorer in self.scoringParameters]
+        self.crossValidator = self.parent.parent.crossValidators[self.crossValidation]['module']()
         
         # Intialize dictionaries to store scores
         self.cv_scores = {}
