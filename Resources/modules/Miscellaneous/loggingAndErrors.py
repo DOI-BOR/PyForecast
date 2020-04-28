@@ -6,6 +6,9 @@ def showErrorMessage(parent, msg):
         
         errorMsg = QtWidgets.QMessageBox.warning(parent, "Error", msg)
 
+def showInfoMessage(parent, msg):
+        infoMsg = QtWidgets.QMessageBox.information(parent, "Information", msg)
+
 def displayDialogYesNo(message):
         """
         """

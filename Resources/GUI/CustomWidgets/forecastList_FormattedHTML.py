@@ -102,9 +102,13 @@ class forecastList_HTML(QtWidgets.QTreeWidget):
             elif source == 'NRCS':
                 modelImg = '<img style="vertical-align:bottom" src="resources/GraphicalResources/icons/NRCS.svg" width="20", height="20"/>'
                 modelNumText = '<strong>NRCS</strong>' + str(idx)
+            elif source == 'NOAA':
+                modelImg = '<img style="vertical-align:bottom" src="resources/GraphicalResources/icons/NOAA.svg" width="20", height="20"/>'
+                modelNumText = '<strong>NOAA</strong>' + str(idx)
             elif source != 'PyForecast':
                 modelImg = ""
                 modelNumText = '<strong>{0}</strong>'.format(source) + str(idx)
+            
             else:
                 modelImg = ""
                 modelNumText = idx
@@ -113,7 +117,8 @@ class forecastList_HTML(QtWidgets.QTreeWidget):
             equationMethod = forecastEquation['EquationMethod'].split('/')
             equationMethod[1] = self.parent.preprocessorsDict[equationMethod[1]]
             equationMethod[2] = self.parent.regressorsDict[equationMethod[2]]
-            pipeText = "<strong>{1}</strong> ({0}, {2})".format(*equationMethod[1:])
+            pipeText1 = "<strong>{0}</strong>".format(equationMethod[2]) 
+            pipeText2 = "({0}, {1})".format(equationMethod[1], equationMethod[3] )
 
             # Get the forecasts
             if idx in self.parent.forecastsTable.index.get_level_values(0):
@@ -143,7 +148,7 @@ class forecastList_HTML(QtWidgets.QTreeWidget):
                             fcstLow = fcstLow,
                             fcstHigh= fcstHigh,
                             target = targetText,
-                            pipe = truncate(pipeText, 50, ellipsis = '...'),
+                            pipe = truncate(pipeText1, 50, ellipsis = '...') + '<br>' + truncate(pipeText2, 50, ellipsis = '...'),
                             skill = truncate(skillText,50, ellipsis = '...'),
                             predictors = truncate(predictorsText, 50, ellipsis = '...'),
                             modelIDNum = modelNumText,
@@ -166,7 +171,7 @@ class forecastList_HTML(QtWidgets.QTreeWidget):
                             fcstLow = fcstLow,
                             fcstHigh= fcstHigh,
                             target = targetText,
-                            pipe = truncate(pipeText, 50, ellipsis = '...'),
+                            pipe = truncate(pipeText1, 50, ellipsis = '...') + '<br>' + truncate(pipeText2, 50, ellipsis = '...'),
                             skill = truncate(skillText,50, ellipsis = '...'),
                             predictors = truncate(predictorsText, 50, ellipsis = '...'),
                             modelIDNum = modelNumText,
@@ -195,7 +200,7 @@ class forecastList_HTML(QtWidgets.QTreeWidget):
                         fcstLow = fcstLow,
                         fcstHigh= fcstHigh,
                         target = targetText,
-                        pipe = truncate(pipeText, 50),
+                        pipe = truncate(pipeText1, 50, ellipsis = '...') + '<br>' + truncate(pipeText2, 50, ellipsis = '...'),
                         skill = truncate(skillText,50),
                         predictors = truncate(predictorsText, 50),
                         modelIDNum = modelNumText,
@@ -287,7 +292,7 @@ if __name__ == '__main__':
         ["first", "average", "average", "average"]
     ]
     widg.forecastEquationsTable.loc[10033] = [
-        "NRCS",
+        "NOAA",
         "",
         106162,
         "R/1900-04-01/P4M/F12M",

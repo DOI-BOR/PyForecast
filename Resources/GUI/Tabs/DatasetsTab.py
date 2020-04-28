@@ -237,6 +237,14 @@ class DatasetTab(QtWidgets.QWidget):
         tabPane.addTab(AdditionalDatasetTab, "ADDITIONAL<br>DATASETS", "resources/graphicalResources/icons/public-24px.svg", "#FFFFFF", iconSize=(25,25))
 
         widg = QtWidgets.QWidget()
+        layout_ = QtWidgets.QFormLayout()
+        self.editDsetButton = QtWidgets.QPushButton("Edit")
+        layout_.addRow("Edit default datasets in Excel:", self.editDsetButton)
+        self.restoreDsetButton = QtWidgets.QPushButton("Restore")
+        layout_.addRow("Restore original PyForecast default datasets:", self.restoreDsetButton)
+        self.addDataloaderButton = QtWidgets.QPushButton("Add")
+        layout_.addRow("Add new custom dataloader script:", self.addDataloaderButton)
+        widg.setLayout(layout_)
         tabPane.addTabBottom(widg, "CONFIGURE", "resources/graphicalResources/icons/settings-24px.svg", "#FFFFFF", iconSize=(20,20))
 
         self.webMapView.sizePolicy().setHorizontalStretch(4)

@@ -278,7 +278,7 @@ function loadDatasetCatalog(geojson_string) {
         pointToLayer: function (feature, latlng) {
             return L.circleMarker(latlng, {
                 pane: "PointsPane",
-                fillColor: "#c0c0c0",
+                fillColor: "#f5edd0",
                 color: "#000000",
                 weight: 1,
                 radius: 7,
@@ -287,6 +287,25 @@ function loadDatasetCatalog(geojson_string) {
         }
     });
     window.layer_group.addLayer(window.NCDCLayer);
+    var arr = ["NCDC", "SNOTEL", "SCAN", "AGRIMET", "RESERVOIR", "STREAMGAGE", "SNOWCOURSE"]
+    window.otherLayer = L.geoJSON(point_data, {
+        
+        filter: function(feature) {
+            if (arr.includes(feature.properties.DatasetType)) {return false} else {return true};
+        },
+        pointToLayer: function (feature, latlng) {
+            return L.circleMarker(latlng, {
+                pane: "PointsPane",
+                fillColor: "#aaaaaa",
+                color: "#000000",
+                weight: 1,
+                radius: 7,
+                fillOpacity: 1
+            })
+        }
+
+    });
+    window.layer_group.addLayer(window.otherLayer);
 
     // Create Popups for point and area datasets
     createPopups();
@@ -304,7 +323,7 @@ function createPopups() {
                     "SCAN":"#ffcc6f",
                     "RESERVOIR":"#5263fe",
                     "AGRIMET":"#f47251",
-                    "NCDC":"#c0c0c0"}
+                    "NCDC":"#f5edd0"}
     window.hucDict = {};
 
     window.hucLayer.eachLayer( function(sublayer) {
@@ -645,7 +664,8 @@ function createLayerControlOverlay() {
             '<span style="display:inline-block;height:10px;width:10px;border: 1px solid black;border-radius:50%;background:#ffcc6f"></span>&nbsp;NRCS SCAN Sites':      window.SCANLayer,
             '<span style="display:inline-block;height:10px;width:10px;border: 1px solid black;border-radius:50%;background:#5263fe"></span>&nbsp;USBR Natural Flow':    window.USBRLayer,
             '<span style="display:inline-block;height:10px;width:10px;border: 1px solid black;border-radius:50%;background:#f47251"></span>&nbsp;USBR AgriMet':         window.USBRAGRIMETLayer,
-            '<span style="display:inline-block;height:10px;width:10px;border: 1px solid black;border-radius:50%;background:#c0c0c0"></span>&nbsp;NOAA Sites':           window.NCDCLayer,
+            '<span style="display:inline-block;height:10px;width:10px;border: 1px solid black;border-radius:50%;background:#f5edd0"></span>&nbsp;NOAA Sites':           window.NCDCLayer,
+            '<span style="display:inline-block;height:10px;width:10px;border: 1px solid black;border-radius:50%;background:#AAAAAA"></span>&nbsp;OTHER':                window.otherLayer,
         },
         "Areas":{
             "Watersheds":           window.hucLayer,

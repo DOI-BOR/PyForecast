@@ -13,6 +13,10 @@ from bisect import bisect_left
 # Set the widget options
 pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
+try:
+    pg.setConfigOptions(useOpenGL = True)
+except:
+    print("not using OpenGL for plots.")
 
 
 pg.PlotItem.clear = PyQtGraphOverrides.PLOTITEM_clear_

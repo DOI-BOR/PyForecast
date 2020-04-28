@@ -10,6 +10,9 @@ Description:    This script contains all the functionality associated with the
 
 import pandas as pd
 import os
+import sys
+import subprocess
+import shutil
 from PyQt5 import QtCore, QtWidgets
 from resources.modules.Miscellaneous import loggingAndErrors
 from resources.modules.DatasetTab import gisFunctions
@@ -57,6 +60,9 @@ class datasetTab(object):
         self.datasetTab.climButton.clicked.connect(                 lambda x: self.addDataset(self.datasetTab.climInput.currentData().name))
         self.datasetTab.keywordSearchBox.returnPressed.connect(     lambda: self.searchForDataset(self.datasetTab.keywordSearchBox.text()))
         self.datasetTab.addiButton.clicked.connect(                 lambda x: self.openUserDefinedDatasetEditor())
+        self.datasetTab.editDsetButton.clicked.connect(             lambda x: self.openDatasetCatalogForEditing())
+        self.datasetTab.restoreDsetButton.clicked.connect(          lambda x: self.resetPyForecastDefaultDatasets())
+        self.datasetTab.addDataloaderButton.clicked.connect(        lambda x: print("Not Implemented"))
 
         # Map Features
         self.datasetTab.webMapView.page.java_msg_signal.connect(    self.addDatasetsFromWebMap)
@@ -68,15 +74,68 @@ class datasetTab(object):
         self.datasetTab.searchResultsBox.buttonPressSignal.connect(                     self.addDataset)
         self.datasetTab.boxHucResultsBox.buttonPressSignal.connect(                     self.addDataset)
         self.datasetTab.selectedDatasetsWidget.buttonPressSignal.connect(               self.openUserDefinedDatasetEditor)
-        #self.datasetTab.selectedDatasetsWidget.Remove_DatasetAction.triggered.connect(  lambda x: self.removeDataset(self.datasetTab.selectedDatasetsWidget.currentItem().data(QtCore.Qt.UserRole).name))
-
         self.datasetTab.selectedDatasetsWidget.Remove_DatasetAction.triggered.connect(  lambda x: self.removeDataset([i.data(QtCore.Qt.UserRole).name for i in self.datasetTab.selectedDatasetsWidget.selectedItems()]))
-                
+        
+        return
 
+
+    def openDatasetCatalogForEditing(self):
+        """
+        Opens a copy of the dataset catalog for the user to edit. The opened copy
+        is titled "USER_PointDatasets.xlsx" and is opened in the user's default
+        program for editing excel files.
+
+        After this file is created, the software will use it to load and search for
+        datasets until it is either deleted by the user, or by the software using the
+        'resetPyForecastDefaultDatasets' function.
+        """
+
+        # Check if the USER version of the file already exists
+        if "USER_PointDatasets.xlsx" in os.listdir("resources/GIS"):
+            fname = os.path.abspath("resources/GIS/USER_PointDatasets.xlsx")
+        else:
+            # Create the USER version of the file
+            fname = os.path.abspath(shutil.copy("resources/GIS/PointDatasets.xlsx", "resources/GIS/USER_PointDatasets.xlsx"))
+        print(fname)
+        # Open the file in the system's default spreadsheet editor
+        if 'linux' in sys.platform or 'darwin' in sys.platform:
+            subprocess.Popen(["open", fname], shell=True)
+        else:
+            subprocess.Popen(['start', fname], shell=True)   
+
+        # Display restart message
+        loggingAndErrors.showInfoMessage(self, "Changes will appear upon restarting the software.")
 
         return
 
-    
+    def resetPyForecastDefaultDatasets(self):
+        """
+        Deletes the USER version of the datasets file and reloads the default pyforecast 
+        dataset catalog file into the software.
+        """
+
+        # Display a warning that we're removing user data
+        result = loggingAndErrors.displayDialogYesNo("This will delete any changes you may have made in the past to the dataset catalog. Continue?")
+        
+        if result == False:
+            return
+
+        # Delete the USER file and reload the dataset catalog
+        if "USER_PointDatasets.xlsx" in os.listdir("resources/GIS"):
+            os.remove("resources/GIS/USER_PointDatasets.xlsx")
+        
+        # Reset the GeoJSON
+        geojson_ = gisFunctions.dataframeToGeoJSON(self.searchableDatasetsTable)
+
+        # Save the geojson file locally in the temp folder
+        with open('resources/temp/map_data.geojson', 'w') as writeFile:
+            writeFile.write(geojson_)
+
+        # Display restart message
+        loggingAndErrors.showInfoMessage(self, "Changes will appear upon restarting the software.")
+
+        return
+
 
     def loadDatasetCatalog(self):
         """
@@ -85,7 +144,10 @@ class datasetTab(object):
         """
 
         # Read the dataset catalogs into pandas dataframes
-        self.searchableDatasetsTable = pd.read_excel("resources/GIS/PointDatasets.xlsx", dtype={"DatasetExternalID": str, "DatasetHUC8":str}, index_col=0)
+        if "USER_PointDatasets.xlsx" in os.listdir("resources/GIS"):
+            self.searchableDatasetsTable = pd.read_excel("resources/GIS/USER_PointDatasets.xlsx", dtype={"DatasetExternalID": str, "DatasetHUC8":str}, index_col=0)
+        else:
+            self.searchableDatasetsTable = pd.read_excel("resources/GIS/PointDatasets.xlsx", dtype={"DatasetExternalID": str, "DatasetHUC8":str}, index_col=0)
         self.searchableDatasetsTable.index.name = 'DatasetInternalID'
         self.additionalDatasetsTable = pd.read_excel('resources/GIS/AdditionalDatasets.xlsx', dtype={"DatasetExternalID": str,  "DatasetHUC8":str}, index_col=0)
         self.additionalDatasetsTable.index.name = 'DatasetInternalID'
@@ -196,10 +258,10 @@ class datasetTab(object):
         # Function to remove dataset
         def remove_(id_):
             # Begin by removing the dataset from the datasetTable
-            self.datasetTable.drop(id_, inplace = True)
+            self.datasetTable.drop(id_, inplace = True, errors='ignore')
 
             # Next remove all data from the DataTable
-            self.dataTable.drop(id_, level='DatasetInternalID', inplace = True)
+            self.dataTable.drop(id_, level='DatasetInternalID', inplace = True, errors='ignore')
 
             # Update the multiIndex of the DataTable
             self.dataTable.set_index(self.dataTable.index.remove_unused_levels(), inplace = True)

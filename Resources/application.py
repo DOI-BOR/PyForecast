@@ -128,6 +128,7 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
             columns = [
                 "EquationSource",       # e.g. 'PyForecast','NRCS', 'CustomImport'
                 "EquationComment",      # E.g. 'Equation Used for 2000-2010 Forecasts'
+                "ModelTrainingPeriod",  # E.g. 1978-10-01/2019-09-30 
                 "EquationPredictand",   # E.g. 103011
                 "PredictandPeriod",     # R/1978-03-01/P1M/F12M (starting in march of 1978, over a 1 month period, recurring once a year.)
                 "PredictandMethod",     # E.g. Accumulation, Average, Max, etc
@@ -156,7 +157,6 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
             ),
             columns = [
                 "ForecastValues",           # in order of 0-100% exceedance
-                "ForecastMagnitude",        # either ['low', 'mid', 'high']
                 ],
         )
         
