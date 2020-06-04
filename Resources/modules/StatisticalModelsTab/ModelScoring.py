@@ -110,12 +110,12 @@ class Scorers(object):
         "AIC_C":{
             "NAME":"Akaike Information Criterion (Small sample size)",
             "WEBSITE":"https://en.wikipedia.org/wiki/Akaike_information_criterion#Modification_for_small_sample_size",
-            "HTML":"<strong>AIC<sub>C</sub></strong>"
+            "HTML":"<strong>AIC<sub>C</sub></strong>",
         },
         "AIC":{
             "NAME":"Akaike Information Criterion",
             "WEBSITE":"https://en.wikipedia.org/wiki/Akaike_information_criterion",
-            "HTML":"<strong>AIC</strong>"
+            "HTML":"<strong>AIC</strong>",
         },
         "RMSE":{
             "NAME":"Root Mean Squared Error",

@@ -149,6 +149,9 @@ def resampleDataSet(dailyData, resampleString, resampleMethod, customFunction = 
     # Parse into values
     startDate = datetime.strptime(resampleList[1], '%Y-%m-%d') # >>> datetime.date(1978, 10, 1)
     period = isodate.parse_duration(resampleList[2]) # >>> isodate.duration.Duration(0, 0, 0, years=0, months=1)
+    # Change the period to 1 day if the resample method is 'first'
+    if resampleMethod == 'first':
+        period = isodate.parse_duration("P1D")
     frequency = isodate.parse_duration(resampleList[3].replace('F', 'P')) # >>> isodate.duration.Duration(0, 0, 0, years=1, months=1)
 
     # Create all the periods

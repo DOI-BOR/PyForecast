@@ -24,6 +24,7 @@ class preprocessor(object):
 
     FILE_NAME = "PreProc_Logarithmic_Y"
     NAME = "Logarithmic Preprocessing"
+    DESCRIPTION = "Applies a natural logarithm to the forecast target. This ensures that the resulting model will never predict negative inflows."
 
     def __init__(self, data):
         """

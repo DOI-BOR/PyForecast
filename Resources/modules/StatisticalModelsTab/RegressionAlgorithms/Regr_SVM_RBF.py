@@ -16,6 +16,7 @@ class Regressor(object):
 
     NAME = "Support Vector Machine - RBF Regression"
     WEBSITE = "https://en.wikipedia.org/wiki/Support-vector_machine"
+    DESCRIPTION = "Optimized the Support Vector Regression problem using a radial basis function kernel."
 
     def __init__(self, parent = None, crossValidation = None, scoringParameters = None):
 

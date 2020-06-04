@@ -34,9 +34,18 @@ class statisticalModelsTab(object):
         self.modelTab.customMethodSpecEdit.editingFinished.connect(self.plotTarget)
         self.modelTab.targetSelect.currentIndexChanged.connect(lambda x: self.modelTab.selectedItemDisplay.setDatasetTable(self.datasetTable.loc[self.modelTab.datasetList.item(x).data(QtCore.Qt.UserRole).name])  if x >= 0 else None)
         self.modelTab.methodCombo.currentIndexChanged.connect(lambda x: self.modelTab.customMethodSpecEdit.show() if self.modelTab.methodCombo.itemData(x) == 'custom' else self.modelTab.customMethodSpecEdit.hide())
-        
+        self.modelTab.defButton.toggled.connect(lambda checked: self.updateModelSettings(checked))
         return
 
+    def updateModelSettings(self, defaultSettings):
+        """
+        This function is run when the user toggles the default model settings
+        on the model settings sub-tab. 
+        """
+
+        print("DEF SETTINGS")
+
+        return
 
     def changedTabsStatisticalModelsPage(self, index):
         """

@@ -27,6 +27,7 @@ class preprocessor(object):
 
     FILE_NAME = "PreProc_YAware"
     NAME = "Y-Aware Preprocessing"
+    DESCRIPTION = "Scales each predictor variable into the range of the target variable such that a 1 unit change in the predictor will yeild a 1 unit change in the target."
 
     def __init__(self, data):
         """

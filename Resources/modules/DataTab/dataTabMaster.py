@@ -93,6 +93,7 @@ class dataTab(object):
         self.dataTab.updateOption.setEnabled(False)
         self.dataTab.freshDownloadOption.setEnabled(False)
         self.dataTab.downloadButton.setEnabled(False)
+        self.datasetTab.selectedDatasetsWidget.Remove_DatasetAction.setEnabled(False)
         
         # Download data for each dataset and append to or update dataTable
         # Here we use the application's threadPool to run this process in the background
@@ -118,6 +119,7 @@ class dataTab(object):
         self.dataTab.updateOption.setEnabled(True)
         self.dataTab.freshDownloadOption.setEnabled(True)
         self.dataTab.downloadButton.setEnabled(True)
+        self.datasetTab.selectedDatasetsWidget.Remove_DatasetAction.setEnabled(True)
 
         return
 

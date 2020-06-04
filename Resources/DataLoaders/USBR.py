@@ -13,6 +13,22 @@ import requests
 from datetime import datetime
 from io import StringIO
 
+INFORMATION = "ABC"
+def dataLoaderInfo():
+
+    REQUIREMENTS = ["DatasetExternalID", "DatasetType", "DatasetAgency"]
+    INFORMATION = """This dataloader downloads data from the Bureau of Reclamation's PN and GP HydroMet servers. Any daily time-scale CBTT/PCODES can be downloaded.
+
+The required parameters are:
+
+    DatasetAgency: Must be either "USBR GP" or "USBR PN" (note, you can also use UBSR MB and USBR CPN)
+    Dataset Parameter Code: Must be the Hydromet PCODE (e.g. FB, IN, QRD, etc)
+    Dataset ID: Must be the HydroMet CBTT (e.g. BFR, LER, GIBR, etc.)
+    
+    """
+
+    return REQUIREMENTS, INFORMATION
+
 def dataLoader(dataset, startDate, endDate):
     """
     This dataloader loads data from USBR Rest endpoints. The required parameters
@@ -33,7 +49,7 @@ def dataLoader(dataset, startDate, endDate):
     pcode = dataset['DatasetParameterCode']
 
     # ---- GP REGION -------
-    if region == 'GP':
+    if region == 'GP' or region == 'MB':
 
         # download instructions for GP Region
         syear = datetime.strftime(startDate, '%Y')
@@ -69,7 +85,7 @@ def dataLoader(dataset, startDate, endDate):
         return df.round(3)
 
     # ---- PN REGION ------
-    elif region == 'PN':
+    elif region == 'PN'  or region == 'CPN':
 
         # Download instructions for PN data:
         syear = datetime.strftime(startDate, '%Y')

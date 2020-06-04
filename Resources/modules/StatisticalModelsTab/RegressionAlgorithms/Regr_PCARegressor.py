@@ -13,6 +13,7 @@ class Regressor(object):
 
     NAME = "Principal Components Regression"
     WEBSITE = "https://en.wikipedia.org/wiki/Principal_component_analysis"
+    DESCRIPTION = "Applies Principal Component dimensionality reduction and solves the ordinary least squares formulation for the optimal number of principal components."
 
     def __init__(self, parent = None, crossValidation = None, scoringParameters = None):
         """

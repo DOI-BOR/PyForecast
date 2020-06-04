@@ -20,6 +20,7 @@ class preprocessor(object):
 
     FILE_NAME = "PreProc_Logarithmic_X"
     NAME = "Logarithmic X Preprocessing"
+    DESCRIPTION = "Applies a natural logarithm to predictor data."
 
     def __init__(self, data):
         """

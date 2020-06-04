@@ -39,6 +39,7 @@ from itertools import compress
 class FeatureSelector(object):
 
     NAME = "Sequential Forward Floating Selection"
+    DESCRIPTION = "Starts with no predictors and iteratively adds in the best performing predictors until no more performance gains can be made."
 
     def __init__(self, parent = None, **kwargs):
 

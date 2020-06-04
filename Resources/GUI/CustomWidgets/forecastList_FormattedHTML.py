@@ -118,7 +118,7 @@ class forecastList_HTML(QtWidgets.QTreeWidget):
             equationMethod[1] = self.parent.preprocessorsDict[equationMethod[1]]
             equationMethod[2] = self.parent.regressorsDict[equationMethod[2]]
             pipeText1 = "<strong>{0}</strong>".format(equationMethod[2]) 
-            pipeText2 = "({0}, {1})".format(equationMethod[1], equationMethod[3] )
+            pipeText2 = "({0}, {1})".format(equationMethod[1], self.parent.crossValidators[equationMethod[3]]['name'] )
 
             # Get the forecasts
             if idx in self.parent.forecastsTable.index.get_level_values(0):
@@ -133,7 +133,10 @@ class forecastList_HTML(QtWidgets.QTreeWidget):
                 mag = 'warning-24px.svg'
             
             # Skill
-            skillText = ', '.join(["<strong>{0}</strong>: {1}".format(key, value) for key, value in forecastEquation['EquationSkill'].items()])
+            skillText = []
+            for key, value in forecastEquation['EquationSkill'].items():
+                skillText.append("<strong>{0}</strong>&nbsp;:&nbsp;{1}".format(self.parent.scorers['info'][key]['HTML'], value)) 
+            skillText = ', '.join(skillText)
 
             # Check if the period equals the last period
             if (i != 0) and (forecastEquation['PredictandPeriod'] == self.parent.forecastEquationsTable.iloc[i-1]['PredictandPeriod']):
@@ -162,7 +165,7 @@ class forecastList_HTML(QtWidgets.QTreeWidget):
                 else:
 
                     issueDate = forecastEquation['EquationIssueDate']
-                    issueDateItem = QtWidgets.QTreeWidgetItem(periodItem, ["Issued on {0}".format(issueDate.strftime("%b %d"))])
+                    issueDateItem = QtWidgets.QTreeWidgetItem(periodItem, ["Issued on {0}".format(issueDate.strftime("%B %d"))])
                     forecastItem = QtWidgets.QTreeWidgetItem(issueDateItem, 0)
                     label = QtWidgets.QLabel(FF.format(
                             units= predictand['DatasetUnits'] if 'KAF' not in forecastEquation['PredictandMethod'] else 'KAF',
@@ -189,9 +192,9 @@ class forecastList_HTML(QtWidgets.QTreeWidget):
                 duration = isodate.parse_duration(period[2])
                 periodEnd = periodStart + duration - isodate.duration.Duration(1)
                 issueDate = forecastEquation['EquationIssueDate']
-                periodItem = QtWidgets.QTreeWidgetItem(self, ["Forecast Period {0} - {1}".format(periodStart.strftime("%b %d"), periodEnd.strftime("%b %d"))])
+                periodItem = QtWidgets.QTreeWidgetItem(self, ["Forecast Period {0} - {1}".format(periodStart.strftime("%B %d"), periodEnd.strftime("%B %d"))])
                 periodItem.setFont(0,self.font_)
-                issueDateItem = QtWidgets.QTreeWidgetItem(periodItem, ["Issued on {0}".format(issueDate.strftime("%b %d"))])
+                issueDateItem = QtWidgets.QTreeWidgetItem(periodItem, ["Issued on {0}".format(issueDate.strftime("%B %d"))])
                 forecastItem = QtWidgets.QTreeWidgetItem(issueDateItem, 0)
                 label = QtWidgets.QLabel(FF.format(
                         units= predictand['DatasetUnits'] if 'KAF' not in forecastEquation['PredictandMethod'] else 'KAF',
@@ -217,6 +220,7 @@ if __name__ == '__main__':
     import pickle
     import importlib
     import os
+    import inspect
     sys.path.append(r"C:\Users\KFoley\Documents\NextFlow")
 
     regr = {}
@@ -244,6 +248,21 @@ if __name__ == '__main__':
     #widg.setFixedHeight(300)
     widg.setFixedWidth(500)
     widg.setMinimumHeight(700)
+
+    widg.crossValidators = {}
+    mod = importlib.import_module("resources.modules.StatisticalModelsTab.CrossValidationAlgorithms")
+    for cv, class_ in inspect.getmembers(mod, inspect.isclass):
+        widg.crossValidators[cv] = {}
+        widg.crossValidators[cv]["module"] = class_
+        widg.crossValidators[cv]["name"] = class_.NAME
+
+    widg.scorers = {}
+    mod = importlib.import_module("resources.modules.StatisticalModelsTab.ModelScoring")
+    widg.scorers["class"] = getattr(mod, "Scorers")
+    widg.scorers['info'] = widg.scorers["class"].INFO
+    widg.scorers["module"] = mod
+    for scorer, scorerFunc in inspect.getmembers(widg.scorers['class'], inspect.isfunction):
+        widg.scorers[scorer] = scorerFunc
 
     widg.forecastEquationsTable = pd.DataFrame(
             index = pd.Index([], dtype=int, name='ForecastEquationID'),

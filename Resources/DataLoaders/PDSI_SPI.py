@@ -4,8 +4,23 @@ import requests
 from io import StringIO
 from datetime import datetime
 from html.parser import HTMLParser
-
+INFORMATION = "ABC"
 URL = "https://wrcc.dri.edu/wwdt/time/regionsAll/?region={REGION}&variable={VARIABLE}"
+
+def dataLoaderInfo():
+
+    REQUIREMENTS = ["DatasetExternalID", "DatasetType"]
+    INFORMATION = """ This dataloader loads Palmer Drought Severity Index data and Standardized Precipitation Index data from the Desert Research Institute's West-Wids Drought Tracker.
+
+This loader needs 2 parameters: The Dataset ID and the Dataset Type to work properly. 
+
+If you want the PDSI data, the Dataset Type must be "PDSI".
+
+If you'd like the SPI data, the Dataset Type must be "SPI"
+
+The Dataset ID should be the 4 digit climate division that you are interested in."""
+
+    return REQUIREMENTS, INFORMATION
 
 """
 This dataloader loads Palmer Drought Severity Index data from the CPC.

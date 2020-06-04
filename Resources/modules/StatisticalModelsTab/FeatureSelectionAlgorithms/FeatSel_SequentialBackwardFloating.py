@@ -38,6 +38,7 @@ import numpy as np
 class FeatureSelector(object):
 
     NAME = "Sequential Backward Floating Selection"
+    DESCRIPTION = "Starts with a full set of predictors and iteratively removes low-performing predictors until the best model is found."
 
     def __init__(self, parent = None, **kwargs):
         """

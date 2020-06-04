@@ -17,7 +17,7 @@ Disclaimer:         This script, and the overall PyForecast Application have bee
 
 """
 
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore, QtGui
 from datetime import datetime
 from resources.GUI import NextFlowGUI
 from resources.modules.DatasetTab import datasetTabMaster 
@@ -181,6 +181,7 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
                 self.regressors[scriptName]["module"] = getattr(mod, "Regressor")
                 self.regressors[scriptName]["name"] = self.regressors[scriptName]["module"].NAME
                 self.regressors[scriptName]['website'] = self.regressors[scriptName]["module"].WEBSITE
+                self.regressors[scriptName]['description'] = self.regressors[scriptName]["module"].DESCRIPTION
 
         for file_ in os.listdir("resources/modules/StatisticalModelsTab/PreProcessingAlgorithms"):
             if '.py' in file_:
@@ -189,6 +190,7 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
                 self.preProcessors[scriptName] = {}
                 self.preProcessors[scriptName]["module"] = getattr(mod, "preprocessor")
                 self.preProcessors[scriptName]["name"] = self.preProcessors[scriptName]["module"].NAME
+                self.preProcessors[scriptName]["description"] = self.preProcessors[scriptName]["module"].DESCRIPTION
         
         for file_ in os.listdir("resources/modules/StatisticalModelsTab/FeatureSelectionAlgorithms"):
             if '.py' in file_:
@@ -197,6 +199,7 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
                 self.featureSelectors[scriptName] = {}
                 self.featureSelectors[scriptName]["module"] = getattr(mod, "FeatureSelector")
                 self.featureSelectors[scriptName]["name"] = self.featureSelectors[scriptName]["module"].NAME
+                self.featureSelectors[scriptName]["description"] = self.featureSelectors[scriptName]["module"].DESCRIPTION
         
         mod = importlib.import_module("resources.modules.StatisticalModelsTab.CrossValidationAlgorithms")
         for cv, class_ in inspect.getmembers(mod, inspect.isclass):
@@ -228,5 +231,6 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
 
         # Show the application
         self.showMaximized()
+        
 
         return

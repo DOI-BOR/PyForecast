@@ -4,7 +4,7 @@ import pyqtgraph as pg
 from PyQt5 import QtCore, QtGui, QtWidgets
 import numpy as np
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 import importlib
 from resources.GUI.CustomWidgets import PyQtGraphOverrides
 from resources.modules.Miscellaneous.DataProcessor import resampleDataSet
@@ -333,7 +333,7 @@ class dataReductionPlot(pg.PlotItem):
         median = np.nanmedian(y)
         average = np.nanmean(y)
         
-        self.b_axis.setTicks([[(i, datetime.utcfromtimestamp(i).strftime('%Y')) for i in x], [(i, datetime.utcfromtimestamp(i).strftime('%Y')) for i in x]])
+        self.b_axis.setTicks([[(i, (datetime(1970,1,1)+timedelta(seconds=i)).strftime('%Y')) for i in x], [(i, (datetime(1970,1,1)+timedelta(seconds=i)).strftime('%Y')) for i in x]])
 
         self.xMax = np.nanmax([self.xMax, np.nanmax(x)])
         self.xMin = np.nanmin([self.xMin, np.nanmin(x)])

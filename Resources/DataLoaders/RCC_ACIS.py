@@ -11,6 +11,22 @@ import numpy as np
 import requests
 from datetime import datetime
 from PyQt5.QtWidgets import QMessageBox
+INFORMATION = "ABC"
+
+def dataLoaderInfo():
+
+    REQUIREMENTS = ["DatasetExternalID", "DatasetParameter", "DatasetAgency"]
+    INFORMATION = """This dataloader loads data from the PRISM Climate Group, or the NRCC Climate Center via the Regional Climate Centers data warehouse.
+
+The dataloader can download watershed averaged temperature and precipitation data for a given watershed.
+
+The dataloader requires that three parameters be assigned in the dataset's metadata: 
+
+    Dataset ID: must be the 8-digit HUC code for the watershed of interest.
+    Dataset Parameter Name: Must be either Temperature or Precipitation.
+    Dataset Agency: Must be either NRCC or PRISM. """
+
+    return REQUIREMENTS, INFORMATION
 
 def dataLoader(stationDict, startDate, endDate):
     """

@@ -97,6 +97,7 @@ class DatasetList_HTML_Formatted(QtWidgets.QListWidget):
         # Set the widget configuration
         self.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
         self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        self.verticalScrollBar().setSingleStep(15)
 
         # Construct the list
         self.refreshDatasetList()

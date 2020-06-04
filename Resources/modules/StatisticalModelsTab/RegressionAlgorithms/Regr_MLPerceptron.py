@@ -14,6 +14,7 @@ class Regressor(object):
 
     NAME = "Multi-Layer Perceptron Regression"
     WEBSITE = "https://en.wikipedia.org/wiki/Multilayer_perceptron"
+    DESCRIPTION = "Optimizes a 1-layer (5 neuron) Multilayer Perceptron Neural Network"
 
     def __init__(self, parent = None, crossValidation = None, scoringParameters = None):
 

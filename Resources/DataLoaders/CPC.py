@@ -9,6 +9,22 @@ import requests
 import pandas as pd
 from io import StringIO
 import numpy as np
+INFORMATION = "ABC"
+def dataLoaderInfo():
+
+    REQUIREMENTS = ["datasetExternalID"]
+    INFORMATION = """This dataloader loads data from NOAA's Climate Prediction Center (CPC). The datasets are climate indices that are useful for long-range weather forecasting. 
+
+The "DatasetExternalID" option specifies which dataset should be downloaded. 
+
+Valid 'DatasetExternalID's are: 
+
+    <strong>nino3.4</strong> - Nino 3.4 Sea Surface Temperature Anomaly (aka ENSO)
+    <strong>pna</strong> - Pacific North American Index
+    <strong>amo</strong> - Atlantic Multidecadal Oscillation
+    <strong>pdo</strong> - Pacific Decadal Oscillation"""
+
+    return REQUIREMENTS, INFORMATION
 
 
 def dataLoader(stationDict, startDate, endDate):

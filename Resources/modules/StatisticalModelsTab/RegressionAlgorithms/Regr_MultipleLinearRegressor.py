@@ -19,6 +19,7 @@ class Regressor(object):
 
     NAME = "Multiple Linear Regression"
     WEBSITE = "https://en.wikipedia.org/wiki/Ordinary_least_squares"
+    DESCRIPTION = "Solves the Ordinary Least Squares formulation"
 
     def __init__(self, parent = None, crossValidation = None, scoringParameters = None):
         """

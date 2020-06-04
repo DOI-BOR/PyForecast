@@ -64,6 +64,7 @@ import numpy as np
 class FeatureSelector(object):
     
     NAME = "Genetic Algorithm"
+    DESCRIPTION = "Mimics natural genetics in selecting models, where high performing models are combined with other high performers. Also includes mutation mechanics."
 
     def __init__(self, parent = None, **kwargs):
 

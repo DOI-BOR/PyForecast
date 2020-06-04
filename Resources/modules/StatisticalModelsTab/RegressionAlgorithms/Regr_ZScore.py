@@ -18,6 +18,7 @@ class Regressor(object):
     """
     NAME = "Z-Score Regression"
     WEBSITE = "https://directives.sc.egov.usda.gov/OpenNonWebContent.aspx?content=34239.wba"
+    DESCRIPTION = "Applies a Z-Score dimensionality reduction to the input data and solves the Ordinary Least Squares Formulation for the Composite Z-Score data."
 
     def __init__(self, parent = None, crossValidation = None, scoringParameters = None):
         """

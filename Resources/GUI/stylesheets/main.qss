@@ -136,10 +136,10 @@ QTabWidget {
 
 QSplitter {
     border: 0px;
-    width:1px;
 }
 QSplitter::handle:horizontal {
-    width: 0px;
+    width: 1px;
+    
 }
 QLabel {
     font-family: 'Open Sans Regular', "Open Sans SemiBold", "Open Sans";

@@ -11,6 +11,24 @@ import pandas as pd
 import numpy as np
 import requests
 from datetime import datetime
+INFORMATION = "ABC"
+
+
+def dataLoaderInfo():
+
+    REQUIREMENTS = ["DatasetExternalID", "DatasetParameterCode"]
+    INFORMATION = """This dataset loads data from the USGS' NWIS database.
+
+The dataloader can load any daily-mean (stat code 00003) data for a given Dataset ID and Parameter ID. 
+
+The required metadata parameters are:
+
+Dataset ID: The USGS site code for the site of interest (e.g. 06279940)
+Dataset Parameter Code: The USGS parameter code for the site of interest (e.g. 00060 for streamflow)"""
+
+    return REQUIREMENTS, INFORMATION
+
+
 
 def dataLoader(stationDict, startDate, endDate):
     """
@@ -28,7 +46,7 @@ def dataLoader(stationDict, startDate, endDate):
             #Specify the end data
             '&endDT=' + datetime.strftime( endDate, '%Y-%m-%d' ) +
             # Specify that we want streamflow
-            '&parameterCd=00060' +
+            '&parameterCd=' + stationDict['DatasetParameterCode'] + 
             # Specify that we want daily means
             '&statCd=00003' +
             # Allow all sites

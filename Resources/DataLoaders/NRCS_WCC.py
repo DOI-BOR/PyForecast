@@ -12,6 +12,30 @@ import requests
 from datetime import datetime
 from zeep import Client
 from decimal import Decimal
+INFORMATION = "ABC"
+def dataLoaderInfo():
+
+    REQUIREMENTS = ["DatasetExternalID", "DatasetType", "DatasetParameter"]
+    INFORMATION = """ This dataloader loads data from the NRCS's AWDB database. This database contains snow, precipitation, and soil moisture data for SNOTEL, SNOWCOURSE, and SCAN stations maintained by the NRCS. 
+
+The "DatasetType" option specifies which of these three networks your station belongs to (MUST BE ONE OF: SNOWCOURSE, SNOTEL, SCAN). 
+
+The Dataset Parameter (MUST BE ONE OF: Snow Water Equivalent, Soil Moisture, Precipitation) and Dataset ID (e.g. 304) options must be specified. 
+
+Valid options for the Parameter are:
+
+"Snow Water Equivalent", 
+"Precipitation",
+"Soil Moisture"
+
+Valid Options for the Dataset Type are:
+"SNOTEL"
+"SNOWCOURSE",
+"SCAN"
+
+"""
+
+    return REQUIREMENTS, INFORMATION
 
 def dataLoader(stationDict, startDate, endDate):
     """

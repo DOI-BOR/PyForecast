@@ -16,7 +16,7 @@ import shutil
 from PyQt5 import QtCore, QtWidgets
 from resources.modules.Miscellaneous import loggingAndErrors
 from resources.modules.DatasetTab import gisFunctions
-from resources.GUI.Dialogs import UserDefinedDatasetDialog, createCompositeDataset
+from resources.GUI.Dialogs import UserDefinedDatasetDialog, createCompositeDataset, DatasetWizard
 from resources.modules.DatasetTab import hucClimDivCompleter
 from fuzzywuzzy.fuzz import WRatio 
 import multiprocessing as mp
@@ -299,7 +299,9 @@ class datasetTab(object):
         to a blank dataset
         """
 
-        # Figure out if we're editing an existing dataset 
+        self.editorDialog = DatasetWizard.DatasetWizard(self, datasetID)
+
+        """         # Figure out if we're editing an existing dataset 
         if datasetID in list(self.datasetTable.index):
             
             # Get the dataset to be edited
@@ -341,7 +343,7 @@ class datasetTab(object):
         self.editorDialog = UserDefinedDatasetDialog.EditorDialog(self, dataset)
 
         # Connect the close events
-        self.editorDialog.saveDatasetSignal.connect(self.saveUserDefinedDataset)
+        self.editorDialog.saveDatasetSignal.connect(self.saveUserDefinedDataset) """
         
         return
     

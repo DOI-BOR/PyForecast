@@ -20,6 +20,7 @@ class preprocessor(object):
 
     FILE_NAME = 'PreProc_NoPreProcessing'
     NAME = "No Preprocessing"
+    DESCRIPTION = "No transformations applied to the data."
 
     def __init__(self, data):
         """

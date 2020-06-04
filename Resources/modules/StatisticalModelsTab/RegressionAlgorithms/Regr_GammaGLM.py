@@ -13,6 +13,7 @@ class Regressor(object):
 
     NAME = "Gamma GLM Regression"
     WEBSITE = "https://en.wikipedia.org/wiki/Generalized_linear_model"
+    DESCRIPTION = "Optimizes a Generalized Linear Model, using a Gamma probability distribution to describe the variance of the data."
 
     def __init__(self, parent = None, crossValidation = None, scoringParameters = None):
 

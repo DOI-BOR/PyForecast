@@ -23,6 +23,7 @@ class preprocessor(object):
 
     FILE_NAME = 'PreProc_MinMaxScaler'
     NAME = "Min / Max Scaler"
+    DESCRIPTION = "Scales the entire dataset (predictors and target) to the minimum and maximum of the entire dataset."
 
     def __init__(self, data):
         """

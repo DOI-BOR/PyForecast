@@ -6,6 +6,7 @@ import numpy as np
 class FeatureSelector(object):
 
     NAME = "Brute Force Selection"
+    DESCRIPTION = "Iterates over all possible combinations of <i>n</i> predictor variables (total of 2<sup>n</sup> combinations)."
 
     def __init__(self, parent = None, **kwargs):
         """

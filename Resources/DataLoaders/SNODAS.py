@@ -3,6 +3,14 @@ import numpy as np
 import requests
 from datetime import datetime
 
+INFORMATION = "ABC"
+def dataLoaderInfo():
+
+    REQUIREMENTS = ["DatasetExternalID", "DatasetType"]
+    INFORMATION = """This Dataloader is not yet implemented yet!"""
+
+    return REQUIREMENTS, INFORMATION
+
 
 def dataLoader(stationDict, startDate, endDate):
     """
