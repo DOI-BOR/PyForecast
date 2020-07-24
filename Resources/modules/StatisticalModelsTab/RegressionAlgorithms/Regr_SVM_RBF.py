@@ -32,7 +32,7 @@ class Regressor(object):
 
         # Set up cross validator, and scorers
         self.scorerClass = self.parent.parent.scorers['class']()
-        self.scorers = [getattr(self.scorerClass, self.parent.parent.scorers[scorer]) for scorer in self.scoringParameters]
+        self.scorers = [getattr(self.scorerClass, scorer) for scorer in self.scoringParameters]
         self.crossValidator = self.parent.parent.crossValidators[self.crossValidation]['module']()
         
         # Intialize dictionaries to store scores

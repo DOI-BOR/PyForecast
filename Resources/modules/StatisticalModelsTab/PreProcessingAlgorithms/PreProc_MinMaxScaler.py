@@ -76,11 +76,14 @@ class preprocessor(object):
         """
 
         data_c = data.copy()
+        try:
+            for i in range(data_c.shape[1]):
 
-        for i in range(data_c.shape[1]):
+                data_c[:,i] = data_c[:,i] * self.scales[i] + self.offsets[i]
+        except:
+            for i in range(len(data_c)):
 
-            data_c[:,i] = data_c[:,i] * self.scales[i] + self.offsets[i]
-
+                data_c[i] = data_c[i] * self.scales[i] + self.offsets[i]
         return data_c
 
 

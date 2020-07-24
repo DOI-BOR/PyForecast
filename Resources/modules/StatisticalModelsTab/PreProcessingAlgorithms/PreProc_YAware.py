@@ -94,8 +94,10 @@ class preprocessor(object):
 
         # Multiply the x data by the yAware coefficients
         # and subtract out the yAware means.
-        data_c[:,:-1] = (data_c[:,:-1]*self.yAwareCoef) - self.yAwareMeans
-        
+        try:
+            data_c[:,:-1] = (data_c[:,:-1]*self.yAwareCoef) - self.yAwareMeans
+        except IndexError:
+            data_c[:-1] = (data_c[:-1]*self.yAwareCoef) - self.yAwareMeans
         return data_c
 
 

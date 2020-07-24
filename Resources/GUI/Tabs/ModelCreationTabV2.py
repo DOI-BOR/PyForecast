@@ -93,7 +93,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         overallLayout.setContentsMargins(0,0,0,0)
         overallLayout.setSpacing(0)
         self.overallStackWidget = QtWidgets.QStackedWidget()
-        targetSelectLayout = QtWidgets.QGridLayout()
+        targetSelectLayout = QtWidgets.QVBoxLayout()
         predictorLayout = QtWidgets.QVBoxLayout()
         optionsLayout = QtWidgets.QVBoxLayout()
         summaryLayout = QtWidgets.QVBoxLayout()
@@ -107,7 +107,8 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Layout the Target Selection Widget
         widg = QtWidgets.QWidget()
-        layout = QtWidgets.QFormLayout()
+        widg.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
+        layout = QtWidgets.QGridLayout()
         self.dataPlot = ModelTabPlots(self, objectName='ModelTabPlot')
         self.dataPlot.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.targetSelect = QtWidgets.QComboBox()
@@ -115,13 +116,15 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.targetSelect.setModel(self.datasetList.model())
         self.targetSelect.setView(self.datasetList)
 
-        layout.addRow("Forecast Target", self.targetSelect)
+        #layout.addRow("Forecast Target", self.targetSelect)
+        layout.addWidget(QtWidgets.QLabel("Forecast Target"), 0, 0)
+        layout.addWidget(self.targetSelect, 0, 1)
         
         self.selectedItemDisplay = DatasetList_HTML_Formatted(self, addButtons = False, objectName = 'ModelTargetList')
         self.selectedItemDisplay.setFixedHeight(99)
         self.selectedItemDisplay.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
         
-        layout.addWidget(self.selectedItemDisplay)
+        layout.addWidget(self.selectedItemDisplay, 1, 0, 1, 2)
         
         self.periodStart = QtWidgets.QDateTimeEdit()
         self.periodStart.setDisplayFormat("MMMM d")
@@ -134,8 +137,13 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.periodEnd.setMinimumDate(QtCore.QDate(QtCore.QDate().currentDate().year(), 1, 1))
         self.periodEnd.setMaximumDate(QtCore.QDate(QtCore.QDate().currentDate().year(), 12, 31))
 
-        layout.addRow("Target Period (Start)", self.periodStart)
-        layout.addRow("Target Period (End)", self.periodEnd)
+        #layout.addRow("Target Period (Start)", self.periodStart)
+        layout.addWidget(QtWidgets.QLabel("Target Period (Start)"), 2, 0)
+        layout.addWidget(self.periodStart, 2,1)
+        
+        #layout.addRow("Target Period (End)", self.periodEnd)
+        layout.addWidget(QtWidgets.QLabel("Target Period (End)"), 3, 0)
+        layout.addWidget(self.periodEnd, 3,1)
 
         # Initialize dates
         self.periodStart.setDate(QtCore.QDate(QtCore.QDate().currentDate().year(), 4, 1))
@@ -153,16 +161,27 @@ class ModelCreationTab(QtWidgets.QWidget):
         ]
         for item in itemList:
             self.methodCombo.addItem(item[0], item[1])
-        layout.addRow("Period Calculation", self.methodCombo)
+        #layout.addRow("Period Calculation", self.methodCombo)
+        layout.addWidget(QtWidgets.QLabel("Period Calculation"), 4, 0)
+        layout.addWidget(self.methodCombo, 4,1)
 
         self.customMethodSpecEdit = QtWidgets.QLineEdit()
         self.customMethodSpecEdit.setPlaceholderText("Define a custom python function here. The variable 'x' represents the periodic dataset [pandas series]. Specify a unit (optional) with '|'. E.g. np.nansum(x)/12 | Feet ")
-        layout.addWidget(self.customMethodSpecEdit)
+        layout.addWidget(self.customMethodSpecEdit, 5, 0, 1, 2)
         self.customMethodSpecEdit.hide()
+
+        layout.setColumnStretch(0, 1)
+        layout.setColumnStretch(1, 10)
+        layout.setVerticalSpacing(0)
+        layout.setHorizontalSpacing(0)
+        layout.setContentsMargins(0,0,0,0)
         
         widg.setLayout(layout)
-        targetSelectLayout.addWidget(widg, 0, 0, 1, 1)
-        targetSelectLayout.addWidget(self.dataPlot, 1, 0, 1, 1)
+        #widg.setStyleSheet("""QWidget {border: 1px solid red}""")
+        widg.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
+        self.dataPlot.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        targetSelectLayout.addWidget(widg)
+        targetSelectLayout.addWidget(self.dataPlot)
         widg = QtWidgets.QWidget()
         widg.setLayout(targetSelectLayout)
         self.workflowWidget.addTab(widg, "FORECAST<br>TARGET", "resources/GraphicalResources/icons/target-24px.svg", "#FFFFFF", iconSize=(66,66))

@@ -86,6 +86,10 @@ class FeatureSelector(object):
             y = self.parent.proc_yTraining[~np.isnan(x).any(axis=1)]
             x = x[~np.isnan(x).any(axis=1)]
 
+        # If any of the variables contain only zero's, we get singular matrix issues (obviosuly).
+        if any(np.all((x==0), axis=0)):
+            return {self.regression.scoringParameters[i]: np.nan for i, scorer in enumerate(self.regression.scorers)}
+
         # Fit the model with the regression method and get the resulting score
         try:
             _, _, score, _ = self.regression.fit(x, y, crossValidate = True)
@@ -116,7 +120,7 @@ class FeatureSelector(object):
 
         # Store the results in the more comprehensive resultsList
         self.parent.resultsList.append(
-            {"Model":modelStr, "Score":score, 
+            {"Model":list(model), "Score":score, 
              "Method":"PIPE/{0}/{1}/{2}".format(self.parent.preprocessor.FILE_NAME, 
                                       self.regressionName,  
                                       self.regression.crossValidation)})

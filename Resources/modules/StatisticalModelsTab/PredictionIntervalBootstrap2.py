@@ -49,12 +49,15 @@ def computePredictionInterval(parent, observations, preprocessor, regressor, cro
     # Create a prediction using the original data
     model.fit(x,y)
     xTest = processedObservations.transform(observations[-1])
+    fitted = model.y_p
     prediction = model.predict(xTest[:-1].reshape(1,-1))
 
-    # Initialize a list of prediction errors
-    predictionErrors = np.full(2000, np.nan)
+    # Create adjusted residuals
+    leverage = model.leverage()
+    adjustedResiduals = (model.residuals()/np.sqrt(1-leverage))
+    adjustedResiduals = adjustedResiduals - np.mean(adjustedResiduals)
 
-    # Function to get a prediction
+    # Function to get a bootstrapped prediction
     def generateBootstrap(dummy):
 
         # Generate a random list of indices to sample from the original data (Ensure we have at least 20% of samples)
@@ -62,21 +65,51 @@ def computePredictionInterval(parent, observations, preprocessor, regressor, cro
         while len(np.unique(randomIndices)) < len(x)/5:
             randomIndices = np.random.randint(low = 0, high = len(x) - 1, size = len(x))
 
-        # Generate random cases from random indices
-        randomX = x[randomIndices]
-        randomY = y[randomIndices]
+        # Get the bootstrap residuals
+        bootstrapResiduals = adjustedResiduals[randomIndices]
 
-        # Generate the prediction from the bootstrapped model
-        model.fit(randomX, randomY)
-        bootstrapPrediction = model.predict(xTest[:-1].reshape(1,-1))
+        # Make the bootstrapped Y
+        bootstappedY = fitted + bootstrapResiduals
 
-        # generate the bootstrap error set
-        bootstrapErrors = model.residuals()
+        # Compute the estimator
+        model.fit(x, bootstappedY)
 
-        # Calculate the prediction error
-        predictionError = bootstrapErrors + prediction - bootstrapPrediction
+        # Obtain the bootstrapped residuals from this replocation
+        bootstrappedErrors = bootstappedY - model.predict(x)
 
-        return predictionError
+        # Calculate the adjusted residuals from this replication
+        bootstrappedAdjustedResiduals = (model.residuals()/np.sqrt(1-leverage))
+        bootstrappedAdjustedResiduals = bootstrappedAdjustedResiduals - np.mean(bootstrappedAdjustedResiduals)
+
+        # Calculate this replocation's draw Ep:
+        return prediction - model.predict(xTest[:-1].reshape(1,-1)) + bootstrappedAdjustedResiduals
+
+    # Initialize a list of prediction errors
+    predictionErrors = np.full(2000, np.nan)
+
+    # # Function to get a prediction
+    # def generateBootstrap(dummy):
+
+    #     # Generate a random list of indices to sample from the original data (Ensure we have at least 20% of samples)
+    #     randomIndices = np.random.randint(low = 0, high = len(x) - 1, size = len(x))
+    #     while len(np.unique(randomIndices)) < len(x)/5:
+    #         randomIndices = np.random.randint(low = 0, high = len(x) - 1, size = len(x))
+
+    #     # Generate random cases from random indices
+    #     randomX = x[randomIndices]
+    #     randomY = y[randomIndices]
+
+    #     # Generate the prediction from the bootstrapped model
+    #     model.fit(randomX, randomY)
+    #     bootstrapPrediction = model.predict(xTest[:-1].reshape(1,-1))
+
+    #     # generate the bootstrap error set
+    #     bootstrapErrors = model.residuals()
+
+    #     # Calculate the prediction error
+    #     predictionError = bootstrapErrors + prediction - bootstrapPrediction
+
+    #     return predictionError
 
     # Iterate 10,000 times to create 10,000 possible predictions
     allPredictionErrors = np.array(sorted([item for sublist in map(generateBootstrap, tqdm(predictionErrors)) for item in sublist], reverse = True))

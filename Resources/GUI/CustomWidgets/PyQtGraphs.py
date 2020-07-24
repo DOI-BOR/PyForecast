@@ -120,6 +120,7 @@ class ModelTabPlots(pg.GraphicsLayoutWidget):
     def __init__(self, parent = None, objectName = None):
 
         pg.GraphicsLayoutWidget.__init__(self, parent)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.parent = parent
 
         # Get a reference to the datasetTable and the dataTable

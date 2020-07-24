@@ -35,7 +35,15 @@ class dataTab(object):
         self.dataTab.spreadsheet.model().loadDataIntoModel(self.dataTable, self.datasetTable)
         
         return
-    
+
+    def resetDataTab(self):
+        """
+        """
+        self.dataTab.spreadsheet.model().loadDataIntoModel(self.dataTable, self.datasetTable)
+        self.dataTab.datasetList.setCurrentRow(0)
+
+        return
+
     def connectEventsDataTab(self):
         """
         Connects all the signal/slot events for the data tab

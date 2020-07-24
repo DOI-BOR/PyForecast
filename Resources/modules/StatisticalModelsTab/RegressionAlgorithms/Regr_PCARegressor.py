@@ -48,7 +48,7 @@ class Regressor(object):
 
         # Set up cross validator, and scorers
         self.scorerClass = self.parent.parent.scorers['class']()
-        self.scorers = [getattr(self.scorerClass, self.parent.parent.scorers[scorer]) for scorer in self.scoringParameters]
+        self.scorers = [getattr(self.scorerClass, scorer) for scorer in self.scoringParameters]
         self.crossValidator = self.parent.parent.crossValidators[self.crossValidation]['module']()
         
         # Intialize dictionaries to store scores
@@ -74,8 +74,11 @@ class Regressor(object):
             # Create the X data
             X_ = PCs[:, :i]
 
+            # append 1's to the X data
+            X_ = np.hstack([X_, np.full((X_.shape[0], 1), 1)])
+
             # Compute the coefficients and the intercept
-            coef_all = np.dot(np.dot(np.linalg.inv(np.diag(self.eigenvalues[:i])), X_.transpose()), y)
+            coef_all = np.linalg.inv(X_.transpose().dot(X_)).dot(X_.transpose()).dot(y)
 
             # Compute the score
             score = self.score(y, np.dot(X_, coef_all), self.x.shape[1])
@@ -146,11 +149,14 @@ class Regressor(object):
                 # Create the X data
                 X_ = PCs[:, :self.num_pcs]
 
+                # Append a column of 1s to the PC data
+                X_ = np.hstack([X_, np.full((X_.shape[0], 1), 1)])
+
                 # Compute the coefficients and the intercept
                 coef_all = np.linalg.inv(X_.transpose().dot(X_)).dot(X_.transpose()).dot(ysample)
 
                 # Convert the test set to PCs
-                xtest = np.dot(xtest, evecs)[:,:self.num_pcs]
+                xtest = np.hstack([np.dot(xtest, evecs)[:,:self.num_pcs],np.full((xtest.shape[0], 1), 1)])
 
                 self.y_p_cv = np.append(self.y_p_cv, (np.dot(xtest, coef_all)*self.yStd) + self.yMean)
                 
@@ -181,6 +187,16 @@ class Regressor(object):
         return np.dot(x, eigenvectors), eigenvalues, eigenvectors
 
 
+    def leverage(self):
+        """
+        Returns the leverage of the response data for this model fit
+        """
+        X_ = self.PCs[:,:self.num_pcs]
+        X = np.hstack([X_, np.full((X_.shape[0], 1), 1)])
+
+        return np.diag(X.dot(np.linalg.inv(np.transpose(X).dot(X))).dot(np.transpose(X)))
+
+
     def residuals(self):
         """
         Returns the residual time series 
@@ -199,8 +215,11 @@ class Regressor(object):
         # Convert the x-vector into PC's
         PCs = np.dot(standardX, self.eigenvectors)
 
+        X_ = PCs[:,:self.num_pcs]
+        X_ = np.hstack([X_, np.full((X_.shape[0], 1), 1)])
+
         # Pare down to the number of PCs and make the predictions
-        return (np.dot(PCs[:,:self.num_pcs], self.pc_coef)*self.yStd) + self.yMean
+        return (np.dot(X_, self.pc_coef)*self.yStd) + self.yMean
         
 
     def score(self, y_obs = [], y_p = [], n_features = None):

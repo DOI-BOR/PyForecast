@@ -90,7 +90,7 @@ def dataLoader(stationDict, startDate, endDate):
     }
 
     # Get the data
-    data = requests.post(baseUrl, json=params, timeout=20)
+    data = requests.post(baseUrl, json=params, timeout=60)
     if data.status_code != 200:
         return pd.DataFrame()
     data = data.json() 

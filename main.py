@@ -53,7 +53,21 @@ class PyForecastProxyStyle(QtWidgets.QProxyStyle):
         else:
             return self.baseStyle().styleHint(hint, option, widget, returnData)
 
+# Custom class to send all stdout and stderr to a log file instead of the console
+class Logger(object):
+    def __init__(self, filename = 'application_log.txt'):
+        self.log = open(filename, 'w')
+    def write(self, message):
+        self.log.write(message)
+    def flush(self):
+        self.log.flush()
+
+
 if __name__ == '__main__':
+
+    # Redirect all console and error messages to log file
+    #sys.stdout = Logger()
+    #sys.stderr = sys.stdout
 
     # Print out a welcome message
     print("""

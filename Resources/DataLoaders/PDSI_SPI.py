@@ -49,7 +49,7 @@ def dataLoader(stationDict, startDate, endDate):
             stationID = stationID[:2] + '00' + stationID[-2:]
 
         url = URL.format(REGION=stationID, VARIABLE=var)
-        r = requests.get(url)
+        r = requests.get(url, verify=False)
         text = r.text.replace("</div>\n        \n          <div>", "\n")
         text = text[text.index("__\n")+3:text.index("</div")]
         text = StringIO(text)

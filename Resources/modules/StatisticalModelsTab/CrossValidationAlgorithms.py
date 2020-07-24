@@ -8,7 +8,7 @@ class LOO():
 
     NAME = 'Leave One Out Cross Validation'
 
-    def yield_samples(X, Y):
+    def yield_samples(self, X, Y):
 
         # Get length of data
         l = len(X)
@@ -26,7 +26,7 @@ class KFOLD_5():
     
     NAME = "5-Fold Cross Validation"
 
-    def yield_samples(X, Y):
+    def yield_samples(self, X, Y):
 
         # Figure out how many samples will be in each fold
         fold_sizes = np.full(5, len(X) // 5, dtype=np.int)
@@ -44,7 +44,7 @@ class KFOLD_10():
 
     NAME = "10-Fold Cross Validation"
 
-    def yield_samples(X, Y):
+    def yield_samples(self, X, Y):
 
         # Figure out how many samples will be in each fold
         fold_sizes = np.full(10, len(X) // 10, dtype=np.int)

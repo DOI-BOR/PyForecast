@@ -52,7 +52,7 @@ class Regressor(object):
 
         # Set up cross validator, and scorers
         self.scorerClass = self.parent.parent.scorers['class']()
-        self.scorers = [getattr(self.scorerClass, self.parent.parent.scorers[scorer]) for scorer in self.scoringParameters]
+        self.scorers = [getattr(self.scorerClass, scorer) for scorer in self.scoringParameters]
         self.crossValidator = self.parent.parent.crossValidators[self.crossValidation]['module']()
         
         # Intialize dictionaries to store scores
@@ -127,6 +127,15 @@ class Regressor(object):
         return (self.scores, self.y_p, self.cv_scores, self.y_p_cv) if crossValidate else (self.scores, self.y_p)
 
     
+    def leverage(self):
+        """
+        Returns the leverage of the response data for this model fit
+        """
+        X = np.concatenate((np.ones(shape=self.x.shape[0]).reshape(-1,1), self.x), 1)
+
+        return np.diag(X.dot(np.linalg.inv(np.transpose(X).dot(X))).dot(np.transpose(X)))
+        
+
     def residuals(self):
         """
         Returns the residual time series 
