@@ -38,6 +38,8 @@ pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-hos
 ECHO OOOOOOOOOOOOOOOO
 pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org bitarray -U --user
 ECHO OOOOOOOOOOOOOOOO
+pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org statsmodels -U --user
+ECHO OOOOOOOOOOOOOOOOO
 ECHO.
 ECHO Press any key to exit
 PAUSE
