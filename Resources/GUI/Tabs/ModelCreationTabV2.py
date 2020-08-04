@@ -187,16 +187,88 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.workflowWidget.addTab(widg, "FORECAST<br>TARGET", "resources/GraphicalResources/icons/target-24px.svg", "#FFFFFF", iconSize=(66,66))
 
         # ===================================================================================================================
-
         # Layout the predictor selector widget
-
+        # Create the icon on the left side of the screen
         widg = QtWidgets.QWidget()
-        self.workflowWidget.addTab(widg, "PREDICTORS", "resources/GraphicalResources/icons/bullseye-24px.svg", "#FFFFFF", iconSize=(66,66))
-        
-        
-        # ====================================================================================================================
 
+        # Setup the initial items
+        SA = QtWidgets.QScrollArea()
+        SA.setWidgetResizable(True)
+        layout = QtWidgets.QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        # Create the initial dialog for the type of analysis
+        label = QtWidgets.QLabel()
+        label.setTextFormat(QtCore.Qt.RichText)
+        label.setText('<strong style="font-size: 18px">Mode: <strong>')
+        label.setFixedWidth(100)
+        label.setStyleSheet("border: 0px solid black;")
+
+        self.defaultPredictorButton = QtWidgets.QRadioButton("Default")
+        self.defaultPredictorButton.setChecked(True)
+        self.defaultPredictorButton.setFixedWidth(100)
+        self.expertPredictorButton = QtWidgets.QRadioButton("Expert")
+        self.expertPredictorButton.setFixedWidth(100)
+
+        bgroup = QtWidgets.QButtonGroup()
+        bgroup.addButton(self.defaultPredictorButton)
+        bgroup.addButton(self.expertPredictorButton)
+        bgroup.setExclusive(True)
+
+        layout2 = QtWidgets.QHBoxLayout()
+        layout2.addWidget(label)
+        layout2.addWidget(self.defaultPredictorButton)
+        layout2.addWidget(self.expertPredictorButton)
+        layout2.setAlignment(QtCore.Qt.AlignLeft)
+
+        gb = QtWidgets.QGroupBox("")
+        gb.setLayout(layout2)
+        layout.addWidget(gb)
+
+        # Space between the setup options and the tabs
+        layout.addSpacerItem(QtWidgets.QSpacerItem(0,0,QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
+
+        # Create the layout object for the analysis
+        layoutAnalysis = QtWidgets.QVBoxLayout()
+        layoutAnalysis.setContentsMargins(15, 15, 15, 15)
+
+        # Create the layout data tab
+        layoutData = QtWidgets.QScrollArea()
+        layoutData.setWidgetResizable(True)
+
+        # Create the layout fill tab
+        layoutFill = QtWidgets.QScrollArea()
+        layoutFill.setWidgetResizable(True)
+
+        # Create the layout extend tab
+        layoutExtend = QtWidgets.QScrollArea()
+        layoutExtend.setWidgetResizable(True)
+
+        # Create the layout window tab
+        layoutWindow = QtWidgets.QScrollArea()
+        layoutWindow.setWidgetResizable(True)
+
+        # Add the tabs into the tab widget
+        tabWidget = QtWidgets.QTabWidget()
+        tabWidget.addTab(layoutData, 'Data')
+        tabWidget.addTab(layoutFill, 'Fill')
+        tabWidget.addTab(layoutExtend, 'Extend')
+        tabWidget.addTab(layoutWindow, 'Window')
+
+        # Add to the test layout
+        layoutAnalysis.addWidget(tabWidget)
+        widg2 = QtWidgets.QWidget()
+        widg2.setLayout(layoutAnalysis)
+
+        layout.addWidget(widg2)
+        widg.setLayout(layout)
+        SA.setWidget(widg)
+        self.workflowWidget.addTab(SA, "PREDICTORS", "resources/GraphicalResources/icons/bullseye-24px.svg",
+                                   "#FFFFFF", iconSize=(66, 66))
+
+        # ====================================================================================================================
         # Layout the Forecast Settings widget
+
         SA = QtWidgets.QScrollArea()
         SA.setWidgetResizable(True)
         widg = QtWidgets.QWidget()        
