@@ -46,16 +46,14 @@ class richTextButton(QtWidgets.QPushButton):
         self.lab.setText(self.richTextUnChecked)
         self.lab.setWordWrap(True)
         self.lab.setContentsMargins(10,10,10,10)
-        self.lab.setFixedWidth(self.width())
-        self.lab.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
-        
-        
-        if self.lab.height() > WIDTH_BIGGEST_REGR_BUTTON:
-            WIDTH_BIGGEST_REGR_BUTTON = self.lab.height()
-        else:
-            self.lab.setMinimumHeight(WIDTH_BIGGEST_REGR_BUTTON)
-        self.setFixedHeight(self.lab.height())
+        self.lab.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+
+        self.lab.setMinimumHeight(self.heightMM())
+        self.lab.setMaximumHeight(self.heightMM()*3)
+        self.lab.setFixedWidth(self.width())
+        self.setFixedHeight(self.heightMM())
 
         self.lab.setAlignment(QtCore.Qt.AlignTop)
         
@@ -67,14 +65,29 @@ class richTextButton(QtWidgets.QPushButton):
             self.lab.setText(self.richTextUnChecked)
 
     def resizeEvent(self, ev):
-        global WIDTH_BIGGEST_REGR_BUTTON
         QtWidgets.QPushButton.resizeEvent(self,ev)
         self.lab.setFixedWidth(self.width())
-        if self.lab.height() > WIDTH_BIGGEST_REGR_BUTTON:
-            WIDTH_BIGGEST_REGR_BUTTON = self.lab.height()
-        else:
-            self.lab.setMinimumHeight(WIDTH_BIGGEST_REGR_BUTTON)
-        self.setFixedHeight(WIDTH_BIGGEST_REGR_BUTTON)
+        self.lab.setFixedHeight(self.height()*5)
+
+        self.parent().parent().setMinimumHeight(self.height()*5)
+        self.parent().resizeEvent(ev)
+        self.parent().parent().resizeEvent(ev)
+
+        if ev.oldSize().width() > 0 and ev.oldSize().height() > 0 and ev.size().width() > 0:
+            if ev.size().width() < 300:
+                self.setFixedHeight(140)
+
+            elif ev.size().width() < 400:
+                self.setFixedHeight(110)
+
+            elif ev.size().width() < 500:
+                self.setFixedHeight(100)
+
+            else:
+                self.setFixedHeight(90)
+
+            self.parent().resizeEvent(ev)
+
 
 
 class ModelCreationTab(QtWidgets.QWidget):
@@ -239,6 +252,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         
         numPreProcessors = len(self.parent.preProcessors.keys())
         layout2 = QtWidgets.QGridLayout()
+
         layout2.setContentsMargins(1,1,1,1)
         for i in range(int(numPreProcessors/3) + 1 if numPreProcessors%3 != 0 else int(numPreProcessors/3)):
             for j in range(3):
@@ -300,7 +314,12 @@ class ModelCreationTab(QtWidgets.QWidget):
                     regrText = '<strong style="font-size: 13px; color:darkcyan">{2}</strong><br>{0}'.format(self.parent.scorers['info'][nameKey]['NAME'], self.parent.scorers['info'][nameKey]['WEBSITE'], self.parent.scorers['info'][nameKey]['HTML'])
                     layout2.addWidget(richTextButton(self, regrText), i, j, 1, 1)
         layout.addLayout(layout2)
-        
+
+        # items = (layout.itemAt(i) for i in range(layout.count()))
+        # print(items)
+        # for w in items:
+        #     w.ResizeEvent()
+
         #layout2.addWidget(richTextButton(self, '<strong style="color:maroon">Multiple Linear Regression</strong><br>Ordinary Least Squares'))
         #layout2.addWidget(richTextButton(self, '<strong style="color:maroon">Principal Components Regression</strong><br>Ordinary Least Squares'))
         #layout2.addWidget(richTextButton(self, '<strong style="color:maroon">Z-Score Regression</strong><br>Ordinary Least Squares'))
@@ -309,6 +328,8 @@ class ModelCreationTab(QtWidgets.QWidget):
         widg.setLayout(layout)
         SA.setWidget(widg)
         self.workflowWidget.addTab(SA, "OPTIONS", "resources/GraphicalResources/icons/tune-24px.svg", "#FFFFFF", iconSize=(66,66))
+
+
         # ====================================================================================================================
 
         # Lay out the summary widget
