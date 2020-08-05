@@ -200,16 +200,110 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.workflowWidget.addTab(widg, "FORECAST<br>TARGET", "resources/GraphicalResources/icons/target-24px.svg", "#FFFFFF", iconSize=(66,66))
 
         # ===================================================================================================================
-
         # Layout the predictor selector widget
+        # Create the icon on the left side of the screen
+        predictorWidget = QtWidgets.QWidget()
 
-        widg = QtWidgets.QWidget()
-        self.workflowWidget.addTab(widg, "PREDICTORS", "resources/GraphicalResources/icons/bullseye-24px.svg", "#FFFFFF", iconSize=(66,66))
+        # Setup the initial items
+        predictorScrollableArea = QtWidgets.QScrollArea()
+        predictorScrollableArea.setWidgetResizable(True)
+        predictorLayout = QtWidgets.QVBoxLayout()
+        predictorLayout.setContentsMargins(0, 0, 0, 0)
+
+        # Create the initial dialog for the type of analysis
+        label = QtWidgets.QLabel()
+        label.setTextFormat(QtCore.Qt.RichText)
+        label.setText('<strong style="font-size: 18px">Mode: <strong>')
+        label.setFixedWidth(100)
+
+        self.defaultPredictorButton = QtWidgets.QRadioButton("Default")
+        self.defaultPredictorButton.setChecked(True)
+        self.defaultPredictorButton.setFixedWidth(100)
+        self.expertPredictorButton = QtWidgets.QRadioButton("Expert")
+        self.expertPredictorButton.setFixedWidth(100)
+
+        bgroup = QtWidgets.QButtonGroup()
+        bgroup.addButton(self.defaultPredictorButton)
+        bgroup.addButton(self.expertPredictorButton)
+        bgroup.setExclusive(True)
+
+        predictorModeLayout = QtWidgets.QHBoxLayout()
+        predictorModeLayout.addWidget(label)
+        predictorModeLayout.addWidget(self.defaultPredictorButton)
+        predictorModeLayout.addWidget(self.expertPredictorButton)
+        predictorModeLayout.setAlignment(QtCore.Qt.AlignLeft)
+
+        gb = QtWidgets.QGroupBox("")
+        gb.setLayout(predictorModeLayout)
+        predictorLayout.addWidget(gb)
+
+        # Space between the setup options and the tabs
+        predictorLayout.addSpacerItem(QtWidgets.QSpacerItem(0,0,QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
+
+        # Create the layout for the simple analysis
+        self.layoutPredictorSimpleAnalysis = QtWidgets.QVBoxLayout()
+        self.layoutPredictorSimpleAnalysis.setContentsMargins(15, 15, 15, 15)
+
+        predictorLayoutSimple = QtWidgets.QScrollArea()
+        predictorLayoutSimple.setWidgetResizable(True)
+
+        self.layoutPredictorSimpleAnalysis.addWidget(predictorLayoutSimple)
+        simplePredictorWidget = QtWidgets.QWidget()
+        simplePredictorWidget.setLayout(self.layoutPredictorSimpleAnalysis)
+
+        # Create the layout object for the expert analysis
+        self.layoutPredictorExpertAnalysis = QtWidgets.QVBoxLayout()
+        self.layoutPredictorExpertAnalysis.setContentsMargins(15, 15, 15, 15)
+
+        # Create the layout data tab
+        layoutData = QtWidgets.QScrollArea()
+        layoutData.setWidgetResizable(True)
+
+        # Create the layout fill tab
+        layoutFill = QtWidgets.QScrollArea()
+        layoutFill.setWidgetResizable(True)
+
+        # Create the layout extend tab
+        layoutExtend = QtWidgets.QScrollArea()
+        layoutExtend.setWidgetResizable(True)
+
+        # Create the layout window tab
+        layoutWindow = QtWidgets.QScrollArea()
+        layoutWindow.setWidgetResizable(True)
+
+        # Add the tabs into the tab widget
+        tabWidget = QtWidgets.QTabWidget()
+        tabWidget.addTab(layoutData, 'Data')
+        tabWidget.addTab(layoutFill, 'Fill')
+        tabWidget.addTab(layoutExtend, 'Extend')
+        tabWidget.addTab(layoutWindow, 'Window')
+
+        # Add to the expert layout
+        self.layoutPredictorExpertAnalysis.addWidget(tabWidget)
+        expertPredictorWidget = QtWidgets.QWidget()
+        expertPredictorWidget.setLayout(self.layoutPredictorExpertAnalysis)
+
+        # Create the stacked widget to handle to toggle between simple and expert analyses
+        self.stackedPredictorWidget = QtWidgets.QStackedLayout()
+        self.stackedPredictorWidget.addWidget(simplePredictorWidget)
+        self.stackedPredictorWidget.addWidget(expertPredictorWidget)
+
+        self.stackedPredictorWidget.setCurrentIndex(0)
+        self.defaultPredictorButton.clicked.connect(self.setPredictorDefaultStack)
+        self.expertPredictorButton.clicked.connect(self.setPredictorExpertStack)
         
-        
+        stackedModePredictorWidget = QtWidgets.QWidget()
+        stackedModePredictorWidget.setLayout(self.stackedPredictorWidget)
+
+        predictorLayout.addWidget(stackedModePredictorWidget)
+        predictorWidget.setLayout(predictorLayout)
+        predictorScrollableArea.setWidget(predictorWidget)
+        self.workflowWidget.addTab(predictorScrollableArea, "PREDICTORS", "resources/GraphicalResources/icons/bullseye-24px.svg",
+                                   "#FFFFFF", iconSize=(66, 66))
+
         # ====================================================================================================================
-
         # Layout the Forecast Settings widget
+
         SA = QtWidgets.QScrollArea()
         SA.setWidgetResizable(True)
         widg = QtWidgets.QWidget()        
@@ -349,4 +443,8 @@ class ModelCreationTab(QtWidgets.QWidget):
         #overallLayout.addWidget(self.overallStackWidget)
         self.setLayout(overallLayout)
 
-    
+    def setPredictorDefaultStack(self):
+        self.stackedPredictorWidget.setCurrentIndex(0)
+
+    def setPredictorExpertStack(self):
+        self.stackedPredictorWidget.setCurrentIndex(1)
