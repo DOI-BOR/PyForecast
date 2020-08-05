@@ -44,6 +44,7 @@ def dataLoader(stationDict, startDate, endDate):
     # Set the index to the dateTime index
     df.set_index(pd.DatetimeIndex(pd.to_datetime(df['dateTime'])), inplace = True)
     del df['dateTime'] # Delete the redundant column
+    del df['qualifiers']
 
     # Replace missing data with NaN's
     df['value'].replace(to_replace = '-999999', value = np.nan, inplace = True)
