@@ -6,14 +6,14 @@ Description:    Defines the layout for the Model Creation Tab. Includes all the 
 """
 
 # Import Libraries
-from    PyQt5   import  QtWidgets, \
-                        QtCore, \
-                        QtGui
+from PyQt5 import QtWidgets, QtCore, QtGui
 
 from resources.GUI.CustomWidgets.DatasetList_HTML_Formatted import DatasetList_HTML_Formatted
+from resources.GUI.CustomWidgets.DoubleList import DoubleList
 from resources.GUI.CustomWidgets.PyQtGraphs import ModelTabPlots
 from resources.GUI.CustomWidgets.customTabs import EnhancedTabWidget
-import pandas as pd
+from resources.GUI.WebMap import webMapView
+# import pandas as pd
 
 WIDTH_BIGGEST_REGR_BUTTON = 0
 
@@ -125,7 +125,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.dataPlot = ModelTabPlots(self, objectName='ModelTabPlot')
         self.dataPlot.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.targetSelect = QtWidgets.QComboBox()
-        self.datasetList = DatasetList_HTML_Formatted(self, datasetTable = self.parent.datasetTable, addButtons = False )
+        self.datasetList = DatasetList_HTML_Formatted(self, datasetTable = self.parent.datasetTable, addButtons=False)
         self.targetSelect.setModel(self.datasetList.model())
         self.targetSelect.setView(self.datasetList)
 
@@ -133,7 +133,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         layout.addWidget(QtWidgets.QLabel("Forecast Target"), 0, 0)
         layout.addWidget(self.targetSelect, 0, 1)
         
-        self.selectedItemDisplay = DatasetList_HTML_Formatted(self, addButtons = False, objectName = 'ModelTargetList')
+        self.selectedItemDisplay = DatasetList_HTML_Formatted(self, addButtons=False, objectName='ModelTargetList')
         self.selectedItemDisplay.setFixedHeight(99)
         self.selectedItemDisplay.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
         
@@ -200,7 +200,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.workflowWidget.addTab(widg, "FORECAST<br>TARGET", "resources/GraphicalResources/icons/target-24px.svg", "#FFFFFF", iconSize=(66,66))
 
         # ===================================================================================================================
-        # Layout the predictor selector widget
+        ### Layout the predictor selector widget ###
         # Create the icon on the left side of the screen
         predictorWidget = QtWidgets.QWidget()
 
@@ -238,7 +238,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         predictorLayout.addWidget(gb)
 
         # Space between the setup options and the tabs
-        predictorLayout.addSpacerItem(QtWidgets.QSpacerItem(0,0,QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
+        predictorLayout.addSpacerItem(QtWidgets.QSpacerItem(0, 0, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
 
         # Create the layout for the simple analysis
         self.layoutPredictorSimpleAnalysis = QtWidgets.QVBoxLayout()
@@ -255,11 +255,40 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.layoutPredictorExpertAnalysis = QtWidgets.QVBoxLayout()
         self.layoutPredictorExpertAnalysis.setContentsMargins(15, 15, 15, 15)
 
-        # Create the layout data tab
-        layoutData = QtWidgets.QScrollArea()
-        layoutData.setWidgetResizable(True)
+        ### Create the layout data tab ###
+        ## Create the initial scrollable area and layout ##
+        # Create the scrollable area and set it to resizeable
+        layoutDataSA = QtWidgets.QScrollArea()
+        layoutDataSA.setWidgetResizable(True)
 
-        # Create the layout fill tab
+        # Create the initial box layout
+        layoutData = QtWidgets.QHBoxLayout()
+
+        ## Add the webmap object to the current layout ##
+        self.webMapView = webMapView.webMapView()
+        layoutData.addWidget(self.webMapView)
+
+        ## Setup the DoubleList object ##
+        # Create the doublelist
+        self.layoutDataDoubleList = DoubleList(self.parent.datasetTable,
+                                               '<strong style="font-size: 18px">Available Datasets<strong>',
+                                               '<strong style="font-size: 18px">Selected Datasets<strong>')
+
+        # Connect the DoubleList with the dataset hmtl list to keep everything in sync. This will automatically
+        # populate the DoubleList entries
+        self.datasetList.updateSignal.connect(self.layoutDataDoubleList.update)
+
+        # todo: Update the positions on the map
+
+        # Add the widget to the layout
+        layoutData.addWidget(self.layoutDataDoubleList)
+
+        ## Finalize the tab format ##
+        # Wrap the layout as a widget to make it compatible with the SA layout
+        layoutDataSA.setLayout(layoutData)
+
+
+        ### Create the layout fill tab ###
         layoutFill = QtWidgets.QScrollArea()
         layoutFill.setWidgetResizable(True)
 
@@ -273,7 +302,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Add the tabs into the tab widget
         tabWidget = QtWidgets.QTabWidget()
-        tabWidget.addTab(layoutData, 'Data')
+        tabWidget.addTab(layoutDataSA, 'Data')
         tabWidget.addTab(layoutFill, 'Fill')
         tabWidget.addTab(layoutExtend, 'Extend')
         tabWidget.addTab(layoutWindow, 'Window')

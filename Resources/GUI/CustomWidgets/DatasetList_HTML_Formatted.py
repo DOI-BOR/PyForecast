@@ -75,6 +75,7 @@ class DatasetList_HTML_Formatted(QtWidgets.QListWidget):
     """
 
     buttonPressSignal = QtCore.pyqtSignal(int)
+    updateSignal = QtCore.pyqtSignal(pd.DataFrame)
 
     def __init__(self, parent=None, datasetTable = empty_dataset_list, HTML_formatting = DEFAULT_HTML_ICON_FORMAT, buttonText = None, useIcon = True, addButtons = True, objectName = None):
         """
@@ -235,6 +236,9 @@ class DatasetList_HTML_Formatted(QtWidgets.QListWidget):
             self.addItem(item)
             self.setItemWidget(item, widget)
 
+        # Send the signal to update other objects that reference this list, passing the updated dataframe
+        self.updateSignal.emit(self.datasetTable)
+
         return
 
     def findSelectedButton(self, dummy):
@@ -287,7 +291,6 @@ class DatasetList_HTML_Formatted(QtWidgets.QListWidget):
         subString = pattern2.sub(lambda m: replacementDict[re.escape(m.group(0))], self.HTML_formatting)
 
         return subString
-
 
 
 # DEBUGGING
