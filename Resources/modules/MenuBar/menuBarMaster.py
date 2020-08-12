@@ -14,8 +14,10 @@ class menuBar(object):
         """
         self.appMenu.preferencesAction.triggered.connect(self.openPreferencesGUI)
         self.appMenu.saveAction.triggered.connect(self.saveForecastFile)
+        self.appMenu.saveAction.setShortcut("Ctrl+S")
         self.appMenu.saveAsAction.triggered.connect(lambda: self.saveForecastFile(True))
         self.appMenu.openAction.triggered.connect(self.openForecastFile)
+        self.appMenu.openAction.setShortcut("Ctrl+O")
         self.appMenu.viewTablesAction.triggered.connect(self.viewDatabase)
         return
 
