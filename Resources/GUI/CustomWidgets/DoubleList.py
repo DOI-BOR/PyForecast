@@ -3,7 +3,7 @@ import pandas as pd
 
 class DoubleList(QtWidgets.QWidget):
 
-    def __init__(self, htmlListWidget, parent=None):
+    def __init__(self, initialDataframe, inputTitle, outputTitle, parent=None):
         """
         Constructor for the DoubleList widget class. This creates side-by-side linked lists. The user is able to move
         data entries from the left list to the right list to include the dataset in the analysis. The datasets in the
@@ -27,6 +27,10 @@ class DoubleList(QtWidgets.QWidget):
         self.listInput = QtWidgets.QListWidget()
         self.listOuput = QtWidgets.QListWidget()
 
+        # Create the title widgets
+        inputTitleWidget = QtWidgets.QLabel(inputTitle)
+        outputTitleWidget = QtWidgets.QLabel(outputTitle)
+
         # Create the buttons to move items between lists
         self.buttonAllToOuput = QtWidgets.QPushButton(">>")
         self.buttonSingleToOutput = QtWidgets.QPushButton(">")
@@ -34,7 +38,13 @@ class DoubleList(QtWidgets.QWidget):
         self.buttonAllToInput = QtWidgets.QPushButton("<<")
 
         # Add the input table to the layout
-        layout.addWidget(self.listInput)
+        layoutInput = QtWidgets.QVBoxLayout()
+        layoutInput.addWidget(inputTitleWidget)
+        layoutInput.addWidget(self.listInput)
+
+        layoutInputWidget = QtWidgets.QWidget()
+        layoutInputWidget.setLayout(layoutInput)
+        layout.addWidget(layoutInputWidget)
 
         # Setup the button box
         layoutm = QtWidgets.QVBoxLayout()
@@ -45,9 +55,17 @@ class DoubleList(QtWidgets.QWidget):
         layoutm.addWidget(self.buttonAllToInput)
         layoutm.addItem(QtWidgets.QSpacerItem(10, 20, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding))
 
-        # Add the buttons and output list to the layout
+        # Add the buttons to the layout
         layout.addLayout(layoutm)
-        layout.addWidget(self.listOuput)
+
+        # Create the output column layout
+        layoutOutput = QtWidgets.QVBoxLayout()
+        layoutOutput.addWidget(outputTitleWidget)
+        layoutOutput.addWidget(self.listOuput)
+
+        layoutOutputWidget = QtWidgets.QWidget()
+        layoutOutputWidget.setLayout(layoutOutput)
+        layout.addWidget(layoutOutputWidget)
 
         # Create buttons to move items up and down in the order
         self.buttonUp = QtWidgets.QPushButton("Up")
@@ -62,7 +80,7 @@ class DoubleList(QtWidgets.QWidget):
 
         layout.addLayout(layoutl)
 
-        self.data_frame = htmlListWidget
+        self.data_frame = initialDataframe
 
 
         self._setStatusButton()
