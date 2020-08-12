@@ -1,9 +1,9 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
-
+import pandas as pd
 
 class DoubleList(QtWidgets.QWidget):
 
-    def __init__(self, parent=None):
+    def __init__(self, htmlListWidget, parent=None):
         """
         Constructor for the DoubleList widget class. This creates side-by-side linked lists. The user is able to move
         data entries from the left list to the right list to include the dataset in the analysis. The datasets in the
@@ -61,6 +61,10 @@ class DoubleList(QtWidgets.QWidget):
         layoutl.addItem(QtWidgets.QSpacerItem(10, 20, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding))
 
         layout.addLayout(layoutl)
+
+        self.data_frame = htmlListWidget
+
+
         self._setStatusButton()
         self.connections()
 
@@ -93,6 +97,9 @@ class DoubleList(QtWidgets.QWidget):
         # Set the up/down button connections
         self.buttonUp.clicked.connect(self._setButtonUpClicked)
         self.buttonDown.clicked.connect(self._setButtonDownClicked)
+
+        # List connection
+        #self.htmlListWidget.buttonPress.connect(self.update)
 
     def _setStatusButton(self):
         """
@@ -133,6 +140,28 @@ class DoubleList(QtWidgets.QWidget):
 
         self.listInput.addItems(listItems);
 
+    def resetAvailableItems(self, listItems):
+        """
+        Clears all list entries and adds items back to the list items
+
+        Parameters
+        ----------
+        self: DoubleList
+        listItems: QStringList
+            List of strings to add to the input list widget
+
+        Returns
+        -------
+        None.
+
+        """
+
+        # Clear the input and output lists
+        self.listInput.clear()
+        self.listOuput.clear()
+
+        # Add the items to the input list
+        self.addAvailableItems(listItems)
 
     def seletedItems(self):
         """
@@ -271,3 +300,29 @@ class DoubleList(QtWidgets.QWidget):
         # Insert the item one below and update the the current row
         self.listOuput.insertItem(i_current_row + 1, currentItem)
         self.listOuput.setCurrentRow(i_current_row + 1)
+
+    def update(self, datasetTable):
+        """
+        Update the double list object based on the input of another widget
+
+        Parameters
+        ----------
+        self: DoubleList
+        datasetTable: dataframe
+            Pandas dataframe containing the updated dataset information
+
+        """
+
+        # Output the table for debug purposes
+        # with pd.option_context('display.max_rows', None, 'display.max_columns', None):
+        #     print(datasetTable)
+
+        # Update the DoubleList dataframe
+        self.data_frame = datasetTable
+
+        # Extract the dataset names
+        sl_names = self.data_frame['DatasetName'].values
+
+        # Reset the list entries
+        self.resetAvailableItems(sl_names)
+
