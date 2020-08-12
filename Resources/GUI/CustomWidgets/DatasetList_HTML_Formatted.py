@@ -238,7 +238,7 @@ class DatasetList_HTML_Formatted(QtWidgets.QListWidget):
 
         # Send the signal to update other objects that reference this list, passing the updated dataframe
         if self.addButtons:
-            self.updateSignal.emit(self.datasetTable)
+            self.updateSignal.emit(pd.DataFrame(self.datasetTable))
 
         return
 
