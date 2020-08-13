@@ -241,19 +241,65 @@ class ModelCreationTab(QtWidgets.QWidget):
         predictorLayout.addSpacerItem(QtWidgets.QSpacerItem(0, 0, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
 
         # Create the layout for the simple analysis
-        self.layoutPredictorSimpleAnalysis = QtWidgets.QVBoxLayout()
+        self.layoutPredictorSimpleAnalysis = QtWidgets.QHBoxLayout()
         self.layoutPredictorSimpleAnalysis.setContentsMargins(15, 15, 15, 15)
-
-        predictorLayoutSimple = QtWidgets.QScrollArea()
-        predictorLayoutSimple.setWidgetResizable(True)
-
-        self.layoutPredictorSimpleAnalysis.addWidget(predictorLayoutSimple)
-        simplePredictorWidget = QtWidgets.QWidget()
-        simplePredictorWidget.setLayout(self.layoutPredictorSimpleAnalysis)
 
         # Create the layout object for the expert analysis
         self.layoutPredictorExpertAnalysis = QtWidgets.QVBoxLayout()
         self.layoutPredictorExpertAnalysis.setContentsMargins(15, 15, 15, 15)
+
+        ### Create the simple analysis tab ###
+        ## Create the initial scrollable area and layout ##
+        predictorLayoutSimple = QtWidgets.QScrollArea()
+        predictorLayoutSimple.setWidgetResizable(True)
+
+        ## Create the DoubleList selector object ##
+        self.layoutSimpleDoubleList = DoubleList(self.parent.datasetTable,
+                                               '<strong style="font-size: 18px">Available Datasets<strong>',
+                                               '<strong style="font-size: 18px">Selected Datasets<strong>')
+
+        # Connect the DoubleList with the dataset hmtl list to keep everything in sync. This will automatically
+        # populate the DoubleList entries
+        self.datasetList.updateSignal.connect(self.layoutSimpleDoubleList.update)
+
+        ## Create the objects on the right side ##
+        # Simple fill
+        self.layoutSimpleFill = richTextButton(self, '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format('Fill data',
+                                               'Automatically fill the selected time series using default properties'))
+
+        # Simple extend
+        self.layoutSimpleExtend = richTextButton(self,'<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format('Extend data',
+                                                 'Automatically extend the selected time series using default properties'))
+
+        ## Add the widgets into the layout ##
+        # Add the items into the horizontal spacer
+        layoutSimple = QtWidgets.QHBoxLayout()
+        layoutSimple.setContentsMargins(0, 0, 0, 0)
+        layoutSimple.addWidget(self.layoutSimpleDoubleList, 2)
+        layoutSimple.addSpacerItem(QtWidgets.QSpacerItem(10, 10, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
+
+        # Create the right side options layout
+        layoutSimpleOptions = QtWidgets.QVBoxLayout()
+        layoutSimpleOptions.setAlignment(QtCore.Qt.AlignTop)
+        layoutSimpleOptions.addWidget(self.layoutSimpleFill)
+        layoutSimpleOptions.addWidget(self.layoutSimpleExtend)
+
+        # Wrap the right side layout in another widget
+        layoutSimpleOptionsWidget = QtWidgets.QWidget()
+        layoutSimpleOptionsWidget.setLayout(layoutSimpleOptions)
+
+        # Add the right side to the simple layout
+        layoutSimple.addWidget(layoutSimpleOptionsWidget, 1)
+
+        # Wrap the layout in a widget
+        layoutSimpleWidget = QtWidgets.QWidget()
+        layoutSimpleWidget.setLayout(layoutSimple)
+
+        # Set the items into the simple layout
+        self.layoutPredictorSimpleAnalysis.addWidget(layoutSimpleWidget)
+        simplePredictorWidget = QtWidgets.QWidget()
+        simplePredictorWidget.setLayout(self.layoutPredictorSimpleAnalysis)
+
 
         ### Create the layout data tab ###
         ## Create the initial scrollable area and layout ##
