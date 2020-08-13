@@ -40,6 +40,8 @@ class hucClimDivCompleter(QtWidgets.QCompleter):
         self.setCompletionMode(QtWidgets.QCompleter.PopupCompletion)
 
         self.activated[str].connect(self.setCompleterSelection)
+
+        self.selectedDataset = {"DatasetExternalID":None}
         
         return
 

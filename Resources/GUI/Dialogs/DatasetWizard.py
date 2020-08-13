@@ -1,6 +1,7 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
 import pandas as pd
 from resources.GUI.CustomWidgets.CombinedDatasetTable import CombinedDatasetTbl
+from resources.modules.Miscellaneous import loggingAndErrors
 import importlib
 from csv import Sniffer
 import os
@@ -33,6 +34,9 @@ class DatasetWizard(QtWidgets.QWizard):
         self.fileButton.clicked.connect(self.loadImportFile)
         self.HTMLloadUrlButton.clicked.connect(self.loadHTMLFile)
 
+        # Initialize an empty dataset
+        self.dataset = pd.Series()
+
         self.exec_()
 
         
@@ -40,16 +44,25 @@ class DatasetWizard(QtWidgets.QWizard):
     def nextId(self):
         print(self.currentId())
 
+        # Page 2: Data Source
         if self.currentId() == 1:
 
+            # Data Source Select Box
             selection = self.sourceBox.checkedId()
             
+            # PyForecast Dataloader
             if selection == 0:
                 nextID_ = 2
+            
+            # File Import
             elif selection == 1:
                 nextID_ = 3
+
+            # From URL
             elif selection == 2:
                 nextID_ = 4
+
+            # Composite
             elif selection == 3:
                 nextID_ = 5
 
@@ -64,6 +77,17 @@ class DatasetWizard(QtWidgets.QWizard):
         
         else:
             nextID_ = self.currentPage().nextId()
+
+        # IF the current ID is 0 (metadata page), save the metadata
+        if self.currentId() == 0:
+
+            self.dataset["DatasetType"] = self.datasetTypeField.currentText()
+            self.dataset["DatasetName"] = self.datasetNameField.text()
+            self.dataset["DatasetParameter"] = self.parameterNameField.text()
+            self.dataset["DatasetParameterCode"] = self.parameterCodeField.text()
+            self.dataset["DatasetExternalID"] = self.datasetIDField.text()
+            self.dataset["DatasetUnits"] = self.parameterUnitField.text()
+            self.dataset["DatasetAgency"] = self.datasetAgencyField.text()
 
         return nextID_
 
@@ -99,6 +123,10 @@ class DatasetWizard(QtWidgets.QWizard):
         self.HTMLfileDatasetSelect.setCurrentIndex(1 if len(rawdata[0].columns) > 0 else 0)  
 
     def loadImportFile(self):
+        
+        self.dateColSelect.clear()
+        self.fileDatasetSelect.clear()
+
         self.importFileName = QtWidgets.QFileDialog.getOpenFileName(self, "Import Flat File", "", "Flat Files (*.csv *.xlsx *.txt)")[0]
         if self.importFileName == "":
             return
@@ -112,7 +140,11 @@ class DatasetWizard(QtWidgets.QWizard):
         # use the CSV library to sniff out the delimiter of the file if it's a csv or txt file
         else:
             with open(self.importFileName, 'r') as readfile:
-                dialect = Sniffer().sniff(readfile.read(1024))
+                try:
+                    dialect = Sniffer().sniff(readfile.read(1024))
+                except:
+                    loggingAndErrors.showErrorMessage(self,"Could not parse the file. Make sure the file is a proper flat file.")
+                    return
             rawdata = pd.read_csv(self.importFileName, nrows=500, sep = dialect.delimiter,quotechar=dialect.quotechar, lineterminator=dialect.lineterminator.replace('\r', ''), skipinitialspace=True)
         pd.set_option('max_colwidth', 200)
         self.filePreviewBox.setLineWrapMode(QtWidgets.QTextEdit.FixedPixelWidth)
@@ -122,7 +154,7 @@ class DatasetWizard(QtWidgets.QWizard):
         rawHtml = rawHtml.replace("<th ", '<th bgcolor="oldlace" ')
         rawHtml = rawHtml.replace("<th>", '<th bgcolor="dimgrey" style="color: white">')
         self.filePreviewBox.setHtml(rawHtml)
-
+        
         self.dateColSelect.addItems(rawdata.columns)
         self.fileDatasetSelect.addItems(rawdata.columns)
 

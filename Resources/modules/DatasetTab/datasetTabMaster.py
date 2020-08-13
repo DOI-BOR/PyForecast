@@ -67,10 +67,10 @@ class datasetTab(object):
         self.datasetTab.boundingBoxButton.clicked.connect(          lambda x: self.beginDatasetAreaSearch("bounding"))
         self.datasetTab.hucSelectionButton.clicked.connect(         lambda x: self.beginDatasetAreaSearch("watershed"))
         self.datasetTab.boxHucSearchButton.clicked.connect(         lambda x: self.areaSearchForDatasets())
-        self.datasetTab.prismButton.clicked.connect(                lambda x: self.addWatershedClimateDivisionDataset(self.prismCompleter.selectedDataset['DatasetExternalID'].iloc[0], 'PRISM'))
-        self.datasetTab.nrccButton.clicked.connect(                 lambda x: self.addWatershedClimateDivisionDataset(self.nrccCompleter.selectedDataset['DatasetExternalID'].iloc[0], 'NRCC'))
-        self.datasetTab.pdsiButton.clicked.connect(                 lambda x: self.addWatershedClimateDivisionDataset(self.climCompleter.selectedDataset['DatasetExternalID'].iloc[0], 'PDSI'))
-        self.datasetTab.spiButton.clicked.connect(                  lambda x: self.addWatershedClimateDivisionDataset(self.climCompleter.selectedDataset['DatasetExternalID'].iloc[0], 'SPI'))
+        self.datasetTab.prismButton.clicked.connect(                lambda x: self.addWatershedClimateDivisionDataset(self.prismCompleter.selectedDataset['DatasetExternalID'].iloc[0], 'PRISM') if self.prismCompleter.selectedDataset['DatasetExternalID'] else False)
+        self.datasetTab.nrccButton.clicked.connect(                 lambda x: self.addWatershedClimateDivisionDataset(self.nrccCompleter.selectedDataset['DatasetExternalID'].iloc[0], 'NRCC') if self.nrccCompleter.selectedDataset['DatasetExternalID'] else False)
+        self.datasetTab.pdsiButton.clicked.connect(                 lambda x: self.addWatershedClimateDivisionDataset(self.climCompleter.selectedDataset['DatasetExternalID'].iloc[0], 'PDSI') if self.climCompleter.selectedDataset['DatasetExternalID'] else False)
+        self.datasetTab.spiButton.clicked.connect(                  lambda x: self.addWatershedClimateDivisionDataset(self.climCompleter.selectedDataset['DatasetExternalID'].iloc[0], 'SPI') if self.climCompleter.selectedDataset['DatasetExternalID'] else False)
         self.datasetTab.climButton.clicked.connect(                 lambda x: self.addDataset(self.datasetTab.climInput.currentData().name))
         self.datasetTab.keywordSearchBox.returnPressed.connect(     lambda: self.searchForDataset(self.datasetTab.keywordSearchBox.text()))
         self.datasetTab.addiButton.clicked.connect(                 lambda x: self.openUserDefinedDatasetEditor())
@@ -436,6 +436,10 @@ class datasetTab(object):
                 - one of ['PRISM', 'NRCC', 'PDSI', 'SPI']
         """
 
+        # Uncompleted selection
+        if areaNumber == None:
+            return
+
         # Retrieve watershed datasets
         if datasetType in ['PRISM', 'NRCC']:
             datasets = self.additionalDatasetsTable[(
@@ -547,7 +551,7 @@ class datasetTab(object):
         if len(searchTerm) < 4: 
 
             # ADD POPUP BOX TO TELL USER ABOUT THE ERROR
-            loggingAndErrors.showErrorMessage("Search term is too broad, please enter a longer search term.")
+            loggingAndErrors.showErrorMessage(self,"Search term is too broad, please enter a longer search term.")
             self.datasetTab.keywordSearchButton.setEnabled(True)
             return
         

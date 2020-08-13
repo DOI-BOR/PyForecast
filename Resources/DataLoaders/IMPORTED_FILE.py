@@ -1,6 +1,7 @@
 # Import Libraries
 import pandas as pd
 import xlrd
+from csv import Sniffer
 import numpy as np
 
 # Define the dataloader
@@ -11,16 +12,34 @@ def dataLoader(stationDict, startDate, endDate):
     """
 
     filename = stationDict['DatasetImportFileName']
-    
-    # Handle CSV data
-    if any(map(lambda x: x in filename.lower(), ['.csv', '.dat'])):
-        
-        df = pd.read_csv(filename, parse_dates=True, index_col=0, )
+    dateLabel = None
+    columnLabel = None
 
-    # Otherwise, we assume it's an excel file+
+    # Check for specific column labels
+    if "?" in filename:
+        filename, dateLabel, columnLabel = filename.split("?")
+
+    # Handle Excel data
+    if 'xlsx' in filename.lower():
+
+        df = pd.read_excel(filename, parse_dates=True, )
+    
+    # Handle CSV style data
     else:
 
-        df = pd.read_excel(filename, parse_dates=True, index_col=0, )
+        with open(filename, 'r') as readfile:
+                    
+            dialect = Sniffer().sniff(readfile.read(1024))
+
+            df = pd.read_csv(filename, parse_dates=True, sep = dialect.delimiter,quotechar=dialect.quotechar, lineterminator=dialect.lineterminator.replace('\r', '') )
+
+    if dateLabel == None:
+        dateLabel = df.columns[0]
+        columnLabel = df.columns[1]
+
+    # Set the index and restrict to the column with the values
+    df = df.set_index(dateLabel)
+    df = df[[columnLabel]]
 
     # Limit the data to between the first and last days (startdate, enddate)
     df = df.loc[startDate:endDate]
