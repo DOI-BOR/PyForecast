@@ -260,7 +260,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Connect the DoubleList with the dataset hmtl list to keep everything in sync. This will automatically
         # populate the DoubleList entries
-        self.datasetList.updateSignal.connect(self.layoutSimpleDoubleList.update)
+        self.datasetList.updateSignalToExternal.connect(self.layoutSimpleDoubleList.update)
 
         ## Create the objects on the right side ##
         # Simple fill
@@ -322,7 +322,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Connect the DoubleList with the dataset hmtl list to keep everything in sync. This will automatically
         # populate the DoubleList entries
-        self.datasetList.updateSignal.connect(self.layoutDataDoubleList.update)
+        self.datasetList.updateSignalToExternal.connect(self.layoutDataDoubleList.update)
 
         # todo: Update the positions on the map
 
@@ -335,21 +335,71 @@ class ModelCreationTab(QtWidgets.QWidget):
 
 
         ### Create the layout fill tab ###
-        layoutFill = QtWidgets.QScrollArea()
-        layoutFill.setWidgetResizable(True)
+        ## Create the scrollable area ##
+        layoutFillSA = QtWidgets.QScrollArea()
+        layoutFillSA.setWidgetResizable(True)
 
-        # Create the layout extend tab
+        ## Create the selector list ##
+        # Create a vertical layout
+        layoutFillLeftLayout = QtWidgets.QVBoxLayout()
+
+        # Create and add the list title
+        layoutFillLeftLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Selected Data<strong>'))
+
+        # Add the list
+        # todo: initialize from output list in the data subtab
+        self.fillList = DatasetList_HTML_Formatted(datasetTable=self.parent.datasetTable)
+        self.datasetList.updateSignalToExternal.connect(self.fillList.refreshDatasetListFromExtenal)
+        layoutFillLeftLayout.addWidget(self.fillList)
+
+        # Link the list to the output table of the DoubleList object in the data tab
+        # todo: add signal to the double list object for updating
+
+        ## Create the right panel ##
+        # Create the vertical layout
+        layoutFillRightLayout = QtWidgets.QVBoxLayout()
+
+        # Create and add a dropdown selector with the available options
+        layoutFillRightLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Fill Method<strong>'))
+        self.layoutFillMethodSelector = QtWidgets.QComboBox()
+        self.layoutFillMethodSelector.addItems(['nearest', 'linear', 'quadratic', 'cubic', 'spline', 'polynomial'])
+        layoutFillRightLayout.addWidget(self.layoutFillMethodSelector)
+
+        # Create a line to delineate the selector from the selector options
+        lineA = QtWidgets.QFrame()
+        lineA.setFrameShape(QtWidgets.QFrame.HLine)
+        layoutFillRightLayout.addWidget(lineA);
+
+        # Fill the remaining area with the layout options
+        setDataFillLayout(self, layoutFillRightLayout)
+
+
+
+        ## Create the full layout ##
+        layoutFill = QtWidgets.QHBoxLayout()
+
+        leftWidget = QtWidgets.QWidget()
+        leftWidget.setLayout(layoutFillLeftLayout)
+        layoutFill.addWidget(leftWidget, 1)
+
+        rightWidget = QtWidgets.QWidget()
+        rightWidget.setLayout(layoutFillRightLayout)
+        layoutFill.addWidget(rightWidget, 2)
+
+        layoutFillSA.setLayout(layoutFill)
+
+        ### Create the layout extend tab ###
         layoutExtend = QtWidgets.QScrollArea()
         layoutExtend.setWidgetResizable(True)
 
-        # Create the layout window tab
+        ### Create the layout window tab ###
         layoutWindow = QtWidgets.QScrollArea()
         layoutWindow.setWidgetResizable(True)
 
         # Add the tabs into the tab widget
         tabWidget = QtWidgets.QTabWidget()
         tabWidget.addTab(layoutDataSA, 'Data')
-        tabWidget.addTab(layoutFill, 'Fill')
+        tabWidget.addTab(layoutFillSA, 'Fill')
         tabWidget.addTab(layoutExtend, 'Extend')
         tabWidget.addTab(layoutWindow, 'Window')
 
@@ -523,3 +573,71 @@ class ModelCreationTab(QtWidgets.QWidget):
 
     def setPredictorExpertStack(self):
         self.stackedPredictorWidget.setCurrentIndex(1)
+
+    def _updateFillSubtab(self):
+        self.stackedLayout.setCurrentIndex(self.layoutFillMethodSelector.currentIndex())
+
+
+def setDataFillLayout(page, layoutMain):
+    """
+    Creates the layout of the fill subtab based on the options for each fill method
+
+    """
+
+    # Set the fill limit
+    # todo: add a label to the field
+    page.layoutFillGapLimit = QtWidgets.QTextEdit()
+    page.layoutFillGapLimit.setPlaceholderText('30')
+    page.layoutFillGapLimit.setFixedWidth(50)
+    page.layoutFillGapLimit.setFixedHeight(25)
+    layoutMain.addWidget(page.layoutFillGapLimit)
+    layoutMain.setAlignment(QtCore.Qt.AlignTop)
+
+
+    ### Create the nearest page ###
+    nearestLayout = QtWidgets.QVBoxLayout()
+
+    ### Create the linear page ###
+    linearLayout = QtWidgets.QVBoxLayout()
+
+    ### Create the quadratic page ###
+    quadradicLayout = QtWidgets.QVBoxLayout()
+
+    ### Create the cubic page ###
+    cubicLayout = QtWidgets.QVBoxLayout()
+
+    ### Create the polynomial page ###
+    polyLayout = QtWidgets.QVBoxLayout()
+
+    ### Create the stacked layout ###
+    # Initialize the layout
+    page.stackedLayout = QtWidgets.QStackedLayout()
+
+    # Add each of the interpolation types to it
+    nearestWidget = QtWidgets.QWidget()
+    nearestWidget.setLayout(nearestLayout)
+    page.stackedLayout.addWidget(nearestWidget)
+
+    linearWidget = QtWidgets.QWidget()
+    linearWidget.setLayout(linearLayout)
+    page.stackedLayout.addWidget(linearWidget)
+
+    quadradicWidget = QtWidgets.QWidget()
+    quadradicWidget.setLayout(quadradicLayout)
+    page.stackedLayout.addWidget(quadradicWidget)
+
+    cubicWidget = QtWidgets.QWidget()
+    cubicWidget.setLayout(cubicLayout)
+    page.stackedLayout.addWidget(cubicWidget)
+
+    splineWidget = QtWidgets.QWidget()
+    splineWidget.setLayout(polyLayout)
+    page.stackedLayout.addWidget(splineWidget)
+
+    # Add the stacked layout to the main layout
+    stackedWidget = QtWidgets.QWidget()
+    stackedWidget.setLayout(page.stackedLayout)
+    layoutMain.addWidget(stackedWidget)
+
+    ### Connect the stacked widget with the selection combo box ###
+    page.layoutFillMethodSelector.currentIndexChanged.connect(page._updateFillSubtab)
