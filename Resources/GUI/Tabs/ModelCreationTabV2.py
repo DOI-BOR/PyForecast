@@ -260,7 +260,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Connect the DoubleList with the dataset hmtl list to keep everything in sync. This will automatically
         # populate the DoubleList entries
-        self.datasetList.updateSignal.connect(self.layoutSimpleDoubleList.update)
+        self.datasetList.updateSignalToExternal.connect(self.layoutSimpleDoubleList.update)
 
         ## Create the objects on the right side ##
         # Simple fill
@@ -322,7 +322,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Connect the DoubleList with the dataset hmtl list to keep everything in sync. This will automatically
         # populate the DoubleList entries
-        self.datasetList.updateSignal.connect(self.layoutDataDoubleList.update)
+        self.datasetList.updateSignalToExternal.connect(self.layoutDataDoubleList.update)
 
         # todo: Update the positions on the map
 
@@ -347,7 +347,9 @@ class ModelCreationTab(QtWidgets.QWidget):
         layoutFillLeftLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Selected Data<strong>'))
 
         # Add the list
-        self.fillList = QtWidgets.QListWidget()
+        # todo: initialize from output list in the data subtab
+        self.fillList = DatasetList_HTML_Formatted(datasetTable=self.parent.datasetTable)
+        self.datasetList.updateSignalToExternal.connect(self.fillList.refreshDatasetListFromExtenal)
         layoutFillLeftLayout.addWidget(self.fillList)
 
         # Link the list to the output table of the DoubleList object in the data tab
