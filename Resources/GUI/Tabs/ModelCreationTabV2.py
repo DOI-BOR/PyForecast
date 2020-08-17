@@ -359,17 +359,6 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Create the vertical layout
         layoutFillRightLayout = QtWidgets.QVBoxLayout()
 
-        # Create and add a dropdown selector with the available options
-        layoutFillRightLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Fill Method<strong>'))
-        self.layoutFillMethodSelector = QtWidgets.QComboBox()
-        self.layoutFillMethodSelector.addItems(['nearest', 'linear', 'quadratic', 'cubic', 'spline', 'polynomial'])
-        layoutFillRightLayout.addWidget(self.layoutFillMethodSelector)
-
-        # Create a line to delineate the selector from the selector options
-        lineA = QtWidgets.QFrame()
-        lineA.setFrameShape(QtWidgets.QFrame.HLine)
-        layoutFillRightLayout.addWidget(lineA);
-
         # Fill the remaining area with the layout options
         setDataFillLayout(self, layoutFillRightLayout)
 
@@ -584,30 +573,60 @@ def setDataFillLayout(page, layoutMain):
 
     """
 
-    # Set the fill limit
-    # todo: add a label to the field
+    # Set the options available for filling the data
+    fillOptions = ['nearest', 'linear', 'quadratic', 'cubic', 'spline', 'polynomial']
+
+    # Create and add a dropdown selector with the available options
+    layoutMain.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Fill Method<strong>'))
+
+    page.layoutFillMethodSelector = QtWidgets.QComboBox()
+    page.layoutFillMethodSelector.addItems(fillOptions)
+    layoutMain.addWidget(page.layoutFillMethodSelector)
+
+    # Create a line to delineate the selector from the selector options
+    lineA = QtWidgets.QFrame()
+    lineA.setFrameShape(QtWidgets.QFrame.HLine)
+    layoutMain.addWidget(lineA)
+
+    # Create the fill limit label
+    filledGapLabel = QtWidgets.QLabel('Maximum Filled Gap')
+
+    # Create teh fill limit widget
     page.layoutFillGapLimit = QtWidgets.QTextEdit()
     page.layoutFillGapLimit.setPlaceholderText('30')
     page.layoutFillGapLimit.setFixedWidth(50)
     page.layoutFillGapLimit.setFixedHeight(25)
-    layoutMain.addWidget(page.layoutFillGapLimit)
+
+    # Create the layout for the fill limit
+    filledGapLayout = QtWidgets.QHBoxLayout()
+    filledGapLayout.setAlignment(QtCore.Qt.AlignTop)
+
+    filledGapLayout.addWidget(filledGapLabel, 1, QtCore.Qt.AlignLeft)
+    filledGapLayout.addWidget(page.layoutFillGapLimit, 5, QtCore.Qt.AlignLeft)
+
+    # Add the limit into the main page
+    filledGapLayoutWidget = QtWidgets.QWidget()
+    filledGapLayoutWidget.setLayout(filledGapLayout)
+
+    layoutMain.addWidget(filledGapLayoutWidget)
+
+    # Adjust the layout of the widgets
     layoutMain.setAlignment(QtCore.Qt.AlignTop)
 
-
     ### Create the nearest page ###
-    nearestLayout = QtWidgets.QVBoxLayout()
+    nearestLayout = QtWidgets.QGridLayout()
 
     ### Create the linear page ###
-    linearLayout = QtWidgets.QVBoxLayout()
+    linearLayout = QtWidgets.QGridLayout()
 
     ### Create the quadratic page ###
-    quadradicLayout = QtWidgets.QVBoxLayout()
+    quadradicLayout = QtWidgets.QGridLayout()
 
     ### Create the cubic page ###
-    cubicLayout = QtWidgets.QVBoxLayout()
+    cubicLayout = QtWidgets.QGridLayout()
 
     ### Create the polynomial page ###
-    polyLayout = QtWidgets.QVBoxLayout()
+    polyLayout = QtWidgets.QGridLayout()
 
     ### Create the stacked layout ###
     # Initialize the layout
