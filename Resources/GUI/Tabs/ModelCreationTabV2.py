@@ -360,7 +360,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         layoutFillRightLayout = QtWidgets.QVBoxLayout()
 
         # Fill the remaining area with the layout options
-        setDataFillLayout(self, layoutFillRightLayout)
+        self.setDataFillLayout(layoutFillRightLayout)
 
         ## Create the full layout ##
         layoutFill = QtWidgets.QHBoxLayout()
@@ -400,14 +400,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         layoutExtendRightLayout = QtWidgets.QVBoxLayout()
 
         # Fill the remaining area with the layout options
-        setDataExtendLayout(self, layoutExtendRightLayout)
-
-        ## Create the right panel ##
-        # Create the vertical layout
-        layoutExtendRightLayout = QtWidgets.QVBoxLayout()
-
-        # Fill the remaining area with the layout options
-        setDataExtendLayout(self, layoutExtendRightLayout)
+        self.setDataExtendLayout(layoutExtendRightLayout)
 
         ## Create the full layout ##
         layoutExtend = QtWidgets.QHBoxLayout()
@@ -599,6 +592,183 @@ class ModelCreationTab(QtWidgets.QWidget):
         #overallLayout.addWidget(self.overallStackWidget)
         self.setLayout(overallLayout)
 
+    def setDataFillLayout(self, layoutMain):
+        """
+        Creates the layout of the fill subtab based on the options for each fill method
+
+        """
+
+        # Set the options available for filling the data
+        fillOptions = ['Nearest', 'Linear', 'Quadratic', 'Cubic', 'Spline', 'Polynomial']
+        # todo: add None option to the list
+
+        # Create and add a dropdown selector with the available options
+        layoutMain.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Fill Method<strong>'))
+
+        self.layoutFillMethodSelector = QtWidgets.QComboBox()
+        self.layoutFillMethodSelector.addItems(fillOptions)
+        layoutMain.addWidget(self.layoutFillMethodSelector)
+
+        # Create a line to delineate the selector from the selector options
+        lineA = QtWidgets.QFrame()
+        lineA.setFrameShape(QtWidgets.QFrame.HLine)
+        layoutMain.addWidget(lineA)
+
+        # Create the fill limit label
+        filledGapLabel = QtWidgets.QLabel('Maximum Filled Gap')
+
+        # Create teh fill limit widget
+        self.layoutExtendGapLimit = QtWidgets.QTextEdit()
+        self.layoutExtendGapLimit.setPlaceholderText('30')
+        self.layoutExtendGapLimit.setFixedWidth(50)
+        self.layoutExtendGapLimit.setFixedHeight(25)
+
+        # Create the layout for the fill limit
+        filledGapLayout = QtWidgets.QHBoxLayout()
+        filledGapLayout.setAlignment(QtCore.Qt.AlignTop)
+
+        filledGapLayout.addWidget(filledGapLabel, 1, QtCore.Qt.AlignLeft)
+        filledGapLayout.addWidget(self.layoutExtendGapLimit, 5, QtCore.Qt.AlignLeft)
+
+        # Add the limit into the main page
+        filledGapLayoutWidget = QtWidgets.QWidget()
+        filledGapLayoutWidget.setLayout(filledGapLayout)
+
+        layoutMain.addWidget(filledGapLayoutWidget)
+
+        # Adjust the layout of the widgets
+        layoutMain.setAlignment(QtCore.Qt.AlignTop)
+
+        ### Create the nearest page ###
+        nearestLayout = QtWidgets.QGridLayout()
+
+        ### Create the linear page ###
+        linearLayout = QtWidgets.QGridLayout()
+
+        ### Create the quadratic page ###
+        quadradicLayout = QtWidgets.QGridLayout()
+
+        ### Create the cubic page ###
+        cubicLayout = QtWidgets.QGridLayout()
+
+        ### Create the polynomial page ###
+        polyLayout = QtWidgets.QGridLayout()
+
+        ### Create the stacked layout ###
+        # Initialize the layout
+        self.stackedFillLayout = QtWidgets.QStackedLayout()
+
+        # Wrap it in a widget and set visibility to false. If this is not done, a small, annoying popup window will
+        # be opened separate from the main window
+        stackedWidget = QtWidgets.QWidget()
+        stackedWidget.setLayout(self.stackedFillLayout)
+        stackedWidget.setVisible(False)
+
+        # Add each of the interpolation types to it
+        nearestWidget = QtWidgets.QWidget()
+        nearestWidget.setLayout(nearestLayout)
+        self.stackedFillLayout.addWidget(nearestWidget)
+
+        linearWidget = QtWidgets.QWidget()
+        linearWidget.setLayout(linearLayout)
+        self.stackedFillLayout.addWidget(linearWidget)
+
+        quadradicWidget = QtWidgets.QWidget()
+        quadradicWidget.setLayout(quadradicLayout)
+        self.stackedFillLayout.addWidget(quadradicWidget)
+
+        cubicWidget = QtWidgets.QWidget()
+        cubicWidget.setLayout(cubicLayout)
+        self.stackedFillLayout.addWidget(cubicWidget)
+
+        splineWidget = QtWidgets.QWidget()
+        splineWidget.setLayout(polyLayout)
+        self.stackedFillLayout.addWidget(splineWidget)
+
+        # Add the stacked layout to the main layout
+        layoutMain.addWidget(stackedWidget)
+        stackedWidget.setVisible(True)
+
+        ### Connect the stacked widget with the selection combo box ###
+        self.layoutFillMethodSelector.currentIndexChanged.connect(self._updateFillSubtab)
+
+    def setDataExtendLayout(self, layoutMain):
+        """
+        Creates the layout of the fill subtab based on the options for each fill method
+
+        """
+
+        # Set the options available for filling the data
+        extendOptions = ['None', 'Fourier']
+
+        # Create and add a dropdown selector with the available options
+        layoutMain.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Extend Method<strong>'))
+
+        self.layoutExtendMethodSelector = QtWidgets.QComboBox()
+        self.layoutExtendMethodSelector.addItems(extendOptions)
+        layoutMain.addWidget(self.layoutExtendMethodSelector)
+
+        # Create a line to delineate the selector from the selector options
+        lineA = QtWidgets.QFrame()
+        lineA.setFrameShape(QtWidgets.QFrame.HLine)
+        layoutMain.addWidget(lineA)
+
+        # Create the fill limit label
+        extendGapLabel = QtWidgets.QLabel('Extension Duration')
+
+        # Create teh fill limit widget
+        self.layoutExtendGapLimit = QtWidgets.QTextEdit()
+        self.layoutExtendGapLimit.setPlaceholderText('30')
+        self.layoutExtendGapLimit.setFixedWidth(50)
+        self.layoutExtendGapLimit.setFixedHeight(25)
+
+        # Create the layout for the fill limit
+        extendGapLayout = QtWidgets.QHBoxLayout()
+        extendGapLayout.setAlignment(QtCore.Qt.AlignTop)
+
+        extendGapLayout.addWidget(extendGapLabel, 1, QtCore.Qt.AlignLeft)
+        extendGapLayout.addWidget(self.layoutExtendGapLimit, 5, QtCore.Qt.AlignLeft)
+
+        # Add the limit into the main page
+        extendGapLayoutWidget = QtWidgets.QWidget()
+        extendGapLayoutWidget.setLayout(extendGapLayout)
+
+        layoutMain.addWidget(extendGapLayoutWidget)
+
+        # Adjust the layout of the widgets
+        layoutMain.setAlignment(QtCore.Qt.AlignTop)
+
+        ### Create the none page ###
+        noneLayout = QtWidgets.QGridLayout()
+
+        ### Create the fourier page ###
+        fourierLayout = QtWidgets.QGridLayout()
+
+        ### Create the stacked layout ###
+        # Initialize the layout
+        self.stackedExtendLayout = QtWidgets.QStackedLayout()
+
+        # Wrap it in a widget and set visibility to false. If this is not done, a small, annoying popup window will
+        # be opened separate from the main window
+        stackedWidget = QtWidgets.QWidget()
+        stackedWidget.setLayout(self.stackedExtendLayout)
+        stackedWidget.setVisible(False)
+
+        # Add each of the interpolation types to it
+        noneWidget = QtWidgets.QWidget()
+        noneWidget.setLayout(noneLayout)
+        self.stackedExtendLayout.addWidget(noneWidget)
+
+        fourierWidget = QtWidgets.QWidget()
+        fourierWidget.setLayout(fourierLayout)
+        self.stackedExtendLayout.addWidget(fourierWidget)
+
+        # Add the stacked layout to the main layout
+        layoutMain.addWidget(stackedWidget)
+
+        ### Connect the stacked widget with the selection combo box ###
+        self.layoutExtendMethodSelector.currentIndexChanged.connect(self._updateExtendSubtab)
+
     def setPredictorDefaultStack(self):
         self.stackedPredictorWidget.setCurrentIndex(0)
 
@@ -611,172 +781,3 @@ class ModelCreationTab(QtWidgets.QWidget):
     def _updateExtendSubtab(self):
         self.stackedExtendLayout.setCurrentIndex(self.layoutExtendMethodSelector.currentIndex())
 
-
-def setDataFillLayout(page, layoutMain):
-    """
-    Creates the layout of the fill subtab based on the options for each fill method
-
-    """
-
-    # Set the options available for filling the data
-    fillOptions = ['Nearest', 'Linear', 'Quadratic', 'Cubic', 'Spline', 'Polynomial']
-    # todo: add None option to the list
-
-    # Create and add a dropdown selector with the available options
-    layoutMain.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Fill Method<strong>'))
-
-    page.layoutFillMethodSelector = QtWidgets.QComboBox()
-    page.layoutFillMethodSelector.addItems(fillOptions)
-    layoutMain.addWidget(page.layoutFillMethodSelector)
-
-    # Create a line to delineate the selector from the selector options
-    lineA = QtWidgets.QFrame()
-    lineA.setFrameShape(QtWidgets.QFrame.HLine)
-    layoutMain.addWidget(lineA)
-
-    # Create the fill limit label
-    filledGapLabel = QtWidgets.QLabel('Maximum Filled Gap')
-
-    # Create teh fill limit widget
-    page.layoutExtendGapLimit = QtWidgets.QTextEdit()
-    page.layoutExtendGapLimit.setPlaceholderText('30')
-    page.layoutExtendGapLimit.setFixedWidth(50)
-    page.layoutExtendGapLimit.setFixedHeight(25)
-
-    # Create the layout for the fill limit
-    filledGapLayout = QtWidgets.QHBoxLayout()
-    filledGapLayout.setAlignment(QtCore.Qt.AlignTop)
-
-    filledGapLayout.addWidget(filledGapLabel, 1, QtCore.Qt.AlignLeft)
-    filledGapLayout.addWidget(page.layoutExtendGapLimit, 5, QtCore.Qt.AlignLeft)
-
-    # Add the limit into the main page
-    filledGapLayoutWidget = QtWidgets.QWidget()
-    filledGapLayoutWidget.setLayout(filledGapLayout)
-
-    layoutMain.addWidget(filledGapLayoutWidget)
-
-    # Adjust the layout of the widgets
-    layoutMain.setAlignment(QtCore.Qt.AlignTop)
-
-    ### Create the nearest page ###
-    nearestLayout = QtWidgets.QGridLayout()
-
-    ### Create the linear page ###
-    linearLayout = QtWidgets.QGridLayout()
-
-    ### Create the quadratic page ###
-    quadradicLayout = QtWidgets.QGridLayout()
-
-    ### Create the cubic page ###
-    cubicLayout = QtWidgets.QGridLayout()
-
-    ### Create the polynomial page ###
-    polyLayout = QtWidgets.QGridLayout()
-
-    ### Create the stacked layout ###
-    # Initialize the layout
-    page.stackedFillLayout = QtWidgets.QStackedLayout()
-
-    # Add each of the interpolation types to it
-    nearestWidget = QtWidgets.QWidget()
-    nearestWidget.setLayout(nearestLayout)
-    page.stackedFillLayout.addWidget(nearestWidget)
-
-    linearWidget = QtWidgets.QWidget()
-    linearWidget.setLayout(linearLayout)
-    page.stackedFillLayout.addWidget(linearWidget)
-
-    quadradicWidget = QtWidgets.QWidget()
-    quadradicWidget.setLayout(quadradicLayout)
-    page.stackedFillLayout.addWidget(quadradicWidget)
-
-    cubicWidget = QtWidgets.QWidget()
-    cubicWidget.setLayout(cubicLayout)
-    page.stackedFillLayout.addWidget(cubicWidget)
-
-    splineWidget = QtWidgets.QWidget()
-    splineWidget.setLayout(polyLayout)
-    page.stackedFillLayout.addWidget(splineWidget)
-
-    # Add the stacked layout to the main layout
-    stackedWidget = QtWidgets.QWidget()
-    stackedWidget.setLayout(page.stackedFillLayout)
-    layoutMain.addWidget(stackedWidget)
-
-    ### Connect the stacked widget with the selection combo box ###
-    page.layoutFillMethodSelector.currentIndexChanged.connect(page._updateFillSubtab)
-
-
-def setDataExtendLayout(page, layoutMain):
-    """
-    Creates the layout of the fill subtab based on the options for each fill method
-
-    """
-
-    # Set the options available for filling the data
-    extendOptions = ['None', 'Fourier']
-
-    # Create and add a dropdown selector with the available options
-    layoutMain.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Extend Method<strong>'))
-
-    page.layoutExtendMethodSelector = QtWidgets.QComboBox()
-    page.layoutExtendMethodSelector.addItems(extendOptions)
-    layoutMain.addWidget(page.layoutExtendMethodSelector)
-
-    # Create a line to delineate the selector from the selector options
-    lineA = QtWidgets.QFrame()
-    lineA.setFrameShape(QtWidgets.QFrame.HLine)
-    layoutMain.addWidget(lineA)
-
-    # Create the fill limit label
-    extendGapLabel = QtWidgets.QLabel('Extension Duration')
-
-    # Create teh fill limit widget
-    page.layoutExtendGapLimit = QtWidgets.QTextEdit()
-    page.layoutExtendGapLimit.setPlaceholderText('30')
-    page.layoutExtendGapLimit.setFixedWidth(50)
-    page.layoutExtendGapLimit.setFixedHeight(25)
-
-    # Create the layout for the fill limit
-    extendGapLayout = QtWidgets.QHBoxLayout()
-    extendGapLayout.setAlignment(QtCore.Qt.AlignTop)
-
-    extendGapLayout.addWidget(extendGapLabel, 1, QtCore.Qt.AlignLeft)
-    extendGapLayout.addWidget(page.layoutExtendGapLimit, 5, QtCore.Qt.AlignLeft)
-
-    # Add the limit into the main page
-    extendGapLayoutWidget = QtWidgets.QWidget()
-    extendGapLayoutWidget.setLayout(extendGapLayout)
-
-    layoutMain.addWidget(extendGapLayoutWidget)
-
-    # Adjust the layout of the widgets
-    layoutMain.setAlignment(QtCore.Qt.AlignTop)
-
-    ### Create the none page ###
-    noneLayout = QtWidgets.QGridLayout()
-
-    ### Create the fourier page ###
-    fourierLayout = QtWidgets.QGridLayout()
-
-    ### Create the stacked layout ###
-    # Initialize the layout
-    page.stackedExtendLayout = QtWidgets.QStackedLayout()
-
-    # Add each of the interpolation types to it
-    noneWidget = QtWidgets.QWidget()
-    noneWidget.setLayout(noneLayout)
-    page.stackedExtendLayout.addWidget(noneWidget)
-
-    fourierWidget = QtWidgets.QWidget()
-    fourierWidget.setLayout(fourierLayout)
-    page.stackedExtendLayout.addWidget(fourierWidget)
-
-    # Add the stacked layout to the main layout
-    stackedWidget = QtWidgets.QWidget()
-    stackedWidget.setLayout(page.stackedFillLayout)
-    layoutMain.addWidget(stackedWidget)
-
-    ### Connect the stacked widget with the selection combo box ###
-    page.layoutExtendMethodSelector.currentIndexChanged.connect(page._updateExtendSubtab)
