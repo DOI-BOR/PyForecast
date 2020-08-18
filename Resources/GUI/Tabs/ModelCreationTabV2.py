@@ -389,7 +389,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Add the list
         self.extendList = DatasetList_HTML_Formatted(datasetTable=self.parent.datasetTable)
-        self.extendList.updateSignalToExternal.connect(self.extendList.refreshDatasetListFromExtenal)
+        self.extendList.updateSignalToExternal.connect(self.layoutDataDoubleList.update)
         layoutExtendLeftLayout.addWidget(self.extendList)
 
         # Link the list to the output table of the DoubleList object in the data tab
