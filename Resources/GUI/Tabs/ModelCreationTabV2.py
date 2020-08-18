@@ -415,15 +415,49 @@ class ModelCreationTab(QtWidgets.QWidget):
 
 
         ### Create the layout window tab ###
-        layoutWindow = QtWidgets.QScrollArea()
-        layoutWindow.setWidgetResizable(True)
+        ## Create the scrollable area ##
+        layoutWindowSA = QtWidgets.QScrollArea()
+        layoutWindowSA.setWidgetResizable(True)
 
-        # Add the tabs into the tab widget
+        ## Create the selector list ##
+        # Create a vertical layout
+        layoutWindowLeftLayout = QtWidgets.QVBoxLayout()
+
+        # Create and add the list title
+        layoutWindowLeftLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Selected Data<strong>'))
+
+        # Connect and add the list
+        self.windowList = DatasetList_HTML_Formatted(datasetTable=self.layoutDataDoubleList.listOutput.datasetTable)
+        self.layoutDataDoubleList.listOutput.updateSignalToExternal.connect(self.windowList.refreshDatasetListFromExtenal)
+        layoutWindowLeftLayout.addWidget(self.windowList)
+
+        ## Create the right panel ##
+        # Create the vertical layout
+        layoutWindowRightLayout = QtWidgets.QVBoxLayout()
+
+        # Fill the remaining area with the layout options
+        self.setDataWindowLayout(layoutWindowRightLayout)
+
+        ## Create the full layout ##
+        layoutWindow = QtWidgets.QHBoxLayout()
+
+        leftWidget = QtWidgets.QWidget()
+        leftWidget.setLayout(layoutWindowLeftLayout)
+        layoutWindow.addWidget(leftWidget, 1)
+
+        rightWidget = QtWidgets.QWidget()
+        rightWidget.setLayout(layoutWindowRightLayout)
+        layoutWindow.addWidget(rightWidget, 2)
+
+        layoutWindowSA.setLayout(layoutWindow)
+
+
+        ### Add the tabs into the tab widget ###
         tabWidget = QtWidgets.QTabWidget()
         tabWidget.addTab(layoutDataSA, 'Data')
         tabWidget.addTab(layoutFillSA, 'Fill')
         tabWidget.addTab(layoutExtendSA, 'Extend')
-        tabWidget.addTab(layoutWindow, 'Window')
+        tabWidget.addTab(layoutWindowSA, 'Window')
 
         # Add to the expert layout
         self.layoutPredictorExpertAnalysis.addWidget(tabWidget)
@@ -766,6 +800,9 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ### Connect the stacked widget with the selection combo box ###
         self.layoutExtendMethodSelector.currentIndexChanged.connect(self._updateExtendSubtab)
+
+    def setDataWindowLayout(self, layoutMain):
+        pass
 
     def setPredictorDefaultStack(self):
         self.stackedPredictorWidget.setCurrentIndex(0)
