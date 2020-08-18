@@ -2,10 +2,12 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from .DatasetList_HTML_Formatted import DatasetList_HTML_Formatted
 import pandas as pd
 import numpy as np
+import copy
 
 class DoubleList(QtWidgets.QWidget):
     
     updatedOutputList = QtCore.pyqtSignal(pd.DataFrame)
+    updatedLinkedList = QtCore.pyqtSignal(DatasetList_HTML_Formatted, DatasetList_HTML_Formatted)
 
     def __init__(self, initialDataframe, inputTitle, outputTitle, parent=None):
         """
@@ -145,24 +147,6 @@ class DoubleList(QtWidgets.QWidget):
         self.buttonSingleToOutput.setDisabled(not self.listInput.selectedItems())
         self.buttonAllToOuput.setDisabled(not self.listInput.selectedItems())
 
-    def addAvailableItems(self, listItems):
-        """
-        Adds entries to the input list of the widget
-
-        Parameters
-        ----------
-        self: DoubleList
-        listItems: QStringList
-            List of strings to add to the input list widget
-
-        Returns
-        -------
-        None
-
-        """
-
-        self.listInput.addItems(listItems)
-
     def resetAvailableItems(self):
         """
         Clears all list entries and adds items back to the list items
@@ -170,8 +154,6 @@ class DoubleList(QtWidgets.QWidget):
         Parameters
         ----------
         self: DoubleList
-        listItems: QStringList
-            List of strings to add to the input list widget
 
         Returns
         -------
@@ -187,6 +169,9 @@ class DoubleList(QtWidgets.QWidget):
         self.listInput.datasetTable = self.data_frame
         self.listInput.refreshDatasetList()
         self.listOutput.refreshDatasetList()
+
+        # Emit for the updated linked doublelists
+        self.updatedLinkedList.emit(self.listInput, self.listOutput)
 
     def seletedItems(self):
         """
@@ -237,6 +222,9 @@ class DoubleList(QtWidgets.QWidget):
         self.listInput.refreshDatasetList()
         self.listOutput.refreshDatasetList()
 
+        # Emit for the updated linked doublelists
+        self.updatedLinkedList.emit(self.listInput, self.listOutput)
+
     def _setAllOutputItems(self):
         """
         Moves all items from the input list to the output list
@@ -260,6 +248,9 @@ class DoubleList(QtWidgets.QWidget):
         # Trigger refreshes of the input and output lists
         self.listInput.refreshDatasetList()
         self.listOutput.refreshDatasetList()
+
+        # Emit for the updated linked doublelists
+        self.updatedLinkedList.emit(self.listInput, self.listOutput)
 
     def _setSingleInputItem(self):
         """
@@ -289,6 +280,9 @@ class DoubleList(QtWidgets.QWidget):
         self.listInput.refreshDatasetList()
         self.listOutput.refreshDatasetList()
 
+        # Emit for the updated linked doublelists
+        self.updatedLinkedList.emit(self.listInput, self.listOutput)
+
 
     def _setSingleOutputItem(self):
         """
@@ -317,6 +311,9 @@ class DoubleList(QtWidgets.QWidget):
         # Trigger refreshes of the input and output lists
         self.listInput.refreshDatasetList()
         self.listOutput.refreshDatasetList()
+
+        # Emit for the updated linked doublelists
+        self.updatedLinkedList.emit(self.listInput, self.listOutput)
 
 
     def _setButtonUpClicked(self):
@@ -350,6 +347,9 @@ class DoubleList(QtWidgets.QWidget):
         # Refresh the table
         self.listOutput.refreshDatasetList()
 
+        # Emit for the updated linked doublelists
+        self.updatedLinkedList.emit(self.listInput, self.listOutput)
+
     def _setButtonDownClicked(self):
         """
         Moves a selected dataset down within the output list
@@ -381,6 +381,9 @@ class DoubleList(QtWidgets.QWidget):
         # Refresh the table
         self.listOutput.refreshDatasetList()
 
+        # Emit for the updated linked doublelists
+        self.updatedLinkedList.emit(self.listInput, self.listOutput)
+
     def update(self, datasetTable):
         """
         Update the double list object based on the input of another widget
@@ -402,4 +405,30 @@ class DoubleList(QtWidgets.QWidget):
 
         # Reset the list entries
         self.resetAvailableItems()
+
+    def updateLinkedDoubleLists(self, inputList, outputList):
+        """
+        Syncronizes the DoubleList with another external DoubleList by copying the tables
+
+        Parameters
+        ----------
+        inputList: html list
+            Qt list of the input series from the other double list
+        outputList: html list
+            Qt list of the output series from the other double list
+
+        Returns
+        -------
+        None.
+
+        """
+
+        # Sync the lists
+        self.listInput.datasetTable = copy.copy(inputList.datasetTable)
+        self.listOutput.datasetTable = copy.copy(outputList.datasetTable)
+
+        # Refresh the object
+        self.listInput.refreshDatasetList()
+        self.listOutput.refreshDatasetList()
+
 
