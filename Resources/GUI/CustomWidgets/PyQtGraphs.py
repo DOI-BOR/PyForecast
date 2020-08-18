@@ -1,7 +1,7 @@
 
 # Import Libraries
 import pyqtgraph as pg
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtGui, QtWidgets, QtChart
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
@@ -542,32 +542,11 @@ class TimeSeriesLinePlot(pg.PlotItem):
             ## (probably this should be handled in ViewBox.resizeEvent)
             self.viewbox_axis2.linkedViewChanged(self.vb, self.viewbox_axis2.XAxis)
 
-        
-
         # Set default limits
-        self.setLimits(
-
-                xMin = 0,
-                xMax = 1,
-                yMin = 0,
-                yMax = 1,
-            
-            )
-        self.viewbox_axis2.setLimits(
-                xMin = 0,
-                xMax = 1,
-                yMin = 0,
-                yMax = 1,
-        )
-        self.setRange(
-
-                xRange = (0, 1),
-                yRange = (0, 1)
-            )
-        self.viewbox_axis2.setRange(
-            xRange = (0, 1),
-            yRange = (0, 1)
-        )
+        self.setLimits(xMin=0, xMax=1, yMin=0, yMax=1)
+        self.viewbox_axis2.setLimits(xMin=0, xMax=1, yMin=0, yMax=1)
+        self.setRange(xRange=(0, 1), yRange=(0, 1))
+        self.viewbox_axis2.setRange(xRange=(0, 1), yRange=(0, 1))
 
         updateViews()
         self.vb.sigResized.connect(updateViews)
@@ -609,7 +588,6 @@ class TimeSeriesLinePlot(pg.PlotItem):
         pi.isActive = False
         return pi
 
-
     def mouseMoved(self, event):
 
         # Don't do anything if there are no datasets
@@ -649,9 +627,6 @@ class TimeSeriesLinePlot(pg.PlotItem):
                     self.legend.items[legendCount][1].setText(item.opts['name']+' <strong>'+str(yval) +' '+ item.units+'</strong>')
                     self.circleItems_axis2[j].setData([date], [yval])
                     legendCount += 1
-            
-        
-
 
     def displayDatasets(self, datasets):
         """
@@ -696,7 +671,6 @@ class TimeSeriesLinePlot(pg.PlotItem):
             # Get the Dataset Title
             d = self.parent.parent.parent.datasetTable.loc[dataset]
             title = d['DatasetName'] + ': ' + d['DatasetParameter']
-            
 
             # Get the Data
             x = np.array(self.parent.parent.parent.dataTable.loc[(slice(None), dataset), 'Value'].index.get_level_values(0).astype('int64'))/1000000000 # Dates in seconds since epoch
@@ -713,7 +687,6 @@ class TimeSeriesLinePlot(pg.PlotItem):
             # Figure out which axis to plot on
             unitsEquivalent = sameUnits(primaryUnits, d['DatasetUnits'])
             if unitsEquivalent[0]:
-
                 
                 self.yMax = np.nanmax([self.yMax, np.nanmax(y)])
                 self.yMin = np.nanmin([self.yMin, np.nanmin(y)])
@@ -725,7 +698,6 @@ class TimeSeriesLinePlot(pg.PlotItem):
                 
             else:
 
-                
                 self.yMax2 = np.nanmax([self.yMax2, np.nanmax(y)])
                 self.yMin2 = np.nanmin([self.yMin2, np.nanmin(y)])
 
@@ -756,31 +728,14 @@ class TimeSeriesLinePlot(pg.PlotItem):
         
         #print('PLOT ',self.xMax, self.xMin, self.yMax, self.yMin)
         if not any([np.isinf(self.xMax), np.isinf(self.xMin), np.isinf(self.yMax), np.isinf(self.yMin)]):
-            self.setLimits(
+            self.setLimits(xMin=self.xMin, xMax=self.xMax, yMin=self.yMin, yMax=self.yMax)
+            self.setRange(xRange=(self.xMin, self.xMax), yRange=(self.yMin, self.yMax))
 
-                xMin = self.xMin,
-                xMax = self.xMax,
-                yMin = self.yMin,
-                yMax = self.yMax,
-            
-            )
-            self.setRange(
-
-                xRange = (self.xMin, self.xMax),
-                yRange = (self.yMin, self.yMax)
-            )
         else:
             print(self.xMax, self.xMin, self.yMax, self.yMin)
 
         if not any([np.isinf(self.xMax), np.isinf(self.xMin), np.isinf(self.yMax2), np.isinf(self.yMin2)]):
-            self.viewbox_axis2.setLimits(
-
-                xMin = self.xMin,
-                xMax = self.xMax,
-                yMin = self.yMin2,
-                yMax = self.yMax2,
-            
-            )
+            self.viewbox_axis2.setLimits(xMin=self.xMin, xMax=self.xMax, yMin=self.yMin2, yMax=self.yMax2)
             self.viewbox_axis2.setRange(
 
                 xRange = (self.xMin, self.xMax),
@@ -810,6 +765,128 @@ class TimeSeriesLinePlot(pg.PlotItem):
 
         return
 
+class TimeSeriesLineBarPlot():
+
+    def __init__(self, parent=None):
+        """
+
+
+        """
+        # todo: doc string
+
+        # Create the new chart
+        self.chart = QtChart.QChart()
+        self.chartView = None
+
+        # Create the bar series
+        self.barSeries = QtChart.QBarSeries()
+
+        # Create a list of of time series
+        self.timeSeries = []
+
+        # Create the axis variables
+        self.barCategories = None
+
+    def createLinePlotItem(self, label, data):
+        """
+        Setup the line plot items using the existing format
+
+        """
+        # todo: doc string
+
+        # Create the line series
+        lineSeries = QtChart.QLineSeries()
+
+        # Set the series name
+        lineSeries.setName(label)
+
+        # Append the values into the series
+        for values in data:
+            lineSeries.append(QtCore.QPoint(values[0], values[1]))
+
+        # Append the line series into the class list
+        self.timeSeries.append(lineSeries)
+
+    def createBarPlotItem(self, label, data):
+        """
+        Create bar plots superimposed on the line plots
+
+        """
+        # todo: doc string
+
+        # Define the set
+        barSet = QtChart.QBarSet(label)
+
+        # Add values into it
+        for value in data:
+            barSet.append(value)
+
+        # Add the set into the series
+        self.barSeries.append(barSet)
+
+    def setBarCategories(self, barCategories):
+        """
+
+
+        """
+
+        self.barCategories = barCategories
+
+
+    def plot(self):
+        """
+
+        """
+        # todo: doc string
+
+        ### Add the data onto the chart ###
+        # Add the bar chart
+        self.chart.addSeries(self.barSeries)
+
+        # Add the time series
+        for series in self.timeSeries:
+            self.chart.addSeries(series)
+
+        ### Format the charts ###
+        ## Create custom x axes ##
+        # Instantiate the bar axis object
+        xAxis = QtChart.QBarCategoryAxis()
+
+        # Add the categories into the axis
+        xAxis.append(self.barCategories)
+
+        ## Set the x axis on all the series ##
+        # Set the bar series
+        self.chart.setAxisX(xAxis, self.barSeries)
+
+        # Loop and set the time series
+        for series in self.timeSeries:
+            self.chart.setAxisX(xAxis, series)
+
+        ## Create the custom y axes ##
+        # Instatiate the axis object
+        yAxis = QtChart.QValueAxis()
+
+        ## Set the x axis on all the series ##
+        # Set the bar series
+        self.chart.setAxisY(yAxis, self.barSeries)
+
+        # Loop and set the time series
+        for series in self.timeSeries:
+            self.chart.setAxisY(yAxis, series)
+
+        ### Show the legend ###
+        # Define the legend
+        legend = self.chart.legend()
+
+        # Set the visibility to true
+        legend.setVisible(True)
+
+        ### Set the chart to render ###
+        self.chartView = QtChart.QChartView(self.chart)
+        self.chartView.setRenderHint(QtGui.QPainter.Antialiasing)
+
+        # Not sure if I need to do anything after this to get it render correctly
 
 
 def sameUnits(unit1, unit2):
@@ -854,9 +931,6 @@ def takeClosest(myList, myNumber):
        return after
     else:
        return before
-
-
-
 
 
 if __name__ == '__main__':
