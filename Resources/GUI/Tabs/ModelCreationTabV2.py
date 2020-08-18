@@ -10,7 +10,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 
 from resources.GUI.CustomWidgets.DatasetList_HTML_Formatted import DatasetList_HTML_Formatted
 from resources.GUI.CustomWidgets.DoubleList import DoubleList
-from resources.GUI.CustomWidgets.PyQtGraphs import ModelTabPlots
+from resources.GUI.CustomWidgets.PyQtGraphs import ModelTabPlots, TimeSeriesLineBarPlot
 from resources.GUI.CustomWidgets.customTabs import EnhancedTabWidget
 from resources.GUI.WebMap import webMapView
 # import pandas as pd
@@ -433,7 +433,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ## Create the right panel ##
         # Create the vertical layout
-        layoutWindowRightLayout = QtWidgets.QVBoxLayout()
+        layoutWindowRightLayout = QtWidgets.QGridLayout()
 
         # Fill the remaining area with the layout options
         self.setDataWindowLayout(layoutWindowRightLayout)
@@ -748,7 +748,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Create the fill limit label
         extendGapLabel = QtWidgets.QLabel('Extension Duration')
 
-        # Create teh fill limit widget
+        # Create the fill limit widget
         self.layoutExtendGapLimit = QtWidgets.QTextEdit()
         self.layoutExtendGapLimit.setPlaceholderText('30')
         self.layoutExtendGapLimit.setFixedWidth(50)
@@ -802,7 +802,95 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.layoutExtendMethodSelector.currentIndexChanged.connect(self._updateExtendSubtab)
 
     def setDataWindowLayout(self, layoutMain):
-        pass
+
+        ### Setup the upper plot ###
+        # Create a line/bar plot object
+        dataPlot = TimeSeriesLineBarPlot()
+
+        # Add some random data to test
+        dataPlot.createBarPlotItem('test1', [0, 1, 2])
+        dataPlot.createBarPlotItem('test2', [3, 4, 6])
+        dataPlot.createBarPlotItem('test3', [7, 8, 9])
+
+        # Add some random timeseries data
+        # @@ These aren't referenced to the values, but to the positions ont eh cart
+        dataPlot.createLinePlotItem('test4', [[0, 2], [2, 4], [4, 6]])
+
+        # Set the bar categories
+        dataPlot.setBarCategories(['1', '2', '3'])
+
+        # Plot the data
+        dataPlot.plot()
+
+        # Add into the main layout
+        layoutMain.addWidget(dataPlot.chartView, 0, 0, 1, 3)
+
+        ### Create the date/lag widgets ###
+        # todo: capture these values for each dataset on list change
+
+        ## Create the start time widget ##
+        # Create the label
+        periodStartLabel = QtWidgets.QLabel('Start Date:')
+
+        # Create the date widget
+        self.periodStartWindowLayout = QtWidgets.QDateTimeEdit()
+        self.periodStartWindowLayout.setDisplayFormat("MMMM d")
+        self.periodStartWindowLayout.setCalendarPopup(True)
+        self.periodStartWindowLayout.setMinimumDate(QtCore.QDate(QtCore.QDate().currentDate().year(), 1, 1))
+        self.periodStartWindowLayout.setMaximumDate(QtCore.QDate(QtCore.QDate().currentDate().year(), 12, 31))
+
+        # Add the widgets to the layout
+        startLayout = QtWidgets.QHBoxLayout()
+        startLayout.setAlignment(QtCore.Qt.AlignLeft)
+        startLayout.addWidget(periodStartLabel, 1)
+        startLayout.addWidget(self.periodStartWindowLayout, 2)
+
+        startLayoutWidget = QtWidgets.QWidget()
+        startLayoutWidget.setLayout(startLayout)
+
+        layoutMain.addWidget(startLayoutWidget, 1, 0)
+
+        ## Create the stop time widget ##
+        # Create the label
+        periodEndLabel = QtWidgets.QLabel('End Date:')
+
+        # Create the date widget
+        self.periodEndWindowLayout = QtWidgets.QDateTimeEdit()
+        self.periodEndWindowLayout.setDisplayFormat("MMMM d")
+        self.periodEndWindowLayout.setCalendarPopup(True)
+        self.periodEndWindowLayout.setMinimumDate(QtCore.QDate(QtCore.QDate().currentDate().year(), 1, 1))
+        self.periodEndWindowLayout.setMaximumDate(QtCore.QDate(QtCore.QDate().currentDate().year(), 12, 31))
+
+        # Add the widgets to the layout
+        stopLayout = QtWidgets.QHBoxLayout()
+        stopLayout.setAlignment(QtCore.Qt.AlignLeft)
+        stopLayout.addWidget(periodEndLabel, 1)
+        stopLayout.addWidget(self.periodEndWindowLayout, 2)
+
+        stopLayoutWidget = QtWidgets.QWidget()
+        stopLayoutWidget.setLayout(stopLayout)
+        layoutMain.addWidget(stopLayoutWidget, 1, 1)
+
+        ## Create the lag box widget ##
+        # Create the label
+        extendGapLabel = QtWidgets.QLabel('Lag Length')
+        # extendGapLabel.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+
+        # Create the widget
+        self.layoutWindowLagLimit = QtWidgets.QTextEdit()
+        self.layoutWindowLagLimit.setPlaceholderText('30')
+        self.layoutWindowLagLimit.setFixedHeight(25)
+        # self.layoutWindowLagLimit.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+
+        # Add the widgets to the layout
+        lagLayout = QtWidgets.QHBoxLayout()
+        lagLayout.setAlignment(QtCore.Qt.AlignLeft)
+        lagLayout.addWidget(extendGapLabel, 1)
+        lagLayout.addWidget(self.layoutWindowLagLimit, 2)
+
+        lagLayoutWidget = QtWidgets.QWidget()
+        lagLayoutWidget.setLayout(lagLayout)
+        layoutMain.addWidget(lagLayoutWidget, 1, 2)
 
     def setPredictorDefaultStack(self):
         self.stackedPredictorWidget.setCurrentIndex(0)
