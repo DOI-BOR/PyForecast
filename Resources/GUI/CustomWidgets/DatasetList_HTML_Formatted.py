@@ -306,7 +306,7 @@ class DatasetList_HTML_Formatted(QtWidgets.QListWidget):
         """
 
         # Update the dataset table
-        self.datasetTable = datasetTable
+        self.datasetTable = copy.copy(datasetTable)
 
         # Trigger a table refresh
         self.refreshDatasetList()

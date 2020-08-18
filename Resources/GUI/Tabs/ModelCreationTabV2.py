@@ -14,6 +14,7 @@ from resources.GUI.CustomWidgets.PyQtGraphs import ModelTabPlots
 from resources.GUI.CustomWidgets.customTabs import EnhancedTabWidget
 from resources.GUI.WebMap import webMapView
 # import pandas as pd
+import copy
 
 WIDTH_BIGGEST_REGR_BUTTON = 0
 
@@ -324,6 +325,10 @@ class ModelCreationTab(QtWidgets.QWidget):
         # populate the DoubleList entries
         self.datasetList.updateSignalToExternal.connect(self.layoutDataDoubleList.update)
 
+        # Connect the doublelists together. This will keep the selection in sync between the simple and expert modes
+        self.layoutDataDoubleList.updatedLinkedList.connect(self.layoutSimpleDoubleList.updateLinkedDoubleLists)
+        self.layoutSimpleDoubleList.updatedLinkedList.connect(self.layoutDataDoubleList.updateLinkedDoubleLists)
+
         # todo: Update the positions on the map
 
         # Add the widget to the layout
@@ -347,13 +352,9 @@ class ModelCreationTab(QtWidgets.QWidget):
         layoutFillLeftLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Selected Data<strong>'))
 
         # Add the list
-        # todo: initialize from output list in the data subtab
-        self.fillList = DatasetList_HTML_Formatted(datasetTable=self.parent.datasetTable)
-        self.datasetList.updateSignalToExternal.connect(self.fillList.refreshDatasetListFromExtenal)
+        self.fillList = DatasetList_HTML_Formatted(datasetTable=self.layoutDataDoubleList.listOutput.datasetTable)
+        self.layoutDataDoubleList.listOutput.updateSignalToExternal.connect(self.fillList.refreshDatasetListFromExtenal)
         layoutFillLeftLayout.addWidget(self.fillList)
-
-        # Link the list to the output table of the DoubleList object in the data tab
-        # todo: add signal to the double list object for updating
 
         ## Create the right panel ##
         # Create the vertical layout
@@ -387,13 +388,10 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Create and add the list title
         layoutExtendLeftLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Selected Data<strong>'))
 
-        # Add the list
-        self.extendList = DatasetList_HTML_Formatted(datasetTable=self.parent.datasetTable)
-        self.extendList.updateSignalToExternal.connect(self.layoutDataDoubleList.update)
+        # Connect and add the list
+        self.extendList = DatasetList_HTML_Formatted(datasetTable=self.layoutDataDoubleList.listOutput.datasetTable)
+        self.layoutDataDoubleList.listOutput.updateSignalToExternal.connect(self.extendList.refreshDatasetListFromExtenal)
         layoutExtendLeftLayout.addWidget(self.extendList)
-
-        # Link the list to the output table of the DoubleList object in the data tab
-        # todo: add signal to the double list object for updating
 
         ## Create the right panel ##
         # Create the vertical layout
@@ -417,15 +415,49 @@ class ModelCreationTab(QtWidgets.QWidget):
 
 
         ### Create the layout window tab ###
-        layoutWindow = QtWidgets.QScrollArea()
-        layoutWindow.setWidgetResizable(True)
+        ## Create the scrollable area ##
+        layoutWindowSA = QtWidgets.QScrollArea()
+        layoutWindowSA.setWidgetResizable(True)
 
-        # Add the tabs into the tab widget
+        ## Create the selector list ##
+        # Create a vertical layout
+        layoutWindowLeftLayout = QtWidgets.QVBoxLayout()
+
+        # Create and add the list title
+        layoutWindowLeftLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Selected Data<strong>'))
+
+        # Connect and add the list
+        self.windowList = DatasetList_HTML_Formatted(datasetTable=self.layoutDataDoubleList.listOutput.datasetTable)
+        self.layoutDataDoubleList.listOutput.updateSignalToExternal.connect(self.windowList.refreshDatasetListFromExtenal)
+        layoutWindowLeftLayout.addWidget(self.windowList)
+
+        ## Create the right panel ##
+        # Create the vertical layout
+        layoutWindowRightLayout = QtWidgets.QVBoxLayout()
+
+        # Fill the remaining area with the layout options
+        self.setDataWindowLayout(layoutWindowRightLayout)
+
+        ## Create the full layout ##
+        layoutWindow = QtWidgets.QHBoxLayout()
+
+        leftWidget = QtWidgets.QWidget()
+        leftWidget.setLayout(layoutWindowLeftLayout)
+        layoutWindow.addWidget(leftWidget, 1)
+
+        rightWidget = QtWidgets.QWidget()
+        rightWidget.setLayout(layoutWindowRightLayout)
+        layoutWindow.addWidget(rightWidget, 2)
+
+        layoutWindowSA.setLayout(layoutWindow)
+
+
+        ### Add the tabs into the tab widget ###
         tabWidget = QtWidgets.QTabWidget()
         tabWidget.addTab(layoutDataSA, 'Data')
         tabWidget.addTab(layoutFillSA, 'Fill')
         tabWidget.addTab(layoutExtendSA, 'Extend')
-        tabWidget.addTab(layoutWindow, 'Window')
+        tabWidget.addTab(layoutWindowSA, 'Window')
 
         # Add to the expert layout
         self.layoutPredictorExpertAnalysis.addWidget(tabWidget)
@@ -768,6 +800,9 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ### Connect the stacked widget with the selection combo box ###
         self.layoutExtendMethodSelector.currentIndexChanged.connect(self._updateExtendSubtab)
+
+    def setDataWindowLayout(self, layoutMain):
+        pass
 
     def setPredictorDefaultStack(self):
         self.stackedPredictorWidget.setCurrentIndex(0)
