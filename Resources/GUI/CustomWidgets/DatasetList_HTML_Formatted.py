@@ -175,66 +175,67 @@ class DatasetList_HTML_Formatted(QtWidgets.QListWidget):
         elif isinstance(self.datasetTable, pd.Series):
             iterator = [(0, self.datasetTable)]
 
-        for i, dataset in iterator:
-            
-            # Create a new item for the widget and assign the dataset to the item's userRole
-            item = QtWidgets.QListWidgetItem()
-            item.setData(QtCore.Qt.UserRole, dataset)
+        if self.datasetTable is not None:
+            for i, dataset in iterator:
 
-            
-            
-            # set the item's text to the HTML formatted version of the dataset
-            htmlString = self.substituteFormatString(item.data(QtCore.Qt.UserRole))
-            svg = 'resources/graphicalResources/icons/cactus-24px.svg'
-            if self.useIcon:
-                parameterName = dataset['DatasetParameter']
-                if "SNOTEL" in dataset['DatasetType'] and 'snow' in parameterName.lower():
-                    svg = os.path.abspath("resources/graphicalResources/icons/terrain-24px.svg")
-                elif 'OTHER' in dataset['DatasetType']:
-                    svg = os.path.abspath("resources/graphicalResources/icons/language-24px.svg")
+                # Create a new item for the widget and assign the dataset to the item's userRole
+                item = QtWidgets.QListWidgetItem()
+                item.setData(QtCore.Qt.UserRole, dataset)
+
+
+
+                # set the item's text to the HTML formatted version of the dataset
+                htmlString = self.substituteFormatString(item.data(QtCore.Qt.UserRole))
+                svg = 'resources/graphicalResources/icons/cactus-24px.svg'
+                if self.useIcon:
+                    parameterName = dataset['DatasetParameter']
+                    if "SNOTEL" in dataset['DatasetType'] and 'snow' in parameterName.lower():
+                        svg = os.path.abspath("resources/graphicalResources/icons/terrain-24px.svg")
+                    elif 'OTHER' in dataset['DatasetType']:
+                        svg = os.path.abspath("resources/graphicalResources/icons/language-24px.svg")
+                    else:
+                        for key, value in datasetIcons.items():
+                            if key in parameterName.lower():
+                                svg = value
+
+                htmlString = htmlString.format(svg)
+
+                item.setText(htmlString)
+
+                item.setForeground(QtGui.QBrush(QtGui.QColor(0,0,0,0)))
+
+                # Create a widget to display the formatted text (and a button if enabled)
+                layout = QtWidgets.QVBoxLayout()
+                textBox = QtWidgets.QLabel(item.text())
+                textBox.setTextFormat(QtCore.Qt.RichText)
+                layout.addWidget(textBox)
+                if dataset.name >= 900000 and self.addButtons:
+                    self.buttonList.append(QtWidgets.QPushButton("Configure"))
+                    self.buttonList[-1].setCheckable(True)
+                    self.buttonList[-1].toggled.connect(self.findSelectedButton)
+                    layout.addWidget(self.buttonList[-1])
+                elif self.buttonText != None:
+                    self.buttonList.append(QtWidgets.QPushButton(self.buttonText))
+                    self.buttonList[-1].setCheckable(True)
+                    self.buttonList[-1].toggled.connect(self.findSelectedButton)
+                    layout.addWidget(self.buttonList[-1])
                 else:
-                    for key, value in datasetIcons.items():
-                        if key in parameterName.lower():
-                            svg = value
+                    self.buttonList.append(QtWidgets.QPushButton(""))
+                    self.buttonList[-1].setCheckable(True)
+                widget = QtWidgets.QWidget(objectName = 'listItemWidget')
+                widget.setLayout(layout)
+                tooltipText = self.createToolTip(dataset)
+                widget.setToolTip(tooltipText)
 
-            htmlString = htmlString.format(svg)
+                # Set a displayrole for combo boxes
+                itemComboBoxText = "{0}: {3} - {1} ({2})".format(dataset['DatasetExternalID'], dataset['DatasetName'], dataset['DatasetParameter'], dataset['DatasetType'])
+                item.setData(QtCore.Qt.DisplayRole, itemComboBoxText)
 
-            item.setText(htmlString)
 
-            item.setForeground(QtGui.QBrush(QtGui.QColor(0,0,0,0)))
-
-            # Create a widget to display the formatted text (and a button if enabled)
-            layout = QtWidgets.QVBoxLayout()
-            textBox = QtWidgets.QLabel(item.text())
-            textBox.setTextFormat(QtCore.Qt.RichText)
-            layout.addWidget(textBox)
-            if dataset.name >= 900000 and self.addButtons:
-                self.buttonList.append(QtWidgets.QPushButton("Configure"))
-                self.buttonList[-1].setCheckable(True)
-                self.buttonList[-1].toggled.connect(self.findSelectedButton)
-                layout.addWidget(self.buttonList[-1])
-            elif self.buttonText != None:
-                self.buttonList.append(QtWidgets.QPushButton(self.buttonText))
-                self.buttonList[-1].setCheckable(True)
-                self.buttonList[-1].toggled.connect(self.findSelectedButton)
-                layout.addWidget(self.buttonList[-1])
-            else:
-                self.buttonList.append(QtWidgets.QPushButton(""))
-                self.buttonList[-1].setCheckable(True)
-            widget = QtWidgets.QWidget(objectName = 'listItemWidget')
-            widget.setLayout(layout)
-            tooltipText = self.createToolTip(dataset)
-            widget.setToolTip(tooltipText)
-
-            # Set a displayrole for combo boxes
-            itemComboBoxText = "{0}: {3} - {1} ({2})".format(dataset['DatasetExternalID'], dataset['DatasetName'], dataset['DatasetParameter'], dataset['DatasetType'])
-            item.setData(QtCore.Qt.DisplayRole, itemComboBoxText)
-            
-
-            # Add the item to the listwidget
-            item.setSizeHint(QtCore.QSize(0,widget.sizeHint().height() + 15))
-            self.addItem(item)
-            self.setItemWidget(item, widget)
+                # Add the item to the listwidget
+                item.setSizeHint(QtCore.QSize(0,widget.sizeHint().height() + 15))
+                self.addItem(item)
+                self.setItemWidget(item, widget)
 
         # Send the signal to update other objects that reference this list, passing the updated dataframe
         self.updateSignalToExternal.emit(pd.DataFrame(self.datasetTable))

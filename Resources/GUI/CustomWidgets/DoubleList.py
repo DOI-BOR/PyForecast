@@ -1,7 +1,11 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
+from .DatasetList_HTML_Formatted import DatasetList_HTML_Formatted
 import pandas as pd
+import numpy as np
 
 class DoubleList(QtWidgets.QWidget):
+    
+    updatedOutputList = QtCore.pyqtSignal(pd.DataFrame)
 
     def __init__(self, initialDataframe, inputTitle, outputTitle, parent=None):
         """
@@ -24,8 +28,8 @@ class DoubleList(QtWidgets.QWidget):
 
         # Create the overall layout objects
         layout = QtWidgets.QHBoxLayout(self)
-        self.listInput = QtWidgets.QListWidget()
-        self.listOuput = QtWidgets.QListWidget()
+        self.listInput = DatasetList_HTML_Formatted()
+        self.listOutput = DatasetList_HTML_Formatted()
 
         # Create the title widgets
         inputTitleWidget = QtWidgets.QLabel(inputTitle)
@@ -61,7 +65,7 @@ class DoubleList(QtWidgets.QWidget):
         # Create the output column layout
         layoutOutput = QtWidgets.QVBoxLayout()
         layoutOutput.addWidget(outputTitleWidget)
-        layoutOutput.addWidget(self.listOuput)
+        layoutOutput.addWidget(self.listOutput)
 
         layoutOutputWidget = QtWidgets.QWidget()
         layoutOutputWidget.setLayout(layoutOutput)
@@ -77,13 +81,15 @@ class DoubleList(QtWidgets.QWidget):
         layoutl.addWidget(self.buttonUp)
         layoutl.addWidget(self.buttonDown)
         layoutl.addItem(QtWidgets.QSpacerItem(10, 20, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding))
-
         layout.addLayout(layoutl)
 
+        # Set the initial dataframe from the parent object
         self.data_frame = initialDataframe
 
-
+        # Set the status button
         self._setStatusButton()
+
+        # Create the connections between the DoubleList objects
         self.connections()
 
     def connections(self):
@@ -102,7 +108,7 @@ class DoubleList(QtWidgets.QWidget):
         """
 
         # Setup the connections between the lists and the status button
-        self.listOuput.itemSelectionChanged.connect(self._setStatusButton)
+        self.listOutput.itemSelectionChanged.connect(self._setStatusButton)
         self.listInput.itemSelectionChanged.connect(self._setStatusButton)
 
         # Set the move button connections
@@ -134,9 +140,8 @@ class DoubleList(QtWidgets.QWidget):
 
         """
 
-
-        self.buttonUp.setDisabled(not self.listOuput.selectedItems() or self.listOuput.currentRow() == 0)
-        self.buttonDown.setDisabled(not self.listOuput.selectedItems() or self.listOuput.currentRow() == self.listOuput.count() - 1)
+        self.buttonUp.setDisabled(not self.listOutput.selectedItems() or self.listOutput.currentRow() == 0)
+        self.buttonDown.setDisabled(not self.listOutput.selectedItems() or self.listOutput.currentRow() == self.listOutput.count() - 1)
         self.buttonSingleToOutput.setDisabled(not self.listInput.selectedItems())
         self.buttonAllToOuput.setDisabled(not self.listInput.selectedItems())
 
@@ -156,9 +161,9 @@ class DoubleList(QtWidgets.QWidget):
 
         """
 
-        self.listInput.addItems(listItems);
+        self.listInput.addItems(listItems)
 
-    def resetAvailableItems(self, listItems):
+    def resetAvailableItems(self):
         """
         Clears all list entries and adds items back to the list items
 
@@ -176,10 +181,12 @@ class DoubleList(QtWidgets.QWidget):
 
         # Clear the input and output lists
         self.listInput.clear()
-        self.listOuput.clear()
+        self.listOutput.clear()
 
-        # Add the items to the input list
-        self.addAvailableItems(listItems)
+        # Add the items to the input list and refresh the input list
+        self.listInput.datasetTable = self.data_frame
+        self.listInput.refreshDatasetList()
+        self.listOutput.refreshDatasetList()
 
     def seletedItems(self):
         """
@@ -194,13 +201,14 @@ class DoubleList(QtWidgets.QWidget):
         None
 
         """
+        # todo: not sure if this works with the updated dataframe syntax
 
         # Create a item list to hold the output
         itemSelected = QtWidgets.QStringList()
 
         # Get each selected item from the output list and add it to the output list
-        for i_item_entry in range(0, self.listOuput.count(), 1):
-            itemSelected.append(self.listOuput.item(i_item_entry).text())
+        for i_item_entry in range(0, self.listOutput.count(), 1):
+            itemSelected.append(self.listOutput.item(i_item_entry).text())
 
         # Return the output list to the calling function
         return itemSelected
@@ -219,8 +227,15 @@ class DoubleList(QtWidgets.QWidget):
 
         """
 
-        while self.listOuput.count() > 0:
-            self.listInput.addItem(self.listOuput.takeItem(0))
+        # Swap the tables between the objects
+        self.listInput.datasetTable = self.listInput.datasetTable.append(self.listOutput.datasetTable)
+
+        # Clear the output list
+        self.listOutput.datasetTable = self.listOutput.datasetTable.drop(self.listOutput.datasetTable.index)
+
+        # Trigger refreshes of the input and output lists
+        self.listInput.refreshDatasetList()
+        self.listOutput.refreshDatasetList()
 
     def _setAllOutputItems(self):
         """
@@ -236,8 +251,15 @@ class DoubleList(QtWidgets.QWidget):
 
         """
 
-        while self.listInput.count() > 0:
-            self.listOuput.addItem(self.listInput.takeItem(0))
+        # Swap the tables between the objects
+        self.listOutput.datasetTable = self.listOutput.datasetTable.append(self.listInput.datasetTable)
+
+        # Clear the input list
+        self.listInput.datasetTable = self.listInput.datasetTable.drop(self.listInput.datasetTable.index)
+
+        # Trigger refreshes of the input and output lists
+        self.listInput.refreshDatasetList()
+        self.listOutput.refreshDatasetList()
 
     def _setSingleInputItem(self):
         """
@@ -253,7 +275,20 @@ class DoubleList(QtWidgets.QWidget):
 
         """
 
-        self.listInput.addItem(self.listOuput.takeItem(self.listOuput.currentRow()))
+        # Get the current row of index
+        input_row_index = self.listOutput.currentRow()
+
+        # Append the row into the output table
+        rows = self.listOutput.datasetTable.iloc[input_row_index, :]
+        self.listInput.datasetTable = self.listInput.datasetTable.append(rows, ignore_index=True)
+
+        # Remove from the input table
+        self.listOutput.datasetTable.drop(self.listOutput.datasetTable.index[input_row_index], inplace=True)
+
+        # Trigger refreshes of the input and output lists
+        self.listInput.refreshDatasetList()
+        self.listOutput.refreshDatasetList()
+
 
     def _setSingleOutputItem(self):
         """
@@ -269,7 +304,20 @@ class DoubleList(QtWidgets.QWidget):
 
         """
 
-        self.listOuput.addItem(self.listInput.takeItem(self.listInput.currentRow()))
+        # Get the current row of index
+        input_row_index = self.listInput.currentRow()
+
+        # Append the row into the output table
+        rows = self.listInput.datasetTable.iloc[input_row_index, :]
+        self.listOutput.datasetTable = self.listOutput.datasetTable.append(rows, ignore_index=True)
+
+        # Remove from the input table
+        self.listInput.datasetTable.drop(self.listInput.datasetTable.index[input_row_index], inplace=True)
+
+        # Trigger refreshes of the input and output lists
+        self.listInput.refreshDatasetList()
+        self.listOutput.refreshDatasetList()
+
 
     def _setButtonUpClicked(self):
         """
@@ -286,14 +334,21 @@ class DoubleList(QtWidgets.QWidget):
         """
 
         # Get the current item in the list
-        i_current_row = self.listOuput.currentRow()
+        i_current_row = self.listOutput.currentRow()
 
-        # Get the current item from the list
-        currentItem = self.listOuput.takeItem(i_current_row)
+        # Get the current row of the output table
+        ia_indices = np.arange(0, len(self.listOutput.datasetTable), 1)
 
-        # Insert the item one above and update the the current row
-        self.listOuput.insertItem(i_current_row - 1, currentItem)
-        self.listOuput.setCurrentRow(i_current_row - 1)
+        # Swap the indices
+        i_current_index = np.argwhere(ia_indices == i_current_row).flatten()[0]
+        ia_indices[i_current_index] = ia_indices[i_current_index - 1]
+        ia_indices[i_current_index - 1] = i_current_row
+
+        # Reindex the table
+        self.listOutput.datasetTable = self.listOutput.datasetTable.reindex(self.listOutput.datasetTable.index[ia_indices])
+
+        # Refresh the table
+        self.listOutput.refreshDatasetList()
 
     def _setButtonDownClicked(self):
         """
@@ -310,14 +365,21 @@ class DoubleList(QtWidgets.QWidget):
         """
 
         # Get the current item in the list
-        i_current_row = self.listOuput.currentRow()
+        i_current_row = self.listOutput.currentRow()
 
-        # Get the current item from the list
-        currentItem = self.listOuput.takeItem(i_current_row)
+        # Get the current row of the output table
+        ia_indices = np.arange(0, len(self.listOutput.datasetTable), 1)
 
-        # Insert the item one below and update the the current row
-        self.listOuput.insertItem(i_current_row + 1, currentItem)
-        self.listOuput.setCurrentRow(i_current_row + 1)
+        # Swap the indices
+        i_current_index = np.argwhere(ia_indices == i_current_row).flatten()[0]
+        ia_indices[i_current_index] = ia_indices[i_current_index + 1]
+        ia_indices[i_current_index + 1] = i_current_row
+
+        # Reindex the table
+        self.listOutput.datasetTable = self.listOutput.datasetTable.reindex(self.listOutput.datasetTable.index[ia_indices])
+
+        # Refresh the table
+        self.listOutput.refreshDatasetList()
 
     def update(self, datasetTable):
         """
@@ -338,9 +400,6 @@ class DoubleList(QtWidgets.QWidget):
         # Update the DoubleList dataframe
         self.data_frame = datasetTable
 
-        # Extract the dataset names
-        sl_names = self.data_frame['DatasetName'].values
-
         # Reset the list entries
-        self.resetAvailableItems(sl_names)
+        self.resetAvailableItems()
 
