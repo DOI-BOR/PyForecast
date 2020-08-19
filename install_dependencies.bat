@@ -40,6 +40,8 @@ pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-hos
 ECHO OOOOOOOOOOOOOOOO
 pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org statsmodels -U --user
 ECHO OOOOOOOOOOOOOOOOO
+pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org pyqtchart -U --user
+ECHO OOOOOOOOOOOOOOOOOO
 ECHO.
 ECHO Press any key to exit
 PAUSE
