@@ -12,166 +12,9 @@ from resources.GUI.CustomWidgets.DatasetList_HTML_Formatted import DatasetList_H
 from resources.GUI.CustomWidgets.DoubleList import DoubleList
 from resources.GUI.CustomWidgets.PyQtGraphs import ModelTabPlots, TimeSeriesLineBarPlot
 from resources.GUI.CustomWidgets.customTabs import EnhancedTabWidget
+from resources.GUI.CustomWidgets.richTextButtons import richTextButton, richTextButtonCheckbox, richTextDescriptionButton
 from resources.GUI.WebMap import webMapView
 # import pandas as pd
-import copy
-
-WIDTH_BIGGEST_REGR_BUTTON = 0
-
-class richTextDescriptionButton(QtWidgets.QPushButton):
-    
-    def __init__(self, parent = None, richText = ""):
-        global WIDTH_BIGGEST_REGR_BUTTON
-
-        QtWidgets.QPushButton.__init__(self)
-        self.setCheckable(True)
-        self.setAutoExclusive(False)
-        self.lab = QtWidgets.QLabel(richText, self)
-        self.lab.mousePressEvent = lambda ev: self.click()
-        self.lab.setTextFormat(QtCore.Qt.RichText)
-        
-        self.richTextChecked = """
-        <table border=0>
-        <tr><td><img src="resources/GraphicalResources/icons/check_box-24px.svg"></td>
-        <td>{0}</td></tr>
-        </table>
-        """.format(richText)
-
-        self.richTextUnChecked = """
-        <table border=0>
-        <tr><td><img src="resources/GraphicalResources/icons/check_box_outline_blank-24px.svg"></td>
-        <td>{0}</td></tr>
-        </table>
-        """.format(richText)
-
-        self.lab.setText(self.richTextUnChecked)
-        self.lab.setWordWrap(True)
-        self.lab.setContentsMargins(10,10,10,10)
-
-        self.lab.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-
-        self.lab.setMinimumHeight(self.heightMM())
-        self.lab.setMaximumHeight(self.heightMM()*3)
-        self.lab.setFixedWidth(self.width())
-        self.setFixedHeight(self.heightMM())
-
-        self.lab.setAlignment(QtCore.Qt.AlignTop)
-        
-    def click(self):
-        QtWidgets.QAbstractButton.click(self)
-        if self.isChecked():
-            self.lab.setText(self.richTextChecked)
-        else:
-            self.lab.setText(self.richTextUnChecked)
-
-    def resizeEvent(self, ev):
-        QtWidgets.QPushButton.resizeEvent(self,ev)
-        self.lab.setFixedWidth(self.width())
-        self.lab.setFixedHeight(self.height()*5)
-
-        self.parent().parent().setMinimumHeight(self.height()*5)
-        self.parent().resizeEvent(ev)
-        self.parent().parent().resizeEvent(ev)
-
-        if ev.oldSize().width() > 0 and ev.oldSize().height() > 0 and ev.size().width() > 0:
-            if ev.size().width() < 300:
-                self.setFixedHeight(140)
-
-            elif ev.size().width() < 400:
-                self.setFixedHeight(110)
-
-            elif ev.size().width() < 500:
-                self.setFixedHeight(100)
-
-            else:
-                self.setFixedHeight(90)
-
-            self.parent().resizeEvent(ev)
-
-
-class richTextButton(QtWidgets.QPushButton):
-
-    def __init__(self, parent=None, text=None):
-
-        QtWidgets.QPushButton.__init__(self)
-        self.__lbl = QtWidgets.QLabel(self)
-
-
-        self.setCheckable(True)
-        self.setAutoExclusive(False)
-
-        self.__lyt = QtWidgets.QHBoxLayout()
-        self.__lyt.setContentsMargins(2, 2, 2, 2)
-        self.__lyt.setSpacing(0)
-        self.setLayout(self.__lyt)
-
-        self.__lbl.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-        self.__lbl.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents)
-        self.__lbl.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        self.__lbl.setTextFormat(QtCore.Qt.RichText)
-        self.__lyt.addWidget(self.__lbl)
-
-        # Create the label position modifications
-        self.__lbl.setWordWrap(True)
-        self.__lbl.setAlignment(QtCore.Qt.AlignTop)
-
-        self.richTextChecked = """
-        <table border=0>
-        <tr><td><img src="resources/GraphicalResources/icons/check_box-24px.svg"></td>
-        <td>{0}</td></tr>
-        </table>
-        """.format(text)
-
-        self.richTextUnChecked = """
-        <table border=0>
-        <tr><td><img src="resources/GraphicalResources/icons/check_box_outline_blank-24px.svg"></td>
-        <td>{0}</td></tr>
-        </table>
-        """.format(text)
-
-        # Set the initial state to unchecked
-        if text is not None:
-            self.__lbl.setText(self.richTextUnChecked)
-
-        # Connect the clicked event to the update function
-        self.clicked.connect(self.clicked_update)
-
-    def setText(self, text):
-        # todo: doc string
-
-        self.__lbl.setText(text)
-        self.updateGeometry()
-
-    def clicked_update(self):
-        # todo: doc string
-
-        if self.isChecked():
-            self.__lbl.setText(self.richTextChecked)
-        else:
-            self.__lbl.setText(self.richTextUnChecked)
-
-        self.updateGeometry()
-
-    def sizeHint(self):
-        # todo: doc string
-
-        s = QtWidgets.QPushButton.sizeHint(self)
-
-        # Get the size of the label
-        labelSize = self.__lbl.sizeHint()
-        labelWidth = labelSize.width()
-        labelHeight = labelSize.height()
-
-        # Set the width of the label
-        s.setWidth(labelWidth)
-
-        # Set the height as the row height
-        s.setHeight(labelHeight)
-
-        # Return the size hint to avoid thrown errors
-        return labelSize
 
 
 class ModelCreationTab(QtWidgets.QWidget):
@@ -1040,7 +883,7 @@ class ModelCreationTab(QtWidgets.QWidget):
                 if (i*3)+j < numPreProcessors:
                     prKey = list((self.parent.preProcessors.keys()))[(3*i)+j]
                     regrText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>'.format(self.parent.preProcessors[prKey]['name'])
-                    preprocessorLayout.addWidget(richTextButton(preprocessorLayout, regrText), i, j, 1, 1)
+                    preprocessorLayout.addWidget(richTextButtonCheckbox(regrText), i, j, 1, 1)
 
         # Wrap the layout in a widget and add to the layout
         preprocessorLayoutWidget = QtWidgets.QWidget()
@@ -1065,7 +908,7 @@ class ModelCreationTab(QtWidgets.QWidget):
                 if (i * 3) + j < numRegressors:
                     prKey = list((self.parent.regressors.keys()))[(3 * i) + j]
                     regrText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(self.parent.regressors[prKey]['name'], '')
-                    regressorLayout.addWidget(richTextButton(regressorLayout, regrText), i, j, 1, 1)
+                    regressorLayout.addWidget(richTextButtonCheckbox(regrText), i, j, 1, 1)
 
 
         # Wrap the layout in a widget and add to the layout
@@ -1090,7 +933,7 @@ class ModelCreationTab(QtWidgets.QWidget):
                 if (i * 3) + j < numSelector:
                     prKey = list((self.parent.featureSelectors.keys()))[(3 * i) + j]
                     regrText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>'.format(self.parent.featureSelectors[prKey]['name'])
-                    selectorLayout.addWidget(richTextButton(selectorLayout, regrText), i, j, 1, 1)
+                    selectorLayout.addWidget(richTextButtonCheckbox(regrText), i, j, 1, 1)
 
         # Wrap the layout in a widget and add to the layout
         selectorLayoutWidget = QtWidgets.QWidget()
@@ -1114,12 +957,39 @@ class ModelCreationTab(QtWidgets.QWidget):
                 if (i*3)+j < numScorers:
                     nameKey = list((self.parent.scorers['info'].keys()))[(3*i)+j]
                     regrText = '<strong style="font-size: 13px; color:darkcyan">{0}</strong><br>'.format(self.parent.scorers['info'][nameKey]['NAME'])
-                    scoringLayout.addWidget(richTextButton(scoringLayout, regrText), i, j, 1, 1)
+                    scoringLayout.addWidget(richTextButtonCheckbox(regrText), i, j, 1, 1)
 
         # Wrap the layout in a widget and add to the layout
         scoringLayoutWidget = QtWidgets.QWidget()
         scoringLayoutWidget.setLayout(scoringLayout)
         summaryRightLayout.addWidget(scoringLayoutWidget)
+
+        ## Set a horizontal break line ##
+        # Create a line to delineate the selector from the selector options
+        lineA = QtWidgets.QFrame()
+        lineA.setFrameShape(QtWidgets.QFrame.HLine)
+        summaryRightLayout.addWidget(lineA)
+
+        ## Create and add the activation buttons ##
+        # Create the clear button
+        summaryClearButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Clear</strong><br>')
+
+        # Create the start button
+        summaryStartButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Start</strong><br>')
+        # summaryStartButton.setText( '<strong style="font-size: 13px; color:darkcyan">Start</strong><br>')
+        # summaryStartButton.setMinimumSize(50, 25)
+
+        # Create an horizontal layout, aligned to the right
+        summaryButtonsLayout = QtWidgets.QHBoxLayout()
+        summaryButtonsLayout.setAlignment(QtCore.Qt.AlignRight)
+
+        summaryButtonsLayout.addWidget(summaryClearButton)
+        summaryButtonsLayout.addWidget(summaryStartButton)
+
+        # Wrap the layout as a widget and add to the main layout
+        summaryButtonsLayoutWidget = QtWidgets.QWidget()
+        summaryButtonsLayoutWidget.setLayout(summaryButtonsLayout)
+        summaryRightLayout.addWidget(summaryButtonsLayoutWidget)
 
         ## Add the summary right pane to the summary layout ##
         # Create the widget to wrap the layout
