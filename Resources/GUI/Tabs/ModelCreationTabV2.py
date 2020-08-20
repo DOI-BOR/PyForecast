@@ -270,37 +270,8 @@ class ModelCreationTab(QtWidgets.QWidget):
         layoutFillSA = QtWidgets.QScrollArea()
         layoutFillSA.setWidgetResizable(True)
 
-        ## Create the selector list ##
-        # Create a vertical layout
-        layoutFillLeftLayout = QtWidgets.QVBoxLayout()
-
-        # Create and add the list title
-        layoutFillLeftLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Selected Data<strong>'))
-
-        # Add the list
-        self.fillList = DatasetList_HTML_Formatted(datasetTable=self.layoutDataDoubleList.listOutput.datasetTable)
-        self.layoutDataDoubleList.listOutput.updateSignalToExternal.connect(self.fillList.refreshDatasetListFromExtenal)
-        layoutFillLeftLayout.addWidget(self.fillList)
-
-        ## Create the right panel ##
-        # Create the vertical layout
-        layoutFillRightLayout = QtWidgets.QVBoxLayout()
-
-        # Fill the remaining area with the layout options
-        self._createDataFillLayout(layoutFillRightLayout)
-
-        ## Create the full layout ##
-        layoutFill = QtWidgets.QHBoxLayout()
-
-        leftWidget = QtWidgets.QWidget()
-        leftWidget.setLayout(layoutFillLeftLayout)
-        layoutFill.addWidget(leftWidget, 1)
-
-        rightWidget = QtWidgets.QWidget()
-        rightWidget.setLayout(layoutFillRightLayout)
-        layoutFill.addWidget(rightWidget, 2)
-
-        layoutFillSA.setLayout(layoutFill)
+        ## Fill the remaining area with the layout options ##
+        self._createDataFillLayout(layoutFillSA)
 
 
         ### Create the layout extend tab ###
@@ -577,26 +548,42 @@ class ModelCreationTab(QtWidgets.QWidget):
         #overallLayout.addWidget(self.overallStackWidget)
         self.setLayout(overallLayout)
 
-    def _createDataFillLayout(self, layoutMain):
+    def _createDataFillLayout(self, layoutFillSA):
         """
         Creates the layout of the fill subtab based on the options for each fill method
 
         """
 
+        ## Create the selector list ##
+        # Create a vertical layout
+        layoutFillLeftLayout = QtWidgets.QVBoxLayout()
+
+        # Create and add the list title
+        layoutFillLeftLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Selected Data<strong>'))
+
+        # Add the list
+        self.fillList = DatasetList_HTML_Formatted(datasetTable=self.layoutDataDoubleList.listOutput.datasetTable)
+        self.layoutDataDoubleList.listOutput.updateSignalToExternal.connect(self.fillList.refreshDatasetListFromExtenal)
+        layoutFillLeftLayout.addWidget(self.fillList)
+
+        ## Create the right panel ##
+        # Create the vertical layout
+        layoutFillRightLayout = QtWidgets.QVBoxLayout()
+
         # Set the options available for filling the data
         fillOptions = ['None', 'Nearest', 'Linear', 'Quadratic', 'Cubic', 'Spline', 'Polynomial']
 
         # Create and add a dropdown selector with the available options
-        layoutMain.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Fill Method<strong>'))
+        layoutFillRightLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Fill Method<strong>'))
 
         self.layoutFillMethodSelector = QtWidgets.QComboBox()
         self.layoutFillMethodSelector.addItems(fillOptions)
-        layoutMain.addWidget(self.layoutFillMethodSelector)
+        layoutFillRightLayout.addWidget(self.layoutFillMethodSelector)
 
         # Create a line to delineate the selector from the selector options
         lineA = QtWidgets.QFrame()
         lineA.setFrameShape(QtWidgets.QFrame.HLine)
-        layoutMain.addWidget(lineA)
+        layoutFillRightLayout.addWidget(lineA)
 
         # Create the fill limit label
         self.layoutFillGapLimitLabel = QtWidgets.QLabel('Maximum Filled Gap')
@@ -620,10 +607,10 @@ class ModelCreationTab(QtWidgets.QWidget):
         filledGapLayoutWidget = QtWidgets.QWidget()
         filledGapLayoutWidget.setLayout(filledGapLayout)
 
-        layoutMain.addWidget(filledGapLayoutWidget)
+        layoutFillRightLayout.addWidget(filledGapLayoutWidget)
 
         # Adjust the layout of the widgets
-        layoutMain.setAlignment(QtCore.Qt.AlignTop)
+        layoutFillRightLayout.setAlignment(QtCore.Qt.AlignTop)
 
         ### Create the nearest page ###
         nearestLayout = QtWidgets.QGridLayout()
@@ -653,30 +640,73 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Add each of the interpolation types to it
         nearestWidget = QtWidgets.QWidget()
         nearestWidget.setLayout(nearestLayout)
+        nearestWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         self.stackedFillLayout.addWidget(nearestWidget)
 
         linearWidget = QtWidgets.QWidget()
         linearWidget.setLayout(linearLayout)
+        linearWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         self.stackedFillLayout.addWidget(linearWidget)
 
         quadradicWidget = QtWidgets.QWidget()
         quadradicWidget.setLayout(quadradicLayout)
+        quadradicWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         self.stackedFillLayout.addWidget(quadradicWidget)
 
         cubicWidget = QtWidgets.QWidget()
         cubicWidget.setLayout(cubicLayout)
+        cubicWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         self.stackedFillLayout.addWidget(cubicWidget)
 
         splineWidget = QtWidgets.QWidget()
         splineWidget.setLayout(polyLayout)
+        splineWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         self.stackedFillLayout.addWidget(splineWidget)
 
         # Add the stacked layout to the main layout
-        layoutMain.addWidget(stackedWidget)
+        layoutFillRightLayout.addWidget(stackedWidget)
         stackedWidget.setVisible(True)
+
+        ### Create clear and apply buttons to apply operations ###
+        # Create the clear button
+        self.layoutFillClearButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Clear</strong><br>')
+        self.layoutFillClearButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
+
+        # Link the button to the clear function
+        self.layoutFillClearButton.clicked.connect(self._applyFillClearToDataset)
+
+        # Create the apply button
+        self.layoutFillApplyButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Apply</strong><br>')
+        self.layoutFillApplyButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
+
+        # Link the button to the apply function
+        self.layoutFillApplyButton.clicked.connect(self._applyFillOptionsToDataset)
+
+        # Create the layout, wrap it, and add to the right layout
+        buttonLayout = QtWidgets.QHBoxLayout()
+        buttonLayout.addWidget(self.layoutFillClearButton)
+        buttonLayout.addWidget(self.layoutFillApplyButton)
+        buttonLayout.setAlignment(QtCore.Qt.AlignRight)
+
+        buttonLayoutWidget = QtWidgets.QWidget()
+        buttonLayoutWidget.setLayout(buttonLayout)
+        layoutFillRightLayout.addWidget(buttonLayoutWidget)
 
         ### Connect the stacked widget with the selection combo box ###
         self.layoutFillMethodSelector.currentIndexChanged.connect(self._updateFillSubtab)
+
+        ### Create the full layout ###
+        layoutFill = QtWidgets.QHBoxLayout()
+
+        leftWidget = QtWidgets.QWidget()
+        leftWidget.setLayout(layoutFillLeftLayout)
+        layoutFill.addWidget(leftWidget, 1)
+
+        rightWidget = QtWidgets.QWidget()
+        rightWidget.setLayout(layoutFillRightLayout)
+        layoutFill.addWidget(rightWidget, 2)
+
+        layoutFillSA.setLayout(layoutFill)
 
     def _createDataExtendLayout(self, layoutMain):
         """
@@ -974,11 +1004,11 @@ class ModelCreationTab(QtWidgets.QWidget):
         ## Create and add the activation buttons ##
         # Create the clear button
         summaryClearButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Clear</strong><br>')
+        summaryClearButton.setMaximumSize(125, 65)
 
         # Create the start button
         summaryStartButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Start</strong><br>')
-        # summaryStartButton.setText( '<strong style="font-size: 13px; color:darkcyan">Start</strong><br>')
-        # summaryStartButton.setMinimumSize(50, 25)
+        summaryStartButton.setMaximumSize(125, 65)
 
         # Create an horizontal layout, aligned to the right
         summaryButtonsLayout = QtWidgets.QHBoxLayout()
@@ -1023,6 +1053,16 @@ class ModelCreationTab(QtWidgets.QWidget):
         else:
             self.layoutFillGapLimitLabel.setVisible(False)
             self.layoutFillGapLimit.setVisible(False)
+
+    def _applyFillOptionsToDataset(self):
+
+        # todo: build this function
+        pass
+
+    def _applyFillClearToDataset(self):
+
+        # todo: build this function
+        pass
 
     def _updateExtendSubtab(self):
         self.stackedExtendLayout.setCurrentIndex(self.layoutExtendMethodSelector.currentIndex())
