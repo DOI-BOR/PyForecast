@@ -584,8 +584,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         """
 
         # Set the options available for filling the data
-        fillOptions = ['Nearest', 'Linear', 'Quadratic', 'Cubic', 'Spline', 'Polynomial']
-        # todo: add None option to the list
+        fillOptions = ['None', 'Nearest', 'Linear', 'Quadratic', 'Cubic', 'Spline', 'Polynomial']
 
         # Create and add a dropdown selector with the available options
         layoutMain.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Fill Method<strong>'))
@@ -600,20 +599,22 @@ class ModelCreationTab(QtWidgets.QWidget):
         layoutMain.addWidget(lineA)
 
         # Create the fill limit label
-        filledGapLabel = QtWidgets.QLabel('Maximum Filled Gap')
+        self.layoutFillGapLimitLabel = QtWidgets.QLabel('Maximum Filled Gap')
+        self.layoutFillGapLimitLabel.setVisible(False)
 
         # Create teh fill limit widget
-        self.layoutExtendGapLimit = QtWidgets.QTextEdit()
-        self.layoutExtendGapLimit.setPlaceholderText('30')
-        self.layoutExtendGapLimit.setFixedWidth(50)
-        self.layoutExtendGapLimit.setFixedHeight(25)
+        self.layoutFillGapLimit = QtWidgets.QTextEdit()
+        self.layoutFillGapLimit.setPlaceholderText('30')
+        self.layoutFillGapLimit.setFixedWidth(50)
+        self.layoutFillGapLimit.setFixedHeight(25)
+        self.layoutFillGapLimit.setVisible(False)
 
         # Create the layout for the fill limit
         filledGapLayout = QtWidgets.QHBoxLayout()
         filledGapLayout.setAlignment(QtCore.Qt.AlignTop)
 
-        filledGapLayout.addWidget(filledGapLabel, 1, QtCore.Qt.AlignLeft)
-        filledGapLayout.addWidget(self.layoutExtendGapLimit, 5, QtCore.Qt.AlignLeft)
+        filledGapLayout.addWidget(self.layoutFillGapLimitLabel, 1, QtCore.Qt.AlignLeft)
+        filledGapLayout.addWidget(self.layoutFillGapLimit, 5, QtCore.Qt.AlignLeft)
 
         # Add the limit into the main page
         filledGapLayoutWidget = QtWidgets.QWidget()
@@ -1007,7 +1008,21 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.stackedPredictorWidget.setCurrentIndex(1)
 
     def _updateFillSubtab(self):
+        """
+        Updates the state of the fill subtab methods pane based on the method selector
+
+        """
+
+        # Switch the stacked widgets
         self.stackedFillLayout.setCurrentIndex(self.layoutFillMethodSelector.currentIndex())
+
+        # Update the gap limit visibility
+        if self.layoutFillMethodSelector.currentIndex() > 0:
+            self.layoutFillGapLimitLabel.setVisible(True)
+            self.layoutFillGapLimit.setVisible(True)
+        else:
+            self.layoutFillGapLimitLabel.setVisible(False)
+            self.layoutFillGapLimit.setVisible(False)
 
     def _updateExtendSubtab(self):
         self.stackedExtendLayout.setCurrentIndex(self.layoutExtendMethodSelector.currentIndex())
