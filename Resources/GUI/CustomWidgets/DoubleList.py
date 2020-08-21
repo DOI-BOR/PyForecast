@@ -9,7 +9,7 @@ class DoubleList(QtWidgets.QWidget):
     updatedOutputList = QtCore.pyqtSignal(pd.DataFrame)
     updatedLinkedList = QtCore.pyqtSignal(DatasetList_HTML_Formatted, DatasetList_HTML_Formatted)
 
-    def __init__(self, initialDataframe, inputTitle, outputTitle, parent=None):
+    def __init__(self, initialDataframe, inputTitle, outputTitle, uniqueItems, parent=None):
         """
         Constructor for the DoubleList widget class. This creates side-by-side linked lists. The user is able to move
         data entries from the left list to the right list to include the dataset in the analysis. The datasets in the
@@ -92,9 +92,9 @@ class DoubleList(QtWidgets.QWidget):
         self._setStatusButton()
 
         # Create the connections between the DoubleList objects
-        self.connections()
+        self.connections(uniqueItems)
 
-    def connections(self):
+    def connections(self, uniqueItems):
         """
         Creates connections between the lists and buttons. This allows the buttons to dynamically adjust the items
         in the lists
@@ -114,11 +114,11 @@ class DoubleList(QtWidgets.QWidget):
         self.listInput.itemSelectionChanged.connect(self._setStatusButton)
 
         # Set the move button connections
-        self.buttonSingleToOutput.clicked.connect(self._setSingleOutputItem)
-        self.buttonSingleToInput.clicked.connect(self._setSingleInputItem)
+        self.buttonSingleToOutput.clicked.connect(lambda: self._setSingleOutputItem(uniqueItems))
+        self.buttonSingleToInput.clicked.connect(lambda: self._setSingleInputItem(uniqueItems))
 
-        self.buttonAllToInput.clicked.connect(self._setAllInputItems)
-        self.buttonAllToOuput.clicked.connect(self._setAllOutputItems)
+        self.buttonAllToInput.clicked.connect(lambda: self._setAllInputItems(uniqueItems))
+        self.buttonAllToOuput.clicked.connect(lambda: self._setAllOutputItems(uniqueItems))
 
         # Set the up/down button connections
         self.buttonUp.clicked.connect(self._setButtonUpClicked)
@@ -198,7 +198,7 @@ class DoubleList(QtWidgets.QWidget):
         # Return the output list to the calling function
         return itemSelected
 
-    def _setAllInputItems(self):
+    def _setAllInputItems(self, uniqueItems):
         """
         Move all items from the output list to the input list
 
@@ -213,7 +213,8 @@ class DoubleList(QtWidgets.QWidget):
         """
 
         # Swap the tables between the objects
-        self.listInput.datasetTable = self.listInput.datasetTable.append(self.listOutput.datasetTable)
+        if uniqueItems:
+            self.listInput.datasetTable = self.listInput.datasetTable.append(self.listOutput.datasetTable)
 
         # Clear the output list
         self.listOutput.datasetTable = self.listOutput.datasetTable.drop(self.listOutput.datasetTable.index)
@@ -225,7 +226,7 @@ class DoubleList(QtWidgets.QWidget):
         # Emit for the updated linked doublelists
         self.updatedLinkedList.emit(self.listInput, self.listOutput)
 
-    def _setAllOutputItems(self):
+    def _setAllOutputItems(self, uniqueItems):
         """
         Moves all items from the input list to the output list
 
@@ -243,7 +244,8 @@ class DoubleList(QtWidgets.QWidget):
         self.listOutput.datasetTable = self.listOutput.datasetTable.append(self.listInput.datasetTable)
 
         # Clear the input list
-        self.listInput.datasetTable = self.listInput.datasetTable.drop(self.listInput.datasetTable.index)
+        if uniqueItems:
+            self.listInput.datasetTable = self.listInput.datasetTable.drop(self.listInput.datasetTable.index)
 
         # Trigger refreshes of the input and output lists
         self.listInput.refreshDatasetList()
@@ -252,7 +254,7 @@ class DoubleList(QtWidgets.QWidget):
         # Emit for the updated linked doublelists
         self.updatedLinkedList.emit(self.listInput, self.listOutput)
 
-    def _setSingleInputItem(self):
+    def _setSingleInputItem(self, uniqueItems):
         """
         Moves a single entry from the output list to the input list
 
@@ -271,7 +273,8 @@ class DoubleList(QtWidgets.QWidget):
 
         # Append the row into the output table
         rows = self.listOutput.datasetTable.iloc[input_row_index, :]
-        self.listInput.datasetTable = self.listInput.datasetTable.append(rows, ignore_index=True)
+        if uniqueItems:
+            self.listInput.datasetTable = self.listInput.datasetTable.append(rows, ignore_index=True)
 
         # Remove from the input table
         self.listOutput.datasetTable.drop(self.listOutput.datasetTable.index[input_row_index], inplace=True)
@@ -284,7 +287,7 @@ class DoubleList(QtWidgets.QWidget):
         self.updatedLinkedList.emit(self.listInput, self.listOutput)
 
 
-    def _setSingleOutputItem(self):
+    def _setSingleOutputItem(self, uniqueItems):
         """
         Moves the single selected item in the input list to the output list
 
@@ -306,7 +309,8 @@ class DoubleList(QtWidgets.QWidget):
         self.listOutput.datasetTable = self.listOutput.datasetTable.append(rows, ignore_index=True)
 
         # Remove from the input table
-        self.listInput.datasetTable.drop(self.listInput.datasetTable.index[input_row_index], inplace=True)
+        if uniqueItems:
+            self.listInput.datasetTable.drop(self.listInput.datasetTable.index[input_row_index], inplace=True)
 
         # Trigger refreshes of the input and output lists
         self.listInput.refreshDatasetList()
