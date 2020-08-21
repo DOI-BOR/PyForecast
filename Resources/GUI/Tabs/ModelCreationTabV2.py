@@ -183,7 +183,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         ## Create the DoubleList selector object ##
         self.layoutSimpleDoubleList = DoubleList(self.parent.datasetTable,
                                                '<strong style="font-size: 18px">Available Datasets<strong>',
-                                               '<strong style="font-size: 18px">Selected Datasets<strong>')
+                                               '<strong style="font-size: 18px">Selected Datasets<strong>', False)
 
         # Connect the DoubleList with the dataset hmtl list to keep everything in sync. This will automatically
         # populate the DoubleList entries
@@ -245,7 +245,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Create the doublelist
         self.layoutDataDoubleList = DoubleList(self.parent.datasetTable,
                                                '<strong style="font-size: 18px">Available Datasets<strong>',
-                                               '<strong style="font-size: 18px">Selected Datasets<strong>')
+                                               '<strong style="font-size: 18px">Selected Datasets<strong>', True)
 
         # Connect the DoubleList with the dataset hmtl list to keep everything in sync. This will automatically
         # populate the DoubleList entries
