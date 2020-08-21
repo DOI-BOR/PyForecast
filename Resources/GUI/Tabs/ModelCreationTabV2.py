@@ -902,7 +902,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ## Layout the preprocessors grid ##
         # Create the label
-        preprocessorLabelWidget = QtWidgets.QLabel('Preprocessors')
+        preprocessorLabelWidget = QtWidgets.QLabel('<strong style="font-size: 18px">Preprocessors</strong>')
 
         # Add the label into the right layout
         summaryRightLayout.addWidget(preprocessorLabelWidget)
@@ -926,7 +926,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ## Layout the regressors grid ##
         # Create the label
-        regressorLabelWidget = QtWidgets.QLabel('Regressors')
+        regressorLabelWidget = QtWidgets.QLabel('<strong style="font-size: 18px">Regressors</strong>')
 
         # Add the label into the right layout
         summaryRightLayout.addWidget(regressorLabelWidget)
@@ -952,7 +952,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ## Layout the feature selectors grid ##
         # Create the label
-        selectorLabelWidget = QtWidgets.QLabel('Feature Selectors')
+        selectorLabelWidget = QtWidgets.QLabel('<strong style="font-size: 18px">Feature Selectors</strong>')
 
         # Add the label into the right layout
         summaryRightLayout.addWidget(selectorLabelWidget)
@@ -976,7 +976,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ## Layout the feature selectors grid ##
         # Create the label
-        scoringLabelWidget = QtWidgets.QLabel('Model Scoring')
+        scoringLabelWidget = QtWidgets.QLabel('<strong style="font-size: 18px">Model Scoring</strong>')
 
         # Add the label into the right layout
         summaryRightLayout.addWidget(scoringLabelWidget)
@@ -1058,7 +1058,10 @@ class ModelCreationTab(QtWidgets.QWidget):
             self.layoutFillGapLimit.setVisible(False)
 
     def _updateFillOptionsOnDataset(self):
-        # todo: doc string
+        """
+        Displays the correct information for the selected dataset in the fill pane
+
+        """
 
         # Check that the fill options have been added into the table
         if 'FillMethod' not in self.parent.datasetTable.columns:
@@ -1083,8 +1086,10 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.layoutFillGapLimit.setText(str(fillGap))
 
     def _applyFillOptionsToDataset(self):
+        """
+        Applies the fill attributes to a dataset
 
-        # todo: doc string
+        """
 
         # Check that the fill options have been added into the table
         if 'FillMethod' not in self.parent.datasetTable.columns:
@@ -1111,8 +1116,11 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.layoutFillApplyButton.setChecked(False)
 
     def _applyFillClearToDataset(self):
+        """
+        Clears the fill attributes of a dataset
 
-        # todo: build this function
+        """
+
         if 'FillMethod' not in self.parent.datasetTable.columns:
             self.__addFillOptionsToDatasetTable()
 
