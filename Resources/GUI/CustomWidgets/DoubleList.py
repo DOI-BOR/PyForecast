@@ -273,8 +273,9 @@ class DoubleList(QtWidgets.QWidget):
 
         # Append the row into the output table
         rows = self.listOutput.datasetTable.iloc[input_row_index, :]
+
         if uniqueItems:
-            self.listInput.datasetTable = self.listInput.datasetTable.append(rows, ignore_index=True)
+            self.listInput.datasetTable = self.listInput.datasetTable.append(rows)
 
         # Remove from the input table
         self.listOutput.datasetTable.drop(self.listOutput.datasetTable.index[input_row_index], inplace=True)
@@ -306,7 +307,7 @@ class DoubleList(QtWidgets.QWidget):
 
         # Append the row into the output table
         rows = self.listInput.datasetTable.iloc[input_row_index, :]
-        self.listOutput.datasetTable = self.listOutput.datasetTable.append(rows, ignore_index=True)
+        self.listOutput.datasetTable = self.listOutput.datasetTable.append(rows)
 
         # Remove from the input table
         if uniqueItems:
