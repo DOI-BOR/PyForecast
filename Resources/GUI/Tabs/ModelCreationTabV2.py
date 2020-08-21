@@ -273,7 +273,6 @@ class ModelCreationTab(QtWidgets.QWidget):
         ## Fill the remaining area with the layout options ##
         self._createDataFillLayout(layoutFillSA)
 
-
         ### Create the layout extend tab ###
         layoutExtendSA = QtWidgets.QScrollArea()
         layoutExtendSA.setWidgetResizable(True)
@@ -566,6 +565,9 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.layoutDataDoubleList.listOutput.updateSignalToExternal.connect(self.fillList.refreshDatasetListFromExtenal)
         layoutFillLeftLayout.addWidget(self.fillList)
 
+        # Connect the list widget to the right panel to adjust the display
+        self.fillList.currentRowChanged.connect(self._updateFillOptionsOnDataset)
+
         ## Create the right panel ##
         # Create the vertical layout
         layoutFillRightLayout = QtWidgets.QVBoxLayout()
@@ -674,6 +676,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Link the button to the clear function
         self.layoutFillClearButton.clicked.connect(self._applyFillClearToDataset)
+        self.layoutFillClearButton.clicked.connect(self._updateFillSubtab)
 
         # Create the apply button
         self.layoutFillApplyButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Apply</strong><br>')
@@ -1054,16 +1057,92 @@ class ModelCreationTab(QtWidgets.QWidget):
             self.layoutFillGapLimitLabel.setVisible(False)
             self.layoutFillGapLimit.setVisible(False)
 
+    def _updateFillOptionsOnDataset(self):
+        # todo: doc string
+
+        # Check that the fill options have been added into the table
+        if 'FillMethod' not in self.parent.datasetTable.columns:
+            self.__addFillOptionsToDatasetTable()
+
+        # Get the current dataset
+        currentIndex = self.fillList.currentIndex().row()
+        currentInternalID = self.fillList.datasetTable.index[currentIndex]
+
+        # Get the options for the item
+        fillMethod = self.parent.datasetTable.at[currentInternalID, 'FillMethod']
+        fillGap = self.parent.datasetTable.at[currentInternalID, 'FillMaximumGap']
+        # If needed, can extract more information based on the fill method here
+
+        # Get the options for the selector and stack
+        fillOptionsIndex = [x for x in range(self.layoutFillMethodSelector.count()) if self.layoutFillMethodSelector.itemText(x) == fillMethod][0]
+        self.stackedFillLayout.setCurrentIndex(fillOptionsIndex)
+        self.layoutFillMethodSelector.setCurrentIndex(fillOptionsIndex)
+
+        # Set the values into the widgets
+        # Correct this issue
+        self.layoutFillGapLimit.setText(str(fillGap))
+
     def _applyFillOptionsToDataset(self):
 
-        # todo: build this function
-        pass
+        # todo: doc string
+
+        # Check that the fill options have been added into the table
+        if 'FillMethod' not in self.parent.datasetTable.columns:
+            self.__addFillOptionsToDatasetTable()
+
+        # Extract the fill limit
+        try:
+            fillLimit = int(self.layoutFillGapLimit.toPlainText())
+        except:
+            fillLimit = None
+
+        # Get the method to be utilized
+        fillMethod = self.layoutFillMethodSelector.currentText()
+
+        # Get the current dataset
+        currentIndex = self.fillList.currentIndex().row()
+        currentInternalID = self.fillList.datasetTable.index[currentIndex]
+
+        # Set the values
+        self.parent.datasetTable.at[currentInternalID, 'FillMethod'] = fillMethod
+        self.parent.datasetTable.at[currentInternalID, 'FillMaximumGap'] = fillLimit
+
+        # Clear the button click
+        self.layoutFillApplyButton.setChecked(False)
 
     def _applyFillClearToDataset(self):
 
         # todo: build this function
-        pass
+        if 'FillMethod' not in self.parent.datasetTable.columns:
+            self.__addFillOptionsToDatasetTable()
+
+        # Get the current dataset
+        currentIndex = self.fillList.currentIndex().row()
+        currentInternalID = self.fillList.datasetTable.index[currentIndex]
+
+        # Set the values
+        self.parent.datasetTable.at[currentInternalID, 'FillMethod'] = 'None'
+        self.parent.datasetTable.at[currentInternalID, 'FillMaximumGap'] = None
+
+        # Clear the button click
+        self.layoutFillClearButton.setChecked(False)
+
+        # Switch the stacked widgets
+        self.layoutFillMethodSelector.setCurrentIndex(0)
+        self._updateFillSubtab()
+
+
+    def __addFillOptionsToDatasetTable(self):
+        """
+        Adds the fill options into the parent dataset table
+
+        """
+
+        self.parent.datasetTable['FillMethod'] = 'None'
+        self.parent.datasetTable['FillMaximumGap'] = None
 
     def _updateExtendSubtab(self):
         self.stackedExtendLayout.setCurrentIndex(self.layoutExtendMethodSelector.currentIndex())
+
+
 
