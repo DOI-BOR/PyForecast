@@ -10,6 +10,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 
 from resources.GUI.CustomWidgets.DatasetList_HTML_Formatted import DatasetList_HTML_Formatted
 from resources.GUI.CustomWidgets.DoubleList import DoubleList
+from resources.GUI.CustomWidgets.AggregationOptions import AggregationOptions
 from resources.GUI.CustomWidgets.PyQtGraphs import ModelTabPlots, TimeSeriesLineBarPlot
 from resources.GUI.CustomWidgets.customTabs import EnhancedTabWidget
 from resources.GUI.CustomWidgets.richTextButtons import richTextButton, richTextButtonCheckbox, richTextDescriptionButton
@@ -198,6 +199,8 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.layoutSimpleExtend = richTextDescriptionButton(self, '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format('Extend data',
                                                  'Automatically extend the selected time series using default properties'))
 
+        self.layoutAggregationOptions = AggregationOptions(self)
+
         ## Add the widgets into the layout ##
         # Add the items into the horizontal spacer
         layoutSimple = QtWidgets.QHBoxLayout()
@@ -210,6 +213,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         layoutSimpleOptions.setAlignment(QtCore.Qt.AlignTop)
         layoutSimpleOptions.addWidget(self.layoutSimpleFill)
         layoutSimpleOptions.addWidget(self.layoutSimpleExtend)
+        layoutSimpleOptions.addWidget(self.layoutAggregationOptions)
 
         # Wrap the right side layout in another widget
         layoutSimpleOptionsWidget = QtWidgets.QWidget()
