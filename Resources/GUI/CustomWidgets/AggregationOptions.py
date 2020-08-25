@@ -30,7 +30,6 @@ class AggregationOptions(QtWidgets.QWidget):
             scrollarea.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
             optionsWidget = QtWidgets.QWidget()
 
-
         # Create the radio buttons
         self.accumOption = QtWidgets.QRadioButton("Accumulation")
         self.accumCfs2KafOption = QtWidgets.QRadioButton("Accumulation (cfs to kaf)")
@@ -42,6 +41,7 @@ class AggregationOptions(QtWidgets.QWidget):
         self.medianValOption = QtWidgets.QRadioButton("Median")
         self.customValOption = QtWidgets.QRadioButton("Custom Pattern")
         self.customValString = QtWidgets.QLineEdit()
+        self.customValString.setPlaceholderText("Define a custom python function here. The variable 'x' represents the periodic dataset [pandas series]. Specify a unit (optional) with '|'. E.g. np.nansum(x)/12 | Feet ")
         self.customValString.setDisabled(True)
         self.customValOption.toggled.connect(self.customValString.setEnabled)
         self.toggleLabel = QtWidgets.QLabel("")
