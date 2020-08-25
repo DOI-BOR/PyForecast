@@ -19,10 +19,10 @@ class AggregationOptions(QtWidgets.QWidget):
         QtWidgets.QWidget.__init__(self)
         self.parent = parent
 
-        vbox = QtWidgets.QVBoxLayout()
-        self.aggOptionsGroupBox = QtWidgets.QGroupBox("Predictor Aggregation Options")
-
         # Create the overall layout objects
+        scrollarea = QtWidgets.QScrollArea()
+        scrollarea.setWidgetResizable(True)
+        #layout = QtWidgets.QHBoxLayout(scrollarea)
         layout = QtWidgets.QHBoxLayout(self)
 
         # Create the radio buttons
@@ -38,25 +38,81 @@ class AggregationOptions(QtWidgets.QWidget):
         self.customValString = QtWidgets.QLineEdit()
         self.customValString.setDisabled(True)
         self.customValOption.toggled.connect(self.customValString.setEnabled)
+        self.toggleLabel = QtWidgets.QLabel("")
+
+        # Connect radio button actions
+        self.accumOption.toggled.connect(self.accumToggled)
+        self.accumCfs2KafOption.toggled.connect(self.accumCfs2KafToggled)
+        self.averageOption.toggled.connect(self.averageToggled)
+        self.firstValOption.toggled.connect(self.firstToggled)
+        self.lastValOption.toggled.connect(self.lastToggled)
+        self.maxValOption.toggled.connect(self.maxToggled)
+        self.minValOption.toggled.connect(self.minToggled)
+        self.medianValOption.toggled.connect(self.medianToggled)
+        self.customValOption.toggled.connect(self.customToggled)
         self.averageOption.setChecked(True)
 
         # Setup the radio button container
-        layoutm = QtWidgets.QVBoxLayout()
-        layoutm.addItem(QtWidgets.QSpacerItem(10, 20, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding))
-        layoutm.addWidget(self.accumOption)
-        layoutm.addWidget(self.accumCfs2KafOption)
-        layoutm.addWidget(self.averageOption)
-        layoutm.addWidget(self.firstValOption)
-        layoutm.addWidget(self.lastValOption)
-        layoutm.addWidget(self.maxValOption)
-        layoutm.addWidget(self.minValOption)
-        layoutm.addWidget(self.medianValOption)
-        layoutm.addWidget(self.customValOption)
-        layoutm.addWidget(self.customValString)
-        layoutm.addItem(QtWidgets.QSpacerItem(10, 20, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding))
+        layout1 = QtWidgets.QVBoxLayout()
+        layout1.addWidget(QtWidgets.QLabel("SELECTED PREDICTOR"))
+        layout1.addWidget(QtWidgets.QLabel("selected predictor info and metadata - 1"))
+        layout1.addWidget(QtWidgets.QLabel("selected predictor info and metadata - 2"))
+        layout1.addWidget(QtWidgets.QLabel("selected predictor info and metadata - 3"))
+        layout1.addWidget(QtWidgets.QLabel("selected predictor info and metadata - 4"))
+        layout1.addWidget(self.accumOption)
+        layout1.addWidget(self.accumCfs2KafOption)
+        layout1.addWidget(self.averageOption)
+        layout1.addWidget(self.firstValOption)
+        layout1.addWidget(self.lastValOption)
+        layout1.addWidget(self.maxValOption)
+        layout1.addWidget(self.minValOption)
+        layout1.addWidget(self.medianValOption)
+        layout1.addWidget(self.customValOption)
+        layout1.addWidget(self.customValString)
+        layout1.addWidget(self.toggleLabel)
+        vertSpacer = QtGui.QSpacerItem(20, 10, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
+        layout1.addItem(vertSpacer)
 
         # Add the container to the layout
-        layout.addLayout(layoutm)
+        layout.addLayout(layout1)
+
+
+    def accumToggled(self):
+        self.toggleLabel.setText("Accumulation option description goes here...")
+        #set predictor object value here...
+
+    def accumCfs2KafToggled(self):
+        self.toggleLabel.setText("Accumulation conversion option description goes here...")
+        #set predictor object value here...
+
+    def averageToggled(self):
+        self.toggleLabel.setText("Average option description goes here...")
+        #set predictor object value here...
+
+    def firstToggled(self):
+        self.toggleLabel.setText("First option description goes here...")
+        #set predictor object value here...
+
+    def lastToggled(self):
+        self.toggleLabel.setText("Last option description goes here...")
+        #set predictor object value here...
+
+    def maxToggled(self):
+        self.toggleLabel.setText("Max option description goes here...")
+        #set predictor object value here...
+
+    def minToggled(self):
+        self.toggleLabel.setText("Min option description goes here...")
+        #set predictor object value here...
+
+    def medianToggled(self):
+        self.toggleLabel.setText("Median option description goes here...")
+        #set predictor object value here...
+
+    def customToggled(self):
+        self.toggleLabel.setText("Custom option description goes here...")
+        #set predictor object value here...
+
 
 
 
