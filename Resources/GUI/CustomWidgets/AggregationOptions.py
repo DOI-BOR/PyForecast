@@ -2,7 +2,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 
 class AggregationOptions(QtWidgets.QWidget):
 
-    def __init__(self, parent=None):
+    def __init__(self, scrollable, parent=None):
         """
         Constructor for the Aggregation Options widget class.
 
@@ -20,10 +20,16 @@ class AggregationOptions(QtWidgets.QWidget):
         self.parent = parent
 
         # Create the overall layout objects
-        scrollarea = QtWidgets.QScrollArea()
-        scrollarea.setWidgetResizable(True)
-        #layout = QtWidgets.QHBoxLayout(scrollarea)
-        layout = QtWidgets.QHBoxLayout(self)
+        layout1 = QtWidgets.QVBoxLayout()
+        if scrollable:
+            scrollarea = QtWidgets.QScrollArea(self)
+            scrollarea.setWidgetResizable(True)
+            scrollarea.setMinimumWidth(300)
+            scrollarea.setMinimumHeight(400) # would be better if resizable
+            scrollarea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+            scrollarea.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+            optionsWidget = QtWidgets.QWidget()
+
 
         # Create the radio buttons
         self.accumOption = QtWidgets.QRadioButton("Accumulation")
@@ -53,7 +59,6 @@ class AggregationOptions(QtWidgets.QWidget):
         self.averageOption.setChecked(True)
 
         # Setup the radio button container
-        layout1 = QtWidgets.QVBoxLayout()
         layout1.addWidget(QtWidgets.QLabel("SELECTED PREDICTOR"))
         layout1.addWidget(QtWidgets.QLabel("selected predictor info and metadata - 1"))
         layout1.addWidget(QtWidgets.QLabel("selected predictor info and metadata - 2"))
@@ -71,10 +76,15 @@ class AggregationOptions(QtWidgets.QWidget):
         layout1.addWidget(self.customValString)
         layout1.addWidget(self.toggleLabel)
         vertSpacer = QtGui.QSpacerItem(20, 10, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
-        layout1.addItem(vertSpacer)
+
 
         # Add the container to the layout
-        layout.addLayout(layout1)
+        if scrollable:
+            optionsWidget.setLayout(layout1)
+            scrollarea.setWidget(optionsWidget)
+        else:
+            layout1.addItem(vertSpacer)
+            self.setLayout(layout1)
 
 
     def accumToggled(self):

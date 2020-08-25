@@ -199,7 +199,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.layoutSimpleExtend = richTextDescriptionButton(self, '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format('Extend data',
                                                  'Automatically extend the selected time series using default properties'))
 
-        self.layoutAggregationOptions = AggregationOptions(self)
+        self.layoutAggregationOptions = AggregationOptions(False)
 
         ## Add the widgets into the layout ##
         # Add the items into the horizontal spacer
