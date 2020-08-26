@@ -80,6 +80,24 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
         ) 
         self.datasetTable['DatasetHUC8'] = self.datasetTable['DatasetHUC8'].astype(str)
 
+        # Create the operations to be applied to the data structures
+        self.datasetOperationsTable = pd.DataFrame(
+            index=pd.Index([], dtype=int, name='DatasetInternalID'),
+            columns=[
+                'DatasetInternalID',        # Reference to the source dataset
+                'DatasetInstanceID',        # Unique version of the dataset to allow multiple accumulators
+                'FillMethod',               # Fill method to apply to the data
+                'FillMaximumGap',           # Maximum gap to fill in the data
+                'ExtendMethod',             # Extend method to apply to the data
+                'ExtendDuration',           # How long the data should be extended in the dataset units
+                'AccumulationMethod',       # Specify the accumulation method that will be applied
+                'AccumulationDateStart',    # Date from which to begin the accumulation of the variable
+                'AccumulationDateStop',     # Date from which to stop the accumulation of the variable
+                'DatasetOperationsOptions'
+            ],
+        )
+        self.datasetTable['DatasetHUC8'] = self.datasetTable['DatasetHUC8'].astype(str)
+
         # The data table stores all of the raw data associated with the selected datasets.
         # Edited data is versioned as 1 and unedited data is versioned as 0
         self.dataTable = pd.DataFrame(
