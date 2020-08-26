@@ -43,7 +43,6 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         self.workflowWidget = EnhancedTabWidget(self, 'above', 'vertical', True, False, True)
 
-
         # ===================================================================================================================
 
         # Layout the Target Selection Widget
@@ -112,9 +111,10 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.customMethodSpecEdit.hide()
 
         # Create the apply button
-        predictandApplyButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Apply</strong>')
-        predictandApplyButton.setMaximumSize(125, 50)
-        layout.addWidget(predictandApplyButton, 6, 0, 1, 1)
+        self.predictandApplyButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Apply</strong>')
+        self.predictandApplyButton.setMaximumSize(125, 50)
+        self.predictandApplyButton.clicked.connect(self.applyPredictandAggregationOption)
+        layout.addWidget(self.predictandApplyButton, 6, 0, 1, 1)
 
         layout.setColumnStretch(0, 1)
         layout.setColumnStretch(1, 10)
@@ -1190,6 +1190,9 @@ class ModelCreationTab(QtWidgets.QWidget):
 
     def _updateExtendSubtab(self):
         self.stackedExtendLayout.setCurrentIndex(self.layoutExtendMethodSelector.currentIndex())
+
+    def applyPredictandAggregationOption(self):
+        a = 1
 
 
     def _updateTabDependencies(self, tabIndex):
