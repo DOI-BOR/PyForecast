@@ -206,9 +206,6 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         self.layoutAggregationOptions = AggregationOptions(False)
 
-        # Create the apply button
-        predictorApplyButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Apply</strong>')
-        predictorApplyButton.setMaximumSize(125, 50)
 
         ## Add the widgets into the layout ##
         # Add the items into the horizontal spacer
@@ -223,7 +220,6 @@ class ModelCreationTab(QtWidgets.QWidget):
         layoutSimpleOptions.addWidget(self.layoutSimpleFill)
         layoutSimpleOptions.addWidget(self.layoutSimpleExtend)
         layoutSimpleOptions.addWidget(self.layoutAggregationOptions)
-        layoutSimpleOptions.addWidget(predictorApplyButton)#, 6, 0, 1, 1)
 
         # Wrap the right side layout in another widget
         layoutSimpleOptionsWidget = QtWidgets.QWidget()
