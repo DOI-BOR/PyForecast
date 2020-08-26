@@ -276,6 +276,9 @@ class EnhancedTabWidget(QtWidgets.QWidget):
         self.currentIndex = idx
         for tab in self.TabList:
             tab.deselectEvent()
+
+        # Emit a changed event to allow tab intercommunication
+        self.currentChanged.emit(idx)
         return
 
 
