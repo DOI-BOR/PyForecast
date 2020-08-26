@@ -557,6 +557,11 @@ class ModelCreationTab(QtWidgets.QWidget):
         #overallLayout.addWidget(self.overallStackWidget)
         self.setLayout(overallLayout)
 
+        # ====================================================================================================================
+        # Create an update method for when the tab widget gets changed to refresh elements
+        self.workflowWidget.currentChanged.connect(self._updateTabDependencies)
+
+
     def _createDataFillLayout(self, layoutFillSA):
         """
         Creates the layout of the fill subtab based on the options for each fill method
@@ -927,7 +932,13 @@ class ModelCreationTab(QtWidgets.QWidget):
                 if (i*3)+j < numPreProcessors:
                     prKey = list((self.parent.preProcessors.keys()))[(3*i)+j]
                     regrText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong>'.format(self.parent.preProcessors[prKey]['name'])
-                    preprocessorLayout.addWidget(richTextButtonCheckbox(regrText), i, j, 1, 1)
+
+                    # Disable the button to prevent user adjustements
+                    button = richTextButtonCheckbox(regrText)
+                    button.setDisabled(True)
+
+                    # Add the button into the layout
+                    preprocessorLayout.addWidget(button, i, j, 1, 1)
 
         # Wrap the layout in a widget and add to the layout
         preprocessorLayoutWidget = QtWidgets.QWidget()
@@ -952,7 +963,13 @@ class ModelCreationTab(QtWidgets.QWidget):
                 if (i * 3) + j < numRegressors:
                     prKey = list((self.parent.regressors.keys()))[(3 * i) + j]
                     regrText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(self.parent.regressors[prKey]['name'], '')
-                    regressorLayout.addWidget(richTextButtonCheckbox(regrText), i, j, 1, 1)
+
+                    # Disable the button to prevent user adjustements
+                    button = richTextButtonCheckbox(regrText)
+                    button.setDisabled(True)
+
+                    # Add the button into the layout
+                    regressorLayout.addWidget(button, i, j, 1, 1)
 
 
         # Wrap the layout in a widget and add to the layout
@@ -977,7 +994,13 @@ class ModelCreationTab(QtWidgets.QWidget):
                 if (i * 3) + j < numSelector:
                     prKey = list((self.parent.featureSelectors.keys()))[(3 * i) + j]
                     regrText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong>'.format(self.parent.featureSelectors[prKey]['name'])
-                    selectorLayout.addWidget(richTextButtonCheckbox(regrText), i, j, 1, 1)
+
+                    # Disable the button to prevent user adjustements
+                    button = richTextButtonCheckbox(regrText)
+                    button.setDisabled(True)
+
+                    # Add the button into the layout
+                    selectorLayout.addWidget(button, i, j, 1, 1)
 
         # Wrap the layout in a widget and add to the layout
         selectorLayoutWidget = QtWidgets.QWidget()
@@ -1001,7 +1024,13 @@ class ModelCreationTab(QtWidgets.QWidget):
                 if (i*3)+j < numScorers:
                     nameKey = list((self.parent.scorers['info'].keys()))[(3*i)+j]
                     regrText = '<strong style="font-size: 13px; color:darkcyan">{0}</strong>'.format(self.parent.scorers['info'][nameKey]['NAME'])
-                    scoringLayout.addWidget(richTextButtonCheckbox(regrText), i, j, 1, 1)
+
+                    # Disable the button to prevent user adjustements
+                    button = richTextButtonCheckbox(regrText)
+                    button.setDisabled(True)
+
+                    # Add to the layout object
+                    scoringLayout.addWidget(button, i, j, 1, 1)
 
         # Wrap the layout in a widget and add to the layout
         scoringLayoutWidget = QtWidgets.QWidget()
@@ -1161,6 +1190,23 @@ class ModelCreationTab(QtWidgets.QWidget):
 
     def _updateExtendSubtab(self):
         self.stackedExtendLayout.setCurrentIndex(self.layoutExtendMethodSelector.currentIndex())
+
+
+    def _updateTabDependencies(self, tabIndex):
+        # todo: doc string
+
+        ### Get the current index the widget has been changed to ###
+        # currentIndex = self.workflowWidget.currentIndex()
+        ##print(tabIndex)
+
+
+        if tabIndex == 3:
+            # Update the summary boxes
+            ##print('@@ debug statement')
+            pass
+
+
+
 
 
 
