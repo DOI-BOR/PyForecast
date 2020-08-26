@@ -10,6 +10,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 
 from resources.GUI.CustomWidgets.DatasetList_HTML_Formatted import DatasetList_HTML_Formatted
 from resources.GUI.CustomWidgets.DoubleList import DoubleList
+from resources.GUI.CustomWidgets.AggregationOptions import AggregationOptions
 from resources.GUI.CustomWidgets.PyQtGraphs import ModelTabPlots, TimeSeriesLineBarPlot
 from resources.GUI.CustomWidgets.customTabs import EnhancedTabWidget
 from resources.GUI.CustomWidgets.richTextButtons import richTextButton, richTextButtonCheckbox, richTextDescriptionButton
@@ -110,6 +111,11 @@ class ModelCreationTab(QtWidgets.QWidget):
         layout.addWidget(self.customMethodSpecEdit, 5, 0, 1, 2)
         self.customMethodSpecEdit.hide()
 
+        # Create the apply button
+        predictandApplyButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Apply</strong>')
+        predictandApplyButton.setMaximumSize(125, 50)
+        layout.addWidget(predictandApplyButton, 6, 0, 1, 1)
+
         layout.setColumnStretch(0, 1)
         layout.setColumnStretch(1, 10)
         layout.setVerticalSpacing(0)
@@ -198,6 +204,9 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.layoutSimpleExtend = richTextDescriptionButton(self, '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format('Extend data',
                                                  'Automatically extend the selected time series using default properties'))
 
+        self.layoutAggregationOptions = AggregationOptions(False)
+
+
         ## Add the widgets into the layout ##
         # Add the items into the horizontal spacer
         layoutSimple = QtWidgets.QHBoxLayout()
@@ -210,6 +219,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         layoutSimpleOptions.setAlignment(QtCore.Qt.AlignTop)
         layoutSimpleOptions.addWidget(self.layoutSimpleFill)
         layoutSimpleOptions.addWidget(self.layoutSimpleExtend)
+        layoutSimpleOptions.addWidget(self.layoutAggregationOptions)
 
         # Wrap the right side layout in another widget
         layoutSimpleOptionsWidget = QtWidgets.QWidget()
@@ -676,7 +686,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ### Create clear and apply buttons to apply operations ###
         # Create the clear button
-        self.layoutFillClearButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Clear</strong><br>')
+        self.layoutFillClearButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Clear</strong>')
         self.layoutFillClearButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
 
         # Link the button to the clear function
@@ -684,7 +694,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.layoutFillClearButton.clicked.connect(self._updateFillSubtab)
 
         # Create the apply button
-        self.layoutFillApplyButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Apply</strong><br>')
+        self.layoutFillApplyButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Apply</strong>')
         self.layoutFillApplyButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
 
         # Link the button to the apply function
@@ -921,7 +931,7 @@ class ModelCreationTab(QtWidgets.QWidget):
             for j in range(3):
                 if (i*3)+j < numPreProcessors:
                     prKey = list((self.parent.preProcessors.keys()))[(3*i)+j]
-                    regrText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>'.format(self.parent.preProcessors[prKey]['name'])
+                    regrText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong>'.format(self.parent.preProcessors[prKey]['name'])
 
                     # Disable the button to prevent user adjustements
                     button = richTextButtonCheckbox(regrText)
@@ -983,7 +993,7 @@ class ModelCreationTab(QtWidgets.QWidget):
             for j in range(3):
                 if (i * 3) + j < numSelector:
                     prKey = list((self.parent.featureSelectors.keys()))[(3 * i) + j]
-                    regrText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>'.format(self.parent.featureSelectors[prKey]['name'])
+                    regrText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong>'.format(self.parent.featureSelectors[prKey]['name'])
 
                     # Disable the button to prevent user adjustements
                     button = richTextButtonCheckbox(regrText)
@@ -1013,7 +1023,7 @@ class ModelCreationTab(QtWidgets.QWidget):
             for j in range(3):
                 if (i*3)+j < numScorers:
                     nameKey = list((self.parent.scorers['info'].keys()))[(3*i)+j]
-                    regrText = '<strong style="font-size: 13px; color:darkcyan">{0}</strong><br>'.format(self.parent.scorers['info'][nameKey]['NAME'])
+                    regrText = '<strong style="font-size: 13px; color:darkcyan">{0}</strong>'.format(self.parent.scorers['info'][nameKey]['NAME'])
 
                     # Disable the button to prevent user adjustements
                     button = richTextButtonCheckbox(regrText)
@@ -1035,11 +1045,11 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ## Create and add the activation buttons ##
         # Create the clear button
-        summaryClearButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Clear</strong><br>')
+        summaryClearButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Clear</strong>')
         summaryClearButton.setMaximumSize(125, 65)
 
         # Create the start button
-        summaryStartButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Start</strong><br>')
+        summaryStartButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Start</strong>')
         summaryStartButton.setMaximumSize(125, 65)
 
         # Create an horizontal layout, aligned to the right
