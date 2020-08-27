@@ -82,7 +82,7 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
 
         # Create the operations to be applied to the data structures
         self.datasetOperationsTable = pd.DataFrame(
-            index=pd.Index([], dtype=int, name='DatasetInternalID'),
+            index=pd.Index([], dtype=int, name='DatasetID'),
             columns=[
                 'DatasetInternalID',        # Reference to the source dataset
                 'DatasetInstanceID',        # Unique version of the dataset to allow multiple accumulators
