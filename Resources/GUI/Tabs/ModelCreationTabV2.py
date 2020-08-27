@@ -1192,7 +1192,14 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.stackedExtendLayout.setCurrentIndex(self.layoutExtendMethodSelector.currentIndex())
 
     def applyPredictandAggregationOption(self):
-        a = 1
+        predictandData = self.targetSelect.currentData()
+        nDays = self.periodEnd.date().toJulianDay() - self.periodStart.date().toJulianDay() + 1 #dates inclusive
+        periodString = "R/" + self.periodStart.date().toString('yyyy-MM-dd') + "/P" + str(nDays) + "D/F12M" #(e.g. R/1978-02-01/P1M/F1Y)
+        print("Predictand Entries for the self.modelRunsTable: ")
+        print("--Predictand ID: " + str(predictandData.name))
+        print("--Predictand Period: " + periodString)#.periodStart.date().toString('MMM d,yyyy') + " - " + self.periodEnd.date().toString('MMM d,yyyy'))
+        print("--Predictand Method: " + self.methodCombo.currentData())
+        # TODO: UPDATE self.modelRunsTable ENTRIES HERE
 
 
     def _updateTabDependencies(self, tabIndex):

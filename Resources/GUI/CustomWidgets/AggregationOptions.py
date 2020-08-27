@@ -106,10 +106,10 @@ class AggregationOptions(QtWidgets.QWidget):
         ]
         # Build, connect, and add the radio buttons
         self.radioGroup = QtWidgets.QGroupBox("Select a predictor aggregation scheme:")
-        self.radioLayout = QtWidgets.QVBoxLayout()
+        self.radioLayout = QtWidgets.QGridLayout()
         self.toggleLabel = QtWidgets.QLabel("placeholder")
         self.toggleLabel.setWordWrap(True)
-        self.radioLayout.addWidget(self.toggleLabel)
+        self.radioLayout.addWidget(self.toggleLabel, 0, 0, 1, 2)
         for i in range(len(self.predictorAggregationOptions)):
             radio = QtWidgets.QRadioButton(self.predictorAggregationLabels[i])
             radio.toggled.connect(self.radioToggled)
@@ -124,6 +124,12 @@ class AggregationOptions(QtWidgets.QWidget):
         # Add to UI
         self.radioGroup.setLayout(self.radioLayout)
         layout1.addWidget(self.radioGroup)
+
+        #########################################################################
+        # Create predictor forcing checkbox
+        self.predForceCheckBox = QtWidgets.QCheckBox("Force Predictor")
+        self.predForceCheckBox.setChecked(False)
+        layout1.addWidget(self.predForceCheckBox)
 
         #########################################################################
         # Create the apply button
@@ -144,14 +150,30 @@ class AggregationOptions(QtWidgets.QWidget):
     def radioToggled(self):
         radioBtn = self.sender()
         desc = self.predictorAggregationDescriptions[self.predictorAggregationLabels.index(radioBtn.text())]
+        opt = self.predictorAggregationOptions[self.predictorAggregationLabels.index(radioBtn.text())]
         if radioBtn.isChecked():
             self.toggleLabel.setText("Selected Aggregation: " + radioBtn.text() + " - " + desc)
-            # set predictor object value here...
+            self.selectedAggOption = opt
+
 
     def resamplingUpdate(self):
         tStepString = self.predictorResamplingLabels[self.tStepChar.currentIndex()]
         freqString = self.predictorResamplingLabels[self.freqChar.currentIndex()]
-        self.resampleDescription.setText("Defined Resampling: " + self.periodStart.text() + ", take " + self.tStepInteger.text() + " " + tStepString + "(s) of data, and make 1 value every " + self.freqInteger.text() + " " + freqString + "(s)")
+        tStepOption = self.predictorResamplingOptions[self.tStepChar.currentIndex()]
+        freqOption = self.predictorResamplingOptions[self.freqChar.currentIndex()]
+        self.resampleDescription.setText("Defined Resampling: Starting " + self.periodStart.text() + ", take " + self.tStepInteger.text() + " " + tStepString + "(s) of data, and make 1 value every " + self.freqInteger.text() + " " + freqString + "(s)")
+        self.selectedAggPeriod = "R/" + self.periodStart.date().toString('yyyy-MM-dd') + "/P" + self.tStepInteger.text() + tStepOption + "/" + "F"+ self.freqInteger.text() + freqOption #(e.g. R/1978-02-01/P1M/F1Y)
+
 
     def applyPredictorAggregationOption(self):
-        print('test')
+        print("Predictor Entries for the predictorTable/self.modelRunsTable: ")
+        # TODO: map this ID from the dataset table
+        print("--PredictorPool: " + "X")
+        # TODO: Add a bool checkbox for this
+        print("--PredictorForceFlag: " + str(self.predForceCheckBox.isChecked()))
+        print("--PredictorPeriods: " + self.selectedAggPeriod)
+        print("--PredictorMethods: " + self.selectedAggOption)
+        # TODO: not sure what these are for
+        print("--PredictorGroups: " + "X")
+        print("--PredictorGroupMapping: " + "X")
+        # TODO: UPDATE predictorTable/self.modelRunsTable ENTRIES HERE
