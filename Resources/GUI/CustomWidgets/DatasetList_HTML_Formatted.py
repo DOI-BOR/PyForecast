@@ -76,32 +76,6 @@ empty_dataset_list = pd.DataFrame(
             ]
         )
 
-empty_dataset_list_multiple = pd.DataFrame(
-            # index = pd.Index([], dtype=int, name='DatasetInternalID'),
-            columns = [
-                'DatasetType',              # e.g. STREAMGAGE, or RESERVOIR
-                'DatasetExternalID',        # e.g. "GIBR" or "06025500"
-                'DatasetInternalID',
-                'DatasetInstanceID',        # e.g. 0, 1, 2
-                'DatasetName',              # e.g. Gibson Reservoir
-                'DatasetAgency',            # e.g. USGS
-                'DatasetParameter',         # e.g. Temperature
-                'DatasetParameterCode',     # e.g. avgt
-                'DatasetUnits',             # e.g. CFS
-                'DatasetDefaultResampling', # e.g. average
-                'DatasetDataloader',        # e.g. RCC_ACIS
-                'DatasetHUC8',              # e.g. 10030104
-                'DatasetLatitude',          # e.g. 44.352
-                'DatasetLongitude',         # e.g. -112.324
-                'DatasetElevation',         # e.g. 3133 (in ft)
-                'DatasetPORStart',          # e.g. 1/24/1993
-                'DatasetPOREnd',            # e.g. 1/22/2019\
-                'DatasetCompositeEquation', # e.g. C/100121,102331,504423/1.0,0.5,4.3/0,0,5
-                'DatasetImportFileName',    # e.g. 'C://Users//JoeDow//Dataset.CSV'
-                'DatasetAdditionalOptions'
-            ]
-        )
-
 class DatasetListHTMLFormatted(QtWidgets.QListWidget):
     """
     This subclass of the QListWidget displays dataset from the PyForecast DatasetTable

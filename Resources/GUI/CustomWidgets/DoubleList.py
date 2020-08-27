@@ -671,7 +671,7 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
             i_number_of_existing = len(self.listOutput.datasetTable.loc[[value]])
 
             if i_number_of_existing == 0:
-                self._setSingleOutputItem(entry, False)
+                self._setSingleOutputItem(False, row_index=entry, refresh=False)
 
         # Trigger refreshes of the input and output lists
         self.listInput.refreshDatasetList()
@@ -707,7 +707,7 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
         # Emit for the updated linked doublelists
         self.updatedLinkedList.emit(self.listInput, self.listOutput)
 
-    def _setSingleOutputItem(self, row_index=None, refresh=True):
+    def _setSingleOutputItem(self, event_status, row_index=None, refresh=True):
         """
         Moves the single selected item in the input list to the output list
 
