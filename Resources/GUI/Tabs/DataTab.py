@@ -10,7 +10,7 @@ Description:        'DataTab.py' is a PyQt5 GUI for the PyForecast application.
 from    PyQt5   import  QtWidgets, \
                         QtCore, \
                         QtGui
-from resources.GUI.CustomWidgets.DatasetList_HTML_Formatted import DatasetList_HTML_Formatted
+from resources.GUI.CustomWidgets.DatasetList_HTML_Formatted import DatasetListHTMLFormatted
 from resources.GUI.CustomWidgets import SVGIcon, customTabs
 from resources.GUI.CustomWidgets.PyQtGraphs import DataTabPlots
 from resources.GUI.CustomWidgets.SpreadSheet import SpreadSheetView
@@ -70,7 +70,8 @@ class DataTab(QtWidgets.QWidget):
         downUpdateBoxLayout.addRow(self.statusBar)
 
         # Initialize other widgets
-        self.datasetList = DatasetList_HTML_Formatted(self, datasetTable = self.parent.datasetTable, HTML_formatting = "", addButtons = False )
+        # self.datasetList = DatasetList_HTML_Formatted(self, datasetTable = self.parent.datasetTable, HTML_formatting = "", addButtons = False )
+        self.datasetList = DatasetListHTMLFormatted(self, datasetTable=self.parent.datasetTable, addButtons=False)
         self.plot = DataTabPlots(self)
         self.spreadsheet = SpreadSheetView(self)
 
