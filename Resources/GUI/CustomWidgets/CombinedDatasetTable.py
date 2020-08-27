@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
-from resources.GUI.CustomWidgets.DatasetList_HTML_Formatted import DatasetList_HTML_Formatted
+from resources.GUI.CustomWidgets.DatasetList_HTML_Formatted import DatasetListHTMLFormatted
 
 class CombinedDatasetTbl(QtWidgets.QTableWidget):
     """
@@ -56,7 +56,7 @@ class datasetComboBox(QtWidgets.QComboBox):
         QtWidgets.QComboBox.__init__(self)
         self.parent = parent
         self.setAutoFillBackground(True)
-        self.datasetList = DatasetList_HTML_Formatted(self, datasetTable = self.parent.datasetTable, HTML_formatting = "", addButtons = False )
+        self.datasetList = DatasetListHTMLFormatted(self, datasetTable = self.parent.datasetTable, HTML_formatting ="", addButtons = False)
         
         self.setModel(self.datasetList.model())
         self.setView(self.datasetList)
