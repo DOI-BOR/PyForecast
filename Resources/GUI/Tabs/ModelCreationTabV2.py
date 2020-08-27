@@ -8,8 +8,8 @@ Description:    Defines the layout for the Model Creation Tab. Includes all the 
 # Import Libraries
 from PyQt5 import QtWidgets, QtCore, QtGui
 
-from resources.GUI.CustomWidgets.DatasetList_HTML_Formatted import DatasetList_HTML_Formatted
-from resources.GUI.CustomWidgets.DoubleList import DoubleList
+from resources.GUI.CustomWidgets.DatasetList_HTML_Formatted import DatasetListHTMLFormatted, DatasetListHTMLFormattedMultiple
+from resources.GUI.CustomWidgets.DoubleList import DoubleListMultipleInstance
 from resources.GUI.CustomWidgets.AggregationOptions import AggregationOptions
 from resources.GUI.CustomWidgets.PyQtGraphs import ModelTabPlots, TimeSeriesLineBarPlot
 from resources.GUI.CustomWidgets.customTabs import EnhancedTabWidget
@@ -53,7 +53,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.dataPlot = ModelTabPlots(self, objectName='ModelTabPlot')
         self.dataPlot.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.targetSelect = QtWidgets.QComboBox()
-        self.datasetList = DatasetList_HTML_Formatted(self, datasetTable = self.parent.datasetTable, addButtons=False)
+        self.datasetList = DatasetListHTMLFormatted(self, datasetTable = self.parent.datasetTable, addButtons=False)
         self.targetSelect.setModel(self.datasetList.model())
         self.targetSelect.setView(self.datasetList)
 
@@ -61,7 +61,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         layout.addWidget(QtWidgets.QLabel("Forecast Target"), 0, 0)
         layout.addWidget(self.targetSelect, 0, 1)
         
-        self.selectedItemDisplay = DatasetList_HTML_Formatted(self, addButtons=False, objectName='ModelTargetList')
+        self.selectedItemDisplay = DatasetListHTMLFormatted(self, addButtons=False, objectName='ModelTargetList')
         self.selectedItemDisplay.setFixedHeight(99)
         self.selectedItemDisplay.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
         
@@ -187,9 +187,9 @@ class ModelCreationTab(QtWidgets.QWidget):
         predictorLayoutSimple.setWidgetResizable(True)
 
         ## Create the DoubleList selector object ##
-        self.layoutSimpleDoubleList = DoubleList(self.parent.datasetTable,
-                                               '<strong style="font-size: 18px">Available Datasets<strong>',
-                                               '<strong style="font-size: 18px">Selected Datasets<strong>', False)
+        self.layoutSimpleDoubleList = DoubleListMultipleInstance(self.parent.datasetTable,
+                                                                 '<strong style="font-size: 18px">Available Datasets<strong>',
+                                                                 '<strong style="font-size: 18px">Selected Datasets<strong>')
 
         # Connect the DoubleList with the dataset hmtl list to keep everything in sync. This will automatically
         # populate the DoubleList entries
@@ -253,9 +253,9 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ## Setup the DoubleList object ##
         # Create the doublelist
-        self.layoutDataDoubleList = DoubleList(self.parent.datasetTable,
-                                               '<strong style="font-size: 18px">Available Datasets<strong>',
-                                               '<strong style="font-size: 18px">Selected Datasets<strong>', True)
+        self.layoutDataDoubleList = DoubleListMultipleInstance(self.parent.datasetTable,
+                                                               '<strong style="font-size: 18px">Available Datasets<strong>',
+                                                               '<strong style="font-size: 18px">Selected Datasets<strong>')
 
         # Connect the DoubleList with the dataset hmtl list to keep everything in sync. This will automatically
         # populate the DoubleList entries
@@ -295,7 +295,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         layoutExtendLeftLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Selected Data<strong>'))
 
         # Connect and add the list
-        self.extendList = DatasetList_HTML_Formatted(datasetTable=self.layoutDataDoubleList.listOutput.datasetTable)
+        self.extendList = DatasetListHTMLFormattedMultiple(inputDataset=self.layoutDataDoubleList.listOutput.datasetTable)
         self.layoutDataDoubleList.listOutput.updateSignalToExternal.connect(self.extendList.refreshDatasetListFromExtenal)
         layoutExtendLeftLayout.addWidget(self.extendList)
 
@@ -337,7 +337,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         layoutWindowLeftLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Selected Data<strong>'))
 
         # Connect and add the list
-        self.windowList = DatasetList_HTML_Formatted(datasetTable=self.layoutDataDoubleList.listOutput.datasetTable)
+        self.windowList = DatasetListHTMLFormattedMultiple(inputDataset=self.layoutDataDoubleList.listOutput.datasetTable)
         self.layoutDataDoubleList.listOutput.updateSignalToExternal.connect(self.windowList.refreshDatasetListFromExtenal)
         layoutWindowLeftLayout.addWidget(self.windowList)
 
@@ -576,7 +576,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         layoutFillLeftLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Selected Data<strong>'))
 
         # Add the list
-        self.fillList = DatasetList_HTML_Formatted(datasetTable=self.layoutDataDoubleList.listOutput.datasetTable)
+        self.fillList = DatasetListHTMLFormattedMultiple(inputDataset=self.layoutDataDoubleList.listOutput.datasetTable)
         self.layoutDataDoubleList.listOutput.updateSignalToExternal.connect(self.fillList.refreshDatasetListFromExtenal)
         layoutFillLeftLayout.addWidget(self.fillList)
 
@@ -1168,8 +1168,8 @@ class ModelCreationTab(QtWidgets.QWidget):
         currentInternalID = self.fillList.datasetTable.index[currentIndex]
 
         # Set the values
-        self.parent.datasetTable.at[currentInternalID, 'FillMethod'] = 'None'
-        self.parent.datasetTable.at[currentInternalID, 'FillMaximumGap'] = None
+        self.parent.datasetOperationsTable.at[currentInternalID, 'FillMethod'] = 'None'
+        self.parent.datasetOperationsTable.at[currentInternalID, 'FillMaximumGap'] = None
 
         # Clear the button click
         self.layoutFillClearButton.setChecked(False)
@@ -1177,16 +1177,6 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Switch the stacked widgets
         self.layoutFillMethodSelector.setCurrentIndex(0)
         self._updateFillSubtab()
-
-
-    def __addFillOptionsToDatasetTable(self):
-        """
-        Adds the fill options into the parent dataset table
-
-        """
-
-        self.parent.datasetTable['FillMethod'] = 'None'
-        self.parent.datasetTable['FillMaximumGap'] = None
 
     def _updateExtendSubtab(self):
         self.stackedExtendLayout.setCurrentIndex(self.layoutExtendMethodSelector.currentIndex())
