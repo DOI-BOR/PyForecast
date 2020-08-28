@@ -692,7 +692,8 @@ class ModelCreationTab(QtWidgets.QWidget):
         ### Create clear and apply buttons to apply operations ###
         # Create the clear button
         self.layoutFillClearButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Clear</strong>')
-        self.layoutFillClearButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
+        self.layoutFillClearButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred)
+        # self.layoutFillClearButton.setFixedHeight(40)
 
         # Link the button to the clear function
         self.layoutFillClearButton.clicked.connect(self._applyFillClearToDataset)
@@ -700,7 +701,8 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Create the apply button
         self.layoutFillApplyButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Apply</strong>')
-        self.layoutFillApplyButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
+        self.layoutFillApplyButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred)
+        # self.layoutFillApplyButton.setFixedHeight(40)
 
         # Link the button to the apply function
         self.layoutFillApplyButton.clicked.connect(self._applyFillOptionsToDataset)
@@ -1107,21 +1109,21 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         """
 
-        # Check that the fill options have been added into the table
-        if 'FillMethod' not in self.parent.datasetTable.columns:
-            self.__addFillOptionsToDatasetTable()
-
-        # Get the current dataset
-        currentIndex = self.fillList.currentIndex().row()
-        currentInternalID = self.fillList.datasetTable.index[currentIndex]
+        # Get the current datasest index
+        currentIndex = self.fillList.datasetTable.index[self.fillList.currentIndex().row()]
 
         # Get the options for the item
-        fillMethod = self.parent.datasetTable.at[currentInternalID, 'FillMethod']
-        fillGap = self.parent.datasetTable.at[currentInternalID, 'FillMaximumGap']
+        fillMethod = self.parent.datasetOperationsTable.loc[currentIndex]['FillMethod']
+        fillGap = self.parent.datasetOperationsTable.loc[currentIndex]['FillMaximumGap']
         # If needed, can extract more information based on the fill method here
 
         # Get the options for the selector and stack
-        fillOptionsIndex = [x for x in range(self.layoutFillMethodSelector.count()) if self.layoutFillMethodSelector.itemText(x) == fillMethod][0]
+        fillOptionsIndex = [x for x in range(self.layoutFillMethodSelector.count()) if self.layoutFillMethodSelector.itemText(x) == fillMethod]
+        if fillOptionsIndex:
+            fillOptionsIndex = fillOptionsIndex[0]
+        else:
+            fillOptionsIndex = 0
+
         self.stackedFillLayout.setCurrentIndex(fillOptionsIndex)
         self.layoutFillMethodSelector.setCurrentIndex(fillOptionsIndex)
 
@@ -1135,10 +1137,6 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         """
 
-        # Check that the fill options have been added into the table
-        if 'FillMethod' not in self.parent.datasetTable.columns:
-            self.__addFillOptionsToDatasetTable()
-
         # Extract the fill limit
         try:
             fillLimit = int(self.layoutFillGapLimit.toPlainText())
@@ -1149,12 +1147,11 @@ class ModelCreationTab(QtWidgets.QWidget):
         fillMethod = self.layoutFillMethodSelector.currentText()
 
         # Get the current dataset
-        currentIndex = self.fillList.currentIndex().row()
-        currentInternalID = self.fillList.datasetTable.index[currentIndex]
+        currentIndex = self.fillList.datasetTable.index[self.fillList.currentIndex().row()]
 
         # Set the values
-        self.parent.datasetTable.at[currentInternalID, 'FillMethod'] = fillMethod
-        self.parent.datasetTable.at[currentInternalID, 'FillMaximumGap'] = fillLimit
+        self.parent.datasetOperationsTable.loc[currentIndex]['FillMethod'] = fillMethod
+        self.parent.datasetOperationsTable.loc[currentIndex]['FillMaximumGap'] = fillLimit
 
         # Clear the button click
         self.layoutFillApplyButton.setChecked(False)
@@ -1165,16 +1162,12 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         """
 
-        if 'FillMethod' not in self.parent.datasetTable.columns:
-            self.__addFillOptionsToDatasetTable()
-
         # Get the current dataset
-        currentIndex = self.fillList.currentIndex().row()
-        currentInternalID = self.fillList.datasetTable.index[currentIndex]
+        currentIndex = self.fillList.datasetTable.index[self.fillList.currentIndex().row()]
 
         # Set the values
-        self.parent.datasetOperationsTable.at[currentInternalID, 'FillMethod'] = 'None'
-        self.parent.datasetOperationsTable.at[currentInternalID, 'FillMaximumGap'] = None
+        self.parent.datasetOperationsTable.loc[currentIndex]['FillMethod'] = None
+        self.parent.datasetOperationsTable.loc[currentIndex]['FillMaximumGap'] = None
 
         # Clear the button click
         self.layoutFillClearButton.setChecked(False)
