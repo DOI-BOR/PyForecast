@@ -209,13 +209,13 @@ class richTextButton(QtWidgets.QPushButton):
         self.setAutoExclusive(False)
 
         self.__lyt = QtWidgets.QHBoxLayout()
-        self.__lyt.setContentsMargins(2, 2, 2, 2)
+        self.__lyt.setContentsMargins(5, 5, 5, 5)
         self.__lyt.setSpacing(0)
         self.setLayout(self.__lyt)
 
         self.__lbl.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         self.__lbl.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents)
-        self.__lbl.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.__lbl.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.__lbl.setTextFormat(QtCore.Qt.RichText)
         self.__lyt.addWidget(self.__lbl)
