@@ -255,7 +255,8 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Create the doublelist
         self.layoutDataDoubleList = DoubleListMultipleInstance(self.parent.datasetTable,
                                                                '<strong style="font-size: 18px">Available Datasets<strong>',
-                                                               '<strong style="font-size: 18px">Selected Datasets<strong>')
+                                                               '<strong style="font-size: 18px">Selected Datasets<strong>',
+                                                               operations_dataframe=self.parent.datasetOperationsTable)
 
         # Connect the DoubleList with the dataset hmtl list to keep everything in sync. This will automatically
         # populate the DoubleList entries
@@ -264,6 +265,10 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Connect the doublelists together. This will keep the selection in sync between the simple and expert modes
         self.layoutDataDoubleList.updatedLinkedList.connect(self.layoutSimpleDoubleList.updateLinkedDoubleLists)
         self.layoutSimpleDoubleList.updatedLinkedList.connect(self.layoutDataDoubleList.updateLinkedDoubleLists)
+
+        # Link the expert doublelist to the model operations table. Since the double lists are linked together, linking
+        # only one is sufficient to ensure the table is always up-to-date
+        self.layoutDataDoubleList.updatedOutputList.connect(self.layoutDataDoubleList.updateLinkedOperationsTables)
 
         # todo: Update the positions on the map
 

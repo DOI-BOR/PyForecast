@@ -96,7 +96,9 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
                 'DatasetOperationsOptions'
             ],
         )
-        self.datasetTable['DatasetHUC8'] = self.datasetTable['DatasetHUC8'].astype(str)
+
+        # Convert the table to a multiindex dataframe for more simple indexing
+        self.datasetOperationsTable.set_index(['DatasetInternalID', 'DatasetInstanceID'], inplace=True)
 
         # The data table stores all of the raw data associated with the selected datasets.
         # Edited data is versioned as 1 and unedited data is versioned as 0

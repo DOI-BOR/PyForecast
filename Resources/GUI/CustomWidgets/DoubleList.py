@@ -86,7 +86,7 @@ class DoubleListUniqueInstance(QtWidgets.QWidget):
         layout.addLayout(layoutl)
 
         # Set the initial dataframe from the parent object
-        self.data_frame = initialDataframe
+        self.dataset_dataframe = initialDataframe
 
         # Set the status button
         self._setStatusButton()
@@ -166,7 +166,7 @@ class DoubleListUniqueInstance(QtWidgets.QWidget):
         self.listOutput.clear()
 
         # Add the items to the input list and refresh the input list
-        self.listInput.datasetTable = self.data_frame
+        self.listInput.datasetTable = self.dataset_dataframe
         self.listInput.refreshDatasetList()
         self.listOutput.refreshDatasetList()
 
@@ -402,7 +402,7 @@ class DoubleListUniqueInstance(QtWidgets.QWidget):
         #     print(datasetTable)
 
         # Update the DoubleList dataframe
-        self.data_frame = datasetTable
+        self.dataset_dataframe = datasetTable
 
         # Reset the list entries
         self.resetAvailableItems()
@@ -437,10 +437,10 @@ class DoubleListUniqueInstance(QtWidgets.QWidget):
 
 class DoubleListMultipleInstance(QtWidgets.QWidget):
 
-    updatedOutputList = QtCore.pyqtSignal(pd.DataFrame)
+    updatedOutputList = QtCore.pyqtSignal()
     updatedLinkedList = QtCore.pyqtSignal(DatasetListHTMLFormatted, DatasetListHTMLFormattedMultiple)
 
-    def __init__(self, initialDataframe, inputTitle, outputTitle, parent=None):
+    def __init__(self, initialDataframe, inputTitle, outputTitle, parent=None, operations_dataframe=None):
         """
         Constructor for the DoubleList widget class. This creates side-by-side linked lists. The user is able to move
         data entries from the left list to the right list to include the dataset in the analysis. The datasets in the
@@ -517,7 +517,8 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
         layout.addLayout(layoutl)
 
         # Set the initial dataframe from the parent object
-        self.data_frame = initialDataframe
+        self.dataset_dataframe = initialDataframe
+        self.operations_dataframe = operations_dataframe
 
         # Set the status button
         self._setStatusButton()
@@ -597,12 +598,13 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
         self.listOutput.clear()
 
         # Add the items to the input list and refresh the input list
-        self.listInput.datasetTable = self.data_frame
+        self.listInput.datasetTable = self.dataset_dataframe
         self.listInput.refreshDatasetList()
         self.listOutput.refreshDatasetList()
 
         # Emit for the updated linked doublelists
         self.updatedLinkedList.emit(self.listInput, self.listOutput)
+        self.updatedOutputList.emit()
 
     def seletedItems(self):
         """
@@ -651,6 +653,7 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
 
         # Emit for the updated linked doublelists
         self.updatedLinkedList.emit(self.listInput, self.listOutput)
+        self.updatedOutputList.emit()
 
     def _setAllOutputItems(self):
         """
@@ -679,6 +682,7 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
 
         # Emit for the updated linked doublelists
         self.updatedLinkedList.emit(self.listInput, self.listOutput)
+        self.updatedOutputList.emit()
 
     def _setSingleInputItem(self):
         """
@@ -706,6 +710,7 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
 
         # Emit for the updated linked doublelists
         self.updatedLinkedList.emit(self.listInput, self.listOutput)
+        self.updatedOutputList.emit()
 
     def _setSingleOutputItem(self, event_status, row_index=None, refresh=True):
         """
@@ -758,6 +763,7 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
 
             # Emit for the updated linked doublelists
             self.updatedLinkedList.emit(self.listInput, self.listOutput)
+            self.updatedOutputList.emit()
 
     def _setButtonUpClicked(self):
         """
@@ -785,8 +791,7 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
         ia_indices[i_current_index - 1] = i_current_row
 
         # Reindex the table
-        self.listOutput.datasetTable = self.listOutput.datasetTable.reindex(
-            self.listOutput.datasetTable.index[ia_indices])
+        self.listOutput.datasetTable = self.listOutput.datasetTable.reindex(self.listOutput.datasetTable.index[ia_indices])
 
         # Refresh the table
         self.listOutput.refreshDatasetList()
@@ -820,8 +825,7 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
         ia_indices[i_current_index + 1] = i_current_row
 
         # Reindex the table
-        self.listOutput.datasetTable = self.listOutput.datasetTable.reindex(
-            self.listOutput.datasetTable.index[ia_indices])
+        self.listOutput.datasetTable = self.listOutput.datasetTable.reindex(self.listOutput.datasetTable.index[ia_indices])
 
         # Refresh the table
         self.listOutput.refreshDatasetList()
@@ -846,7 +850,7 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
         #     print(datasetTable)
 
         # Update the DoubleList dataframe
-        self.data_frame = datasetTable
+        self.dataset_dataframe = datasetTable
 
         # Reset the list entries
         self.resetAvailableItems()
@@ -875,3 +879,43 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
         # Refresh the object
         self.listInput.refreshDatasetList()
         self.listOutput.refreshDatasetList()
+
+        # Emit the updated output table sync signal
+        self.updatedOutputList.emit()
+
+    def updateLinkedOperationsTables(self):
+        """
+        Propagates changes in the doublelist output table to the linked operations table
+
+        Parameters
+        ----------
+        self: DoubleListMultipleInstance
+        syncedTable: dataframe
+            Operations table that needs to be synced across the application
+
+        Returns
+        -------
+        None. Modfies the linked table stored within the list object
+
+        """
+
+        # Determine if a row has been added for removed
+        rowRemoved = len(self.listOutput.datasetTable) < len(self.operations_dataframe)
+        rowAdded = len(self.listOutput.datasetTable) > len(self.operations_dataframe)
+
+        # Take action based on the table change
+        if rowRemoved:
+            # Determine which row has been removed from the dataset table
+            targetTuples = [x for x in self.operations_dataframe.index if x not in self.listOutput.datasetTable.index]
+
+            # Drop the value from the operations table
+            for targetTuple in targetTuples:
+                self.operations_dataframe.drop(targetTuple, inplace=True)
+
+        if rowAdded:
+            # Determine which row has be added to the dataset table
+            targetTuples = [x for x in self.listOutput.datasetTable.index if x not in self.operations_dataframe.index]
+
+            # Add the information into the table
+            for targetTuple in targetTuples:
+                self.operations_dataframe.loc[(targetTuple[0],targetTuple[1]),:] = None
