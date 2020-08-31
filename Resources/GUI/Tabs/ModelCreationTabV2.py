@@ -281,97 +281,33 @@ class ModelCreationTab(QtWidgets.QWidget):
 
 
         ### Create the layout fill tab ###
-        ## Create the scrollable area ##
+        # Create the scrollable area
         layoutFillSA = QtWidgets.QScrollArea()
         layoutFillSA.setWidgetResizable(True)
 
-        ## Fill the remaining area with the layout options ##
+        # Fill the remaining area with the layout options
         self._createDataFillLayout(layoutFillSA)
 
+
         ### Create the layout extend tab ###
+        # Create the scrollable area
         layoutExtendSA = QtWidgets.QScrollArea()
         layoutExtendSA.setWidgetResizable(True)
 
-        ## Create the selector list ##
-        # Create a vertical layout
-        layoutExtendLeftLayout = QtWidgets.QVBoxLayout()
-
-        # Create and add the list title
-        layoutExtendLeftLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Selected Data<strong>'))
-
-        # Connect and add the list
-        self.extendList = DatasetListHTMLFormattedMultiple(inputDataset=self.layoutDataDoubleList.listOutput.datasetTable)
-        self.layoutDataDoubleList.listOutput.updateSignalToExternal.connect(self.extendList.refreshDatasetListFromExtenal)
-        layoutExtendLeftLayout.addWidget(self.extendList)
-
-        ## Create the right panel ##
-        # Create the vertical layout
-        layoutExtendRightLayout = QtWidgets.QVBoxLayout()
-
         # Fill the remaining area with the layout options
-        self._createDataExtendLayout(layoutExtendRightLayout)
-
-        ## Create the full layout ##
-        # Create the horizontal layout
-        layoutExtend = QtWidgets.QHBoxLayout()
-
-        # Wrap the left layout in a widget and add to the layout
-        leftWidget = QtWidgets.QWidget()
-        leftWidget.setLayout(layoutExtendLeftLayout)
-        layoutExtend.addWidget(leftWidget, 1)
-
-        # Wrap the right layout in a widget and add to the layout
-        rightWidget = QtWidgets.QWidget()
-        rightWidget.setLayout(layoutExtendRightLayout)
-        layoutExtend.addWidget(rightWidget, 2)
-
-        # Add the layout to the extend scrollable area
-        layoutExtendSA.setLayout(layoutExtend)
+        self._createDataExtendLayout(layoutExtendSA)
 
 
         ### Create the layout window tab ###
-        ## Create the scrollable area ##
+        # Create the scrollable area
         layoutWindowSA = QtWidgets.QScrollArea()
         layoutWindowSA.setWidgetResizable(True)
 
-        ## Create the selector list ##
-        # Create a vertical layout
-        layoutWindowLeftLayout = QtWidgets.QVBoxLayout()
-
-        # Create and add the list title
-        layoutWindowLeftLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Selected Data<strong>'))
-
-        # Connect and add the list
-        self.windowList = DatasetListHTMLFormattedMultiple(inputDataset=self.layoutDataDoubleList.listOutput.datasetTable)
-        self.layoutDataDoubleList.listOutput.updateSignalToExternal.connect(self.windowList.refreshDatasetListFromExtenal)
-        layoutWindowLeftLayout.addWidget(self.windowList)
-
-        ## Create the right panel ##
-        # Create the vertical layout
-        layoutWindowRightLayout = QtWidgets.QGridLayout()
-
         # Fill the remaining area with the layout options
-        self._createDataWindowLayout(layoutWindowRightLayout)
-
-        ## Create the full layout ##
-        # Create the horizontal layout
-        layoutWindow = QtWidgets.QHBoxLayout()
-
-        # Wrap the left layout in a widget and add to the layout
-        leftWidget = QtWidgets.QWidget()
-        leftWidget.setLayout(layoutWindowLeftLayout)
-        layoutWindow.addWidget(leftWidget, 1)
-
-        # Wrap the Right layout in a widget and add to the layout
-        rightWidget = QtWidgets.QWidget()
-        rightWidget.setLayout(layoutWindowRightLayout)
-        layoutWindow.addWidget(rightWidget, 2)
-
-        # Add the layout to the extend scrollable area
-        layoutWindowSA.setLayout(layoutWindow)
+        self._createDataWindowLayout(layoutWindowSA)
 
 
-        ### Add the tabs into the tab widget ###
+        ### Add the subtabs into the tab widget ###
         tabWidget = QtWidgets.QTabWidget()
         tabWidget.addTab(layoutDataSA, 'Data')
         tabWidget.addTab(layoutFillSA, 'Fill')
@@ -403,123 +339,18 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # ====================================================================================================================
         # Layout the Forecast Settings widget
-
+        # Create the scrollable area
         SA = QtWidgets.QScrollArea()
         SA.setWidgetResizable(True)
-        widg = QtWidgets.QWidget()        
-        layout = QtWidgets.QVBoxLayout()
-        layout.setContentsMargins(0,0,0,0)
 
-        label = QtWidgets.QLabel()
-        label.setTextFormat(QtCore.Qt.RichText)
-        label.setText('<strong style="font-size: 24px">How should PyForecast build and evaluate models?</strong>')
-        layout.addWidget(label)
+        # Construct the layout object
+        optionsLayout = self._createOptionsTabLayout()
 
-        # Forecast Issue Date
-        # Model Training Period
-        
+        # Set the layout into the widget
+        widg = QtWidgets.QWidget()
+        widg.setLayout(optionsLayout)
 
-        label = QtWidgets.QLabel()
-        label.setTextFormat(QtCore.Qt.RichText)
-        label.setText('<strong style="font-size: 18px">Select options below or choose the default options<strong>')
-        layout.addWidget(label)
-        self.defButton = QtWidgets.QRadioButton("Choose Defaults")
-        self.defButton.setChecked(True)
-        self.expertButton = QtWidgets.QRadioButton("I'm an expert! Let me choose")
-        bgroup = QtWidgets.QButtonGroup()
-        gb = QtWidgets.QGroupBox("")
-        bgroup.addButton(self.defButton)
-        bgroup.addButton(self.expertButton)
-        bgroup.setExclusive(True)
-        layout2 = QtWidgets.QVBoxLayout()
-        layout2.addWidget(self.defButton)
-        layout2.addWidget(self.expertButton)
-        gb.setLayout(layout2)
-        layout.addWidget(gb)
-        
-
-        label  = QtWidgets.QLabel()
-        label.setTextFormat(QtCore.Qt.RichText)
-        label.setText('<strong style="font-size: 18px">Preprocessing Algorithms</strong>')
-        layout.addWidget(label)
-        layout.addWidget(QtWidgets.QLabel("Select one or more algorithms:"))
-        
-        numPreProcessors = len(self.parent.preProcessors.keys())
-        layout2 = QtWidgets.QGridLayout()
-
-        layout2.setContentsMargins(1,1,1,1)
-        for i in range(int(numPreProcessors/3) + 1 if numPreProcessors%3 != 0 else int(numPreProcessors/3)):
-            for j in range(3):
-                if (i*3)+j < numPreProcessors:
-                    prKey = list((self.parent.preProcessors.keys()))[(3*i)+j]
-                    regrText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(self.parent.preProcessors[prKey]['name'], self.parent.preProcessors[prKey]['description'])
-                    layout2.addWidget(richTextDescriptionButton(self, regrText), i, j, 1, 1)
-        layout.addLayout(layout2)
-
-        label  = QtWidgets.QLabel()
-        label.setTextFormat(QtCore.Qt.RichText)
-        label.setText('<strong style="font-size: 18px">Regression Algorithms</strong>')
-        layout.addWidget(label)
-        layout.addWidget(QtWidgets.QLabel("Select one or more algorithms:"))
-        
-        numRegressionModels = len(self.parent.regressors.keys())
-        layout2 = QtWidgets.QGridLayout()
-        layout2.setContentsMargins(1,1,1,1)
-        for i in range(int(numRegressionModels/3) + 1 if numRegressionModels%3 != 0 else int(numRegressionModels/3)):
-            for j in range(3):
-                if (i*3)+j < numRegressionModels:
-                    regrKey = list((self.parent.regressors.keys()))[(3*i)+j]
-                    regrText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(self.parent.regressors[regrKey]['name'], self.parent.regressors[regrKey]['description'])
-                    layout2.addWidget(richTextDescriptionButton(self, regrText), i, j, 1, 1)
-        layout.addLayout(layout2)
-
-        label  = QtWidgets.QLabel()
-        label.setTextFormat(QtCore.Qt.RichText)
-        label.setText('<strong style="font-size: 18px">Model Selection Algorithms</strong>')
-        layout.addWidget(label)
-        layout.addWidget(QtWidgets.QLabel("Select one or more algorithms:"))
-        
-        numFeatSelectors = len(self.parent.featureSelectors.keys())
-        layout2 = QtWidgets.QGridLayout()
-        layout2.setContentsMargins(1,1,1,1)
-        for i in range(int(numFeatSelectors/3) + 1 if numFeatSelectors%3 != 0 else int(numFeatSelectors/3)):
-            for j in range(3):
-                if (i*3)+j < numFeatSelectors:
-                    regrKey = list((self.parent.featureSelectors.keys()))[(3*i)+j]
-                    regrText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(self.parent.featureSelectors[regrKey]['name'], self.parent.featureSelectors[regrKey]['description'])
-                    layout2.addWidget(richTextDescriptionButton(self, regrText), i, j, 1, 1)
-        layout.addLayout(layout2)
-
-        label  = QtWidgets.QLabel()
-        label.setTextFormat(QtCore.Qt.RichText)
-        label.setText('<strong style="font-size: 18px">Model Scoring</strong>')
-        layout.addWidget(label)
-        layout.addWidget(QtWidgets.QLabel("Select one or more scoring parameters (used to rank models):"))
-
-        numScorers = len(self.parent.scorers['info'].keys())
-        layout2 = QtWidgets.QGridLayout()
-        layout2.setContentsMargins(1,1,1,1)
-        for i in range(int(numScorers/3) + 1 if numScorers%3 != 0 else int(numScorers/3)):
-            #layout2 = QtWidgets.QHBoxLayout()
-            #layout2.setContentsMargins(1,1,1,1)
-            for j in range(3):
-                if (i*3)+j < numScorers:
-                    nameKey = list((self.parent.scorers['info'].keys()))[(3*i)+j]
-                    regrText = '<strong style="font-size: 13px; color:darkcyan">{2}</strong><br>{0}'.format(self.parent.scorers['info'][nameKey]['NAME'], self.parent.scorers['info'][nameKey]['WEBSITE'], self.parent.scorers['info'][nameKey]['HTML'])
-                    layout2.addWidget(richTextDescriptionButton(self, regrText), i, j, 1, 1)
-        layout.addLayout(layout2)
-
-        # items = (layout.itemAt(i) for i in range(layout.count()))
-        # print(items)
-        # for w in items:
-        #     w.ResizeEvent()
-
-        #layout2.addWidget(richTextButton(self, '<strong style="color:maroon">Multiple Linear Regression</strong><br>Ordinary Least Squares'))
-        #layout2.addWidget(richTextButton(self, '<strong style="color:maroon">Principal Components Regression</strong><br>Ordinary Least Squares'))
-        #layout2.addWidget(richTextButton(self, '<strong style="color:maroon">Z-Score Regression</strong><br>Ordinary Least Squares'))
-        
-        layout.addSpacerItem(QtWidgets.QSpacerItem(100,100,QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding))
-        widg.setLayout(layout)
+        # Add the widget to the scrollable area
         SA.setWidget(widg)
         self.workflowWidget.addTab(SA, "OPTIONS", "resources/GraphicalResources/icons/tune-24px.svg", "#FFFFFF", iconSize=(66,66))
 
@@ -569,7 +400,16 @@ class ModelCreationTab(QtWidgets.QWidget):
 
     def _createDataFillLayout(self, layoutFillSA):
         """
-        Creates the layout of the fill subtab based on the options for each fill method
+        Lays out the fill subtab in the expert predictor mode
+
+        Parameters
+        ----------
+        layoutFillSA: scrollable area
+            The area into which all layout items are placed
+
+        Returns
+        -------
+        None.
 
         """
 
@@ -733,26 +573,51 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         layoutFillSA.setLayout(layoutFill)
 
-    def _createDataExtendLayout(self, layoutMain):
+    def _createDataExtendLayout(self, layoutExtendSA):
         """
-        Creates the layout of the fill subtab based on the options for each fill method
+        Lays out the extend subtab in the expert predictor mode
+
+        Parameters
+        ----------
+        layoutExtendSA: scrollable area
+            The area into which all layout items are placed
+
+        Returns
+        -------
+        None.
 
         """
+
+        ## Create the selector list ##
+        # Create a vertical layout
+        layoutExtendLeftLayout = QtWidgets.QVBoxLayout()
+
+        # Create and add the list title
+        layoutExtendLeftLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Selected Data<strong>'))
+
+        # Connect and add the list
+        self.extendList = DatasetListHTMLFormattedMultiple(inputDataset=self.layoutDataDoubleList.listOutput.datasetTable)
+        self.layoutDataDoubleList.listOutput.updateSignalToExternal.connect(self.extendList.refreshDatasetListFromExtenal)
+        layoutExtendLeftLayout.addWidget(self.extendList)
+
+        ## Create the right panel ##
+        # Create the vertical layout
+        layoutExtendRightLayout = QtWidgets.QVBoxLayout()
 
         # Set the options available for filling the data
         extendOptions = ['None', 'Fourier']
 
         # Create and add a dropdown selector with the available options
-        layoutMain.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Extend Method<strong>'))
+        layoutExtendRightLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Extend Method<strong>'))
 
         self.layoutExtendMethodSelector = QtWidgets.QComboBox()
         self.layoutExtendMethodSelector.addItems(extendOptions)
-        layoutMain.addWidget(self.layoutExtendMethodSelector)
+        layoutExtendRightLayout.addWidget(self.layoutExtendMethodSelector)
 
         # Create a line to delineate the selector from the selector options
         lineA = QtWidgets.QFrame()
         lineA.setFrameShape(QtWidgets.QFrame.HLine)
-        layoutMain.addWidget(lineA)
+        layoutExtendRightLayout.addWidget(lineA)
 
         # Create the fill limit label
         extendGapLabel = QtWidgets.QLabel('Extension Duration')
@@ -774,10 +639,10 @@ class ModelCreationTab(QtWidgets.QWidget):
         extendGapLayoutWidget = QtWidgets.QWidget()
         extendGapLayoutWidget.setLayout(extendGapLayout)
 
-        layoutMain.addWidget(extendGapLayoutWidget)
+        layoutExtendRightLayout.addWidget(extendGapLayoutWidget)
 
         # Adjust the layout of the widgets
-        layoutMain.setAlignment(QtCore.Qt.AlignTop)
+        layoutExtendRightLayout.setAlignment(QtCore.Qt.AlignTop)
 
         ### Create the none page ###
         noneLayout = QtWidgets.QGridLayout()
@@ -805,12 +670,58 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.stackedExtendLayout.addWidget(fourierWidget)
 
         # Add the stacked layout to the main layout
-        layoutMain.addWidget(stackedWidget)
+        layoutExtendRightLayout.addWidget(stackedWidget)
 
         ### Connect the stacked widget with the selection combo box ###
         self.layoutExtendMethodSelector.currentIndexChanged.connect(self._updateExtendSubtab)
 
-    def _createDataWindowLayout(self, layoutMain):
+        ## Create the full layout ##
+        # Create the horizontal layout
+        layoutExtend = QtWidgets.QHBoxLayout()
+
+        # Wrap the left layout in a widget and add to the layout
+        leftWidget = QtWidgets.QWidget()
+        leftWidget.setLayout(layoutExtendLeftLayout)
+        layoutExtend.addWidget(leftWidget, 1)
+
+        # Wrap the right layout in a widget and add to the layout
+        rightWidget = QtWidgets.QWidget()
+        rightWidget.setLayout(layoutExtendRightLayout)
+        layoutExtend.addWidget(rightWidget, 2)
+
+        # Add the layout to the extend scrollable area
+        layoutExtendSA.setLayout(layoutExtend)
+
+    def _createDataWindowLayout(self, layoutWindowSA):
+        """
+        Lays out the windowing subtab in the expert predictor mode
+
+        Parameters
+        ----------
+        layoutWindowSA: scrollable area
+            The area into which all layout items are placed
+
+        Returns
+        -------
+        None.
+
+        """
+
+        ## Create the selector list ##
+        # Create a vertical layout
+        layoutWindowLeftLayout = QtWidgets.QVBoxLayout()
+
+        # Create and add the list title
+        layoutWindowLeftLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Selected Data<strong>'))
+
+        # Connect and add the list
+        self.windowList = DatasetListHTMLFormattedMultiple(inputDataset=self.layoutDataDoubleList.listOutput.datasetTable)
+        self.layoutDataDoubleList.listOutput.updateSignalToExternal.connect(self.windowList.refreshDatasetListFromExtenal)
+        layoutWindowLeftLayout.addWidget(self.windowList)
+
+        ## Create the right panel ##
+        # Create the vertical layout
+        layoutWindowRightLayout = QtWidgets.QGridLayout()
 
         ### Setup the upper plot ###
         # Create a line/bar plot object
@@ -832,7 +743,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         dataPlot.plot()
 
         # Add into the main layout
-        layoutMain.addWidget(dataPlot.chartView, 0, 0, 1, 3)
+        layoutWindowRightLayout.addWidget(dataPlot.chartView, 0, 0, 1, 3)
 
         ### Create the date/lag widgets ###
         # todo: capture these values for each dataset on list change
@@ -857,7 +768,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         startLayoutWidget = QtWidgets.QWidget()
         startLayoutWidget.setLayout(startLayout)
 
-        layoutMain.addWidget(startLayoutWidget, 1, 0)
+        layoutWindowRightLayout.addWidget(startLayoutWidget, 1, 0)
 
         ## Create the stop time widget ##
         # Create the label
@@ -878,7 +789,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         stopLayoutWidget = QtWidgets.QWidget()
         stopLayoutWidget.setLayout(stopLayout)
-        layoutMain.addWidget(stopLayoutWidget, 1, 1)
+        layoutWindowRightLayout.addWidget(stopLayoutWidget, 1, 1)
 
         ## Create the lag box widget ##
         # Create the label
@@ -899,21 +810,227 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         lagLayoutWidget = QtWidgets.QWidget()
         lagLayoutWidget.setLayout(lagLayout)
-        layoutMain.addWidget(lagLayoutWidget, 1, 2)
+        layoutWindowRightLayout.addWidget(lagLayoutWidget, 1, 2)
+
+        ## Create the full layout ##
+        # Create the horizontal layout
+        layoutWindow = QtWidgets.QHBoxLayout()
+
+        # Wrap the left layout in a widget and add to the layout
+        leftWidget = QtWidgets.QWidget()
+        leftWidget.setLayout(layoutWindowLeftLayout)
+        layoutWindow.addWidget(leftWidget, 1)
+
+        # Wrap the Right layout in a widget and add to the layout
+        rightWidget = QtWidgets.QWidget()
+        rightWidget.setLayout(layoutWindowRightLayout)
+        layoutWindow.addWidget(rightWidget, 2)
+
+        # Add the layout to the extend scrollable area
+        layoutWindowSA.setLayout(layoutWindow)
+
+    def _createOptionsTabLayout(self):
+        """
+        Lays out the options tab
+
+        Parameters
+        ----------
+        None.
+
+        Returns
+        -------
+        layoutMain: QT layout object
+            Object containing all layout information to be placed in the widgets tab
+
+        """
+
+        # Create the page master layout
+        layoutMain = QtWidgets.QVBoxLayout()
+        layoutMain.setContentsMargins(0, 0, 0, 0)
+
+        # Create the description text for the page
+        label = QtWidgets.QLabel()
+        label.setTextFormat(QtCore.Qt.RichText)
+        label.setText('<strong style="font-size: 24px">How should PyForecast build and evaluate models?</strong>')
+        layoutMain.addWidget(label)
+
+        # Forecast Issue Date
+        # Model Training Period
+
+        label = QtWidgets.QLabel()
+        label.setTextFormat(QtCore.Qt.RichText)
+        label.setText('<strong style="font-size: 18px">Select options below or choose the default options<strong>')
+        layoutMain.addWidget(label)
+        self.defButton = QtWidgets.QRadioButton("Choose Defaults")
+        self.defButton.setChecked(True)
+        self.expertButton = QtWidgets.QRadioButton("I'm an expert! Let me choose")
+        bgroup = QtWidgets.QButtonGroup()
+        gb = QtWidgets.QGroupBox("")
+        bgroup.addButton(self.defButton)
+        bgroup.addButton(self.expertButton)
+        bgroup.setExclusive(True)
+        layout2 = QtWidgets.QVBoxLayout()
+        layout2.addWidget(self.defButton)
+        layout2.addWidget(self.expertButton)
+        gb.setLayout(layout2)
+        layoutMain.addWidget(gb)
+
+        ### Setup the preprocessing algorithms ###
+        ## Create the label ##
+        label = QtWidgets.QLabel()
+        label.setTextFormat(QtCore.Qt.RichText)
+        label.setText('<strong style="font-size: 18px">Preprocessing Algorithms</strong>')
+        layoutMain.addWidget(label)
+        layoutMain.addWidget(QtWidgets.QLabel("Select one or more algorithms:"))
+
+        ## Set the boxes containing options into the layout grid ##
+        # Create and format the layout
+        optionsPreprocessorLayout = QtWidgets.QGridLayout()
+        optionsPreprocessorLayout.setContentsMargins(1, 1, 1, 1)
+
+        # Loop and fill the layout
+        self.optionsPreprocessor = []
+        numPreProcessors = len(self.parent.preProcessors.keys())
+        for i in range(int(numPreProcessors / 3) + 1 if numPreProcessors % 3 != 0 else int(numPreProcessors / 3)):
+            for j in range(3):
+                if (i * 3) + j < numPreProcessors:
+                    prKey = list((self.parent.preProcessors.keys()))[(3 * i) + j]
+                    regrText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(
+                        self.parent.preProcessors[prKey]['name'], self.parent.preProcessors[prKey]['description'])
+                    button = richTextDescriptionButton(self, regrText)
+
+                    # Add the button to the layout and the tracking list
+                    optionsPreprocessorLayout.addWidget(button, i, j, 1, 1)
+                    self.optionsPreprocessor.append(button)
+
+        layoutMain.addLayout(optionsPreprocessorLayout)
+
+        ### Setup the regression algorithms ###
+        ## Create the label ##
+        label = QtWidgets.QLabel()
+        label.setTextFormat(QtCore.Qt.RichText)
+        label.setText('<strong style="font-size: 18px">Regression Algorithms</strong>')
+        layoutMain.addWidget(label)
+        layoutMain.addWidget(QtWidgets.QLabel("Select one or more algorithms:"))
+
+        ## Set the boxes containing options into the layout grid ##
+        # Create and format the layout
+        optionsRegressionLayout = QtWidgets.QGridLayout()
+        optionsRegressionLayout.setContentsMargins(1, 1, 1, 1)
+
+        # Loop and fill the layout
+        self.optionsRegression = []
+        numRegressionModels = len(self.parent.regressors.keys())
+        for i in range(int(numRegressionModels / 3) + 1 if numRegressionModels % 3 != 0 else int(numRegressionModels / 3)):
+            for j in range(3):
+                if (i * 3) + j < numRegressionModels:
+                    regrKey = list((self.parent.regressors.keys()))[(3 * i) + j]
+                    regrText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(
+                        self.parent.regressors[regrKey]['name'], self.parent.regressors[regrKey]['description'])
+                    button = richTextDescriptionButton(self, regrText)
+
+                    # Add the button to the layout and the tracking list
+                    optionsRegressionLayout.addWidget(button, i, j, 1, 1)
+                    self.optionsRegression.append(button)
+
+        layoutMain.addLayout(optionsRegressionLayout)
+
+        ### Setup the model selection algorithms ###
+        ## Create the label ##
+        label = QtWidgets.QLabel()
+        label.setTextFormat(QtCore.Qt.RichText)
+        label.setText('<strong style="font-size: 18px">Model Selection Algorithms</strong>')
+        layoutMain.addWidget(label)
+        layoutMain.addWidget(QtWidgets.QLabel("Select one or more algorithms:"))
+
+        ## Set the boxes containing options into the layout grid ##
+        # Create and format the layout
+        optionsSelectionLayout = QtWidgets.QGridLayout()
+        optionsSelectionLayout.setContentsMargins(1, 1, 1, 1)
+
+        # Loop and fill the layout
+        self.optionsSelection = []
+        numFeatSelectors = len(self.parent.featureSelectors.keys())
+        for i in range(int(numFeatSelectors / 3) + 1 if numFeatSelectors % 3 != 0 else int(numFeatSelectors / 3)):
+            for j in range(3):
+                if (i * 3) + j < numFeatSelectors:
+                    regrKey = list((self.parent.featureSelectors.keys()))[(3 * i) + j]
+                    regrText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(
+                        self.parent.featureSelectors[regrKey]['name'],
+                        self.parent.featureSelectors[regrKey]['description'])
+                    button = richTextDescriptionButton(self, regrText)
+
+                    # Add the button to the layout and the holding list
+                    optionsSelectionLayout.addWidget(button, i, j, 1, 1)
+                    self.optionsSelection.append(button)
+
+        layoutMain.addLayout(optionsSelectionLayout)
+
+        ### Setup the model scoring algorithms ###
+        ## Create the label ##
+        label = QtWidgets.QLabel()
+        label.setTextFormat(QtCore.Qt.RichText)
+        label.setText('<strong style="font-size: 18px">Model Scoring</strong>')
+        layoutMain.addWidget(label)
+        layoutMain.addWidget(QtWidgets.QLabel("Select one or more scoring parameters (used to rank models):"))
+
+        ## Set the boxes containing options into the layout grid ##
+        # Create and format the layout
+        optionsScoringLayout = QtWidgets.QGridLayout()
+        optionsScoringLayout.setContentsMargins(1, 1, 1, 1)
+
+        # Loop and fill the layout
+        self.optionsScoring = []
+        numScorers = len(self.parent.scorers['info'].keys())
+        for i in range(int(numScorers / 3) + 1 if numScorers % 3 != 0 else int(numScorers / 3)):
+            # layout2 = QtWidgets.QHBoxLayout()
+            # layout2.setContentsMargins(1,1,1,1)
+            for j in range(3):
+                if (i * 3) + j < numScorers:
+                    nameKey = list((self.parent.scorers['info'].keys()))[(3 * i) + j]
+                    regrText = '<strong style="font-size: 13px; color:darkcyan">{2}</strong><br>{0}'.format(
+                        self.parent.scorers['info'][nameKey]['NAME'], self.parent.scorers['info'][nameKey]['WEBSITE'],
+                        self.parent.scorers['info'][nameKey]['HTML'])
+                    button = richTextDescriptionButton(self, regrText)
+
+                    # Add the button to the layout and the holding list
+                    optionsScoringLayout.addWidget(button, i, j, 1, 1)
+                    self.optionsScoring.append(button)
+
+        layoutMain.addLayout(optionsScoringLayout)
+
+        # items = (layout.itemAt(i) for i in range(layout.count()))
+        # print(items)
+        # for w in items:
+        #     w.ResizeEvent()
+
+        # layout2.addWidget(richTextButton(self, '<strong style="color:maroon">Multiple Linear Regression</strong><br>Ordinary Least Squares'))
+        # layout2.addWidget(richTextButton(self, '<strong style="color:maroon">Principal Components Regression</strong><br>Ordinary Least Squares'))
+        # layout2.addWidget(richTextButton(self, '<strong style="color:maroon">Z-Score Regression</strong><br>Ordinary Least Squares'))
+
+        layoutMain.addSpacerItem(QtWidgets.QSpacerItem(100, 100, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding))
+
+        return layoutMain
 
     def _createSummaryTabLayout(self, mainLayout):
         """
+        Lays out the summary tab
 
+        Parameters
+        ----------
+        None.
+
+        Returns
+        -------
+        layoutMain: QT layout object
+            Object containing all layout information to be placed in the widgets tab
 
         """
-        # todo: doc string
 
         ### Create the left side dataset summary table ###
         # Create the list widget
         summaryListWidget = QtWidgets.QListWidget()
 
-        # Populate the widget with data
-        # todo: add the linkage across the tables
 
         # Add to the layout
         mainLayout.addWidget(summaryListWidget)
@@ -934,6 +1051,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Loop and fill the preprocessor options
         numPreProcessors = len(self.parent.preProcessors.keys())
+        counter = 0
         for i in range(int(numPreProcessors/3) + 1 if numPreProcessors%3 != 0 else int(numPreProcessors/3)):
             for j in range(3):
                 if (i*3)+j < numPreProcessors:
@@ -946,6 +1064,11 @@ class ModelCreationTab(QtWidgets.QWidget):
 
                     # Add the button into the layout
                     preprocessorLayout.addWidget(button, i, j, 1, 1)
+
+                    # Link the button with the corresponding box on the options tab
+                    recipricalBox = self.optionsPreprocessor[counter]
+                    recipricalBox.updateLinkedButton.connect(button.update_from_exteral)
+                    counter += 1
 
         # Wrap the layout in a widget and add to the layout
         preprocessorLayoutWidget = QtWidgets.QWidget()
@@ -964,8 +1087,8 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Loop and fill the preprocessor options
         numRegressors = len(self.parent.regressors.keys())
+        counter = 0
         for i in range(int(numRegressors / 3) + 1 if numRegressors % 3 != 0 else int(numRegressors / 3)):
-
             for j in range(3):
                 if (i * 3) + j < numRegressors:
                     prKey = list((self.parent.regressors.keys()))[(3 * i) + j]
@@ -977,6 +1100,11 @@ class ModelCreationTab(QtWidgets.QWidget):
 
                     # Add the button into the layout
                     regressorLayout.addWidget(button, i, j, 1, 1)
+
+                    # Link the button with the corresponding box on the options tab
+                    recipricalBox = self.optionsRegression[counter]
+                    recipricalBox.updateLinkedButton.connect(button.update_from_exteral)
+                    counter += 1
 
 
         # Wrap the layout in a widget and add to the layout
@@ -996,6 +1124,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Loop and fill the preprocessor options
         numSelector = len(self.parent.featureSelectors.keys())
+        counter = 0
         for i in range(int(numSelector / 3) + 1 if numSelector % 3 != 0 else int(numSelector / 3)):
             for j in range(3):
                 if (i * 3) + j < numSelector:
@@ -1008,6 +1137,11 @@ class ModelCreationTab(QtWidgets.QWidget):
 
                     # Add the button into the layout
                     selectorLayout.addWidget(button, i, j, 1, 1)
+
+                    # Link the button with the corresponding box on the options tab
+                    recipricalBox = self.optionsSelection[counter]
+                    recipricalBox.updateLinkedButton.connect(button.update_from_exteral)
+                    counter += 1
 
         # Wrap the layout in a widget and add to the layout
         selectorLayoutWidget = QtWidgets.QWidget()
@@ -1026,6 +1160,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Loop and fill the preprocessor options
         numScorers = len(self.parent.scorers['info'].keys())
+        counter = 0
         for i in range(int(numScorers/3) + 1 if numScorers%3 != 0 else int(numScorers/3)):
             for j in range(3):
                 if (i*3)+j < numScorers:
@@ -1038,6 +1173,11 @@ class ModelCreationTab(QtWidgets.QWidget):
 
                     # Add to the layout object
                     scoringLayout.addWidget(button, i, j, 1, 1)
+
+                    # Link the button with the corresponding box on the options tab
+                    recipricalBox = self.optionsScoring[counter]
+                    recipricalBox.updateLinkedButton.connect(button.update_from_exteral)
+                    counter += 1
 
         # Wrap the layout in a widget and add to the layout
         scoringLayoutWidget = QtWidgets.QWidget()

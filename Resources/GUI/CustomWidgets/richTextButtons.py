@@ -3,6 +3,8 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 
 class richTextDescriptionButton(QtWidgets.QPushButton):
 
+    updateLinkedButton = QtCore.pyqtSignal(bool)
+
     def __init__(self, parent=None, richText=""):
 
         QtWidgets.QPushButton.__init__(self)
@@ -46,6 +48,9 @@ class richTextDescriptionButton(QtWidgets.QPushButton):
             self.lab.setText(self.richTextChecked)
         else:
             self.lab.setText(self.richTextUnChecked)
+
+        # Emit an update signal to allow status update on linked buttons
+        self.updateLinkedButton.emit(self.isChecked())
 
     def resizeEvent(self, ev):
         QtWidgets.QPushButton.resizeEvent(self, ev)
@@ -185,6 +190,18 @@ class richTextButtonCheckbox(QtWidgets.QPushButton):
         # Return the size hint to avoid thrown errors
         return labelSize
 
+    def update_from_exteral(self, externalStatus):
+        """
+        Updates clicked state from a linked external button
+
+        """
+
+        if externalStatus:
+            self.setChecked(True)
+            self.__lbl.setText(self.richTextChecked)
+        else:
+            self.setChecked(False)
+            self.__lbl.setText(self.richTextUnChecked)
 
 class richTextButton(QtWidgets.QPushButton):
 
