@@ -281,97 +281,33 @@ class ModelCreationTab(QtWidgets.QWidget):
 
 
         ### Create the layout fill tab ###
-        ## Create the scrollable area ##
+        # Create the scrollable area
         layoutFillSA = QtWidgets.QScrollArea()
         layoutFillSA.setWidgetResizable(True)
 
-        ## Fill the remaining area with the layout options ##
+        # Fill the remaining area with the layout options
         self._createDataFillLayout(layoutFillSA)
 
+
         ### Create the layout extend tab ###
+        # Create the scrollable area
         layoutExtendSA = QtWidgets.QScrollArea()
         layoutExtendSA.setWidgetResizable(True)
 
-        ## Create the selector list ##
-        # Create a vertical layout
-        layoutExtendLeftLayout = QtWidgets.QVBoxLayout()
-
-        # Create and add the list title
-        layoutExtendLeftLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Selected Data<strong>'))
-
-        # Connect and add the list
-        self.extendList = DatasetListHTMLFormattedMultiple(inputDataset=self.layoutDataDoubleList.listOutput.datasetTable)
-        self.layoutDataDoubleList.listOutput.updateSignalToExternal.connect(self.extendList.refreshDatasetListFromExtenal)
-        layoutExtendLeftLayout.addWidget(self.extendList)
-
-        ## Create the right panel ##
-        # Create the vertical layout
-        layoutExtendRightLayout = QtWidgets.QVBoxLayout()
-
         # Fill the remaining area with the layout options
-        self._createDataExtendLayout(layoutExtendRightLayout)
-
-        ## Create the full layout ##
-        # Create the horizontal layout
-        layoutExtend = QtWidgets.QHBoxLayout()
-
-        # Wrap the left layout in a widget and add to the layout
-        leftWidget = QtWidgets.QWidget()
-        leftWidget.setLayout(layoutExtendLeftLayout)
-        layoutExtend.addWidget(leftWidget, 1)
-
-        # Wrap the right layout in a widget and add to the layout
-        rightWidget = QtWidgets.QWidget()
-        rightWidget.setLayout(layoutExtendRightLayout)
-        layoutExtend.addWidget(rightWidget, 2)
-
-        # Add the layout to the extend scrollable area
-        layoutExtendSA.setLayout(layoutExtend)
+        self._createDataExtendLayout(layoutExtendSA)
 
 
         ### Create the layout window tab ###
-        ## Create the scrollable area ##
+        # Create the scrollable area
         layoutWindowSA = QtWidgets.QScrollArea()
         layoutWindowSA.setWidgetResizable(True)
 
-        ## Create the selector list ##
-        # Create a vertical layout
-        layoutWindowLeftLayout = QtWidgets.QVBoxLayout()
-
-        # Create and add the list title
-        layoutWindowLeftLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Selected Data<strong>'))
-
-        # Connect and add the list
-        self.windowList = DatasetListHTMLFormattedMultiple(inputDataset=self.layoutDataDoubleList.listOutput.datasetTable)
-        self.layoutDataDoubleList.listOutput.updateSignalToExternal.connect(self.windowList.refreshDatasetListFromExtenal)
-        layoutWindowLeftLayout.addWidget(self.windowList)
-
-        ## Create the right panel ##
-        # Create the vertical layout
-        layoutWindowRightLayout = QtWidgets.QGridLayout()
-
         # Fill the remaining area with the layout options
-        self._createDataWindowLayout(layoutWindowRightLayout)
-
-        ## Create the full layout ##
-        # Create the horizontal layout
-        layoutWindow = QtWidgets.QHBoxLayout()
-
-        # Wrap the left layout in a widget and add to the layout
-        leftWidget = QtWidgets.QWidget()
-        leftWidget.setLayout(layoutWindowLeftLayout)
-        layoutWindow.addWidget(leftWidget, 1)
-
-        # Wrap the Right layout in a widget and add to the layout
-        rightWidget = QtWidgets.QWidget()
-        rightWidget.setLayout(layoutWindowRightLayout)
-        layoutWindow.addWidget(rightWidget, 2)
-
-        # Add the layout to the extend scrollable area
-        layoutWindowSA.setLayout(layoutWindow)
+        self._createDataWindowLayout(layoutWindowSA)
 
 
-        ### Add the tabs into the tab widget ###
+        ### Add the subtabs into the tab widget ###
         tabWidget = QtWidgets.QTabWidget()
         tabWidget.addTab(layoutDataSA, 'Data')
         tabWidget.addTab(layoutFillSA, 'Fill')
@@ -733,26 +669,42 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         layoutFillSA.setLayout(layoutFill)
 
-    def _createDataExtendLayout(self, layoutMain):
+    def _createDataExtendLayout(self, layoutExtendSA):
         """
         Creates the layout of the fill subtab based on the options for each fill method
 
         """
 
+        ## Create the selector list ##
+        # Create a vertical layout
+        layoutExtendLeftLayout = QtWidgets.QVBoxLayout()
+
+        # Create and add the list title
+        layoutExtendLeftLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Selected Data<strong>'))
+
+        # Connect and add the list
+        self.extendList = DatasetListHTMLFormattedMultiple(inputDataset=self.layoutDataDoubleList.listOutput.datasetTable)
+        self.layoutDataDoubleList.listOutput.updateSignalToExternal.connect(self.extendList.refreshDatasetListFromExtenal)
+        layoutExtendLeftLayout.addWidget(self.extendList)
+
+        ## Create the right panel ##
+        # Create the vertical layout
+        layoutExtendRightLayout = QtWidgets.QVBoxLayout()
+
         # Set the options available for filling the data
         extendOptions = ['None', 'Fourier']
 
         # Create and add a dropdown selector with the available options
-        layoutMain.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Extend Method<strong>'))
+        layoutExtendRightLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Extend Method<strong>'))
 
         self.layoutExtendMethodSelector = QtWidgets.QComboBox()
         self.layoutExtendMethodSelector.addItems(extendOptions)
-        layoutMain.addWidget(self.layoutExtendMethodSelector)
+        layoutExtendRightLayout.addWidget(self.layoutExtendMethodSelector)
 
         # Create a line to delineate the selector from the selector options
         lineA = QtWidgets.QFrame()
         lineA.setFrameShape(QtWidgets.QFrame.HLine)
-        layoutMain.addWidget(lineA)
+        layoutExtendRightLayout.addWidget(lineA)
 
         # Create the fill limit label
         extendGapLabel = QtWidgets.QLabel('Extension Duration')
@@ -774,10 +726,10 @@ class ModelCreationTab(QtWidgets.QWidget):
         extendGapLayoutWidget = QtWidgets.QWidget()
         extendGapLayoutWidget.setLayout(extendGapLayout)
 
-        layoutMain.addWidget(extendGapLayoutWidget)
+        layoutExtendRightLayout.addWidget(extendGapLayoutWidget)
 
         # Adjust the layout of the widgets
-        layoutMain.setAlignment(QtCore.Qt.AlignTop)
+        layoutExtendRightLayout.setAlignment(QtCore.Qt.AlignTop)
 
         ### Create the none page ###
         noneLayout = QtWidgets.QGridLayout()
@@ -805,12 +757,45 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.stackedExtendLayout.addWidget(fourierWidget)
 
         # Add the stacked layout to the main layout
-        layoutMain.addWidget(stackedWidget)
+        layoutExtendRightLayout.addWidget(stackedWidget)
 
         ### Connect the stacked widget with the selection combo box ###
         self.layoutExtendMethodSelector.currentIndexChanged.connect(self._updateExtendSubtab)
 
-    def _createDataWindowLayout(self, layoutMain):
+        ## Create the full layout ##
+        # Create the horizontal layout
+        layoutExtend = QtWidgets.QHBoxLayout()
+
+        # Wrap the left layout in a widget and add to the layout
+        leftWidget = QtWidgets.QWidget()
+        leftWidget.setLayout(layoutExtendLeftLayout)
+        layoutExtend.addWidget(leftWidget, 1)
+
+        # Wrap the right layout in a widget and add to the layout
+        rightWidget = QtWidgets.QWidget()
+        rightWidget.setLayout(layoutExtendRightLayout)
+        layoutExtend.addWidget(rightWidget, 2)
+
+        # Add the layout to the extend scrollable area
+        layoutExtendSA.setLayout(layoutExtend)
+
+    def _createDataWindowLayout(self, layoutWindowSA):
+
+        ## Create the selector list ##
+        # Create a vertical layout
+        layoutWindowLeftLayout = QtWidgets.QVBoxLayout()
+
+        # Create and add the list title
+        layoutWindowLeftLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Selected Data<strong>'))
+
+        # Connect and add the list
+        self.windowList = DatasetListHTMLFormattedMultiple(inputDataset=self.layoutDataDoubleList.listOutput.datasetTable)
+        self.layoutDataDoubleList.listOutput.updateSignalToExternal.connect(self.windowList.refreshDatasetListFromExtenal)
+        layoutWindowLeftLayout.addWidget(self.windowList)
+
+        ## Create the right panel ##
+        # Create the vertical layout
+        layoutWindowRightLayout = QtWidgets.QGridLayout()
 
         ### Setup the upper plot ###
         # Create a line/bar plot object
@@ -832,7 +817,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         dataPlot.plot()
 
         # Add into the main layout
-        layoutMain.addWidget(dataPlot.chartView, 0, 0, 1, 3)
+        layoutWindowRightLayout.addWidget(dataPlot.chartView, 0, 0, 1, 3)
 
         ### Create the date/lag widgets ###
         # todo: capture these values for each dataset on list change
@@ -857,7 +842,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         startLayoutWidget = QtWidgets.QWidget()
         startLayoutWidget.setLayout(startLayout)
 
-        layoutMain.addWidget(startLayoutWidget, 1, 0)
+        layoutWindowRightLayout.addWidget(startLayoutWidget, 1, 0)
 
         ## Create the stop time widget ##
         # Create the label
@@ -878,7 +863,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         stopLayoutWidget = QtWidgets.QWidget()
         stopLayoutWidget.setLayout(stopLayout)
-        layoutMain.addWidget(stopLayoutWidget, 1, 1)
+        layoutWindowRightLayout.addWidget(stopLayoutWidget, 1, 1)
 
         ## Create the lag box widget ##
         # Create the label
@@ -899,7 +884,24 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         lagLayoutWidget = QtWidgets.QWidget()
         lagLayoutWidget.setLayout(lagLayout)
-        layoutMain.addWidget(lagLayoutWidget, 1, 2)
+        layoutWindowRightLayout.addWidget(lagLayoutWidget, 1, 2)
+
+        ## Create the full layout ##
+        # Create the horizontal layout
+        layoutWindow = QtWidgets.QHBoxLayout()
+
+        # Wrap the left layout in a widget and add to the layout
+        leftWidget = QtWidgets.QWidget()
+        leftWidget.setLayout(layoutWindowLeftLayout)
+        layoutWindow.addWidget(leftWidget, 1)
+
+        # Wrap the Right layout in a widget and add to the layout
+        rightWidget = QtWidgets.QWidget()
+        rightWidget.setLayout(layoutWindowRightLayout)
+        layoutWindow.addWidget(rightWidget, 2)
+
+        # Add the layout to the extend scrollable area
+        layoutWindowSA.setLayout(layoutWindow)
 
     def _createSummaryTabLayout(self, mainLayout):
         """
