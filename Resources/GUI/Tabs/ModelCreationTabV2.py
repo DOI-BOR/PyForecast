@@ -885,10 +885,11 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ## Set the boxes containing options into the layout grid ##
         # Create and format the layout
-        self.optionsPreprocessorLayout = QtWidgets.QGridLayout()
-        self.optionsPreprocessorLayout.setContentsMargins(1, 1, 1, 1)
+        optionsPreprocessorLayout = QtWidgets.QGridLayout()
+        optionsPreprocessorLayout.setContentsMargins(1, 1, 1, 1)
 
         # Loop and fill the layout
+        self.optionsPreprocessor = []
         numPreProcessors = len(self.parent.preProcessors.keys())
         for i in range(int(numPreProcessors / 3) + 1 if numPreProcessors % 3 != 0 else int(numPreProcessors / 3)):
             for j in range(3):
@@ -896,8 +897,13 @@ class ModelCreationTab(QtWidgets.QWidget):
                     prKey = list((self.parent.preProcessors.keys()))[(3 * i) + j]
                     regrText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(
                         self.parent.preProcessors[prKey]['name'], self.parent.preProcessors[prKey]['description'])
-                    self.optionsPreprocessorLayout.addWidget(richTextDescriptionButton(self, regrText), i, j, 1, 1)
-        layoutMain.addLayout(self.optionsPreprocessorLayout)
+                    button = richTextDescriptionButton(self, regrText)
+
+                    # Add the button to the layout and the tracking list
+                    optionsPreprocessorLayout.addWidget(button, i, j, 1, 1)
+                    self.optionsPreprocessor.append(button)
+
+        layoutMain.addLayout(optionsPreprocessorLayout)
 
         ### Setup the regression algorithms ###
         ## Create the label ##
@@ -909,10 +915,11 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ## Set the boxes containing options into the layout grid ##
         # Create and format the layout
-        self.optionsRegressionLayout = QtWidgets.QGridLayout()
-        self.optionsRegressionLayout.setContentsMargins(1, 1, 1, 1)
+        optionsRegressionLayout = QtWidgets.QGridLayout()
+        optionsRegressionLayout.setContentsMargins(1, 1, 1, 1)
 
         # Loop and fill the layout
+        self.optionsRegression = []
         numRegressionModels = len(self.parent.regressors.keys())
         for i in range(int(numRegressionModels / 3) + 1 if numRegressionModels % 3 != 0 else int(numRegressionModels / 3)):
             for j in range(3):
@@ -920,8 +927,13 @@ class ModelCreationTab(QtWidgets.QWidget):
                     regrKey = list((self.parent.regressors.keys()))[(3 * i) + j]
                     regrText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(
                         self.parent.regressors[regrKey]['name'], self.parent.regressors[regrKey]['description'])
-                    self.optionsRegressionLayout.addWidget(richTextDescriptionButton(self, regrText), i, j, 1, 1)
-        layoutMain.addLayout(self.optionsRegressionLayout)
+                    button = richTextDescriptionButton(self, regrText)
+
+                    # Add the button to the layout and the tracking list
+                    optionsRegressionLayout.addWidget(button, i, j, 1, 1)
+                    self.optionsRegression.append(button)
+
+        layoutMain.addLayout(optionsRegressionLayout)
 
         ### Setup the model selection algorithms ###
         ## Create the label ##
@@ -933,10 +945,11 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ## Set the boxes containing options into the layout grid ##
         # Create and format the layout
-        self.optionsSelectionLayout = QtWidgets.QGridLayout()
-        self.optionsSelectionLayout.setContentsMargins(1, 1, 1, 1)
+        optionsSelectionLayout = QtWidgets.QGridLayout()
+        optionsSelectionLayout.setContentsMargins(1, 1, 1, 1)
 
         # Loop and fill the layout
+        self.optionsSelection = []
         numFeatSelectors = len(self.parent.featureSelectors.keys())
         for i in range(int(numFeatSelectors / 3) + 1 if numFeatSelectors % 3 != 0 else int(numFeatSelectors / 3)):
             for j in range(3):
@@ -945,8 +958,13 @@ class ModelCreationTab(QtWidgets.QWidget):
                     regrText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(
                         self.parent.featureSelectors[regrKey]['name'],
                         self.parent.featureSelectors[regrKey]['description'])
-                    self.optionsSelectionLayout.addWidget(richTextDescriptionButton(self, regrText), i, j, 1, 1)
-        layoutMain.addLayout(self.optionsSelectionLayout)
+                    button = richTextDescriptionButton(self, regrText)
+
+                    # Add the button to the layout and the holding list
+                    optionsSelectionLayout.addWidget(button, i, j, 1, 1)
+                    self.optionsSelection.append(button)
+
+        layoutMain.addLayout(optionsSelectionLayout)
 
         ### Setup the model scoring algorithms ###
         ## Create the label ##
@@ -958,10 +976,11 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ## Set the boxes containing options into the layout grid ##
         # Create and format the layout
-        self.optionsScoringLayout = QtWidgets.QGridLayout()
-        self.optionsScoringLayout.setContentsMargins(1, 1, 1, 1)
+        optionsScoringLayout = QtWidgets.QGridLayout()
+        optionsScoringLayout.setContentsMargins(1, 1, 1, 1)
 
         # Loop and fill the layout
+        self.optionsScoring = []
         numScorers = len(self.parent.scorers['info'].keys())
         for i in range(int(numScorers / 3) + 1 if numScorers % 3 != 0 else int(numScorers / 3)):
             # layout2 = QtWidgets.QHBoxLayout()
@@ -972,8 +991,13 @@ class ModelCreationTab(QtWidgets.QWidget):
                     regrText = '<strong style="font-size: 13px; color:darkcyan">{2}</strong><br>{0}'.format(
                         self.parent.scorers['info'][nameKey]['NAME'], self.parent.scorers['info'][nameKey]['WEBSITE'],
                         self.parent.scorers['info'][nameKey]['HTML'])
-                    self.optionsScoringLayout.addWidget(richTextDescriptionButton(self, regrText), i, j, 1, 1)
-        layoutMain.addLayout(self.optionsScoringLayout)
+                    button = richTextDescriptionButton(self, regrText)
+
+                    # Add the button to the layout and the holding list
+                    optionsScoringLayout.addWidget(button, i, j, 1, 1)
+                    self.optionsScoring.append(button)
+
+        layoutMain.addLayout(optionsScoringLayout)
 
         # items = (layout.itemAt(i) for i in range(layout.count()))
         # print(items)
@@ -990,17 +1014,23 @@ class ModelCreationTab(QtWidgets.QWidget):
 
     def _createSummaryTabLayout(self, mainLayout):
         """
+        Lays out the summary tab
 
+        Parameters
+        ----------
+        None.
+
+        Returns
+        -------
+        layoutMain: QT layout object
+            Object containing all layout information to be placed in the widgets tab
 
         """
-        # todo: doc string
 
         ### Create the left side dataset summary table ###
         # Create the list widget
         summaryListWidget = QtWidgets.QListWidget()
 
-        # Populate the widget with data
-        # todo: add the linkage across the tables
 
         # Add to the layout
         mainLayout.addWidget(summaryListWidget)
@@ -1021,6 +1051,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Loop and fill the preprocessor options
         numPreProcessors = len(self.parent.preProcessors.keys())
+        counter = 0
         for i in range(int(numPreProcessors/3) + 1 if numPreProcessors%3 != 0 else int(numPreProcessors/3)):
             for j in range(3):
                 if (i*3)+j < numPreProcessors:
@@ -1033,6 +1064,11 @@ class ModelCreationTab(QtWidgets.QWidget):
 
                     # Add the button into the layout
                     preprocessorLayout.addWidget(button, i, j, 1, 1)
+
+                    # Link the button with the corresponding box on the options tab
+                    recipricalBox = self.optionsPreprocessor[counter]
+                    recipricalBox.updateLinkedButton.connect(button.update_from_exteral)
+                    counter += 1
 
         # Wrap the layout in a widget and add to the layout
         preprocessorLayoutWidget = QtWidgets.QWidget()
@@ -1051,8 +1087,8 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Loop and fill the preprocessor options
         numRegressors = len(self.parent.regressors.keys())
+        counter = 0
         for i in range(int(numRegressors / 3) + 1 if numRegressors % 3 != 0 else int(numRegressors / 3)):
-
             for j in range(3):
                 if (i * 3) + j < numRegressors:
                     prKey = list((self.parent.regressors.keys()))[(3 * i) + j]
@@ -1064,6 +1100,11 @@ class ModelCreationTab(QtWidgets.QWidget):
 
                     # Add the button into the layout
                     regressorLayout.addWidget(button, i, j, 1, 1)
+
+                    # Link the button with the corresponding box on the options tab
+                    recipricalBox = self.optionsRegression[counter]
+                    recipricalBox.updateLinkedButton.connect(button.update_from_exteral)
+                    counter += 1
 
 
         # Wrap the layout in a widget and add to the layout
@@ -1083,6 +1124,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Loop and fill the preprocessor options
         numSelector = len(self.parent.featureSelectors.keys())
+        counter = 0
         for i in range(int(numSelector / 3) + 1 if numSelector % 3 != 0 else int(numSelector / 3)):
             for j in range(3):
                 if (i * 3) + j < numSelector:
@@ -1095,6 +1137,11 @@ class ModelCreationTab(QtWidgets.QWidget):
 
                     # Add the button into the layout
                     selectorLayout.addWidget(button, i, j, 1, 1)
+
+                    # Link the button with the corresponding box on the options tab
+                    recipricalBox = self.optionsSelection[counter]
+                    recipricalBox.updateLinkedButton.connect(button.update_from_exteral)
+                    counter += 1
 
         # Wrap the layout in a widget and add to the layout
         selectorLayoutWidget = QtWidgets.QWidget()
@@ -1113,6 +1160,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Loop and fill the preprocessor options
         numScorers = len(self.parent.scorers['info'].keys())
+        counter = 0
         for i in range(int(numScorers/3) + 1 if numScorers%3 != 0 else int(numScorers/3)):
             for j in range(3):
                 if (i*3)+j < numScorers:
@@ -1125,6 +1173,11 @@ class ModelCreationTab(QtWidgets.QWidget):
 
                     # Add to the layout object
                     scoringLayout.addWidget(button, i, j, 1, 1)
+
+                    # Link the button with the corresponding box on the options tab
+                    recipricalBox = self.optionsScoring[counter]
+                    recipricalBox.updateLinkedButton.connect(button.update_from_exteral)
+                    counter += 1
 
         # Wrap the layout in a widget and add to the layout
         scoringLayoutWidget = QtWidgets.QWidget()
