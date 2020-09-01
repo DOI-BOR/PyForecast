@@ -76,6 +76,28 @@ class richTextDescriptionButton(QtWidgets.QPushButton):
 
             self.parent().resizeEvent(ev)
 
+    def updateToChecked(self):
+        """
+        Update the button status to checked and emit a synchronization signal
+
+        """
+
+        self.lab.setText(self.richTextChecked)
+
+        # Emit an update signal to allow status update on linked buttons
+        self.updateLinkedButton.emit(self.isChecked())
+
+    def updateToUnchecked(self):
+        """
+        Update the button status to unchecked and emit a synchronization signal
+
+        """
+
+        self.lab.setText(self.richTextUnChecked)
+
+        # Emit an update signal to allow status update on linked buttons
+        self.updateLinkedButton.emit(self.isChecked())
+
 
 class richTextButtonCheckbox(QtWidgets.QPushButton):
 
