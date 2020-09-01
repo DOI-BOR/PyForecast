@@ -1205,8 +1205,11 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ## Create and add the activation buttons ##
         # Create the clear button
-        summaryClearButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Clear</strong>')
-        summaryClearButton.setMaximumSize(125, 65)
+        self.summaryClearButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Clear</strong>')
+        self.summaryClearButton.setMaximumSize(125, 65)
+
+        # Connect the clear button to its action function
+        self.summaryClearButton.clicked.connect(self._applySummaryClear)
 
         # Create the start button
         summaryStartButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Start</strong>')
@@ -1216,7 +1219,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         summaryButtonsLayout = QtWidgets.QHBoxLayout()
         summaryButtonsLayout.setAlignment(QtCore.Qt.AlignRight)
 
-        summaryButtonsLayout.addWidget(summaryClearButton)
+        summaryButtonsLayout.addWidget(self.summaryClearButton)
         summaryButtonsLayout.addWidget(summaryStartButton)
 
         # Wrap the layout as a widget and add to the main layout
@@ -1331,6 +1334,51 @@ class ModelCreationTab(QtWidgets.QWidget):
 
     def _updateExtendSubtab(self):
         self.stackedExtendLayout.setCurrentIndex(self.layoutExtendMethodSelector.currentIndex())
+
+    def _applySummaryClear(self):
+        """
+        Clear/reset all dataset and analysis options within the application
+
+        """
+
+        ### Reset the dataset operations table ###
+        # Drop all rows in the table
+        self.parent.datasetOperationsTable.drop(self.parent.datasetOperationsTable.index, inplace=True)
+
+        # Update the table display elements
+        self.summaryListWidget.model().loadDataIntoModel(self.parent.datasetTable, self.parent.datasetOperationsTable)
+
+        ### Reset all processing options ###
+        # Reset the preprocessing operations
+        for x in self.optionsPreprocessor:
+            x.setChecked(False)
+            x.updateToUnchecked()
+
+        # Reset the regression options
+        for x in self.optionsRegression:
+            x.setChecked(False)
+            x.updateToUnchecked()
+
+        # Reset the selection options
+        for x in self.optionsSelection:
+            x.setChecked(False)
+            x.updateToUnchecked()
+
+        # Reset the scoring operations
+        for x in self.optionsScoring:
+            x.setChecked(False)
+            x.updateToUnchecked()
+
+        ### Reset the button state ###
+        self.summaryClearButton.setChecked(False)
+
+    def _applySummaryStart(self):
+        """
+        Start the regression analysis using the specified settings
+
+        """
+
+        pass
 
     def applyPredictandAggregationOption(self):
         predictandData = self.targetSelect.currentData()
