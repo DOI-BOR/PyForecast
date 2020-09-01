@@ -647,7 +647,11 @@ class SpreadSheetModelOperations(QtCore.QAbstractItemModel):
         and returning the correct QVariants from the data table
         """
 
-        replacementDict = {}
+        replacementDict = {'FillMethod': "Fill Method", 'FillMaximumGap': "Fill Maximum Gap",
+                           'ExtendMethod': "Extend Method", 'ExtendDuration': "Extend Duration",
+                           'AccumulationMethod': "Accumulation Method", 'AccumulationDateStart': "Accumulation Date Start",
+                           'AccumulationDateStop': "Accumulation Date Stop",
+                           'DatasetOperationsOptions': "Dataset Additional Options"}
 
         # Check for horizontal orientation and return the column name if true
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
@@ -657,9 +661,9 @@ class SpreadSheetModelOperations(QtCore.QAbstractItemModel):
         # Check for the vertical orientation and return the date if true
         elif orientation == QtCore.Qt.Vertical and role == QtCore.Qt.DisplayRole:
             if section == 0:
-                val = QtCore.QVariant(self.operationsTable.index.names[1])
+                val = QtCore.QVariant('Instance ID')
             else:
-                val = QtCore.QVariant(self.operationsTable.columns[section - 1])
+                val = QtCore.QVariant(replacementDict[self.operationsTable.columns[section - 1]])
 
         else:
             val = QtCore.QVariant()
@@ -683,7 +687,6 @@ class SpreadSheetModelOperations(QtCore.QAbstractItemModel):
         return QtCore.QModelIndex()
 
 
-
 class SpreadSheetViewOperations(QtWidgets.QTableView):
     """
     """
@@ -705,8 +708,6 @@ class SpreadSheetViewOperations(QtWidgets.QTableView):
         self.setStyleSheet(open(os.path.abspath('resources/GUI/stylesheets/spreadsheet.qss'), 'r').read().format(colorCode))
         self.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
         self.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
-
-        self.setSelectionMode(0)
         
         # Set the dataframes into the object
         self.datasets = datasetTable
