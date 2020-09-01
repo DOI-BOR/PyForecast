@@ -509,6 +509,8 @@ class SpreadSheetModelOperations(QtCore.QAbstractItemModel):
     DataTable to display data in the SpreadsheetView.
     """
 
+    updateSelectionSignal = QtCore.pyqtSignal(int, int)
+
     def __init__(self, parent=None):
         """
         """
@@ -556,22 +558,9 @@ class SpreadSheetModelOperations(QtCore.QAbstractItemModel):
         if len(self.operationsTable) == 0:
             return
 
-        # Create a list of id's that are composite datasets
-        # self.compDatasets = {}
-        # for i, equation in self.datasetTable['DatasetCompositeEquation'].dropna().iteritems():
-        #     ids = equation.split('/')[1]
-        #     ids = [int(j) for j in ids.split(',')]
-        #     self.compDatasets[i] = {"Datasets": ids, "String": equation}
-
-        # Create an index dictionary for dataset names (looks like: {100101: "Gibson Reservoir: Inflow", ...})
-        # self.datasetIndex = OrderedDict((id_, name) for id_, name in
-        #                                 ((row[0], "{0}: {1}".format(row[1]['DatasetName'], row[1]['DatasetParameter']))
-        #                                  for row in self.datasetTable.iterrows()))
+        # Create an index dictionary for dataset names
         self.datasetIndex = OrderedDict((x, (self.operationsTable.index[x][0], self.operationsTable.index[x][1]))
                                  for x in range(0, len(self.operationsTable.index), 1))
-
-        # Create a list of the dataset numbers (looks like [100101, ...])
-        # self.datasetIndexedList = [item[0] for item in self.operationsTable.index]
 
         # Iterate through the datasets and chop up the dataset names for a prettier display in the table
         for id_ in list(self.datasetIndex):
@@ -580,10 +569,10 @@ class SpreadSheetModelOperations(QtCore.QAbstractItemModel):
             lines = []  # create an array to store lines
             line = words[0]  # Start the first line with the first word
             for word in words[1:]:  # Iterate over words and
-                if len(word) > 21:  # If the word is longer than 21 characters
+                if len(word) > 15:  # If the word is longer than 21 characters
                     lines.append(line)  # finish the previous line
                     line = word  # start a new line with the long word
-                elif len(line + ' ' + word) > 22:  # If the previous line plus the word goes over 22 characters
+                elif len(line + ' ' + word) > 16:  # If the previous line plus the word goes over 22 characters
                     lines.append(line)  # finish the previous line
                     line = word  # start a new line with the long word
                 else:
@@ -591,10 +580,10 @@ class SpreadSheetModelOperations(QtCore.QAbstractItemModel):
             lines.append(line)  # add the last line
             self.datasetIndexedList.append('\n'.join(lines)) # join the lines by a newline character
 
-        # Create an index array to associate model indices with data from the table (looks like: [[QModelIndex(...), QModelIndex(...),...],...])
-        # Todo: this is not being configured correctly
-        self.indexArray = [[self.createIndex(i, j) for j, id_ in enumerate(self.operationsTable.index)]
-                            for i, date in enumerate(self.operationsTable.columns)]
+        # Create an index array to layout the basic structure of the table. This is has the number of datasets as the
+        # columns and the number of parameters, plus one, as the rows
+        self.indexArray = [[self.createIndex(i, j) for j in range(0, len(self.operationsTable.index), 1)]
+                            for i in range(0, len(self.operationsTable.columns) + 1, 1)]
 
         # Let the view know we're done resetting the model
         self.initialized = True
@@ -637,27 +626,18 @@ class SpreadSheetModelOperations(QtCore.QAbstractItemModel):
         un-edited data.
         """
 
-        # Figure out the date and dataset id of the data requested
-        #date = self.operationsTable.index.levels[0][index.row()]
-        #id_ = self.datasetIndexedList[index.column()]
+        if role == QtCore.Qt.DisplayRole:
+            # Grab the associated data (if it exists) if the role is Display
+            if index.row() == 0:
+                # Get the instance ID
+                val = QtCore.QVariant(str(self.operationsTable.index[index.column()][1]))
 
-        # Grab the associated data (if it exists) if the role is Display
-        val = QtCore.QVariant(str(self.operationsTable.iloc[index.column(), index.row()]))
+            else:
+                # Get property values from the table
+                val = QtCore.QVariant(str(self.operationsTable.iloc[index.column(), index.row() - 1]))
 
-
-        # Paint the background color for edited data 
-        # elif role == QtCore.Qt.BackgroundRole:
-        #     if (date, id_) in self.dataTable.index:
-        #         if self.dataTable.loc[(date, id_), 'EditFlag']:
-        #             val = QtCore.QVariant(QtGui.QColor(228, 255, 181))
-        #         else:
-        #             val = QtCore.QVariant(QtGui.QColor(255, 255, 255))
-        #     else:
-        #         val = QtCore.QVariant(QtGui.QColor(255, 255, 255))
-
-        # If all else, return nothing
-        # else:
-        # val = QtCore.QVariant()
+        else:
+            val = QtCore.QVariant()
 
         return val
 
@@ -667,9 +647,7 @@ class SpreadSheetModelOperations(QtCore.QAbstractItemModel):
         and returning the correct QVariants from the data table
         """
 
-        # Make sure the role is DisplayRole
-        # if role != QtCore.Qt.DisplayRole:
-        #     return QtCore.QVariant()
+        replacementDict = {}
 
         # Check for horizontal orientation and return the column name if true
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
@@ -678,29 +656,33 @@ class SpreadSheetModelOperations(QtCore.QAbstractItemModel):
 
         # Check for the vertical orientation and return the date if true
         elif orientation == QtCore.Qt.Vertical and role == QtCore.Qt.DisplayRole:
-            val = QtCore.QVariant(self.operationsTable.columns[section])
+            if section == 0:
+                val = QtCore.QVariant(self.operationsTable.index.names[1])
+            else:
+                val = QtCore.QVariant(self.operationsTable.columns[section - 1])
 
         else:
             val = QtCore.QVariant()
 
         return val
 
-    def parent(self, index):
-        #todo: make sure that this is implemented correctly for this case
-
-        node = self.getNodeFromIndex(index)
-        parentNode = node.getParent()
-        if parentNode == self.items:
-            return QtCore.QModelIndex()
-        return self.createIndex(parentNode.row(), 0, parentNode)
-
     def getNodeFromIndex(self, index):
-        # todo: make sure that this is implemented correctly for this case
+        #todo: make sure this implementation is valid
         if index.isValid():
             node = index.internalPointer()
             if node:
                 return node
         return self.items
+
+    def parent(self, index):
+        """
+        Returns an empty model index to allow selection
+
+        """
+
+        return QtCore.QModelIndex()
+
+
 
 class SpreadSheetViewOperations(QtWidgets.QTableView):
     """
@@ -715,7 +697,6 @@ class SpreadSheetViewOperations(QtWidgets.QTableView):
         self.parent = parent
         self.setModel(SpreadSheetModelOperations(self))
 
-
         # Set up a highlight color for the spreadsheet
         self.highlightColor = QtGui.QColor(0, 115, 150)
         colorCode = '#%02x%02x%02x' % (self.highlightColor.red(), self.highlightColor.green(), self.highlightColor.blue())
@@ -724,50 +705,18 @@ class SpreadSheetViewOperations(QtWidgets.QTableView):
         self.setStyleSheet(open(os.path.abspath('resources/GUI/stylesheets/spreadsheet.qss'), 'r').read().format(colorCode))
         self.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
         self.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
+
+        self.setSelectionMode(0)
         
         # Set the dataframes into the object
         self.datasets = datasetTable
         self.operations = datasetOperationsTable
 
         # Set up a signal/slot to resize columns when the model is reset
-        # self.model().modelReset.connect(self.resizeColumns)
+        self.model().modelReset.connect(self.resizeColumns)
+        # self.clicked.connect(self._updateSelection)
+        # self.model().updateSelectionSignal.connect(self._updateSelection)
 
-        # Set up a context menu event mapping for the table
-        # self.copyAction = QtWidgets.QAction('Copy')
-        # self.pasteAction = QtWidgets.QAction('Paste')
-        # self.interpAction = QtWidgets.QAction('Interpolate')
-        # self.excelAction = QtWidgets.QAction('Open in Excel')
-
-        # Keyboard shortcuts
-        # self.copyShortcut = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+C"), self)
-        # self.copyShortcut.activated.connect(self.copySelectionToClipboard)
-        # self.pasteShortcut = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+V"), self)
-        # self.pasteShortcut.activated.connect(self.pasteSelectionFromClipboard)
-
-        # Connect signal/slots
-        # self.copyAction.triggered.connect(self.copySelectionToClipboard)
-        # self.pasteAction.triggered.connect(self.pasteSelectionFromClipboard)
-        # self.interpAction.triggered.connect(self.interpolateInSelection)
-        # self.excelAction.triggered.connect(self.openTableInExcel)
-
-        ### Code to chop the display of the table ###
-        # Iterate through the datasets and chop up the dataset names for a prettier display in the table
-        # for id_ in list(datasetOperationsTable):
-        #     name = datasetOperationsTable[id_]  # Get the full name
-        #     words = name.split()  # split the name into words
-        #     lines = []  # create an array to store lines
-        #     line = words[0]  # Start the first line with the first word
-        #     for word in words[1:]:  # Iterate over words and
-        #         if len(word) > 21:  # If the word is longer than 21 characters
-        #             lines.append(line)  # finish the previous line
-        #             line = word  # start a new line with the long word
-        #         elif len(line + ' ' + word) > 22:  # If the previous line plus the word goes over 22 characters
-        #             lines.append(line)  # finish the previous line
-        #             line = word  # start a new line with the long word
-        #         else:
-        #             line = line + ' ' + word  # append the word to the current line
-        #     lines.append(line)  # add the last line
-        #     self.datasetIndex[id_] = '\n'.join(lines)  # join the lines by a newline character
 
     def resizeColumns(self):
         """
@@ -776,6 +725,14 @@ class SpreadSheetViewOperations(QtWidgets.QTableView):
         [self.setColumnWidth(i, 150) for i in range(self.model().columnCount())]
 
         return
+
+    def _updateSelection(self, test):
+
+        # selectedBox = QtCore.QRect(row, column, 1, 1)
+        self.clearSelection()
+        self.setCurrentIndex(test)
+        # self.setSelection(selectedBox, QtCore.QItemSelectionModel.Select)
+
 
 
 # FOR TESTING
