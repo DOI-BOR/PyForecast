@@ -647,11 +647,11 @@ class SpreadSheetModelOperations(QtCore.QAbstractItemModel):
         and returning the correct QVariants from the data table
         """
 
-        replacementDict = {'FillMethod': "Fill Method", 'FillMaximumGap': "Fill Maximum Gap",
-                           'ExtendMethod': "Extend Method", 'ExtendDuration': "Extend Duration",
-                           'AccumulationMethod': "Accumulation Method", 'AccumulationDateStart': "Accumulation Date Start",
-                           'AccumulationDateStop': "Accumulation Date Stop",
-                           'DatasetOperationsOptions': "Dataset Additional Options"}
+        replacementDict = {'FillMethod': " Fill Method", 'FillMaximumGap': " Fill Maximum Gap",
+                           'ExtendMethod': " Extend Method", 'ExtendDuration': " Extend Duration",
+                           'AccumulationMethod': " Accumulation Method", 'AccumulationDateStart': " Accumulation Date Start",
+                           'AccumulationDateStop': " Accumulation Date Stop",
+                           'DatasetOperationsOptions': " Dataset Additional Options"}
 
         # Check for horizontal orientation and return the column name if true
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
@@ -661,7 +661,7 @@ class SpreadSheetModelOperations(QtCore.QAbstractItemModel):
         # Check for the vertical orientation and return the date if true
         elif orientation == QtCore.Qt.Vertical and role == QtCore.Qt.DisplayRole:
             if section == 0:
-                val = QtCore.QVariant('Instance ID')
+                val = QtCore.QVariant(' Instance ID')
             else:
                 val = QtCore.QVariant(replacementDict[self.operationsTable.columns[section - 1]])
 
@@ -669,14 +669,6 @@ class SpreadSheetModelOperations(QtCore.QAbstractItemModel):
             val = QtCore.QVariant()
 
         return val
-
-    def getNodeFromIndex(self, index):
-        #todo: make sure this implementation is valid
-        if index.isValid():
-            node = index.internalPointer()
-            if node:
-                return node
-        return self.items
 
     def parent(self, index):
         """

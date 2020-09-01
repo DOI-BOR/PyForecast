@@ -1029,15 +1029,24 @@ class ModelCreationTab(QtWidgets.QWidget):
         """
 
         ### Create the left side dataset summary table ###
+        # Create a vertical layout
+        listLayout = QtWidgets.QVBoxLayout()
+        listLayout.setContentsMargins(5, 5, 5, 5)
+
         # Create the list widget
         self.summaryListWidget = SpreadSheetViewOperations(self.parent.datasetTable, self.parent.datasetOperationsTable,
                                                            parent=self)
 
         # Connect the summary list to change with the operations table
+        listLayout.addWidget(self.summaryListWidget)
 
+        # Force the background color to prevent bleed through of the SA color in the headings
+        listLayoutWidget = QtWidgets.QWidget()
+        listLayoutWidget.setLayout(listLayout)
+        listLayoutWidget.setStyleSheet("background-color:white;")
 
         # Add to the layout
-        mainLayout.addWidget(self.summaryListWidget)
+        mainLayout.addWidget(listLayoutWidget)
 
         ### Create the right side of the pane ###
         ## Create a vertical layout ##
