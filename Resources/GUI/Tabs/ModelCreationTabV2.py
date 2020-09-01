@@ -1212,15 +1212,18 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.summaryClearButton.clicked.connect(self._applySummaryClear)
 
         # Create the start button
-        summaryStartButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Start</strong>')
-        summaryStartButton.setMaximumSize(125, 65)
+        self.summaryStartButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Start</strong>')
+        self.summaryStartButton.setMaximumSize(125, 65)
+
+        # Connect the start button to its action function
+        self.summaryStartButton.clicked.connect(self._applySummaryStart)
 
         # Create an horizontal layout, aligned to the right
         summaryButtonsLayout = QtWidgets.QHBoxLayout()
         summaryButtonsLayout.setAlignment(QtCore.Qt.AlignRight)
 
         summaryButtonsLayout.addWidget(self.summaryClearButton)
-        summaryButtonsLayout.addWidget(summaryStartButton)
+        summaryButtonsLayout.addWidget(self.summaryStartButton)
 
         # Wrap the layout as a widget and add to the main layout
         summaryButtonsLayoutWidget = QtWidgets.QWidget()
@@ -1378,7 +1381,16 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         """
 
-        pass
+        ### Reset the button state ###
+        self.summaryStartButton.setChecked(False)
+
+        ### Apply operations to datasets ###
+
+        ### Generate predictors ###
+
+        ### Kick off the analysis ###
+        print('Beginning regression calculations...')
+        print('I am batman!')
 
     def applyPredictandAggregationOption(self):
         predictandData = self.targetSelect.currentData()
