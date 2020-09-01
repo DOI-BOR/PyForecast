@@ -626,7 +626,7 @@ class SpreadSheetModelOperations(QtCore.QAbstractItemModel):
         un-edited data.
         """
 
-        if role == QtCore.Qt.DisplayRole:
+        if role == QtCore.Qt.DisplayRole and len(self.operationsTable) > 0:
             # Grab the associated data (if it exists) if the role is Display
             if index.row() == 0:
                 # Get the instance ID
