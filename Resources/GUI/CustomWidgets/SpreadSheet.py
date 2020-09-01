@@ -12,7 +12,7 @@ Description:    Implements Spreadsheet functionality for displaying
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 import pandas as pd
-import os
+import os, copy
 import sys
 import numpy as np
 from collections import OrderedDict
@@ -500,15 +500,239 @@ class SpreadSheetView(QtWidgets.QTableView):
         """
         cols = [self.model().datasetIndexedList[idx.column()] for idx in self.selectionModel().selectedColumns()]
         
-        return list(set(cols))  
+        return list(set(cols))
+
+
+class SpreadSheetModelOperations(QtCore.QAbstractItemModel):
+    """
+    The SpeadsheetModel is a Qt model that works on top of PyForecast's
+    DataTable to display data in the SpreadsheetView.
+    """
+
+    updateSelectionSignal = QtCore.pyqtSignal(int, int)
+
+    def __init__(self, parent=None):
+        """
+        """
+        QtCore.QAbstractItemModel.__init__(self)
+        # self.parent = parent
+        self.initialized = False
+        self.setParent(parent)
+
+        return
+
+    def loadDataIntoModel(self, datasetTable, datasetOperationsTable):
+        """
+        Loads a PyForecast DataTable into the model.
 
 
 
+        The dataTable looks like:
+        datetime    datasetInternalID   value   editflag
+        2018-10-01  102020              34.22   F
+        2018-10-01  102321              122.33  T
+        ...
+
+        The datasetTable looks like:
+        datasetID   datasetName ... ...
+        102020      Big Tree SNOTEL
+        102321      Horse River nr Red Willow
+        ...
+        """
+
+        # Let the view know we're resetting the model
+        self.beginResetModel()
+
+        # Create references to the dataTable and the datasetTable
+        self.operationsTable = datasetOperationsTable
+        self.datasetTable = datasetTable
 
 
+        # If the datasets are empty, we initialize an empty indexArray and return
+        self.indexArray = []
+        self.datasetIndex = OrderedDict()
+        self.initialized = True
+        self.endResetModel()
+        self.datasetIndexedList = []
+
+        if len(self.operationsTable) == 0:
+            return
+
+        # Create an index dictionary for dataset names
+        self.datasetIndex = OrderedDict((x, (self.operationsTable.index[x][0], self.operationsTable.index[x][1]))
+                                 for x in range(0, len(self.operationsTable.index), 1))
+
+        # Iterate through the datasets and chop up the dataset names for a prettier display in the table
+        for id_ in list(self.datasetIndex):
+            name = self.datasetTable.loc[self.datasetIndex[id_][0]]['DatasetName']  # Get the full name
+            words = name.split()  # split the name into words
+            lines = []  # create an array to store lines
+            line = words[0]  # Start the first line with the first word
+            for word in words[1:]:  # Iterate over words and
+                if len(word) > 15:  # If the word is longer than 21 characters
+                    lines.append(line)  # finish the previous line
+                    line = word  # start a new line with the long word
+                elif len(line + ' ' + word) > 16:  # If the previous line plus the word goes over 22 characters
+                    lines.append(line)  # finish the previous line
+                    line = word  # start a new line with the long word
+                else:
+                    line = line + ' ' + word  # append the word to the current line
+            lines.append(line)  # add the last line
+            self.datasetIndexedList.append('\n'.join(lines)) # join the lines by a newline character
+
+        # Create an index array to layout the basic structure of the table. This is has the number of datasets as the
+        # columns and the number of parameters, plus one, as the rows
+        self.indexArray = [[self.createIndex(i, j) for j in range(0, len(self.operationsTable.index), 1)]
+                            for i in range(0, len(self.operationsTable.columns) + 1, 1)]
+
+        # Let the view know we're done resetting the model
+        self.initialized = True
+        self.endResetModel()
+
+        return
+
+    def columnCount(self, parent=QtCore.QModelIndex()):
+        """
+        If the model is initialized, return the number of columns
+        in the index array. Otherwise, return 0
+        """
+        if self.initialized:
+            if len(self.indexArray) > 0:
+                return len(self.indexArray[0])
+
+        return 0
+
+    def rowCount(self, parent=QtCore.QModelIndex()):
+        """
+        If the model is initialized, return the number of rows
+        in the index array. Otherwise, return 0
+        """
+        if self.initialized:
+            return len(self.indexArray)
+
+        return 0
+
+    def index(self, row, column, parent = QtCore.QModelIndex()):
+        """
+        Return the index associated with the tableview's row and column
+        """
+        return self.indexArray[row][column]
+
+    def data(self, index, role=QtCore.Qt.DisplayRole):
+        """
+        This function returns the data associated with the index if the 
+        role is the displayRole. If the role is the BackgroundRole, the 
+        funciton returns the color red for edited data and white for 
+        un-edited data.
+        """
+
+        if role == QtCore.Qt.DisplayRole:
+            # Grab the associated data (if it exists) if the role is Display
+            if index.row() == 0:
+                # Get the instance ID
+                val = QtCore.QVariant(str(self.operationsTable.index[index.column()][1]))
+
+            else:
+                # Get property values from the table
+                val = QtCore.QVariant(str(self.operationsTable.iloc[index.column(), index.row() - 1]))
+
+        else:
+            val = QtCore.QVariant()
+
+        return val
+
+    def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
+        """
+        This function formats the row and column headers by checking the orientation
+        and returning the correct QVariants from the data table
+        """
+
+        replacementDict = {'FillMethod': "Fill Method", 'FillMaximumGap': "Fill Maximum Gap",
+                           'ExtendMethod': "Extend Method", 'ExtendDuration': "Extend Duration",
+                           'AccumulationMethod': "Accumulation Method", 'AccumulationDateStart': "Accumulation Date Start",
+                           'AccumulationDateStop': "Accumulation Date Stop",
+                           'DatasetOperationsOptions': "Dataset Additional Options"}
+
+        # Check for horizontal orientation and return the column name if true
+        if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
+            # val = QtCore.QVariant(str(self.operationsTable.columns))
+            val = QtCore.QVariant(self.datasetIndexedList[section])
+
+        # Check for the vertical orientation and return the date if true
+        elif orientation == QtCore.Qt.Vertical and role == QtCore.Qt.DisplayRole:
+            if section == 0:
+                val = QtCore.QVariant('Instance ID')
+            else:
+                val = QtCore.QVariant(replacementDict[self.operationsTable.columns[section - 1]])
+
+        else:
+            val = QtCore.QVariant()
+
+        return val
+
+    def getNodeFromIndex(self, index):
+        #todo: make sure this implementation is valid
+        if index.isValid():
+            node = index.internalPointer()
+            if node:
+                return node
+        return self.items
+
+    def parent(self, index):
+        """
+        Returns an empty model index to allow selection
+
+        """
+
+        return QtCore.QModelIndex()
 
 
+class SpreadSheetViewOperations(QtWidgets.QTableView):
+    """
+    """
 
+    def __init__(self, datasetTable, datasetOperationsTable, parent=None):
+        """
+        """
+
+        # Instantiate the inheirence variables
+        QtWidgets.QTableView.__init__(self)
+        self.parent = parent
+        self.setModel(SpreadSheetModelOperations(self))
+
+        # Set up a highlight color for the spreadsheet
+        self.highlightColor = QtGui.QColor(0, 115, 150)
+        colorCode = '#%02x%02x%02x' % (self.highlightColor.red(), self.highlightColor.green(), self.highlightColor.blue())
+
+        # Set the display properties for the spreadsheet
+        self.setStyleSheet(open(os.path.abspath('resources/GUI/stylesheets/spreadsheet.qss'), 'r').read().format(colorCode))
+        self.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
+        self.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
+        
+        # Set the dataframes into the object
+        self.datasets = datasetTable
+        self.operations = datasetOperationsTable
+
+        # Set up a signal/slot to resize columns when the model is reset
+        self.model().modelReset.connect(self.resizeColumns)
+        # self.clicked.connect(self._updateSelection)
+        # self.model().updateSelectionSignal.connect(self._updateSelection)
+
+
+    def resizeColumns(self):
+        """
+        This function resizes the table columns to be 150 pixels wide
+        """
+        [self.setColumnWidth(i, 150) for i in range(self.model().columnCount())]
+
+        return
+
+    def _updateSelection(self, test):
+
+        # selectedBox = QtCore.QRect(row, column, 1, 1)
+        self.clearSelection()
+        self.setCurrentIndex(test)
+        # self.setSelection(selectedBox, QtCore.QItemSelectionModel.Select)
 
 
 
@@ -602,7 +826,7 @@ if __name__ == '__main__':
 
 
     app = QtWidgets.QApplication(sys.argv)
-    widg = SpreadSheetView()
+    widg = SpreadSheetViewOperations()
     widg.model().loadDataIntoModel(dataTable, datasetTable)
     widg.show()
     

@@ -14,6 +14,7 @@ from resources.GUI.CustomWidgets.AggregationOptions import AggregationOptions
 from resources.GUI.CustomWidgets.PyQtGraphs import ModelTabPlots, TimeSeriesLineBarPlot
 from resources.GUI.CustomWidgets.customTabs import EnhancedTabWidget
 from resources.GUI.CustomWidgets.richTextButtons import richTextButton, richTextButtonCheckbox, richTextDescriptionButton
+from resources.GUI.CustomWidgets.SpreadSheet import SpreadSheetViewOperations
 from resources.GUI.WebMap import webMapView
 # import pandas as pd
 
@@ -1029,11 +1030,14 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ### Create the left side dataset summary table ###
         # Create the list widget
-        summaryListWidget = QtWidgets.QListWidget()
+        self.summaryListWidget = SpreadSheetViewOperations(self.parent.datasetTable, self.parent.datasetOperationsTable,
+                                                           parent=self)
+
+        # Connect the summary list to change with the operations table
 
 
         # Add to the layout
-        mainLayout.addWidget(summaryListWidget)
+        mainLayout.addWidget(self.summaryListWidget)
 
         ### Create the right side of the pane ###
         ## Create a vertical layout ##
@@ -1341,7 +1345,8 @@ class ModelCreationTab(QtWidgets.QWidget):
         if tabIndex == 3:
             # Update the summary boxes
             ##print('@@ debug statement')
-            pass
+            self.summaryListWidget.model().loadDataIntoModel(self.parent.datasetTable, self.parent.datasetOperationsTable)
+
 
 
 
