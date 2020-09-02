@@ -205,7 +205,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.layoutSimpleExtend = richTextDescriptionButton(self, '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format('Extend data',
                                                  'Automatically extend the selected time series using default properties'))
 
-        self.layoutAggregationOptions = AggregationOptions(False)
+        self.layoutAggregationOptions = AggregationOptions(False, orientation='vertical')
 
 
         ## Add the widgets into the layout ##
@@ -851,21 +851,28 @@ class ModelCreationTab(QtWidgets.QWidget):
         lagLayoutWidget.setLayout(lagLayout)
         layoutWindowRightGridLayout.addWidget(lagLayoutWidget, 1, 2)
 
+        ### Add the aggregation options ###
+        # Create the widget
+        self.layoutWindowAggregationGroup = AggregationOptions(False, orientation='horizontal')
+
+        # Add it into the page
+        layoutWindowRightGridLayout.addWidget(self.layoutWindowAggregationGroup, 2, 0)
+
         ### Create clear and apply buttons to apply operations ###
         # Create the clear button
         self.layoutWindowClearButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Clear</strong>')
         self.layoutWindowClearButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred)
 
         # Link the button to the clear function
-        # self.layoutWindowClearButton.clicked.connect(self._applyWindowClearToDataset)
-        # self.layoutWindowClearButton.clicked.connect(self._updateWindowSubtab)
+        self.layoutWindowClearButton.clicked.connect(self._applyWindowClearToDataset)
+        self.layoutWindowClearButton.clicked.connect(self._updateWindowSubtab)
 
         # Create the apply button
         self.layoutWindowApplyButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Apply</strong>')
         self.layoutWindowApplyButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred)
 
         # Link the button to the apply function
-        # self.layoutWindowApplyButton.clicked.connect(self._applyWindowOptionsToDataset)
+        self.layoutWindowApplyButton.clicked.connect(self._applyWindowOptionsToDataset)
 
         # Create the layout, wrap it, and add to the right layout
         buttonLayout = QtWidgets.QHBoxLayout()
@@ -881,7 +888,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         rightGridWidget = QtWidgets.QWidget()
         rightGridWidget.setLayout(layoutWindowRightGridLayout)
         layoutWindowRightLayout.addWidget(rightGridWidget)
-        
+
         layoutWindowRightLayout.addWidget(buttonLayoutWidget)
 
         # Create the horizontal layout
@@ -1494,6 +1501,100 @@ class ModelCreationTab(QtWidgets.QWidget):
         # # Switch the stacked widgets
         self.layoutExtendMethodSelector.setCurrentIndex(0)
         self._updateExtendSubtab()
+
+    def _updateWindowSubtab(self):
+        """
+        Updates the state of the extend subtab methods pane based on the method selector
+
+        """
+
+        # Switch the stacked widgets
+        # self.stackedExtendLayout.setCurrentIndex(self.layoutExtendMethodSelector.currentIndex())
+        #
+        # # Update the gap limit visibility
+        # if self.layoutExtendMethodSelector.currentIndex() > 0:
+        #     self.layoutExtendDurationLabel.setVisible(True)
+        #     self.layoutExtendDurationLimit.setVisible(True)
+        # else:
+        #     self.layoutExtendDurationLabel.setVisible(False)
+        #     self.layoutExtendDurationLimit.setVisible(False)
+        pass
+
+    def _updateWindowOptionsOnDataset(self):
+        """
+        Displays the correct information for the selected dataset in the fill pane
+
+        """
+
+        # Get the current datasest index
+        # currentIndex = self.extendList.datasetTable.index[self.extendList.currentIndex().row()]
+        #
+        # # Get the options for the item
+        # extendMethod = self.parent.datasetOperationsTable.loc[currentIndex]['ExtendMethod']
+        # extendDuration = self.parent.datasetOperationsTable.loc[currentIndex]['ExtendDuration']
+        # # If needed, can extract more information based on the fill method here
+        #
+        # # # Get the options for the selector and stack
+        # extendOptionsIndex = [x for x in range(self.layoutExtendMethodSelector.count()) if self.layoutExtendMethodSelector.itemText(x) == extendMethod]
+        # if extendOptionsIndex:
+        #     extendOptionsIndex = extendOptionsIndex[0]
+        # else:
+        #     extendOptionsIndex = 0
+        #
+        # self.stackedExtendLayout.setCurrentIndex(extendOptionsIndex)
+        # self.layoutExtendMethodSelector.setCurrentIndex(extendOptionsIndex)
+        #
+        # # Set the values into the widgets
+        # # Correct this issue
+        # self.layoutExtendDurationLimit.setText(str(extendDuration))
+        pass
+
+    def _applyWindowOptionsToDataset(self):
+        """
+        Applies the fill attributes to a dataset
+
+        """
+
+        # Extract the fill limit
+        # try:
+        #     extendLimit = int(self.layoutExtendDurationLimit.toPlainText())
+        # except:
+        #     extendLimit = None
+        #
+        # # Get the method to be utilized
+        # extendMethod = self.layoutExtendMethodSelector.currentText()
+        #
+        # # Get the current dataset
+        # currentIndex = self.extendList.datasetTable.index[self.extendList.currentIndex().row()]
+        #
+        # # Set the values
+        # self.parent.datasetOperationsTable.loc[currentIndex]['ExtendMethod'] = extendMethod
+        # self.parent.datasetOperationsTable.loc[currentIndex]['ExtendDuration'] = extendLimit
+        #
+        # # Clear the button click
+        # self.layoutExtendApplyButton.setChecked(False)
+        pass
+
+    def _applyWindowClearToDataset(self):
+        """
+        Clears the fill attributes of a dataset
+
+        """
+
+        # Get the current dataset
+        # currentIndex = self.extendList.datasetTable.index[self.extendList.currentIndex().row()]
+        #
+        # # Set the values
+        # self.parent.datasetOperationsTable.loc[currentIndex]['ExtendMethod'] = None
+        # self.parent.datasetOperationsTable.loc[currentIndex]['ExtendDuration'] = None
+        #
+        # # Clear the button click
+        # self.layoutFillClearButton.setChecked(False)
+        #
+        # # # Switch the stacked widgets
+        # self.layoutExtendMethodSelector.setCurrentIndex(0)
+        # self._updateExtendSubtab()
+        pass
 
     def _applySummaryClear(self):
         """
