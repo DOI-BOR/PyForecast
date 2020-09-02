@@ -606,6 +606,29 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
         self.updatedLinkedList.emit(self.listInput, self.listOutput)
         self.updatedOutputList.emit()
 
+    def resetOutputItems(self):
+        """
+        Clears all output list entries
+
+        Parameters
+        ----------
+        self: DoubleList
+
+        Returns
+        -------
+        None.
+
+        """
+
+        # Clear the input and output lists
+        self.listOutput.datasetTable.drop(self.listOutput.datasetTable.index, inplace=True)
+        self.listOutput.refreshDatasetList()
+
+        # Emit for the updated linked doublelists
+        self.updatedLinkedList.emit(self.listInput, self.listOutput)
+        self.updatedOutputList.emit()
+
+
     def seletedItems(self):
         """
         Returns of the list of items in the output list in order from top to bottom
