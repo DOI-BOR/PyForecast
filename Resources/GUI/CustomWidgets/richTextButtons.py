@@ -83,6 +83,7 @@ class richTextDescriptionButton(QtWidgets.QPushButton):
         """
 
         self.lab.setText(self.richTextChecked)
+        self.setChecked(True)
 
         # Emit an update signal to allow status update on linked buttons
         self.updateLinkedButton.emit(self.isChecked())
@@ -94,6 +95,7 @@ class richTextDescriptionButton(QtWidgets.QPushButton):
         """
 
         self.lab.setText(self.richTextUnChecked)
+        self.setChecked(False)
 
         # Emit an update signal to allow status update on linked buttons
         self.updateLinkedButton.emit(self.isChecked())
