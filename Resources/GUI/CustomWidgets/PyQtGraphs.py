@@ -206,6 +206,63 @@ class DataTabPlots(pg.GraphicsLayoutWidget):
         return
 
 
+class DatasetTimeseriesPlots(pg.GraphicsLayoutWidget):
+
+    def __init__(self, dataset, parent=None):
+        # Instantiate the widget and create a reference to the parent
+        pg.GraphicsLayoutWidget.__init__(self, parent)
+        self.parent = parent
+
+        # Get a reference to the datasetTable and the dataTable
+        if dataset is None:
+            self.datasetTable = pd.DataFrame()
+        else:
+            self.datasetTable = dataset
+
+        # Create a color cyler
+        self.colors = [
+            (255, 61, 0),
+            (0, 145, 234),
+            (255, 214, 0),
+            (0, 200, 83),
+            (255, 103, 32),
+            (170, 0, 255),
+            (141, 110, 99),
+            (198, 255, 0),
+            (29, 233, 182),
+            (136, 14, 79)
+        ]
+        self.penCycler = [pg.mkPen(pg.mkColor(color), width=1.5) for color in self.colors]
+        self.brushCycler = [pg.mkBrush(pg.mkColor(color)) for color in self.colors]
+
+        # Instantiate the plots
+        self.timeSeriesPlot = TimeSeriesLinePlot(self)
+        # self.timeSliderPlot = TimeSliderPlot(self)
+        # self.spaghettiPlot = SpaghettiPlot(self)
+
+        # Add the plots
+        self.addItem(self.timeSeriesPlot)
+        # self.addItem(self.timeSliderPlot, row=7, col=0, rowspan=2)
+
+        return
+
+    def clearPlots(self):
+        """
+        Clears the plots of any data
+        """
+        self.timeSeriesPlot.clear()
+        # self.timeSliderPlot.clear()
+
+        return
+
+    def displayDatasets(self, datasets):
+        # If there is more than one dataset,
+        self.timeSeriesPlot.displayDatasets(datasets)
+        # self.timeSliderPlot.displayDatasets(datasets)
+
+        return
+
+
 # Create a flow histogram
 class dataReductionPlot(pg.PlotItem):
 

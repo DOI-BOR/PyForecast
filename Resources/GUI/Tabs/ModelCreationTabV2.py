@@ -11,13 +11,14 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from resources.GUI.CustomWidgets.DatasetList_HTML_Formatted import DatasetListHTMLFormatted, DatasetListHTMLFormattedMultiple
 from resources.GUI.CustomWidgets.DoubleList import DoubleListMultipleInstance
 from resources.GUI.CustomWidgets.AggregationOptions import AggregationOptions
-from resources.GUI.CustomWidgets.PyQtGraphs import ModelTabPlots, TimeSeriesLineBarPlot
+from resources.GUI.CustomWidgets.PyQtGraphs import ModelTabPlots, TimeSeriesLineBarPlot, DatasetTimeseriesPlots
 from resources.GUI.CustomWidgets.customTabs import EnhancedTabWidget
 from resources.GUI.CustomWidgets.richTextButtons import richTextButton, richTextButtonCheckbox, richTextDescriptionButton
 from resources.GUI.CustomWidgets.SpreadSheet import SpreadSheetViewOperations
 from resources.GUI.WebMap import webMapView
 # import pandas as pd
 
+from resources.modules.StatisticalModelsTab.Operations.Fill import *
 
 class ModelCreationTab(QtWidgets.QWidget):
     """
@@ -571,6 +572,13 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Add the stacked layout to the main layout
         layoutFillRightLayout.addWidget(stackedWidget)
         stackedWidget.setVisible(True)
+
+        ### Create the plot that shows the result of the selection ###
+        # Create the plot
+        self.layoutFillPlot = DatasetTimeseriesPlots(None)
+
+        # Add it into the layout
+        layoutFillRightLayout.addWidget(self.layoutFillPlot)
 
         ### Create clear and apply buttons to apply operations ###
         # Create the clear button
@@ -1440,9 +1448,11 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Get the current datasest index
         currentIndex = self.fillList.datasetTable.index[self.fillList.currentIndex().row()]
 
+        ### Update the widgets with dataset information ###
         # Get the options for the item
         fillMethod = self.parent.datasetOperationsTable.loc[currentIndex]['FillMethod']
         fillGap = self.parent.datasetOperationsTable.loc[currentIndex]['FillMaximumGap']
+        # todo: add order to support poly interpolation
         # If needed, can extract more information based on the fill method here
 
         # Get the options for the selector and stack
@@ -1458,6 +1468,25 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Set the values into the widgets
         # Correct this issue
         self.layoutFillGapLimit.setText(str(fillGap))
+
+        ### Update the plot with the dataset and interpolation ###
+        # Get the source and fill dataset. This copies it to avoid changing the source data
+        sourceData = self.parent.dataTable.query('DatasetInternalID == @currentIndex[0]', inplace=False)
+        # sourceData = sourceData.droplevel('DatasetInternalID')
+
+        if fillOptionsIndex > 0:
+            # Fill the data with the applied operation
+            filledData = fill_missing(sourceData, fillMethod, fillGap)
+
+            # Stack it together with the existing data
+
+
+        ## Plot the source dataset ##
+        self.layoutFillPlot.displayDatasets(sourceData)
+
+        ## Plot the dataset with the fill options applied ##
+
+
 
     def _applyFillOptionsToDataset(self):
         """
