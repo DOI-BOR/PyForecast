@@ -452,7 +452,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.layoutFillGapLimitLabel = QtWidgets.QLabel('Maximum Filled Gap')
         self.layoutFillGapLimitLabel.setVisible(False)
 
-        # Create teh fill limit widget
+        # Create the fill limit widget
         self.layoutFillGapLimit = QtWidgets.QTextEdit()
         self.layoutFillGapLimit.setPlaceholderText('30')
         self.layoutFillGapLimit.setFixedWidth(50)
@@ -534,7 +534,6 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Create the clear button
         self.layoutFillClearButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Clear</strong>')
         self.layoutFillClearButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred)
-        # self.layoutFillClearButton.setFixedHeight(40)
 
         # Link the button to the clear function
         self.layoutFillClearButton.clicked.connect(self._applyFillClearToDataset)
@@ -543,7 +542,6 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Create the apply button
         self.layoutFillApplyButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Apply</strong>')
         self.layoutFillApplyButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred)
-        # self.layoutFillApplyButton.setFixedHeight(40)
 
         # Link the button to the apply function
         self.layoutFillApplyButton.clicked.connect(self._applyFillOptionsToDataset)
@@ -601,6 +599,9 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.layoutDataDoubleList.listOutput.updateSignalToExternal.connect(self.extendList.refreshDatasetListFromExtenal)
         layoutExtendLeftLayout.addWidget(self.extendList)
 
+        # Connect the list widget to the right panel to adjust the display
+        self.extendList.currentRowChanged.connect(self._updateExtendOptionsOnDataset)
+
         ## Create the right panel ##
         # Create the vertical layout
         layoutExtendRightLayout = QtWidgets.QVBoxLayout()
@@ -615,26 +616,31 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.layoutExtendMethodSelector.addItems(extendOptions)
         layoutExtendRightLayout.addWidget(self.layoutExtendMethodSelector)
 
+        # Connect the methods selector with the update function
+        self.layoutExtendMethodSelector.currentIndexChanged.connect(self._updateExtendSubtab)
+
         # Create a line to delineate the selector from the selector options
         lineA = QtWidgets.QFrame()
         lineA.setFrameShape(QtWidgets.QFrame.HLine)
         layoutExtendRightLayout.addWidget(lineA)
 
         # Create the fill limit label
-        extendGapLabel = QtWidgets.QLabel('Extension Duration')
+        self.layoutExtendDurationLabel = QtWidgets.QLabel('Extension Duration')
+        self.layoutExtendDurationLabel.setVisible(False)
 
         # Create the fill limit widget
-        self.layoutExtendGapLimit = QtWidgets.QTextEdit()
-        self.layoutExtendGapLimit.setPlaceholderText('30')
-        self.layoutExtendGapLimit.setFixedWidth(50)
-        self.layoutExtendGapLimit.setFixedHeight(25)
+        self.layoutExtendDurationLimit = QtWidgets.QTextEdit()
+        self.layoutExtendDurationLimit.setPlaceholderText('30')
+        self.layoutExtendDurationLimit.setFixedWidth(50)
+        self.layoutExtendDurationLimit.setFixedHeight(25)
+        self.layoutExtendDurationLimit.setVisible(False)
 
         # Create the layout for the fill limit
         extendGapLayout = QtWidgets.QHBoxLayout()
         extendGapLayout.setAlignment(QtCore.Qt.AlignTop)
 
-        extendGapLayout.addWidget(extendGapLabel, 1, QtCore.Qt.AlignLeft)
-        extendGapLayout.addWidget(self.layoutExtendGapLimit, 5, QtCore.Qt.AlignLeft)
+        extendGapLayout.addWidget(self.layoutExtendDurationLabel, 1, QtCore.Qt.AlignLeft)
+        extendGapLayout.addWidget(self.layoutExtendDurationLimit, 5, QtCore.Qt.AlignLeft)
 
         # Add the limit into the main page
         extendGapLayoutWidget = QtWidgets.QWidget()
@@ -659,15 +665,17 @@ class ModelCreationTab(QtWidgets.QWidget):
         # be opened separate from the main window
         stackedWidget = QtWidgets.QWidget()
         stackedWidget.setLayout(self.stackedExtendLayout)
-        stackedWidget.setVisible(False)
+        stackedWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
 
-        # Add each of the interpolation types to it
+        # Add each of the interpolation types to it, specifying how to scale with the screen
         noneWidget = QtWidgets.QWidget()
         noneWidget.setLayout(noneLayout)
+        noneWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         self.stackedExtendLayout.addWidget(noneWidget)
 
         fourierWidget = QtWidgets.QWidget()
         fourierWidget.setLayout(fourierLayout)
+        fourierWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         self.stackedExtendLayout.addWidget(fourierWidget)
 
         # Add the stacked layout to the main layout
@@ -675,6 +683,32 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ### Connect the stacked widget with the selection combo box ###
         self.layoutExtendMethodSelector.currentIndexChanged.connect(self._updateExtendSubtab)
+
+        ### Create clear and apply buttons to apply operations ###
+        # Create the clear button
+        self.layoutExtendClearButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Clear</strong>')
+        self.layoutExtendClearButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred)
+
+        # Link the button to the clear function
+        self.layoutExtendClearButton.clicked.connect(self._applyExtendClearToDataset)
+        self.layoutExtendClearButton.clicked.connect(self._updateExtendSubtab)
+
+        # Create the apply button
+        self.layoutExtendApplyButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Apply</strong>')
+        self.layoutExtendApplyButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred)
+
+        # Link the button to the apply function
+        self.layoutExtendApplyButton.clicked.connect(self._applyExtendOptionsToDataset)
+
+        # Create the layout, wrap it, and add to the right layout
+        buttonLayout = QtWidgets.QHBoxLayout()
+        buttonLayout.addWidget(self.layoutExtendClearButton)
+        buttonLayout.addWidget(self.layoutExtendApplyButton)
+        buttonLayout.setAlignment(QtCore.Qt.AlignRight)
+
+        buttonLayoutWidget = QtWidgets.QWidget()
+        buttonLayoutWidget.setLayout(buttonLayout)
+        layoutExtendRightLayout.addWidget(buttonLayoutWidget)
 
         ## Create the full layout ##
         # Create the horizontal layout
@@ -1336,7 +1370,94 @@ class ModelCreationTab(QtWidgets.QWidget):
         self._updateFillSubtab()
 
     def _updateExtendSubtab(self):
+        """
+        Updates the state of the extend subtab methods pane based on the method selector
+
+        """
+
+        # Switch the stacked widgets
         self.stackedExtendLayout.setCurrentIndex(self.layoutExtendMethodSelector.currentIndex())
+
+        # Update the gap limit visibility
+        if self.layoutExtendMethodSelector.currentIndex() > 0:
+            self.layoutExtendDurationLabel.setVisible(True)
+            self.layoutExtendDurationLimit.setVisible(True)
+        else:
+            self.layoutExtendDurationLabel.setVisible(False)
+            self.layoutExtendDurationLimit.setVisible(False)
+
+    def _updateExtendOptionsOnDataset(self):
+        """
+        Displays the correct information for the selected dataset in the fill pane
+
+        """
+
+        # Get the current datasest index
+        currentIndex = self.extendList.datasetTable.index[self.extendList.currentIndex().row()]
+
+        # Get the options for the item
+        extendMethod = self.parent.datasetOperationsTable.loc[currentIndex]['ExtendMethod']
+        extendDuration = self.parent.datasetOperationsTable.loc[currentIndex]['ExtendDuration']
+        # If needed, can extract more information based on the fill method here
+
+        # # Get the options for the selector and stack
+        extendOptionsIndex = [x for x in range(self.layoutExtendMethodSelector.count()) if self.layoutExtendMethodSelector.itemText(x) == extendMethod]
+        if extendOptionsIndex:
+            extendOptionsIndex = extendOptionsIndex[0]
+        else:
+            extendOptionsIndex = 0
+
+        self.stackedExtendLayout.setCurrentIndex(extendOptionsIndex)
+        self.layoutExtendMethodSelector.setCurrentIndex(extendOptionsIndex)
+
+        # Set the values into the widgets
+        # Correct this issue
+        self.layoutExtendDurationLimit.setText(str(extendDuration))
+
+    def _applyExtendOptionsToDataset(self):
+        """
+        Applies the fill attributes to a dataset
+
+        """
+
+        # Extract the fill limit
+        try:
+            extendLimit = int(self.layoutExtendDurationLimit.toPlainText())
+        except:
+            extendLimit = None
+
+        # Get the method to be utilized
+        extendMethod = self.layoutExtendMethodSelector.currentText()
+
+        # Get the current dataset
+        currentIndex = self.extendList.datasetTable.index[self.extendList.currentIndex().row()]
+
+        # Set the values
+        self.parent.datasetOperationsTable.loc[currentIndex]['ExtendMethod'] = extendMethod
+        self.parent.datasetOperationsTable.loc[currentIndex]['ExtendDuration'] = extendLimit
+
+        # Clear the button click
+        self.layoutExtendApplyButton.setChecked(False)
+
+    def _applyExtendClearToDataset(self):
+        """
+        Clears the fill attributes of a dataset
+
+        """
+
+        # Get the current dataset
+        currentIndex = self.extendList.datasetTable.index[self.extendList.currentIndex().row()]
+
+        # Set the values
+        self.parent.datasetOperationsTable.loc[currentIndex]['ExtendMethod'] = None
+        self.parent.datasetOperationsTable.loc[currentIndex]['ExtendDuration'] = None
+
+        # Clear the button click
+        self.layoutFillClearButton.setChecked(False)
+
+        # # Switch the stacked widgets
+        self.layoutExtendMethodSelector.setCurrentIndex(0)
+        self._updateExtendSubtab()
 
     def _applySummaryClear(self):
         """
