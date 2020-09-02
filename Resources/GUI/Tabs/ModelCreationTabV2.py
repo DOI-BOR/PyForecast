@@ -755,8 +755,12 @@ class ModelCreationTab(QtWidgets.QWidget):
         layoutWindowLeftLayout.addWidget(self.windowList)
 
         ## Create the right panel ##
-        # Create the vertical layout
-        layoutWindowRightLayout = QtWidgets.QGridLayout()
+        # Create the layouts for subsequent use
+        layoutWindowRightLayout = QtWidgets.QVBoxLayout()
+        layoutWindowRightLayout.setContentsMargins(0, 0, 0, 0)
+
+        layoutWindowRightGridLayout = QtWidgets.QGridLayout()
+        layoutWindowRightGridLayout.setContentsMargins(0, 0, 0, 0)
 
         ### Setup the upper plot ###
         # Create a line/bar plot object
@@ -778,7 +782,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         dataPlot.plot()
 
         # Add into the main layout
-        layoutWindowRightLayout.addWidget(dataPlot.chartView, 0, 0, 1, 3)
+        layoutWindowRightGridLayout.addWidget(dataPlot.chartView, 0, 0, 1, 3)
 
         ### Create the date/lag widgets ###
         # todo: capture these values for each dataset on list change
@@ -803,7 +807,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         startLayoutWidget = QtWidgets.QWidget()
         startLayoutWidget.setLayout(startLayout)
 
-        layoutWindowRightLayout.addWidget(startLayoutWidget, 1, 0)
+        layoutWindowRightGridLayout.addWidget(startLayoutWidget, 1, 0)
 
         ## Create the stop time widget ##
         # Create the label
@@ -824,7 +828,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         stopLayoutWidget = QtWidgets.QWidget()
         stopLayoutWidget.setLayout(stopLayout)
-        layoutWindowRightLayout.addWidget(stopLayoutWidget, 1, 1)
+        layoutWindowRightGridLayout.addWidget(stopLayoutWidget, 1, 1)
 
         ## Create the lag box widget ##
         # Create the label
@@ -845,9 +849,41 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         lagLayoutWidget = QtWidgets.QWidget()
         lagLayoutWidget.setLayout(lagLayout)
-        layoutWindowRightLayout.addWidget(lagLayoutWidget, 1, 2)
+        layoutWindowRightGridLayout.addWidget(lagLayoutWidget, 1, 2)
+
+        ### Create clear and apply buttons to apply operations ###
+        # Create the clear button
+        self.layoutWindowClearButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Clear</strong>')
+        self.layoutWindowClearButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred)
+
+        # Link the button to the clear function
+        # self.layoutWindowClearButton.clicked.connect(self._applyWindowClearToDataset)
+        # self.layoutWindowClearButton.clicked.connect(self._updateWindowSubtab)
+
+        # Create the apply button
+        self.layoutWindowApplyButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Apply</strong>')
+        self.layoutWindowApplyButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred)
+
+        # Link the button to the apply function
+        # self.layoutWindowApplyButton.clicked.connect(self._applyWindowOptionsToDataset)
+
+        # Create the layout, wrap it, and add to the right layout
+        buttonLayout = QtWidgets.QHBoxLayout()
+        buttonLayout.addWidget(self.layoutWindowClearButton)
+        buttonLayout.addWidget(self.layoutWindowApplyButton)
+        buttonLayout.setAlignment(QtCore.Qt.AlignRight)
+
+        buttonLayoutWidget = QtWidgets.QWidget()
+        buttonLayoutWidget.setLayout(buttonLayout)
 
         ## Create the full layout ##
+        # Add the items to the right layout
+        rightGridWidget = QtWidgets.QWidget()
+        rightGridWidget.setLayout(layoutWindowRightGridLayout)
+        layoutWindowRightLayout.addWidget(rightGridWidget)
+        
+        layoutWindowRightLayout.addWidget(buttonLayoutWidget)
+
         # Create the horizontal layout
         layoutWindow = QtWidgets.QHBoxLayout()
 
