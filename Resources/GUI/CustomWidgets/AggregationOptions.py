@@ -3,13 +3,15 @@ from resources.GUI.CustomWidgets.richTextButtons import richTextButton
 
 class AggregationOptions(QtWidgets.QWidget):
 
-    def __init__(self, scrollable, parent=None):
+    def __init__(self, scrollable, orientation, parent=None):
         """
         Constructor for the Aggregation Options widget class.
 
         Parameters
         ----------
         self: AggregationOptions
+        orientation: str
+            Determines layout of the widget. Valid options are 'vertical' or 'horizontal'
 
         Returns
         -------
@@ -18,6 +20,9 @@ class AggregationOptions(QtWidgets.QWidget):
         """
         QtWidgets.QWidget.__init__(self)
         self.parent = parent
+
+        # Validate the layout orientation
+        assert orientation == 'vertical' or orientation == 'horizontal', "Aggregation layout orientation is not understood."
 
         # Create the overall layout objects
         layout1 = QtWidgets.QVBoxLayout()
@@ -84,7 +89,7 @@ class AggregationOptions(QtWidgets.QWidget):
         self.resamplingLayout.addWidget(self.freqChar, 3, 2)
         # Add to UI
         self.resamplingGroup.setLayout(self.resamplingLayout)
-        layout1.addWidget(self.resamplingGroup)
+
 
         #########################################################################
         # Set predictor method
@@ -123,7 +128,7 @@ class AggregationOptions(QtWidgets.QWidget):
         self.radioLayout.addWidget(self.customValString)
         # Add to UI
         self.radioGroup.setLayout(self.radioLayout)
-        layout1.addWidget(self.radioGroup)
+
 
         #########################################################################
         # Create predictor forcing checkbox
@@ -132,19 +137,92 @@ class AggregationOptions(QtWidgets.QWidget):
         layout1.addWidget(self.predForceCheckBox)
 
         #########################################################################
-        # Create the apply button
-        self.predictorApplyButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Apply</strong>')
-        self.predictorApplyButton.setMaximumSize(125, 50)
-        self.predictorApplyButton.clicked.connect(self.applyPredictorAggregationOption)
-        layout1.addWidget(self.predictorApplyButton)
-
         # Add the container to the layout
         if scrollable:
-            optionsWidget.setLayout(layout1)
-            scrollarea.setWidget(optionsWidget)
+            if orientation == 'vertical':
+                # Setup a vertical layout orientation
+                layoutVertical = QtWidgets.QVBoxLayout()
+
+                # Cast the layout to a widget
+                layout1Widget = QtWidgets.QWidget()
+                layout1Widget.setLayout(layout1)
+
+                # Add widgets into the vertical layout
+                layoutVertical.addWidget(layout1Widget)
+                layoutVertical.addWidget(self.resamplingGroup)
+                layoutVertical.addWidget(self.radioGroup)
+                layoutVertical.addWidget(self.predForceCheckBox)
+
+                optionsWidget.setLayout(layoutVertical)
+                scrollarea.setWidget(optionsWidget)
+
+            else:
+                # Setup a horizontal orientation
+                layoutVertical = QtWidgets.QVBoxLayout()
+
+                # Cast the layout to a widget
+                layout1Widget = QtWidgets.QWidget()
+                layout1Widget.setLayout(layout1)
+
+                # Create a horizontal layout
+                layoutHorizontal = QtWidgets.QHBoxLayout()
+                layoutHorizontal.addWidget(layout1Widget)
+                layoutHorizontal.addWidget(self.resamplingGroup)
+                layoutHorizontal.addWidget(self.radioGroup)
+
+                # Cast the layout to a widget
+                layoutHorizontalWidget = QtWidgets.QWidget()
+                layoutHorizontalWidget.setLayout(layoutHorizontal)
+
+                # Add widgets into the vertical layout
+                layoutVertical.addWidget(layoutHorizontalWidget)
+                layoutVertical.addWidget(self.predForceCheckBox)
+
+                optionsWidget.setLayout(layoutVertical)
+                scrollarea.setWidget(optionsWidget)
+
         else:
-            layout1.addItem(QtGui.QSpacerItem(20, 10, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding))
-            self.setLayout(layout1)
+            if orientation == 'vertical':
+                # Setup a vertical layout orientation
+                layoutVertical = QtWidgets.QVBoxLayout()
+
+                # Cast the layout to a widget
+                layout1Widget = QtWidgets.QWidget()
+                layout1Widget.setLayout(layout1)
+
+                # Add widgets into the vertical layout
+                layoutVertical.addWidget(layout1Widget)
+                layoutVertical.addWidget(self.resamplingGroup)
+                layoutVertical.addWidget(self.radioGroup)
+                layoutVertical.addWidget(self.predForceCheckBox)
+
+                layoutVertical.addItem(QtGui.QSpacerItem(20, 10, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding))
+                self.setLayout(layoutVertical)
+
+            else:
+                # Setup a horizontal orientation
+                layoutVertical = QtWidgets.QVBoxLayout()
+
+                # Cast the layout to a widget
+                layout1Widget = QtWidgets.QWidget()
+                layout1Widget.setLayout(layout1)
+
+                # Create a horizontal layout
+                layoutHorizontal = QtWidgets.QHBoxLayout()
+                layoutHorizontal.addWidget(layout1Widget)
+                layoutHorizontal.addWidget(self.resamplingGroup)
+                layoutHorizontal.addWidget(self.radioGroup)
+
+                # Cast the layout to a widget
+                layoutHorizontalWidget = QtWidgets.QWidget()
+                layoutHorizontalWidget.setLayout(layoutHorizontal)
+
+                # Add widgets into the vertical layout
+                layoutVertical.addWidget(layoutHorizontalWidget)
+                layoutVertical.addWidget(self.predForceCheckBox)
+
+                layoutVertical.addItem(QtGui.QSpacerItem(20, 10, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding))
+                self.setLayout(layoutVertical)
 
 
     def radioToggled(self):
@@ -165,15 +243,15 @@ class AggregationOptions(QtWidgets.QWidget):
         self.selectedAggPeriod = "R/" + self.periodStart.date().toString('yyyy-MM-dd') + "/P" + self.tStepInteger.text() + tStepOption + "/" + "F"+ self.freqInteger.text() + freqOption #(e.g. R/1978-02-01/P1M/F1Y)
 
 
-    def applyPredictorAggregationOption(self):
-        print("Predictor Entries for the predictorTable/self.modelRunsTable: ")
-        # TODO: map this ID from the dataset table
-        print("--PredictorPool: " + "X")
-        # TODO: Add a bool checkbox for this
-        print("--PredictorForceFlag: " + str(self.predForceCheckBox.isChecked()))
-        print("--PredictorPeriods: " + self.selectedAggPeriod)
-        print("--PredictorMethods: " + self.selectedAggOption)
-        # TODO: not sure what these are for
-        print("--PredictorGroups: " + "X")
-        print("--PredictorGroupMapping: " + "X")
-        # TODO: UPDATE predictorTable/self.modelRunsTable ENTRIES HERE
+    # def applyPredictorAggregationOption(self):
+    #     print("Predictor Entries for the predictorTable/self.modelRunsTable: ")
+    #     # TODO: map this ID from the dataset table
+    #     print("--PredictorPool: " + "X")
+    #     # TODO: Add a bool checkbox for this
+    #     print("--PredictorForceFlag: " + str(self.predForceCheckBox.isChecked()))
+    #     print("--PredictorPeriods: " + self.selectedAggPeriod)
+    #     print("--PredictorMethods: " + self.selectedAggOption)
+    #     # TODO: not sure what these are for
+    #     print("--PredictorGroups: " + "X")
+    #     print("--PredictorGroupMapping: " + "X")
+    #     # TODO: UPDATE predictorTable/self.modelRunsTable ENTRIES HERE
