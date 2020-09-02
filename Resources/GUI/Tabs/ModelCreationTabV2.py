@@ -184,60 +184,12 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ### Create the simple analysis tab ###
         ## Create the initial scrollable area and layout ##
+        # Create the scrollable area and set it to resizeable
         predictorLayoutSimple = QtWidgets.QScrollArea()
         predictorLayoutSimple.setWidgetResizable(True)
 
-        ## Create the DoubleList selector object ##
-        self.layoutSimpleDoubleList = DoubleListMultipleInstance(self.parent.datasetTable,
-                                                                 '<strong style="font-size: 18px">Available Datasets<strong>',
-                                                                 '<strong style="font-size: 18px">Selected Datasets<strong>')
-
-        # Connect the DoubleList with the dataset hmtl list to keep everything in sync. This will automatically
-        # populate the DoubleList entries
-        self.datasetList.updateSignalToExternal.connect(self.layoutSimpleDoubleList.update)
-
-        ## Create the objects on the right side ##
-        # Simple fill
-        self.layoutSimpleFill = richTextDescriptionButton(self, '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format('Fill data',
-                                               'Automatically fill the selected time series using default properties'))
-
-        # Simple extend
-        self.layoutSimpleExtend = richTextDescriptionButton(self, '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format('Extend data',
-                                                 'Automatically extend the selected time series using default properties'))
-
-        self.layoutAggregationOptions = AggregationOptions(False)
-
-
-        ## Add the widgets into the layout ##
-        # Add the items into the horizontal spacer
-        layoutSimple = QtWidgets.QHBoxLayout()
-        layoutSimple.setContentsMargins(0, 0, 0, 0)
-        layoutSimple.addWidget(self.layoutSimpleDoubleList, 2)
-        layoutSimple.addSpacerItem(QtWidgets.QSpacerItem(10, 10, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
-
-        # Create the right side options layout
-        layoutSimpleOptions = QtWidgets.QVBoxLayout()
-        layoutSimpleOptions.setAlignment(QtCore.Qt.AlignTop)
-        layoutSimpleOptions.addWidget(self.layoutSimpleFill)
-        layoutSimpleOptions.addWidget(self.layoutSimpleExtend)
-        layoutSimpleOptions.addWidget(self.layoutAggregationOptions)
-
-        # Wrap the right side layout in another widget
-        layoutSimpleOptionsWidget = QtWidgets.QWidget()
-        layoutSimpleOptionsWidget.setLayout(layoutSimpleOptions)
-
-        # Add the right side to the simple layout
-        layoutSimple.addWidget(layoutSimpleOptionsWidget, 1)
-
-        # Wrap the layout in a widget
-        layoutSimpleWidget = QtWidgets.QWidget()
-        layoutSimpleWidget.setLayout(layoutSimple)
-
-        # Set the items into the simple layout
-        self.layoutPredictorSimpleAnalysis.addWidget(layoutSimpleWidget)
-        simplePredictorWidget = QtWidgets.QWidget()
-        simplePredictorWidget.setLayout(self.layoutPredictorSimpleAnalysis)
-
+        # Fill the remaining area with the layout options
+        self._createSimplePredictorLayout(predictorLayoutSimple)
 
         ### Create the layout data tab ###
         ## Create the initial scrollable area and layout ##
@@ -322,7 +274,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Create the stacked widget to handle to toggle between simple and expert analyses
         self.stackedPredictorWidget = QtWidgets.QStackedLayout()
-        self.stackedPredictorWidget.addWidget(simplePredictorWidget)
+        self.stackedPredictorWidget.addWidget(predictorLayoutSimple)
         self.stackedPredictorWidget.addWidget(expertPredictorWidget)
 
         self.stackedPredictorWidget.setCurrentIndex(0)
@@ -397,6 +349,96 @@ class ModelCreationTab(QtWidgets.QWidget):
         # ====================================================================================================================
         # Create an update method for when the tab widget gets changed to refresh elements
         self.workflowWidget.currentChanged.connect(self._updateTabDependencies)
+
+
+    def _createSimplePredictorLayout(self, predictorLayoutSimple):
+        """
+        Lays out the full simple predictor tab
+
+        Parameters
+        ----------
+        predictorLayoutSimple: scrollable area
+            The area into which all layout items are placed
+
+        Returns
+        -------
+        None.
+
+        """
+
+        ## Create the DoubleList selector object ##
+        self.layoutSimpleDoubleList = DoubleListMultipleInstance(self.parent.datasetTable,
+                                                                 '<strong style="font-size: 18px">Available Datasets<strong>',
+                                                                 '<strong style="font-size: 18px">Selected Datasets<strong>')
+
+        # Connect the DoubleList with the dataset hmtl list to keep everything in sync. This will automatically
+        # populate the DoubleList entries
+        self.datasetList.updateSignalToExternal.connect(self.layoutSimpleDoubleList.update)
+
+        ## Create the objects on the right side ##
+        # Simple fill
+        self.layoutSimpleFill = richTextDescriptionButton(self,
+                                                          '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(
+                                                              'Fill data',
+                                                              'Automatically fill the selected time series using default properties'))
+
+        # Simple extend
+        self.layoutSimpleExtend = richTextDescriptionButton(self,
+                                                            '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(
+                                                                'Extend data',
+                                                                'Automatically extend the selected time series using default properties'))
+
+        self.layoutAggregationOptions = AggregationOptions(False, orientation='vertical')
+
+        ### Create clear and apply buttons to apply operations ###
+        # Create the clear button
+        self.layoutSimpleClearButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Clear</strong>')
+        self.layoutSimpleClearButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred)
+
+        # Link the button to the clear function
+        self.layoutSimpleClearButton.clicked.connect(self._applySimpleClear)
+        # self.layoutSimpleClearButton.clicked.connect(self._updateSimpleSubtab)
+
+        # Create the apply button
+        self.layoutSimpleApplyButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Apply</strong>')
+        self.layoutSimpleApplyButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred)
+
+        # Link the button to the apply function
+        self.layoutSimpleApplyButton.clicked.connect(self._applySimpleOptions)
+
+        # Create the layout, wrap it, and add to the right layout
+        buttonLayout = QtWidgets.QHBoxLayout()
+        buttonLayout.addWidget(self.layoutSimpleClearButton)
+        buttonLayout.addWidget(self.layoutSimpleApplyButton)
+        buttonLayout.setAlignment(QtCore.Qt.AlignRight)
+
+        buttonLayoutWidget = QtWidgets.QWidget()
+        buttonLayoutWidget.setLayout(buttonLayout)
+
+        ## Add the widgets into the layout ##
+        # Add the items into the horizontal spacer
+        layoutSimple = QtWidgets.QHBoxLayout()
+        layoutSimple.setContentsMargins(0, 0, 0, 0)
+        layoutSimple.addWidget(self.layoutSimpleDoubleList, 2)
+        layoutSimple.addSpacerItem(QtWidgets.QSpacerItem(10, 10, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
+
+        # Create the right side options layout
+        layoutSimpleOptions = QtWidgets.QVBoxLayout()
+        layoutSimpleOptions.setAlignment(QtCore.Qt.AlignTop)
+        layoutSimpleOptions.addWidget(self.layoutSimpleFill)
+        layoutSimpleOptions.addWidget(self.layoutSimpleExtend)
+        layoutSimpleOptions.addWidget(self.layoutAggregationOptions)
+        layoutSimpleOptions.addWidget(buttonLayoutWidget)
+
+        # Wrap the right side layout in another widget
+        layoutSimpleOptionsWidget = QtWidgets.QWidget()
+        layoutSimpleOptionsWidget.setLayout(layoutSimpleOptions)
+
+        # Add the right side to the simple layout
+        layoutSimple.addWidget(layoutSimpleOptionsWidget, 1)
+
+        # Set the items into the simple layout
+        predictorLayoutSimple.setLayout(layoutSimple)
 
 
     def _createDataFillLayout(self, layoutFillSA):
@@ -571,6 +613,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         layoutFill.addWidget(rightWidget, 2)
 
         layoutFillSA.setLayout(layoutFill)
+
 
     def _createDataExtendLayout(self, layoutExtendSA):
         """
@@ -755,8 +798,12 @@ class ModelCreationTab(QtWidgets.QWidget):
         layoutWindowLeftLayout.addWidget(self.windowList)
 
         ## Create the right panel ##
-        # Create the vertical layout
-        layoutWindowRightLayout = QtWidgets.QGridLayout()
+        # Create the layouts for subsequent use
+        layoutWindowRightLayout = QtWidgets.QVBoxLayout()
+        layoutWindowRightLayout.setContentsMargins(0, 0, 0, 0)
+
+        layoutWindowRightGridLayout = QtWidgets.QGridLayout()
+        layoutWindowRightGridLayout.setContentsMargins(0, 0, 0, 0)
 
         ### Setup the upper plot ###
         # Create a line/bar plot object
@@ -778,7 +825,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         dataPlot.plot()
 
         # Add into the main layout
-        layoutWindowRightLayout.addWidget(dataPlot.chartView, 0, 0, 1, 3)
+        layoutWindowRightGridLayout.addWidget(dataPlot.chartView, 0, 0, 1, 3)
 
         ### Create the date/lag widgets ###
         # todo: capture these values for each dataset on list change
@@ -803,7 +850,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         startLayoutWidget = QtWidgets.QWidget()
         startLayoutWidget.setLayout(startLayout)
 
-        layoutWindowRightLayout.addWidget(startLayoutWidget, 1, 0)
+        layoutWindowRightGridLayout.addWidget(startLayoutWidget, 1, 0)
 
         ## Create the stop time widget ##
         # Create the label
@@ -824,7 +871,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         stopLayoutWidget = QtWidgets.QWidget()
         stopLayoutWidget.setLayout(stopLayout)
-        layoutWindowRightLayout.addWidget(stopLayoutWidget, 1, 1)
+        layoutWindowRightGridLayout.addWidget(stopLayoutWidget, 1, 1)
 
         ## Create the lag box widget ##
         # Create the label
@@ -845,9 +892,48 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         lagLayoutWidget = QtWidgets.QWidget()
         lagLayoutWidget.setLayout(lagLayout)
-        layoutWindowRightLayout.addWidget(lagLayoutWidget, 1, 2)
+        layoutWindowRightGridLayout.addWidget(lagLayoutWidget, 1, 2)
+
+        ### Add the aggregation options ###
+        # Create the widget
+        self.layoutWindowAggregationGroup = AggregationOptions(False, orientation='horizontal')
+
+        # Add it into the page
+        layoutWindowRightGridLayout.addWidget(self.layoutWindowAggregationGroup, 2, 0)
+
+        ### Create clear and apply buttons to apply operations ###
+        # Create the clear button
+        self.layoutWindowClearButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Clear</strong>')
+        self.layoutWindowClearButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred)
+
+        # Link the button to the clear function
+        self.layoutWindowClearButton.clicked.connect(self._applyWindowClearToDataset)
+        self.layoutWindowClearButton.clicked.connect(self._updateWindowSubtab)
+
+        # Create the apply button
+        self.layoutWindowApplyButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Apply</strong>')
+        self.layoutWindowApplyButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred)
+
+        # Link the button to the apply function
+        self.layoutWindowApplyButton.clicked.connect(self._applyWindowOptionsToDataset)
+
+        # Create the layout, wrap it, and add to the right layout
+        buttonLayout = QtWidgets.QHBoxLayout()
+        buttonLayout.addWidget(self.layoutWindowClearButton)
+        buttonLayout.addWidget(self.layoutWindowApplyButton)
+        buttonLayout.setAlignment(QtCore.Qt.AlignRight)
+
+        buttonLayoutWidget = QtWidgets.QWidget()
+        buttonLayoutWidget.setLayout(buttonLayout)
 
         ## Create the full layout ##
+        # Add the items to the right layout
+        rightGridWidget = QtWidgets.QWidget()
+        rightGridWidget.setLayout(layoutWindowRightGridLayout)
+        layoutWindowRightLayout.addWidget(rightGridWidget)
+
+        layoutWindowRightLayout.addWidget(buttonLayoutWidget)
+
         # Create the horizontal layout
         layoutWindow = QtWidgets.QHBoxLayout()
 
@@ -1279,6 +1365,55 @@ class ModelCreationTab(QtWidgets.QWidget):
     def setPredictorExpertStack(self):
         self.stackedPredictorWidget.setCurrentIndex(1)
 
+    def _applySimpleOptions(self):
+        """
+        Applies the attributes from the simple predictor page into the dataset operations table
+
+        """
+        # todo: write this function when the aggregation group is stable
+
+        # Extract the fill limit
+        # try:
+        #     fillLimit = int(self.layoutFillGapLimit.toPlainText())
+        # except:
+        #     fillLimit = None
+        #
+        # # Get the method to be utilized
+        # fillMethod = self.layoutFillMethodSelector.currentText()
+        #
+        # # Get the current dataset
+        # currentIndex = self.fillList.datasetTable.index[self.fillList.currentIndex().row()]
+        #
+        # # Set the values
+        # self.parent.datasetOperationsTable.loc[currentIndex]['FillMethod'] = fillMethod
+        # self.parent.datasetOperationsTable.loc[currentIndex]['FillMaximumGap'] = fillLimit
+        #
+        # # Clear the button click
+        # self.layoutFillApplyButton.setChecked(False)
+        pass
+
+    def _applySimpleClear(self):
+        """
+        Clears the fill attributes of a dataset
+
+        """
+
+        # Drop all rows in the dataset operations table
+        self.parent.datasetOperationsTable.drop(self.parent.datasetOperationsTable.index, inplace=True)
+
+        # Reset the output table
+        self.layoutSimpleDoubleList.resetOutputItems()
+
+        # Clear the checkboxes
+        self.layoutSimpleExtend.updateToUnchecked()
+        self.layoutSimpleFill.updateToUnchecked()
+
+        # Clear the aggregation options
+        # todo: Add this functionality
+
+        ### Reset the button state ###
+        self.layoutSimpleClearButton.setChecked(False)
+
     def _updateFillSubtab(self):
         """
         Updates the state of the fill subtab methods pane based on the method selector
@@ -1459,6 +1594,100 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.layoutExtendMethodSelector.setCurrentIndex(0)
         self._updateExtendSubtab()
 
+    def _updateWindowSubtab(self):
+        """
+        Updates the state of the extend subtab methods pane based on the method selector
+
+        """
+        # todo: build this when the aggregation group is stable
+
+        # Switch the stacked widgets
+        # self.stackedExtendLayout.setCurrentIndex(self.layoutExtendMethodSelector.currentIndex())
+        #
+        # # Update the gap limit visibility
+        # if self.layoutExtendMethodSelector.currentIndex() > 0:
+        #     self.layoutExtendDurationLabel.setVisible(True)
+        #     self.layoutExtendDurationLimit.setVisible(True)
+        # else:
+        #     self.layoutExtendDurationLabel.setVisible(False)
+        #     self.layoutExtendDurationLimit.setVisible(False)
+        pass
+
+    def _updateWindowOptionsOnDataset(self):
+        """
+        Displays the correct information for the selected dataset in the fill pane
+
+        """
+        # todo: build this function when the aggregation function is stable
+
+        # Get the current datasest index
+        # currentIndex = self.extendList.datasetTable.index[self.extendList.currentIndex().row()]
+        #
+        # # Get the options for the item
+        # extendMethod = self.parent.datasetOperationsTable.loc[currentIndex]['ExtendMethod']
+        # extendDuration = self.parent.datasetOperationsTable.loc[currentIndex]['ExtendDuration']
+        # # If needed, can extract more information based on the fill method here
+        #
+        # # # Get the options for the selector and stack
+        # extendOptionsIndex = [x for x in range(self.layoutExtendMethodSelector.count()) if self.layoutExtendMethodSelector.itemText(x) == extendMethod]
+        # if extendOptionsIndex:
+        #     extendOptionsIndex = extendOptionsIndex[0]
+        # else:
+        #     extendOptionsIndex = 0
+        #
+        # self.stackedExtendLayout.setCurrentIndex(extendOptionsIndex)
+        # self.layoutExtendMethodSelector.setCurrentIndex(extendOptionsIndex)
+        #
+        # # Set the values into the widgets
+        # # Correct this issue
+        # self.layoutExtendDurationLimit.setText(str(extendDuration))
+        pass
+
+    def _applyWindowOptionsToDataset(self):
+        """
+        Applies the fill attributes to a dataset
+
+        """
+        # todo: build this function when the aggregation widget is stable
+
+        # Extract the fill limit
+        # try:
+        #     extendLimit = int(self.layoutExtendDurationLimit.toPlainText())
+        # except:
+        #     extendLimit = None
+        #
+        # # Get the method to be utilized
+        # extendMethod = self.layoutExtendMethodSelector.currentText()
+        #
+        # # Get the current dataset
+        # currentIndex = self.extendList.datasetTable.index[self.extendList.currentIndex().row()]
+        #
+        # # Set the values
+        # self.parent.datasetOperationsTable.loc[currentIndex]['ExtendMethod'] = extendMethod
+        # self.parent.datasetOperationsTable.loc[currentIndex]['ExtendDuration'] = extendLimit
+        #
+        # # Clear the button click
+        # self.layoutExtendApplyButton.setChecked(False)
+        pass
+
+    def _applyWindowClearToDataset(self):
+        """
+        Clears the window attributes of a dataset
+
+        """
+
+        # Get the current dataset
+        currentIndex = self.extendList.datasetTable.index[self.extendList.currentIndex().row()]
+
+        # Set the values
+        self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationMethod'] = None
+        self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationDateStart'] = None
+        self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationDateStop'] = None
+
+        # Clear the button click
+        self.layouWindowClearButton.setChecked(False)
+
+
     def _applySummaryClear(self):
         """
         Clear/reset all dataset and analysis options within the application
@@ -1475,22 +1704,18 @@ class ModelCreationTab(QtWidgets.QWidget):
         ### Reset all processing options ###
         # Reset the preprocessing operations
         for x in self.optionsPreprocessor:
-            x.setChecked(False)
             x.updateToUnchecked()
 
         # Reset the regression options
         for x in self.optionsRegression:
-            x.setChecked(False)
             x.updateToUnchecked()
 
         # Reset the selection options
         for x in self.optionsSelection:
-            x.setChecked(False)
             x.updateToUnchecked()
 
         # Reset the scoring operations
         for x in self.optionsScoring:
-            x.setChecked(False)
             x.updateToUnchecked()
 
         ### Reset the button state ###
