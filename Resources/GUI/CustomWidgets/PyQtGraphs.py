@@ -177,7 +177,7 @@ class DataTabPlots(pg.GraphicsLayoutWidget):
         self.brushCycler = [pg.mkBrush(pg.mkColor(color)) for color in self.colors]
 
         # Instantiate the plots
-        self.timeSeriesPlot = TimeSeriesLinePlot(self)
+        self.timeSeriesPlot = TimeSeriesLinePlot(parent=self)
         self.timeSliderPlot = TimeSliderPlot(self)
         #self.spaghettiPlot = SpaghettiPlot(self)
 
@@ -198,7 +198,38 @@ class DataTabPlots(pg.GraphicsLayoutWidget):
 
     
     def displayDatasets(self, datasets):
-        
+        """
+        Formats DataTab data for plotting with the TimeSeriesPlot class
+
+        Parameters
+        ----------
+        datasets: list
+            List of InternalDatasetIDs to be plotted
+
+        Returns
+        -------
+        None.
+
+        """
+
+        # Slice out the data required for the plotting
+        plotData = self.parent.parent.dataTable.loc[(slice(None), datasets), 'Value']
+
+        # Slice out units for each of the plots
+        if len(self.parent.parent.datasetTable) > 0:
+            plotUnits = self.parent.parent.datasetTable.loc[datasets]['DatasetUnits'].to_list()
+
+            plotNames = self.parent.parent.datasetTable.loc[datasets]['DatasetName'].to_list()
+            plotParameters = self.parent.parent.datasetTable.loc[datasets]['DatasetParameter'].to_list()
+            plotNames = [plotNames[x] + ': ' + plotParameters[x] for x in range(0, len(plotNames), 1)]
+
+        else:
+            plotUnits = ['']
+            plotNames = ['']
+
+        # Perform an update on the timeseries plot
+        self.timeSeriesPlot.updateData(plotData, plotNames, plotUnits)
+
         # If there is more than one dataset, 
         self.timeSeriesPlot.displayDatasets(datasets)
         self.timeSliderPlot.displayDatasets(datasets)
@@ -236,7 +267,7 @@ class DatasetTimeseriesPlots(pg.GraphicsLayoutWidget):
         self.brushCycler = [pg.mkBrush(pg.mkColor(color)) for color in self.colors]
 
         # Instantiate the plots
-        self.timeSeriesPlot = TimeSeriesLinePlot(self)
+        self.timeSeriesPlot = TimeSeriesLinePlot(parent=self)
         # self.timeSliderPlot = TimeSliderPlot(self)
         # self.spaghettiPlot = SpaghettiPlot(self)
 
@@ -563,12 +594,16 @@ class TimeSliderPlot(pg.PlotItem):
 # Time Series Plot to display Time Series Data
 class TimeSeriesLinePlot(pg.PlotItem):
 
-    def __init__(self, parent = None):
+    def __init__(self, parent=None):
 
         # Instantiate the widget and create a reference to the parent
         pg.PlotItem.__init__(self, axisItems={"bottom":DateTimeAxis(orientation = "bottom")})
         self.parent = parent
         self.setMenuEnabled(False)
+
+        # Set the dataset properties into the function
+        self.datasets = None
+        self.unitAttributes = None
 
         # Instantiate Limits
         self.xMin = np.inf
@@ -628,6 +663,17 @@ class TimeSeriesLinePlot(pg.PlotItem):
         self.datasets = []
 
         return
+
+    def updateData(self, datasets, datasetsNames, unitAttributes):
+        """
+        Updates the data within the object for plotting
+
+        """
+
+        self.datasets = datasets
+        self.datasetsNames = datasetsNames
+        self.unitAttributes = unitAttributes
+
     
     def createCircleItem(self, i):
         """
@@ -648,7 +694,7 @@ class TimeSeriesLinePlot(pg.PlotItem):
     def mouseMoved(self, event):
 
         # Don't do anything if there are no datasets
-        if self.datasets == []:
+        if self.datasets is None:
             return
         
         # Get the mouse position
@@ -685,7 +731,7 @@ class TimeSeriesLinePlot(pg.PlotItem):
                     self.circleItems_axis2[j].setData([date], [yval])
                     legendCount += 1
 
-    def displayDatasets(self, datasets):
+    def displayDatasets(self, datasetInternalIDs):
         """
         datasets = [100103, 313011, ...]
         """
@@ -716,22 +762,22 @@ class TimeSeriesLinePlot(pg.PlotItem):
         self.legend.setParentItem(self.vb)
 
         # Keep track of current datasets
-        self.datasets = datasets
+        # self.datasets = datasets
 
         # Primary units for left hand axis
-        primaryUnits = self.parent.parent.parent.datasetTable.loc[datasets[0]]['DatasetUnits'].upper()
+        primaryUnits = self.unitAttributes[0].upper()
         y2UnitList = []
 
         # Create a new item for each dataset
-        for i, dataset in enumerate(datasets):
+        for i, dataset in enumerate(datasetInternalIDs):
 
             # Get the Dataset Title
-            d = self.parent.parent.parent.datasetTable.loc[dataset]
-            title = d['DatasetName'] + ': ' + d['DatasetParameter']
+            d = self.datasets.loc[:, (dataset)]
+            title = self.datasetsNames[i]
 
             # Get the Data
-            x = np.array(self.parent.parent.parent.dataTable.loc[(slice(None), dataset), 'Value'].index.get_level_values(0).astype('int64'))/1000000000 # Dates in seconds since epoch
-            y = self.parent.parent.parent.dataTable.loc[(slice(None), dataset), 'Value'].values
+            x = self.datasets.loc[:, (dataset)].index.astype('int64').values/1000000000 # Dates in seconds since epoch
+            y = self.datasets.loc[:, (dataset)].values
 
             # Check if there is data to plot!
             if any([x.size == 0, x.shape != y.shape]):
@@ -742,7 +788,7 @@ class TimeSeriesLinePlot(pg.PlotItem):
             self.xMin = np.nanmin([self.xMin, np.nanmin(x)])
 
             # Figure out which axis to plot on
-            unitsEquivalent = sameUnits(primaryUnits, d['DatasetUnits'])
+            unitsEquivalent = sameUnits(primaryUnits, self.unitAttributes[i].upper())
             if unitsEquivalent[0]:
                 
                 self.yMax = np.nanmax([self.yMax, np.nanmax(y)])
@@ -760,7 +806,7 @@ class TimeSeriesLinePlot(pg.PlotItem):
 
                 # set the data for the i-th second axis item
                 self.items_axis2[i].setData(x, y, name = title, connect='finite')
-                self.items_axis2[i].units = sameUnits(d['DatasetUnits'], d['DatasetUnits'])[1].lower()
+                self.items_axis2[i].units = sameUnits(d['DatasetUnits'], self.unitAttributes[i].upper())[1].lower()
                 self.items_axis2[i].isActive = True
                 y2UnitList.append(self.items_axis2[i].units)
 
