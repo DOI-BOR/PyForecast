@@ -694,10 +694,9 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
 
         # Check for each input list entry in the output list
         for entry, value in enumerate(self.listInput.datasetTable.index):
-            i_number_of_existing = len(self.listOutput.datasetTable.loc[[value]])
-
-            if i_number_of_existing == 0:
-                self._setSingleOutputItem(False, row_index=entry, refresh=False)
+            #i_number_of_existing = len(self.listOutput.datasetTable.loc[[value]])
+            #if i_number_of_existing == 0:
+            self._setSingleOutputItem(False, row_index=entry, refresh=False)
 
         # Trigger refreshes of the input and output lists
         self.listInput.refreshDatasetList()
@@ -759,7 +758,10 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
         rows = self.listInput.datasetTable.iloc[input_row_index, :]
 
         # Determine the instance number to assign to the entry
-        i_number_of_existing = len(self.listOutput.datasetTable.loc[[rows.name]])
+        try:
+            i_number_of_existing = len(self.listOutput.datasetTable.loc[[rows.name]])
+        except:
+            i_number_of_existing = 0
 
         # Check that there's not a gap in the numbering scheme
         if i_number_of_existing > 0:
