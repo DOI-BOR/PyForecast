@@ -334,10 +334,16 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.workflowWidget.addTab(summarySA, "SUMMARY", "resources/GraphicalResources/icons/clipboard-24px.svg", "#FFFFFF", iconSize=(66,66))
 
         # ====================================================================================================================
+        ### Create the summary scrollabe area ###
+        # Create the scrollable area
+        resultsSA = QtWidgets.QScrollArea()
+        resultsSA.setWidgetResizable(True)
+
+        # Setup the layout
+        self._createResultsTabLayout(resultsSA)
 
         # Layout the results widget
-        widg = QtWidgets.QWidget()
-        self.workflowWidget.addTab(widg, "RESULTS", "resources/GraphicalResources/icons/run-24px.svg", "#FFFFFF", iconSize=(66,66))
+        self.workflowWidget.addTab(resultsSA, "RESULTS", "resources/GraphicalResources/icons/run-24px.svg", "#FFFFFF", iconSize=(66,66))
 
 
         
@@ -1358,6 +1364,113 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Add the widget to the main layout
         mainLayout.addWidget(rightLayoutWidget)
 
+    def _createResultsTabLayout(self, resultSA):
+        """
+        Lays out the results tab
+
+        Parameters
+        ----------
+        None.
+
+        Returns
+        -------
+        resultSA: QT scrollable area
+
+
+        """
+
+        ### Create the left side dataset summary table ###
+        # Create a vertical layout
+        leftLayout = QtWidgets.QVBoxLayout()
+
+        # Create the preprocessing list
+        resultPreprocessingLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Preprocessors<strong>')
+        leftLayout.addWidget(resultPreprocessingLabel)
+
+        resultPreprocessorsList = QtWidgets.QListWidget()
+        leftLayout.addWidget(resultPreprocessorsList)
+
+        # Create the regression list
+        resultsRegressorsLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Regressors<strong>')
+        leftLayout.addWidget(resultsRegressorsLabel)
+
+        resultsRegressorsList = QtWidgets.QListWidget()
+        leftLayout.addWidget(resultsRegressorsList)
+
+        # Create the selection list
+        resultsSelectorsLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Selectors<strong>')
+        leftLayout.addWidget(resultsSelectorsLabel)
+
+        resultsSelectorsList = QtWidgets.QListWidget()
+        leftLayout.addWidget(resultsSelectorsList)
+
+        ### Create the right side items ###
+        ## Create the initial layouts ##
+        rightLayout = QtWidgets.QVBoxLayout()
+
+        rightLayoutHorizontal = QtWidgets.QHBoxLayout()
+        rightLayoutHorizontal.setContentsMargins(0, 0, 0, 0)
+
+        rightLayoutVertical = QtWidgets.QVBoxLayout()
+        rightLayoutVertical.setContentsMargins(0, 0, 0, 0)
+
+        ## Create the main left observed/forecast plot ##
+        self.resultsObservedForecstPlot = QtWidgets.QTableWidget()
+
+        ## Create the upper right inflow/year plot ##
+        self.resultsInflowYearPlot = QtWidgets.QTableWidget()
+
+        ## Create the lower right residual/year plot ##
+        self.resultsResidualYearPlot = QtWidgets.QTableWidget()
+
+        ## Create the table to show the metrics ##
+        self.resultsMetricTable = QtWidgets.QTableWidget()
+
+        ## Add items into the layouts ##
+        # Add the subplots to the vertical layout
+        rightLayoutVertical.addWidget(self.resultsInflowYearPlot)
+        rightLayoutVertical.addWidget(self.resultsResidualYearPlot)
+
+        # Wrap the vertical layout as a widget 
+        rightLayoutVerticalWidget = QtWidgets.QWidget()
+        rightLayoutVerticalWidget.setLayout(rightLayoutVertical)
+
+        # Add items to the horizontal layout
+        rightLayoutHorizontal.addWidget(self.resultsObservedForecstPlot)
+        rightLayoutHorizontal.addWidget(rightLayoutVerticalWidget)
+
+        # Wrap the horizontal layout as a widget
+        rightLayoutHorizontalWidget = QtWidgets.QWidget()
+        rightLayoutHorizontalWidget.setLayout(rightLayoutHorizontal)
+
+        # Add items into the main right layout
+        rightLayout.addWidget(rightLayoutHorizontalWidget)
+        rightLayout.addWidget(self.resultsMetricTable)
+
+        ### Add the items into the layout ###
+        # Create the horizontal layout
+        layoutMain = QtWidgets.QHBoxLayout()
+
+        ## Add the left layout ##
+        # Promote the layout to a widget
+        leftLayoutWidget = QtWidgets.QWidget()
+        leftLayoutWidget.setLayout(leftLayout)
+
+        # Add it to the layout
+        layoutMain.addWidget(leftLayoutWidget, 1)
+
+        ## Add the right layout ##
+        # Promote the right layout to a widget
+        rightLayoutWidget = QtWidgets.QWidget()
+        rightLayoutWidget.setLayout(rightLayout)
+
+        # Add it into the layout
+        layoutMain.addWidget(rightLayoutWidget, 2)
+
+        ## Add into the scrollable area ##
+        layoutMainWidget = QtWidgets.QWidget()
+        layoutMainWidget.setLayout(layoutMain)
+        resultSA.setWidget(layoutMainWidget)
 
     def setPredictorDefaultStack(self):
         self.stackedPredictorWidget.setCurrentIndex(0)
