@@ -239,16 +239,15 @@ class DataTabPlots(pg.GraphicsLayoutWidget):
 
 class DatasetTimeseriesPlots(pg.GraphicsLayoutWidget):
 
-    def __init__(self, dataset, parent=None):
+    def __init__(self, parent=None):
         # Instantiate the widget and create a reference to the parent
         pg.GraphicsLayoutWidget.__init__(self, parent)
         self.parent = parent
 
         # Get a reference to the datasetTable and the dataTable
-        if dataset is None:
-            self.datasetTable = pd.DataFrame()
-        else:
-            self.datasetTable = dataset
+        self.datasetTable = None
+        self.level = None
+        self.units = None
 
         # Create a color cyler
         self.colors = [
@@ -286,10 +285,49 @@ class DatasetTimeseriesPlots(pg.GraphicsLayoutWidget):
 
         return
 
-    def displayDatasets(self, datasets):
-        # If there is more than one dataset,
-        self.timeSeriesPlot.displayDatasets(datasets)
-        # self.timeSliderPlot.displayDatasets(datasets)
+    def updateData(self, dataframe, level, units):
+        # todo: doc string
+
+        self.datasetTable = dataframe
+        self.level = level
+        self.units = units
+
+    def displayDatasets(self):
+        """
+        Formats DataTab data for plotting with the TimeSeriesPlot class
+
+        Parameters
+        ----------
+        datasets: list
+            List of InternalDatasetIDs to be plotted
+
+        Returns
+        -------
+        None.
+
+        """
+
+        # Get all data on the specified level
+        if self.level is not None:
+            # Get the location of the index attribute in the index vector
+            columnIndex = [x for x in range(0, len(self.datasetTable.index.names), 1) if self.datasetTable.index.names[x] == self.level][0]
+
+            # Find the unique entries to be plotted
+            datasetLabels = list(set([x[columnIndex] for x in self.datasetTable.index]))
+
+            # Define plot names
+            plotNames = datasetLabels
+            plotUnits = [self.units for x in datasetLabels]
+
+            # Remove the value field label from the data
+            plotData = self.datasetTable.loc[(slice(None), datasetLabels), 'Value']
+
+            # Perform an update on the timeseries plot
+            self.timeSeriesPlot.updateData(plotData, plotNames, plotUnits)
+
+            # If there is more than one dataset,
+            self.timeSeriesPlot.displayDatasets(datasetLabels)
+            # self.timeSliderPlot.displayDatasets(datasets)
 
         return
 
