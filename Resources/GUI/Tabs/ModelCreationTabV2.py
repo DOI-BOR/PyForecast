@@ -11,13 +11,14 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from resources.GUI.CustomWidgets.DatasetList_HTML_Formatted import DatasetListHTMLFormatted, DatasetListHTMLFormattedMultiple
 from resources.GUI.CustomWidgets.DoubleList import DoubleListMultipleInstance
 from resources.GUI.CustomWidgets.AggregationOptions import AggregationOptions
-from resources.GUI.CustomWidgets.PyQtGraphs import ModelTabPlots, TimeSeriesLineBarPlot
+from resources.GUI.CustomWidgets.PyQtGraphs import ModelTabPlots, TimeSeriesLineBarPlot, DatasetTimeseriesPlots
 from resources.GUI.CustomWidgets.customTabs import EnhancedTabWidget
 from resources.GUI.CustomWidgets.richTextButtons import richTextButton, richTextButtonCheckbox, richTextDescriptionButton
 from resources.GUI.CustomWidgets.SpreadSheet import SpreadSheetViewOperations
 from resources.GUI.WebMap import webMapView
 # import pandas as pd
 
+from resources.modules.StatisticalModelsTab.Operations.Fill import *
 
 class ModelCreationTab(QtWidgets.QWidget):
     """
@@ -551,32 +552,39 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Add each of the interpolation types to it
         nearestWidget = QtWidgets.QWidget()
         nearestWidget.setLayout(nearestLayout)
-        nearestWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        nearestWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred)
         self.stackedFillLayout.addWidget(nearestWidget)
 
         linearWidget = QtWidgets.QWidget()
         linearWidget.setLayout(linearLayout)
-        linearWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        linearWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred)
         self.stackedFillLayout.addWidget(linearWidget)
 
         quadradicWidget = QtWidgets.QWidget()
         quadradicWidget.setLayout(quadradicLayout)
-        quadradicWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        quadradicWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred)
         self.stackedFillLayout.addWidget(quadradicWidget)
 
         cubicWidget = QtWidgets.QWidget()
         cubicWidget.setLayout(cubicLayout)
-        cubicWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        cubicWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred)
         self.stackedFillLayout.addWidget(cubicWidget)
 
         splineWidget = QtWidgets.QWidget()
         splineWidget.setLayout(polyLayout)
-        splineWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        splineWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred)
         self.stackedFillLayout.addWidget(splineWidget)
 
         # Add the stacked layout to the main layout
         layoutFillRightLayout.addWidget(stackedWidget)
         stackedWidget.setVisible(True)
+
+        ### Create the plot that shows the result of the selection ###
+        # Create the plot
+        self.layoutFillPlot = DatasetTimeseriesPlots(None)
+
+        # Add it into the layout
+        layoutFillRightLayout.addWidget(self.layoutFillPlot)
 
         ### Create clear and apply buttons to apply operations ###
         # Create the clear button
@@ -606,6 +614,9 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ### Connect the stacked widget with the selection combo box ###
         self.layoutFillMethodSelector.currentIndexChanged.connect(self._updateFillSubtab)
+
+        ### Connect the fill plot with the layout options ###
+        # todo: build this
 
         ### Create the full layout ###
         layoutFill = QtWidgets.QHBoxLayout()
@@ -1533,6 +1544,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         """
 
+        ### Update the widget pane ###
         # Switch the stacked widgets
         self.stackedFillLayout.setCurrentIndex(self.layoutFillMethodSelector.currentIndex())
 
@@ -1544,6 +1556,22 @@ class ModelCreationTab(QtWidgets.QWidget):
             self.layoutFillGapLimitLabel.setVisible(False)
             self.layoutFillGapLimit.setVisible(False)
 
+        ### Update the plot ###
+        # Get the current datasest index
+        # currentIndex = self.fillList.datasetTable.index[self.fillList.currentIndex().row()]
+
+        # Get the current values from the data table
+        # selectedFrame = self.parent.dataTable.loc[:, (currentIndex)]
+
+        # Apply the fill operation to the data
+        # filledFrame = fill_missing(self, self.parent.datasetOperationsTable.loc[currentIndex]['FillMethod'],
+        #                            self.parent.datasetOperationsTable.loc[currentIndex]['FillMaximumGap'])
+
+        # Update the fill plot
+        # print('@@ debug statement')
+
+        # self.layoutFillPlot.up
+
     def _updateFillOptionsOnDataset(self):
         """
         Displays the correct information for the selected dataset in the fill pane
@@ -1553,9 +1581,11 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Get the current datasest index
         currentIndex = self.fillList.datasetTable.index[self.fillList.currentIndex().row()]
 
+        ### Update the widgets with dataset information ###
         # Get the options for the item
         fillMethod = self.parent.datasetOperationsTable.loc[currentIndex]['FillMethod']
         fillGap = self.parent.datasetOperationsTable.loc[currentIndex]['FillMaximumGap']
+        # todo: add order to support poly interpolation
         # If needed, can extract more information based on the fill method here
 
         # Get the options for the selector and stack
@@ -1571,6 +1601,9 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Set the values into the widgets
         # Correct this issue
         self.layoutFillGapLimit.setText(str(fillGap))
+
+        ### Update the plot with the dataset and interpolation ###
+        self._updateFillPlot(currentIndex, fillMethod, fillGap)
 
     def _applyFillOptionsToDataset(self):
         """
@@ -1597,6 +1630,10 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Clear the button click
         self.layoutFillApplyButton.setChecked(False)
 
+        # Update the plot on the tab
+        self._updateFillPlot(currentIndex, fillMethod, fillLimit)
+
+
     def _applyFillClearToDataset(self):
         """
         Clears the fill attributes of a dataset
@@ -1616,6 +1653,56 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Switch the stacked widgets
         self.layoutFillMethodSelector.setCurrentIndex(0)
         self._updateFillSubtab()
+
+    def _updateFillPlot(self, currentIndex, fillMethod, fillLimit):
+        """
+        Updates the plot on the fill subtab
+
+        Parameters
+        ----------
+        currentIndex: pandas index
+            Index which specifies the active dataset
+        fillMethod: str
+            Fill method specified to fill the gaps
+        fillLimit: int
+            Maximum size of gap to fill via interpolation
+
+        """
+
+        ### Update the plot with the dataset and interpolation ###
+        # Get the source and fill dataset. This copies it to avoid changing the source data
+        sourceData = self.parent.dataTable.loc[(slice(None), currentIndex), 'Value']
+        sourceData = sourceData.droplevel('DatasetInternalID')
+        sourceUnits = self.parent.datasetTable.loc[currentIndex[0]]['DatasetUnits']
+
+        if fillMethod is not None and fillMethod != 'None':
+            # Fill the data with the applied operation
+            filledData = fill_missing(sourceData, fillMethod.lower(), fillLimit)
+
+            # Promote and set the status of the filled data
+            fillData = pd.DataFrame(filledData)
+            fillData['Status'] = 'Filled'
+            fillData.set_index(['Status'], append=True, inplace=True)
+
+            # Promote and set the status of the source data
+            sourceData = pd.DataFrame(sourceData)
+            sourceData['Status'] = 'Not Filled'
+            sourceData.set_index(['Status'], append=True, inplace=True)
+
+            # Stack it together with the existing data
+            sourceData = pd.concat([fillData, sourceData]).sort_index()
+
+        else:
+            # No filled data is present. Promote back to a dataframe and add the plotting label
+            sourceData = pd.DataFrame(sourceData)
+            sourceData['Status'] = 'Not Filled'
+
+            # Convert to a multiinstance table
+            sourceData.set_index(['Status'], append=True, inplace=True)
+
+        ## Plot the source dataset ##
+        self.layoutFillPlot.updateData(sourceData, 'Status', sourceUnits)
+        self.layoutFillPlot.displayDatasets()
 
     def _updateExtendSubtab(self):
         """
