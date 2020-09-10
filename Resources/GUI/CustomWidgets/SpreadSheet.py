@@ -621,25 +621,35 @@ class SpreadSheetModelOperations(QtCore.QAbstractItemModel):
     def data(self, index, role=QtCore.Qt.DisplayRole):
         """
         This function returns the data associated with the index if the 
-        role is the displayRole. If the role is the BackgroundRole, the 
-        funciton returns the color red for edited data and white for 
-        un-edited data.
+        role is the displayRole. If the role is the ForegroundRole, the
+        function returns the color red for undefined user options.
         """
 
         if role == QtCore.Qt.DisplayRole and len(self.operationsTable) > 0:
             # Grab the associated data (if it exists) if the role is Display
             if index.row() == 0:
                 # Get the instance ID
-                val = QtCore.QVariant(str(self.operationsTable.index[index.column()][1]))
+                val = QtCore.QVariant(str(self.operationsTable.index[index.column()][0]) +
+                                      "-" + str(self.operationsTable.index[index.column()][1]))
 
             else:
                 # Get property values from the table
                 val = QtCore.QVariant(str(self.operationsTable.iloc[index.column(), index.row() - 1]))
+        # Color cells with None values
+        elif role == QtCore.Qt.ForegroundRole and len(self.operationsTable) > 0 and index.row() >= 5:
+            tempVal = str(self.operationsTable.iloc[index.column(), index.row() - 1])
+            if tempVal == "None":
+                val = QtGui.QBrush(QtCore.Qt.red)
+            else:
+                val = QtGui.QBrush(QtCore.Qt.darkGreen)
 
         else:
             val = QtCore.QVariant()
 
         return val
+
+
+
 
     def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
         """
