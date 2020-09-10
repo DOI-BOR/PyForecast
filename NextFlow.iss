@@ -11,7 +11,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; Run required batch file to consolidate all the stuff that InnoSetup needs.
-expr Exec("C:\Users\jrocha\Documents\Python\NextFlow\installerPreBuild.bat")
+#expr Exec("C:\Users\jrocha\Documents\Python\NextFlow\installerPreBuild.bat")
 
 #define MyAppName "NextFlow"
 #define MyAppVersion "1.0"
