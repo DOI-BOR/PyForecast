@@ -10,6 +10,8 @@ class AggregationOptions(QtWidgets.QWidget):
         Parameters
         ----------
         self: AggregationOptions
+        scrollable: bool
+            True - Widget is in a QScrollArea, False - Widget is in a QVBoxLayout
         orientation: str
             Determines layout of the widget. Valid options are 'vertical' or 'horizontal'
 
@@ -243,19 +245,8 @@ class AggregationOptions(QtWidgets.QWidget):
         freqString = self.predictorResamplingLabels[self.freqChar.currentIndex()]
         tStepOption = self.predictorResamplingOptions[self.tStepChar.currentIndex()]
         freqOption = self.predictorResamplingOptions[self.freqChar.currentIndex()]
-        self.resampleDescription.setText("Defined Resampling: Starting " + self.periodStart.text() + ", take " + self.tStepInteger.text() + " " + tStepString + "(s) of data, and make 1 value every " + self.freqInteger.text() + " " + freqString + "(s)")
-        self.selectedAggPeriod = "R/" + self.periodStart.date().toString('yyyy-MM-dd') + "/P" + self.tStepInteger.text() + tStepOption + "/" + "F"+ self.freqInteger.text() + freqOption #(e.g. R/1978-02-01/P1M/F1Y)
-
-
-    # def applyPredictorAggregationOption(self):
-    #     print("Predictor Entries for the predictorTable/self.modelRunsTable: ")
-    #     # TODO: map this ID from the dataset table
-    #     print("--PredictorPool: " + "X")
-    #     # TODO: Add a bool checkbox for this
-    #     print("--PredictorForceFlag: " + str(self.predForceCheckBox.isChecked()))
-    #     print("--PredictorPeriods: " + self.selectedAggPeriod)
-    #     print("--PredictorMethods: " + self.selectedAggOption)
-    #     # TODO: not sure what these are for
-    #     print("--PredictorGroups: " + "X")
-    #     print("--PredictorGroupMapping: " + "X")
-    #     # TODO: UPDATE predictorTable/self.modelRunsTable ENTRIES HERE
+        self.selectedAggPeriod = "R/" + self.periodStart.date().toString('yyyy-MM-dd') + "/P" + self.tStepInteger.text() + tStepOption + \
+                                 "/" + "F" + self.freqInteger.text() + freqOption  # (e.g. R/1978-02-01/P1M/F1Y)
+        self.resampleDescription.setText("Defined Resampling: Starting " + self.periodStart.text() + ", take " + self.tStepInteger.text() +
+                                         " " + tStepString + "(s) of data, and make 1 value every " + self.freqInteger.text() + " " +
+                                         freqString + "(s) (ISO 8601 Pattern: " + self.selectedAggPeriod + ")")

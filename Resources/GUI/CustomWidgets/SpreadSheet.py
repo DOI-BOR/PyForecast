@@ -650,8 +650,8 @@ class SpreadSheetModelOperations(QtCore.QAbstractItemModel):
         replacementDict = {'FillMethod': " Fill Method", 'FillMaximumGap': " Fill Maximum Gap",
                            'ExtendMethod': " Extend Method", 'ExtendDuration': " Extend Duration",
                            'AccumulationMethod': " Accumulation Method", 'AccumulationDateStart': " Accumulation Date Start",
-                           'AccumulationDateStop': " Accumulation Date Stop",
-                           'DatasetOperationsOptions': " Dataset Additional Options"}
+                           'AccumulationDateStop': " Accumulation Date Stop", 'DatasetOperationsOptions': " Dataset Additional Options",
+                           'AccumulationPeriod':"Accumulation Period", 'ForcingFlag':"Forcing Flag"}
 
         # Check for horizontal orientation and return the column name if true
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:

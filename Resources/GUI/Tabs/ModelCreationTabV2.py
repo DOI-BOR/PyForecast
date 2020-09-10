@@ -335,7 +335,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.workflowWidget.addTab(summarySA, "SUMMARY", "resources/GraphicalResources/icons/clipboard-24px.svg", "#FFFFFF", iconSize=(66,66))
 
         # ====================================================================================================================
-        ### Create the summary scrollabe area ###
+        ### Create the results scrollabe area ###
         # Create the scrollable area
         resultsSA = QtWidgets.QScrollArea()
         resultsSA.setWidgetResizable(True)
@@ -377,6 +377,8 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.layoutSimpleDoubleList = DoubleListMultipleInstance(self.parent.datasetTable,
                                                                  '<strong style="font-size: 18px">Available Datasets<strong>',
                                                                  '<strong style="font-size: 18px">Selected Datasets<strong>')
+
+        ## Connect row-change event on the output list to the aggregation options widget ##
         self.layoutSimpleDoubleList.listOutput.currentRowChanged.connect(self._updateSimpleLayoutAggregationOptions)
 
         # Connect the DoubleList with the dataset hmtl list to keep everything in sync. This will automatically
@@ -466,6 +468,19 @@ class ModelCreationTab(QtWidgets.QWidget):
             self.layoutAggregationOptions.aggLabel2.setText("     Accumulation Method: " + accumMethod)
             self.layoutAggregationOptions.aggLabel3.setText("     Accumulation Period: " + accumPeriod)
             self.layoutAggregationOptions.aggLabel4.setText("     Forced Flag: " + predForcing)
+
+            if accumMethod == 'None':
+                self.layoutAggregationOptions.aggLabel2.setStyleSheet("color : red")
+            else:
+                self.layoutAggregationOptions.aggLabel2.setStyleSheet("color : green")
+            if accumPeriod == 'None':
+                self.layoutAggregationOptions.aggLabel3.setStyleSheet("color : red")
+            else:
+                self.layoutAggregationOptions.aggLabel3.setStyleSheet("color : green")
+            if predForcing == 'None':
+                self.layoutAggregationOptions.aggLabel4.setStyleSheet("color : red")
+            else:
+                self.layoutAggregationOptions.aggLabel4.setStyleSheet("color : green")
         else:
             self.layoutAggregationOptions.aggLabel1.setText("No Predictor Selected")
             self.layoutAggregationOptions.aggLabel2.setText("     Accumulation Method: NA")
