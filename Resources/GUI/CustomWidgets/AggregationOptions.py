@@ -37,10 +37,14 @@ class AggregationOptions(QtWidgets.QWidget):
 
         #########################################################################
         # Display selected predictor info
-        layout1.addWidget(QtWidgets.QLabel("Selected Predictor:"))
-        layout1.addWidget(QtWidgets.QLabel("   selected predictor info and metadata - 1"))
-        layout1.addWidget(QtWidgets.QLabel("   selected predictor info and metadata - 2"))
-        layout1.addWidget(QtWidgets.QLabel("   selected predictor info and metadata - 3"))
+        self.aggLabel1 = QtWidgets.QLabel("No Predictor Selected")
+        self.aggLabel2 = QtWidgets.QLabel("     Accumulation Method: NA")
+        self.aggLabel3 = QtWidgets.QLabel("     Accumulation Period: NA")
+        self.aggLabel4 = QtWidgets.QLabel("     Forced Flag: NA")
+        layout1.addWidget(self.aggLabel1)
+        layout1.addWidget(self.aggLabel2)
+        layout1.addWidget(self.aggLabel3)
+        layout1.addWidget(self.aggLabel4)
 
         #########################################################################
         # Set predictor resampling period

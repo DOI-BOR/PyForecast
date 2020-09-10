@@ -93,6 +93,8 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
                 'AccumulationMethod',       # Specify the accumulation method that will be applied
                 'AccumulationDateStart',    # Date from which to begin the accumulation of the variable
                 'AccumulationDateStop',     # Date from which to stop the accumulation of the variable
+                'AccumulationPeriod',       # ISO-8601 string pattern for the accumulation period
+                'ForcingFlag',              # Boolean to force the use of this predictor
                 'DatasetOperationsOptions'
             ],
         )

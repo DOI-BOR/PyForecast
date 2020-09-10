@@ -377,6 +377,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.layoutSimpleDoubleList = DoubleListMultipleInstance(self.parent.datasetTable,
                                                                  '<strong style="font-size: 18px">Available Datasets<strong>',
                                                                  '<strong style="font-size: 18px">Selected Datasets<strong>')
+        self.layoutSimpleDoubleList.listOutput.currentRowChanged.connect(self._updateSimpleLayoutAggregationOptions)
 
         # Connect the DoubleList with the dataset hmtl list to keep everything in sync. This will automatically
         # populate the DoubleList entries
@@ -446,6 +447,30 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Set the items into the simple layout
         predictorLayoutSimple.setLayout(layoutSimple)
+
+
+    def _updateSimpleLayoutAggregationOptions(self):
+        if self.layoutSimpleDoubleList.listOutput.currentIndex().row() >= 0:
+            # Get the current datasest index
+            currentIndex = self.layoutSimpleDoubleList.listOutput.datasetTable.index[self.layoutSimpleDoubleList.listOutput.currentIndex().row()]
+
+            # Get the current dataset and operations settings
+            datasetInfo = self.fillList.datasetTable.loc[currentIndex]["DatasetName"] + " - " + \
+                          self.fillList.datasetTable.loc[currentIndex]["DatasetParameter"] + " " + \
+                          str(self.fillList.datasetTable.loc[currentIndex].name)
+            accumMethod = str(self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationMethod'])
+            accumPeriod = str(self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationPeriod'])
+            predForcing = str(self.parent.datasetOperationsTable.loc[currentIndex]['ForcingFlag'])
+
+            self.layoutAggregationOptions.aggLabel1.setText("Selected Predictor: " + datasetInfo)
+            self.layoutAggregationOptions.aggLabel2.setText("     Accumulation Method: " + accumMethod)
+            self.layoutAggregationOptions.aggLabel3.setText("     Accumulation Period: " + accumPeriod)
+            self.layoutAggregationOptions.aggLabel4.setText("     Forced Flag: " + predForcing)
+        else:
+            self.layoutAggregationOptions.aggLabel1.setText("No Predictor Selected")
+            self.layoutAggregationOptions.aggLabel2.setText("     Accumulation Method: NA")
+            self.layoutAggregationOptions.aggLabel3.setText("     Accumulation Period: NA")
+            self.layoutAggregationOptions.aggLabel4.setText("     Forced Flag: NA")
 
 
     def _createDataFillLayout(self, layoutFillSA):
@@ -630,7 +655,6 @@ class ModelCreationTab(QtWidgets.QWidget):
         layoutFill.addWidget(rightWidget, 2)
 
         layoutFillSA.setLayout(layoutFill)
-
 
     def _createDataExtendLayout(self, layoutExtendSA):
         """
@@ -1496,6 +1520,16 @@ class ModelCreationTab(QtWidgets.QWidget):
         """
         # todo: write this function when the aggregation group is stable
 
+        # Get the current datasest index
+        currentIndex = self.layoutSimpleDoubleList.listOutput.datasetTable.index[self.layoutSimpleDoubleList.listOutput.currentIndex().row()]
+
+        # Apply selected options
+        self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationMethod'] = self.layoutAggregationOptions.selectedAggOption
+        self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationDateStart'] = self.layoutAggregationOptions.periodStart.text()
+        self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationDateStop'] = ''
+        self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationPeriod'] = self.layoutAggregationOptions.selectedAggPeriod
+        self.parent.datasetOperationsTable.loc[currentIndex]['ForcingFlag'] = self.layoutAggregationOptions.predForceCheckBox.isChecked()
+
         # Extract the fill limit
         # try:
         #     fillLimit = int(self.layoutFillGapLimit.toPlainText())
@@ -1505,20 +1539,17 @@ class ModelCreationTab(QtWidgets.QWidget):
         # # Get the method to be utilized
         # fillMethod = self.layoutFillMethodSelector.currentText()
         #
-        # # Get the current dataset
-        # currentIndex = self.fillList.datasetTable.index[self.fillList.currentIndex().row()]
-        #
         # # Set the values
         # self.parent.datasetOperationsTable.loc[currentIndex]['FillMethod'] = fillMethod
         # self.parent.datasetOperationsTable.loc[currentIndex]['FillMaximumGap'] = fillLimit
         #
-        # # Clear the button click
-        # self.layoutFillApplyButton.setChecked(False)
-        pass
+        # Clear the button click
+        self.layoutSimpleApplyButton.setChecked(False)
+
 
     def _applySimpleClear(self):
         """
-        Clears the fill attributes of a dataset
+        Clears the fill attributes of a predictor
 
         """
 
@@ -1961,10 +1992,4 @@ class ModelCreationTab(QtWidgets.QWidget):
             # Update the summary boxes
             ##print('@@ debug statement')
             self.summaryListWidget.model().loadDataIntoModel(self.parent.datasetTable, self.parent.datasetOperationsTable)
-
-
-
-
-
-
 
