@@ -79,7 +79,7 @@ class AggregationOptions(QtWidgets.QWidget):
         self.tStepChar = QtWidgets.QComboBox()
         self.tStepChar.addItems(self.predictorResamplingLabels)
         self.tStepChar.setCurrentIndex(0)
-        self.tStepChar.currentIndexChanged.connect(lambda: self.resamplingUpdate)
+        self.tStepChar.currentTextChanged.connect(self.resamplingUpdate)
         self.resamplingLayout.addWidget(self.tStepChar, 2, 2)
         # Resampling frequency
         self.resamplingLayout.addWidget(QtWidgets.QLabel("Frequency"), 3, 0)
@@ -89,7 +89,7 @@ class AggregationOptions(QtWidgets.QWidget):
         self.resamplingLayout.addWidget(self.freqInteger, 3, 1)
         self.freqChar = QtWidgets.QComboBox()
         self.freqChar.addItems(self.predictorResamplingLabels)
-        self.freqChar.currentIndexChanged.connect(lambda: self.resamplingUpdate)
+        self.freqChar.currentTextChanged.connect(self.resamplingUpdate)
         self.freqChar.setCurrentIndex(2)
         self.resamplingUpdate()
         self.resamplingLayout.addWidget(self.freqChar, 3, 2)
@@ -118,6 +118,7 @@ class AggregationOptions(QtWidgets.QWidget):
         # Build, connect, and add the radio buttons
         self.radioGroup = QtWidgets.QGroupBox("Select a predictor aggregation scheme:")
         self.radioLayout = QtWidgets.QGridLayout()
+        self.radioButtons = QtWidgets.QButtonGroup()
         self.toggleLabel = QtWidgets.QLabel("placeholder")
         self.toggleLabel.setWordWrap(True)
         self.radioLayout.addWidget(self.toggleLabel, 0, 0, 1, 2)
@@ -127,6 +128,7 @@ class AggregationOptions(QtWidgets.QWidget):
             if i==2:
                 radio.setChecked(True)
             self.radioLayout.addWidget(radio)
+            self.radioButtons.addButton(radio,i)
 
         self.customValString = QtWidgets.QLineEdit()
         self.customValString.setPlaceholderText(

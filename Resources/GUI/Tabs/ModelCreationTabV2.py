@@ -17,6 +17,8 @@ from resources.GUI.CustomWidgets.richTextButtons import richTextButton, richText
 from resources.GUI.CustomWidgets.SpreadSheet import SpreadSheetViewOperations
 from resources.GUI.WebMap import webMapView
 # import pandas as pd
+import numpy as np
+from dateutil import parser
 
 from resources.modules.StatisticalModelsTab.Operations.Fill import *
 
@@ -471,16 +473,31 @@ class ModelCreationTab(QtWidgets.QWidget):
 
             if accumMethod == 'None':
                 self.layoutAggregationOptions.aggLabel2.setStyleSheet("color : red")
-            else:
+            else: #set defined aggregation scheme
                 self.layoutAggregationOptions.aggLabel2.setStyleSheet("color : green")
+                defIdx = self.layoutAggregationOptions.predictorAggregationOptions.index(accumMethod)
+                self.layoutAggregationOptions.radioButtons.button(defIdx).setChecked(True)
             if accumPeriod == 'None':
                 self.layoutAggregationOptions.aggLabel3.setStyleSheet("color : red")
-            else:
+            else: #set defined resampling period options
                 self.layoutAggregationOptions.aggLabel3.setStyleSheet("color : green")
+                predPeriodItems = accumPeriod.split("/") #R/1978-03-01/P1M/F12M
+                self.layoutAggregationOptions.periodStart.setDate(parser.parse(predPeriodItems[1]))
+                predPeriodPStep = str(predPeriodItems[2])[-1]
+                a = self.layoutAggregationOptions.predictorResamplingOptions.index(predPeriodPStep)
+                self.layoutAggregationOptions.tStepChar.setCurrentIndex(self.layoutAggregationOptions.predictorResamplingOptions.index(predPeriodPStep))
+                predPeriodPNum = ''.join(map(str,[int(s) for s in predPeriodItems[2] if s.isdigit()]))
+                self.layoutAggregationOptions.tStepInteger.setValue(int(predPeriodPNum))
+                predPeriodFStep = str(predPeriodItems[3])[-1]
+                self.layoutAggregationOptions.freqChar.setCurrentIndex(self.layoutAggregationOptions.predictorResamplingOptions.index(predPeriodFStep))
+                predPeriodFNum = ''.join(map(str,[int(s) for s in predPeriodItems[3] if s.isdigit()]))
+                self.layoutAggregationOptions.freqInteger.setValue(int(predPeriodFNum))
+                self.layoutAggregationOptions.resamplingUpdate()
             if predForcing == 'None':
                 self.layoutAggregationOptions.aggLabel4.setStyleSheet("color : red")
-            else:
+            else: #set defined forcing flag
                 self.layoutAggregationOptions.aggLabel4.setStyleSheet("color : green")
+                self.layoutAggregationOptions.predForceCheckBox.setChecked(predForcing == 'True')
         else:
             self.layoutAggregationOptions.aggLabel1.setText("No Predictor Selected")
             self.layoutAggregationOptions.aggLabel2.setText("     Accumulation Method: NA")
@@ -1540,10 +1557,10 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Apply selected options
         self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationMethod'] = self.layoutAggregationOptions.selectedAggOption
-        self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationDateStart'] = self.layoutAggregationOptions.periodStart.text()
+        self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationDateStart'] = self.layoutAggregationOptions.periodStart.text
         self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationDateStop'] = ''
         self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationPeriod'] = self.layoutAggregationOptions.selectedAggPeriod
-        self.parent.datasetOperationsTable.loc[currentIndex]['ForcingFlag'] = self.layoutAggregationOptions.predForceCheckBox.isChecked()
+        self.parent.datasetOperationsTable.loc[currentIndex]['ForcingFlag'] = str(self.layoutAggregationOptions.predForceCheckBox.checkState() == 2)
 
         # Extract the fill limit
         # try:
@@ -1976,6 +1993,10 @@ class ModelCreationTab(QtWidgets.QWidget):
         ### Reset the button state ###
         self.summaryStartButton.setChecked(False)
 
+        # Check all required options are defined
+        # Check required self.modelRunsTable entries are defined
+
+
         ### Apply operations to datasets ###
 
         ### Generate predictors ###
@@ -1986,10 +2007,21 @@ class ModelCreationTab(QtWidgets.QWidget):
 
     def applyPredictandAggregationOption(self):
         predictandData = self.targetSelect.currentData()
+        predID = predictandData.name
+        # Get Min dataset date
+        minT = parser.parse(str(np.sort(list(set(self.parent.dataTable.loc[(slice(None),predID),'Value'].index.get_level_values(0).values)))[0]))
+        maxT = parser.parse(str(np.sort(list(set(self.parent.dataTable.loc[(slice(None),predID),'Value'].index.get_level_values(0).values)))[-1]))
+        selT = parser.parse(self.periodStart.dateTime().toString("yyyy-MM-ddThh:mm:ss.zzz"))
+        if (parser.parse(str(minT.year) + '-'+str(selT.month)+ '-'+str(selT.day))<minT):
+            startT = parser.parse(str(minT.year + 1) + '-' + str(selT.month) + '-' + str(selT.day))
+        else:
+            startT = parser.parse(str(minT.year) + '-' + str(selT.month) + '-' + str(selT.day))
+
         nDays = self.periodEnd.date().toJulianDay() - self.periodStart.date().toJulianDay() + 1 #dates inclusive
-        periodString = "R/" + self.periodStart.date().toString('yyyy-MM-dd') + "/P" + str(nDays) + "D/F12M" #(e.g. R/1978-02-01/P1M/F1Y)
+        periodString = "R/" + startT.strftime("%Y-%m-%d") + "/P" + str(nDays) + "D/F12M" #(e.g. R/1978-02-01/P1M/F1Y)
         print("Predictand Entries for the self.modelRunsTable: ")
-        print("--Predictand ID: " + str(predictandData.name))
+        print("--Model Training Period: " + minT.strftime("%Y-%m-%d") + "/" + maxT.strftime("%Y-%m-%d"))
+        print("--Predictand ID: " + str(predID))
         print("--Predictand Period: " + periodString)#.periodStart.date().toString('MMM d,yyyy') + " - " + self.periodEnd.date().toString('MMM d,yyyy'))
         print("--Predictand Method: " + self.methodCombo.currentData())
         # TODO: UPDATE self.modelRunsTable ENTRIES HERE
