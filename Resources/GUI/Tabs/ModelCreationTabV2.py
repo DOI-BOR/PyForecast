@@ -178,21 +178,19 @@ class ModelCreationTab(QtWidgets.QWidget):
         predictorLayout.addSpacerItem(QtWidgets.QSpacerItem(0, 0, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
 
         # Create the layout for the simple analysis
-        self.layoutPredictorSimpleAnalysis = QtWidgets.QHBoxLayout()
+        self.layoutPredictorSimpleAnalysis = QtWidgets.QScrollArea()
         self.layoutPredictorSimpleAnalysis.setContentsMargins(15, 15, 15, 15)
+        self.layoutPredictorSimpleAnalysis.setWidgetResizable(True)
+        self.layoutPredictorSimpleAnalysis.setFrameShape(QtWidgets.QFrame.NoFrame)
+        # self.layoutPredictorSimpleAnalysis.setStyleSheet("border: 0px")
 
         # Create the layout object for the expert analysis
         self.layoutPredictorExpertAnalysis = QtWidgets.QVBoxLayout()
         self.layoutPredictorExpertAnalysis.setContentsMargins(15, 15, 15, 15)
 
         ### Create the simple analysis tab ###
-        ## Create the initial scrollable area and layout ##
-        # Create the scrollable area and set it to resizeable
-        predictorLayoutSimple = QtWidgets.QScrollArea()
-        predictorLayoutSimple.setWidgetResizable(True)
-
         # Fill the remaining area with the layout options
-        self._createSimplePredictorLayout(predictorLayoutSimple)
+        self._createSimplePredictorLayout(self.layoutPredictorSimpleAnalysis)
 
         ### Create the layout data tab ###
         ## Create the initial scrollable area and layout ##
@@ -277,7 +275,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Create the stacked widget to handle to toggle between simple and expert analyses
         self.stackedPredictorWidget = QtWidgets.QStackedLayout()
-        self.stackedPredictorWidget.addWidget(predictorLayoutSimple)
+        self.stackedPredictorWidget.addWidget(self.layoutPredictorSimpleAnalysis)
         self.stackedPredictorWidget.addWidget(expertPredictorWidget)
 
         self.stackedPredictorWidget.setCurrentIndex(0)
@@ -1707,7 +1705,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Extract the fill limit
         try:
-            fillLimit = int(self.layoutFillGapLimit.toPlainText())
+            fillLimit = int(self.layoutFillGapLimit.text())
         except:
             fillLimit = None
 
@@ -1744,6 +1742,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Set the values
         self.parent.datasetOperationsTable.loc[currentIndex]['FillMethod'] = None
         self.parent.datasetOperationsTable.loc[currentIndex]['FillMaximumGap'] = None
+        self.parent.datasetOperationsTable.loc[currentIndex]['FillOrder'] = None
 
         # Clear the button click
         self.layoutFillClearButton.setChecked(False)
