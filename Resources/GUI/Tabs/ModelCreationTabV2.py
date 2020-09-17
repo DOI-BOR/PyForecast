@@ -1984,6 +1984,9 @@ class ModelCreationTab(QtWidgets.QWidget):
         ### Reset the button state ###
         self.summaryClearButton.setChecked(False)
 
+        ### Emit change to the doublelist object ###
+        self.layoutSimpleDoubleList.resetOutputItems()
+
     def _applySummaryStart(self):
         """
         Start the regression analysis using the specified settings
