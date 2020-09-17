@@ -581,12 +581,14 @@ class ModelCreationTab(QtWidgets.QWidget):
         filledGapLayout.setAlignment(QtCore.Qt.AlignTop)
         filledGapLayout.addWidget(self.layoutFillGapLimitLabel)
         filledGapLayout.addWidget(self.layoutFillGapLimit)
+        filledGapLayout.setContentsMargins(0, 0, 0, 0)
 
         # Create the layout for the fill order
         filledOrderLayout = QtWidgets.QHBoxLayout()
         filledOrderLayout.setAlignment(QtCore.Qt.AlignTop)
         filledOrderLayout.addWidget(self.layoutFillOrderLabel)
         filledOrderLayout.addWidget(self.layoutFillOrder)
+        filledOrderLayout.setContentsMargins(0, 0, 0, 0)
 
         # Crate the widgets to wrap the conserved buttons
         filledGapLayoutWidget = QtWidgets.QWidget()
@@ -630,33 +632,34 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Wrap it in a widget and set visibility to false. If this is not done, a small, annoying popup window will
         # be opened separate from the main window
         stackedWidget = QtWidgets.QWidget()
+        stackedWidget.setSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Maximum)
         stackedWidget.setLayout(self.stackedFillLayout)
         stackedWidget.setVisible(False)
 
         # Add each of the interpolation types to it
         nearestWidget = QtWidgets.QWidget()
         nearestWidget.setLayout(nearestLayout)
-        nearestWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred)
+        nearestWidget.setSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Maximum)
         self.stackedFillLayout.addWidget(nearestWidget)
 
         linearWidget = QtWidgets.QWidget()
         linearWidget.setLayout(linearLayout)
-        linearWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred)
+        linearWidget.setSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Maximum)
         self.stackedFillLayout.addWidget(linearWidget)
 
         quadradicWidget = QtWidgets.QWidget()
         quadradicWidget.setLayout(quadradicLayout)
-        quadradicWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred)
+        quadradicWidget.setSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Maximum)
         self.stackedFillLayout.addWidget(quadradicWidget)
 
         cubicWidget = QtWidgets.QWidget()
         cubicWidget.setLayout(cubicLayout)
-        cubicWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred)
+        cubicWidget.setSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Maximum)
         self.stackedFillLayout.addWidget(cubicWidget)
 
         splineWidget = QtWidgets.QWidget()
         splineWidget.setLayout(polyLayout)
-        splineWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred)
+        splineWidget.setSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Maximum)
         self.stackedFillLayout.addWidget(splineWidget)
 
         # Add the stacked layout to the main layout
@@ -666,6 +669,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         ### Create the plot that shows the result of the selection ###
         # Create the plot
         self.layoutFillPlot = DatasetTimeseriesPlots(None)
+        self.layoutFillPlot.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
 
         # Add it into the layout
         layoutFillRightLayout.addWidget(self.layoutFillPlot)
@@ -1653,22 +1657,6 @@ class ModelCreationTab(QtWidgets.QWidget):
             self.layoutFillOrderLabel.setVisible(False)
             self.layoutFillOrder.setVisible(False)
 
-        ### Update the plot ###
-        # Get the current datasest index
-        # currentIndex = self.fillList.datasetTable.index[self.fillList.currentIndex().row()]
-
-        # Get the current values from the data table
-        # selectedFrame = self.parent.dataTable.loc[:, (currentIndex)]
-
-        # Apply the fill operation to the data
-        # filledFrame = fill_missing(self, self.parent.datasetOperationsTable.loc[currentIndex]['FillMethod'],
-        #                            self.parent.datasetOperationsTable.loc[currentIndex]['FillMaximumGap'])
-
-        # Update the fill plot
-        # print('@@ debug statement')
-
-        # self.layoutFillPlot.up
-
     def _updateFillOptionsOnDataset(self):
         """
         Displays the correct information for the selected dataset in the fill pane
@@ -1682,7 +1670,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Get the options for the item
         fillMethod = self.parent.datasetOperationsTable.loc[currentIndex]['FillMethod']
         fillGap = self.parent.datasetOperationsTable.loc[currentIndex]['FillMaximumGap']
-        # todo: add order to support poly interpolation
+        fillOrder = self.parent.datasetOperationsTable.loc[currentIndex]['FillOrder']
         # If needed, can extract more information based on the fill method here
 
         # Get the options for the selector and stack
@@ -1692,15 +1680,24 @@ class ModelCreationTab(QtWidgets.QWidget):
         else:
             fillOptionsIndex = 0
 
+        # Get the fill order index
+        fillOrderIndex = [x for x in range(self.layoutFillOrder.count()) if self.layoutFillOrder.itemText(x) == str(fillOrder)]
+        if fillOrderIndex:
+            fillOrderIndex = fillOrderIndex[0]
+        else:
+            fillOrderIndex = 0
+
+        # Set the values into the widgets
         self.stackedFillLayout.setCurrentIndex(fillOptionsIndex)
         self.layoutFillMethodSelector.setCurrentIndex(fillOptionsIndex)
+        self.layoutFillOrder.setCurrentIndex(fillOrderIndex)
 
         # Set the values into the widgets
         # Correct this issue
         self.layoutFillGapLimit.setText(str(fillGap))
 
         ### Update the plot with the dataset and interpolation ###
-        self._updateFillPlot(currentIndex, fillMethod, fillGap)
+        self._updateFillPlot(currentIndex, fillMethod, fillGap, fillOrder)
 
     def _applyFillOptionsToDataset(self):
         """
@@ -1717,18 +1714,22 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Get the method to be utilized
         fillMethod = self.layoutFillMethodSelector.currentText()
 
+        # Get the order
+        fillOrder = int(self.layoutFillOrder.currentText())
+
         # Get the current dataset
         currentIndex = self.fillList.datasetTable.index[self.fillList.currentIndex().row()]
 
         # Set the values
         self.parent.datasetOperationsTable.loc[currentIndex]['FillMethod'] = fillMethod
         self.parent.datasetOperationsTable.loc[currentIndex]['FillMaximumGap'] = fillLimit
+        self.parent.datasetOperationsTable.loc[currentIndex]['FillOrder'] = fillOrder
 
         # Clear the button click
         self.layoutFillApplyButton.setChecked(False)
 
         # Update the plot on the tab
-        self._updateFillPlot(currentIndex, fillMethod, fillLimit)
+        self._updateFillPlot(currentIndex, fillMethod, fillLimit, fillOrder)
 
 
     def _applyFillClearToDataset(self):
@@ -1751,7 +1752,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.layoutFillMethodSelector.setCurrentIndex(0)
         self._updateFillSubtab()
 
-    def _updateFillPlot(self, currentIndex, fillMethod, fillLimit):
+    def _updateFillPlot(self, currentIndex, fillMethod, fillLimit, fillOrder):
         """
         Updates the plot on the fill subtab
 
@@ -1763,6 +1764,8 @@ class ModelCreationTab(QtWidgets.QWidget):
             Fill method specified to fill the gaps
         fillLimit: int
             Maximum size of gap to fill via interpolation
+        fillOrder: int
+            Order of the fill method, if applicable
 
         """
 
@@ -1774,7 +1777,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         if fillMethod is not None and fillMethod != 'None':
             # Fill the data with the applied operation
-            filledData = fill_missing(sourceData, fillMethod.lower(), fillLimit)
+            filledData = fill_missing(sourceData, fillMethod.lower(), fillLimit, order=fillOrder)
 
             # Promote and set the status of the filled data
             fillData = pd.DataFrame(filledData)

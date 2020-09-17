@@ -88,6 +88,7 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
                 'DatasetInstanceID',        # Unique version of the dataset to allow multiple accumulators
                 'FillMethod',               # Fill method to apply to the data
                 'FillMaximumGap',           # Maximum gap to fill in the data
+                'FillOrder',                # Order of the interpolation method
                 'ExtendMethod',             # Extend method to apply to the data
                 'ExtendDuration',           # How long the data should be extended in the dataset units
                 'AccumulationMethod',       # Specify the accumulation method that will be applied
