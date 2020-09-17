@@ -557,26 +557,53 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Create the fill limit label
         self.layoutFillGapLimitLabel = QtWidgets.QLabel('Maximum Filled Gap')
         self.layoutFillGapLimitLabel.setVisible(False)
+        self.layoutFillGapLimitLabel.setSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Minimum)
 
         # Create the fill limit widget
-        self.layoutFillGapLimit = QtWidgets.QTextEdit()
+        self.layoutFillGapLimit = QtWidgets.QLineEdit()
         self.layoutFillGapLimit.setPlaceholderText('30')
-        self.layoutFillGapLimit.setFixedWidth(50)
-        self.layoutFillGapLimit.setFixedHeight(25)
         self.layoutFillGapLimit.setVisible(False)
+        self.layoutFillGapLimit.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.Maximum)
+
+        # Create the fill order widget label
+        self.layoutFillOrderLabel = QtWidgets.QLabel('Fill order')
+        self.layoutFillOrderLabel.setVisible(False)
+        self.layoutFillOrderLabel.setSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Minimum)
+
+        # Create the fill order widget
+        self.layoutFillOrder = QtWidgets.QComboBox()
+        self.layoutFillOrder.addItems([str(x) for x in range(1, 11, 1)])
+        self.layoutFillOrder.setVisible(False)
+        self.layoutFillOrder.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.Maximum)
 
         # Create the layout for the fill limit
         filledGapLayout = QtWidgets.QHBoxLayout()
         filledGapLayout.setAlignment(QtCore.Qt.AlignTop)
+        filledGapLayout.addWidget(self.layoutFillGapLimitLabel)
+        filledGapLayout.addWidget(self.layoutFillGapLimit)
 
-        filledGapLayout.addWidget(self.layoutFillGapLimitLabel, 1, QtCore.Qt.AlignLeft)
-        filledGapLayout.addWidget(self.layoutFillGapLimit, 5, QtCore.Qt.AlignLeft)
+        # Create the layout for the fill order
+        filledOrderLayout = QtWidgets.QHBoxLayout()
+        filledOrderLayout.setAlignment(QtCore.Qt.AlignTop)
+        filledOrderLayout.addWidget(self.layoutFillOrderLabel)
+        filledOrderLayout.addWidget(self.layoutFillOrder)
 
-        # Add the limit into the main page
+        # Crate the widgets to wrap the conserved buttons
         filledGapLayoutWidget = QtWidgets.QWidget()
         filledGapLayoutWidget.setLayout(filledGapLayout)
 
-        layoutFillRightLayout.addWidget(filledGapLayoutWidget)
+        filledOrderLayoutWidget = QtWidgets.QWidget()
+        filledOrderLayoutWidget.setLayout(filledOrderLayout)
+
+        # Create a layout, widget for the conserved widgets and add to the right layout
+        filledTopOptionsLayout = QtWidgets.QHBoxLayout()
+        filledTopOptionsLayout.addWidget(filledGapLayoutWidget)
+        filledTopOptionsLayout.addWidget(filledOrderLayoutWidget)
+        filledTopOptionsLayout.setContentsMargins(0, 0, 0, 0)
+
+        filledTopOptionsLayoutWidget = QtWidgets.QWidget()
+        filledTopOptionsLayoutWidget.setLayout(filledTopOptionsLayout)
+        layoutFillRightLayout.addWidget(filledTopOptionsLayoutWidget)
 
         # Adjust the layout of the widgets
         layoutFillRightLayout.setAlignment(QtCore.Qt.AlignTop)
@@ -1618,6 +1645,13 @@ class ModelCreationTab(QtWidgets.QWidget):
         else:
             self.layoutFillGapLimitLabel.setVisible(False)
             self.layoutFillGapLimit.setVisible(False)
+
+        if self.layoutFillMethodSelector.currentIndex() >= 5:
+            self.layoutFillOrderLabel.setVisible(True)
+            self.layoutFillOrder.setVisible(True)
+        else:
+            self.layoutFillOrderLabel.setVisible(False)
+            self.layoutFillOrder.setVisible(False)
 
         ### Update the plot ###
         # Get the current datasest index
