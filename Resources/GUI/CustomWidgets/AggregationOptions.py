@@ -39,7 +39,9 @@ class AggregationOptions(QtWidgets.QWidget):
 
         #########################################################################
         # Display selected predictor info
-        self.aggLabel1 = QtWidgets.QLabel("No Predictor Selected")
+        self.aggLabel1 = QtWidgets.QLabel('<strong style="font-size: 18px">No Predictor Selected<strong>')
+        self.aggLabel1.setWordWrap(True)
+        #self.aggLabel1.setMinimumSize(self.sizeHint())
         self.aggLabel2 = QtWidgets.QLabel("     Accumulation Method: NA")
         self.aggLabel3 = QtWidgets.QLabel("     Accumulation Period: NA")
         self.aggLabel4 = QtWidgets.QLabel("     Forced Flag: NA")

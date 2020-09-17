@@ -345,9 +345,6 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Layout the results widget
         self.workflowWidget.addTab(resultsSA, "RESULTS", "resources/GraphicalResources/icons/run-24px.svg", "#FFFFFF", iconSize=(66,66))
-
-
-        
         
         overallLayout.addWidget(self.workflowWidget)
         #overallLayout.addWidget(self.overallStackWidget)
@@ -386,19 +383,24 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.datasetList.updateSignalToExternal.connect(self.layoutSimpleDoubleList.update)
 
         ## Create the objects on the right side ##
+        # Aggregation options widget
+        self.layoutAggregationOptions = AggregationOptions(False, orientation='vertical')
+
         # Simple fill
         self.layoutSimpleFill = richTextDescriptionButton(self,
                                                           '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(
                                                               'Fill data',
                                                               'Automatically fill the selected time series using default properties'))
+        # self.layoutSimpleFill2 = QtWidgets.QCheckBox("Fill data: Automatically fill the selected time series using default properties")
+        # self.layoutSimpleFill2.setChecked(False)
 
         # Simple extend
         self.layoutSimpleExtend = richTextDescriptionButton(self,
                                                             '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(
                                                                 'Extend data',
                                                                 'Automatically extend the selected time series using default properties'))
-
-        self.layoutAggregationOptions = AggregationOptions(False, orientation='vertical')
+        # self.layoutSimpleExtend2 = QtWidgets.QCheckBox("Extend data: Automatically extend the selected time series using default properties")
+        # self.layoutSimpleExtend2.setChecked(False)
 
         ### Create clear and apply buttons to apply operations ###
         # Create the clear button
@@ -435,9 +437,9 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Create the right side options layout
         layoutSimpleOptions = QtWidgets.QVBoxLayout()
         layoutSimpleOptions.setAlignment(QtCore.Qt.AlignTop)
+        layoutSimpleOptions.addWidget(self.layoutAggregationOptions)
         layoutSimpleOptions.addWidget(self.layoutSimpleFill)
         layoutSimpleOptions.addWidget(self.layoutSimpleExtend)
-        layoutSimpleOptions.addWidget(self.layoutAggregationOptions)
         layoutSimpleOptions.addWidget(buttonLayoutWidget)
 
         # Wrap the right side layout in another widget
@@ -464,17 +466,27 @@ class ModelCreationTab(QtWidgets.QWidget):
             accumPeriod = str(self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationPeriod'])
             predForcing = str(self.parent.datasetOperationsTable.loc[currentIndex]['ForcingFlag'])
 
-            self.layoutAggregationOptions.aggLabel1.setText("Selected Predictor: " + datasetInfo)
+            self.layoutAggregationOptions.aggLabel1.setText('<strong style="font-size: 18px">Selected Predictor: ' + datasetInfo + '<strong>')
             self.layoutAggregationOptions.aggLabel2.setText("     Accumulation Method: " + accumMethod)
             self.layoutAggregationOptions.aggLabel3.setText("     Accumulation Period: " + accumPeriod)
             self.layoutAggregationOptions.aggLabel4.setText("     Forced Flag: " + predForcing)
 
+            # Set date selector range
+            minT = parser.parse(str(np.sort(list(set(self.parent.dataTable.loc[(slice(None),currentIndex[0]),'Value'].index.get_level_values(0).values)))[0]))
+            maxT = parser.parse(str(np.sort(list(set(self.parent.dataTable.loc[(slice(None),currentIndex[0]),'Value'].index.get_level_values(0).values)))[-1]))
+            self.layoutAggregationOptions.periodStart.minimumDate = minT
+            self.layoutAggregationOptions.periodStart.maximumDate = maxT
+            self.layoutAggregationOptions.periodStart.setDate(minT)
+
+            # Set aggregation option on UI
             if accumMethod == 'None':
                 self.layoutAggregationOptions.aggLabel2.setStyleSheet("color : red")
             else: #set defined aggregation scheme
                 self.layoutAggregationOptions.aggLabel2.setStyleSheet("color : green")
                 defIdx = self.layoutAggregationOptions.predictorAggregationOptions.index(accumMethod)
                 self.layoutAggregationOptions.radioButtons.button(defIdx).setChecked(True)
+
+            # Set aggregation period on UI
             if accumPeriod == 'None':
                 self.layoutAggregationOptions.aggLabel3.setStyleSheet("color : red")
             else: #set defined resampling period options
@@ -490,17 +502,20 @@ class ModelCreationTab(QtWidgets.QWidget):
                 self.layoutAggregationOptions.freqChar.setCurrentIndex(self.layoutAggregationOptions.predictorResamplingOptions.index(predPeriodFStep))
                 predPeriodFNum = ''.join(map(str,[int(s) for s in predPeriodItems[3] if s.isdigit()]))
                 self.layoutAggregationOptions.freqInteger.setValue(int(predPeriodFNum))
-                self.layoutAggregationOptions.resamplingUpdate()
+
+            # Set forcing flag on UI
             if predForcing == 'None':
                 self.layoutAggregationOptions.aggLabel4.setStyleSheet("color : red")
             else: #set defined forcing flag
                 self.layoutAggregationOptions.aggLabel4.setStyleSheet("color : green")
                 self.layoutAggregationOptions.predForceCheckBox.setChecked(predForcing == 'True')
         else:
-            self.layoutAggregationOptions.aggLabel1.setText("No Predictor Selected")
+            self.layoutAggregationOptions.aggLabel1.setText('<strong style="font-size: 18px">No Predictor Selected<strong>')
             self.layoutAggregationOptions.aggLabel2.setText("     Accumulation Method: NA")
             self.layoutAggregationOptions.aggLabel3.setText("     Accumulation Period: NA")
             self.layoutAggregationOptions.aggLabel4.setText("     Forced Flag: NA")
+
+        self.layoutAggregationOptions.resamplingUpdate()
 
 
     def _createDataFillLayout(self, layoutFillSA):
@@ -1581,31 +1596,38 @@ class ModelCreationTab(QtWidgets.QWidget):
         """
         # todo: write this function when the aggregation group is stable
 
-        # Get the current datasest index
-        currentIndex = self.layoutSimpleDoubleList.listOutput.datasetTable.index[self.layoutSimpleDoubleList.listOutput.currentIndex().row()]
-
-        # Apply selected options
-        self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationMethod'] = self.layoutAggregationOptions.selectedAggOption
-        self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationDateStart'] = self.layoutAggregationOptions.periodStart.text
-        self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationDateStop'] = ''
-        self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationPeriod'] = self.layoutAggregationOptions.selectedAggPeriod
-        self.parent.datasetOperationsTable.loc[currentIndex]['ForcingFlag'] = str(self.layoutAggregationOptions.predForceCheckBox.checkState() == 2)
-
-        # Extract the fill limit
-        # try:
-        #     fillLimit = int(self.layoutFillGapLimit.toPlainText())
-        # except:
-        #     fillLimit = None
-        #
-        # # Get the method to be utilized
-        # fillMethod = self.layoutFillMethodSelector.currentText()
-        #
-        # # Set the values
-        # self.parent.datasetOperationsTable.loc[currentIndex]['FillMethod'] = fillMethod
-        # self.parent.datasetOperationsTable.loc[currentIndex]['FillMaximumGap'] = fillLimit
-        #
         # Clear the button click
         self.layoutSimpleApplyButton.setChecked(False)
+
+        # Get the current datasest index
+        rowIdx = self.layoutSimpleDoubleList.listOutput.currentIndex().row()
+
+        if rowIdx >= 0:
+
+            currentIndex = self.layoutSimpleDoubleList.listOutput.datasetTable.index[rowIdx]
+
+            # Apply selected options
+            self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationMethod'] = self.layoutAggregationOptions.selectedAggOption
+            self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationDateStart'] = self.layoutAggregationOptions.periodStart.dateTime().toString("yyyy-MM-dd")
+            self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationDateStop'] = (parser.parse(str(np.sort(list(set(self.parent.dataTable.loc[(slice(None),currentIndex[0]),'Value'].index.get_level_values(0).values)))[-1]))).strftime("%Y-%m-%d")
+            self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationPeriod'] = self.layoutAggregationOptions.selectedAggPeriod
+            self.parent.datasetOperationsTable.loc[currentIndex]['ForcingFlag'] = str(self.layoutAggregationOptions.predForceCheckBox.checkState() == 2)
+
+            # Extract the fill limit
+            # try:
+            #     fillLimit = int(self.layoutFillGapLimit.toPlainText())
+            # except:
+            #     fillLimit = None
+            #
+            # # Get the method to be utilized
+            # fillMethod = self.layoutFillMethodSelector.currentText()
+            #
+            # # Set the values
+            # self.parent.datasetOperationsTable.loc[currentIndex]['FillMethod'] = fillMethod
+            # self.parent.datasetOperationsTable.loc[currentIndex]['FillMaximumGap'] = fillLimit
+            #
+
+        self._updateSimpleLayoutAggregationOptions()
 
 
     def _applySimpleClear(self):
@@ -2061,9 +2083,13 @@ class ModelCreationTab(QtWidgets.QWidget):
         print("Predictand Entries for the self.modelRunsTable: ")
         print("--Model Training Period: " + minT.strftime("%Y-%m-%d") + "/" + maxT.strftime("%Y-%m-%d"))
         print("--Predictand ID: " + str(predID))
-        print("--Predictand Period: " + periodString)#.periodStart.date().toString('MMM d,yyyy') + " - " + self.periodEnd.date().toString('MMM d,yyyy'))
+        print("--Predictand Period: " + periodString)
         print("--Predictand Method: " + self.methodCombo.currentData())
         # TODO: UPDATE self.modelRunsTable ENTRIES HERE
+        # self.parent.modelRunsTable.loc[0]['ModelTrainingPeriod'] = minT.strftime("%Y-%m-%d") + "/" + maxT.strftime("%Y-%m-%d")
+        # self.parent.modelRunsTable.loc[0]['Predictand'] = predID
+        # self.parent.modelRunsTable.loc[0]['PredictandPeriod'] = periodString
+        # self.parent.modelRunsTable.loc[0]['PredictandMethod'] = self.methodCombo.currentData()
 
 
     def _updateTabDependencies(self, tabIndex):

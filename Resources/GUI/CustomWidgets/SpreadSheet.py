@@ -657,7 +657,7 @@ class SpreadSheetModelOperations(QtCore.QAbstractItemModel):
         and returning the correct QVariants from the data table
         """
 
-        replacementDict = {'FillMethod': " Fill Method", 'FillMaximumGap': " Fill Maximum Gap",
+        replacementDict = {'FillMethod': " Fill Method", 'FillMaximumGap': " Fill Maximum Gap", 'FillOrder': " Fill Order",
                            'ExtendMethod': " Extend Method", 'ExtendDuration': " Extend Duration",
                            'AccumulationMethod': " Accumulation Method", 'AccumulationDateStart': " Accumulation Date Start",
                            'AccumulationDateStop': " Accumulation Date Stop", 'DatasetOperationsOptions': " Dataset Additional Options",
