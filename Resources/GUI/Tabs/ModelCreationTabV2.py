@@ -182,7 +182,6 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.layoutPredictorSimpleAnalysis.setContentsMargins(15, 15, 15, 15)
         self.layoutPredictorSimpleAnalysis.setWidgetResizable(True)
         self.layoutPredictorSimpleAnalysis.setFrameShape(QtWidgets.QFrame.NoFrame)
-        # self.layoutPredictorSimpleAnalysis.setStyleSheet("border: 0px")
 
         # Create the layout object for the expert analysis
         self.layoutPredictorExpertAnalysis = QtWidgets.QVBoxLayout()
@@ -789,21 +788,21 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.layoutExtendDurationLabel.setVisible(False)
 
         # Create the fill limit widget
-        self.layoutExtendDurationLimit = QtWidgets.QTextEdit()
+        self.layoutExtendDurationLimit = QtWidgets.QLineEdit()
         self.layoutExtendDurationLimit.setPlaceholderText('30')
-        self.layoutExtendDurationLimit.setFixedWidth(50)
-        self.layoutExtendDurationLimit.setFixedHeight(25)
         self.layoutExtendDurationLimit.setVisible(False)
 
         # Create the layout for the fill limit
         extendGapLayout = QtWidgets.QHBoxLayout()
         extendGapLayout.setAlignment(QtCore.Qt.AlignTop)
+        extendGapLayout.setContentsMargins(0, 0, 0, 0)
 
         extendGapLayout.addWidget(self.layoutExtendDurationLabel, 1, QtCore.Qt.AlignLeft)
         extendGapLayout.addWidget(self.layoutExtendDurationLimit, 5, QtCore.Qt.AlignLeft)
 
         # Add the limit into the main page
         extendGapLayoutWidget = QtWidgets.QWidget()
+        extendGapLayoutWidget.setSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Maximum)
         extendGapLayoutWidget.setLayout(extendGapLayout)
 
         layoutExtendRightLayout.addWidget(extendGapLayoutWidget)
@@ -825,17 +824,17 @@ class ModelCreationTab(QtWidgets.QWidget):
         # be opened separate from the main window
         stackedWidget = QtWidgets.QWidget()
         stackedWidget.setLayout(self.stackedExtendLayout)
-        stackedWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        stackedWidget.setSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Maximum)
 
         # Add each of the interpolation types to it, specifying how to scale with the screen
         noneWidget = QtWidgets.QWidget()
         noneWidget.setLayout(noneLayout)
-        noneWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        noneWidget.setSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Maximum)
         self.stackedExtendLayout.addWidget(noneWidget)
 
         fourierWidget = QtWidgets.QWidget()
         fourierWidget.setLayout(fourierLayout)
-        fourierWidget.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        fourierWidget.setSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Maximum)
         self.stackedExtendLayout.addWidget(fourierWidget)
 
         # Add the stacked layout to the main layout
@@ -843,6 +842,14 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ### Connect the stacked widget with the selection combo box ###
         self.layoutExtendMethodSelector.currentIndexChanged.connect(self._updateExtendSubtab)
+
+        ### Create the plot that shows the result of the selection ###
+        # Create the plot
+        self.layoutExtendPlot = DatasetTimeseriesPlots(None)
+        self.layoutExtendPlot.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+
+        # Add it into the layout
+        layoutExtendRightLayout.addWidget(self.layoutExtendPlot)
 
         ### Create clear and apply buttons to apply operations ###
         # Create the clear button
@@ -1870,6 +1877,9 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Correct this issue
         self.layoutExtendDurationLimit.setText(str(extendDuration))
 
+        # Update the plot on the tab
+        self._updateExtendPlot(currentIndex, extendMethod, extendDuration)
+
     def _applyExtendOptionsToDataset(self):
         """
         Applies the fill attributes to a dataset
@@ -1878,7 +1888,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Extract the fill limit
         try:
-            extendLimit = int(self.layoutExtendDurationLimit.toPlainText())
+            extendLimit = int(self.layoutExtendDurationLimit.text())
         except:
             extendLimit = None
 
@@ -1894,6 +1904,9 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Clear the button click
         self.layoutExtendApplyButton.setChecked(False)
+
+        # Update the plot on the tab
+        self._updateExtendPlot(currentIndex, extendMethod, extendLimit)
 
     def _applyExtendClearToDataset(self):
         """
@@ -1914,6 +1927,58 @@ class ModelCreationTab(QtWidgets.QWidget):
         # # Switch the stacked widgets
         self.layoutExtendMethodSelector.setCurrentIndex(0)
         self._updateExtendSubtab()
+
+    def _updateExtendPlot(self, currentIndex, extendMethod, extendLimit):
+        """
+        Updates the plot on the extend subtab
+
+        Parameters
+        ----------
+        currentIndex: pandas index
+            Index which specifies the active dataset
+        extendMethod: str
+            Fill method specified to extend the series
+        extendLimit: int
+            Extension period
+
+        """
+
+        ### Update the plot with the dataset and interpolation ###
+        # Get the source and fill dataset. This copies it to avoid changing the source data
+        sourceData = self.parent.dataTable.loc[(slice(None), currentIndex), 'Value']
+        sourceData = sourceData.droplevel('DatasetInternalID')
+        sourceUnits = self.parent.datasetTable.loc[currentIndex[0]]['DatasetUnits']
+
+        extendMethod = None
+        if extendMethod is not None and extendMethod != 'None':
+            # Fill the data with the applied operation
+            filledData = fill_missing(sourceData, fillMethod.lower(), fillLimit, order=fillOrder)
+
+            # Promote and set the status of the filled data
+            fillData = pd.DataFrame(filledData)
+            fillData['Status'] = 'Filled'
+            fillData.set_index(['Status'], append=True, inplace=True)
+
+            # Promote and set the status of the source data
+            sourceData = pd.DataFrame(sourceData)
+            sourceData['Status'] = 'Not Filled'
+            sourceData.set_index(['Status'], append=True, inplace=True)
+
+            # Stack it together with the existing data
+            sourceData = pd.concat([fillData, sourceData]).sort_index()
+
+        else:
+            # No filled data is present. Promote back to a dataframe and add the plotting label
+            sourceData = pd.DataFrame(sourceData)
+            sourceData['Status'] = 'Not Filled'
+
+            # Convert to a multiinstance table
+            sourceData.set_index(['Status'], append=True, inplace=True)
+
+        ## Plot the source dataset ##
+        self.layoutExtendPlot.updateData(sourceData, 'Status', sourceUnits)
+        self.layoutExtendPlot.displayDatasets()
+
 
     def _updateWindowSubtab(self):
         """
