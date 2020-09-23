@@ -57,8 +57,8 @@ class DatasetTab(QtWidgets.QWidget):
         
         label2.setWordWrap(True)
         self.selectedDatasetsLabel = QtWidgets.QLabel("0 DATASETS HAVE BEEN SELECTED:")
-        self.selectedDatasetsWidget = DatasetList_HTML_Formatted.DatasetListHTMLFormatted(datasetTable=self.parent.datasetTable)
-        self.selectedDatasetsWidget.defineContextMenu(menuItems=['Remove Dataset'])
+        self.selectedDatasetsWidget = DatasetList_HTML_Formatted.DatasetListHTMLFormatted(datasetTable=self.parent.datasetTable, addButtons=False)
+        self.selectedDatasetsWidget.defineContextMenu(menuItems=['Remove Dataset', 'Edit Dataset'])
         layout_.addWidget(label)
         layout_.addWidget(label2)
         layout_.addWidget(self.selectedDatasetsLabel)

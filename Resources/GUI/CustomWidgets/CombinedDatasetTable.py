@@ -56,7 +56,7 @@ class datasetComboBox(QtWidgets.QComboBox):
         QtWidgets.QComboBox.__init__(self)
         self.parent = parent
         self.setAutoFillBackground(True)
-        self.datasetList = DatasetListHTMLFormatted(self, datasetTable = self.parent.datasetTable, HTML_formatting ="", addButtons = False)
+        self.datasetList = DatasetListHTMLFormatted(self, datasetTable = self.parent.datasetTable, HTML_formatting ="default", addButtons = False)
         
         self.setModel(self.datasetList.model())
         self.setView(self.datasetList)
