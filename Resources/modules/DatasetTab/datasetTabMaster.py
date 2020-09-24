@@ -87,7 +87,7 @@ class datasetTab(object):
         self.datasetTab.boxHucResultsBox.itemDoubleClicked.connect(                     self.navigateMapToSelectedItem)
         self.datasetTab.searchResultsBox.buttonPressSignal.connect(                     self.addDataset)
         self.datasetTab.boxHucResultsBox.buttonPressSignal.connect(                     self.addDataset)
-        self.datasetTab.selectedDatasetsWidget.buttonPressSignal.connect(               self.openUserDefinedDatasetEditor)
+        self.datasetTab.selectedDatasetsWidget.Edit_DatasetAction.triggered.connect(    lambda x: self.openUserDefinedDatasetEditor([i.data(QtCore.Qt.UserRole).name for i in self.datasetTab.selectedDatasetsWidget.selectedItems()][0]))
         self.datasetTab.selectedDatasetsWidget.Remove_DatasetAction.triggered.connect(  lambda x: self.removeDataset([i.data(QtCore.Qt.UserRole).name for i in self.datasetTab.selectedDatasetsWidget.selectedItems()]))
         
         return
@@ -314,50 +314,10 @@ class datasetTab(object):
         """
 
         self.editorDialog = DatasetWizard.DatasetWizard(self, datasetID)
-
-        """         # Figure out if we're editing an existing dataset 
-        if datasetID in list(self.datasetTable.index):
-            
-            # Get the dataset to be edited
-            dataset = self.datasetTable.loc[datasetID]
-        
-        else:
-
-            # Create a blank dataset to be edited
-            if list(self.datasetTable.index) == []:
-                newID = 900000
-            else:
-                newID = max(self.datasetTable.index) + 1 if max(self.datasetTable.index) >= 900000 else 900000
-            dataset = pd.Series(
-                data = ['OTHER','','','','','','','average','','',np.nan, np.nan, np.nan, '','',np.nan,np.nan,{}],
-                index = [
-                        'DatasetType',              # e.g. STREAMGAGE, or RESERVOIR
-                        'DatasetExternalID',        # e.g. "GIBR" or "06025500"
-                        'DatasetName',              # e.g. Gibson Reservoir
-                        'DatasetAgency',            # e.g. USGS
-                        'DatasetParameter',         # e.g. Temperature
-                        "DatasetParameterCode",     # e.g. avgt
-                        'DatasetUnits',             # e.g. CFS
-                        'DatasetDefaultResampling', # e.g. average 
-                        'DatasetDataloader',        # e.g. RCC_ACIS
-                        'DatasetHUC8',              # e.g. 10030104
-                        'DatasetLatitude',          # e.g. 44.352
-                        'DatasetLongitude',         # e.g. -112.324
-                        'DatasetElevation',         # e.g. 3133 (in ft)
-                        'DatasetPORStart',          # e.g. 1/24/1993
-                        'DatasetPOREnd',            # e.g. 1/22/2019\
-                        'DatasetCompositeEquation', # e.g. C/100121,102331,504423/1.0,0.5,4.3/0,0,5
-                        'DatasetImportFileName',    # e.g. 'C://Users//JoeDow//Dataset.CSV'
-                        'DatasetAdditionalOptions'],
-                name = newID
-                
-            )
-
-        # Open the dialog with the dataset
-        self.editorDialog = UserDefinedDatasetDialog.EditorDialog(self, dataset)
-
-        # Connect the close events
-        self.editorDialog.saveDatasetSignal.connect(self.saveUserDefinedDataset) """
+        self.editorDialog.returnDatasetSignal.connect(lambda x: self.saveUserDefinedDataset(x))
+        # self.editorDialog.returnDatasetSignal.connect(lambda x: print(x))
+        # Open the dialog window
+        self.editorDialog.exec_()
         
         return
     
@@ -372,7 +332,7 @@ class datasetTab(object):
         if dataset.name in list(self.datasetTable.index):
             
             # Update the dataset table
-            self.datasetTable.update(dataset)
+            self.datasetTable.loc[dataset.name] = dataset
 
         else:
 
@@ -433,7 +393,7 @@ class datasetTab(object):
                 - The HUC8 of the watershed to add, or the 4 digit climate division code
 
                 datasetType
-                - one of ['PRISM', 'NRCC', 'PDSI', 'SPI']
+                - one of ['PRISM', 'NRCC', 'PDSI', 'SPEI']
         """
 
         # Uncompleted selection
@@ -448,7 +408,7 @@ class datasetTab(object):
             )]
 
         # Retrieve Climate Division Datasets
-        if datasetType in ['PDSI', 'SPI']:
+        if datasetType in ['PDSI', 'SPEI']:
             datasets = self.additionalDatasetsTable[(
                 self.additionalDatasetsTable['DatasetType'] == datasetType) &
                 (self.additionalDatasetsTable['DatasetExternalID'] == areaNumber

@@ -1,3 +1,4 @@
+# Import Statements
 from PyQt5 import QtWidgets, QtGui, QtCore
 import pandas as pd
 from resources.GUI.CustomWidgets.CombinedDatasetTable import CombinedDatasetTbl
@@ -8,26 +9,38 @@ import os
 import requests
 import io
 
-class DatasetWizard(QtWidgets.QWizard):
 
-    def __init__(self, parent = None, datasetID = None):
+# Main Class Definition
+class DatasetWizard(QtWidgets.QWizard):
+    # Signal to return the custom dataset definition to the application
+    returnDatasetSignal = QtCore.pyqtSignal(object)
+
+    def __init__(self, parent=None, datasetID=None):
+        """
+        This dialog window handles adding custom dataset definitions
+        into the forecast file.
+        """
 
         QtWidgets.QWizard.__init__(self)
-        
+
         self.parent = parent
+        self.datasetID = datasetID
         self.setWindowTitle("User Defined Dataset")
-        self.setWhatsThis("Use this dialog to define a new dataset using an alternate data source (Import, composite, URL, etc).")
+        self.setWhatsThis(
+            "Use this dialog to define a new dataset using an alternate data source (Import, composite, URL, etc).")
         self.setWizardStyle(QtWidgets.QWizard.ModernStyle)
         logo = QtGui.QPixmap("resources/GraphicalResources/icon.png")
-        self.setPixmap(QtWidgets.QWizard.LogoPixmap, logo.scaled(71,61))
-        
-        
+        self.setPixmap(QtWidgets.QWizard.LogoPixmap, logo.scaled(71, 61))
+
+        # Load in the list of dataloaders
         self.dloaderNames = []
         for filename in os.listdir("resources/DataLoaders"):
             if '.py' in filename.lower() and not 'import' in filename.lower():
                 self.dloaderNames.append(filename[:filename.index(".py")])
-        self.dloaders = [importlib.import_module("resources.DataLoaders.{0}".format(fname)) for fname in self.dloaderNames]
+        self.dloaders = [importlib.import_module("resources.DataLoaders.{0}".format(fname)) for fname in
+                         self.dloaderNames]
 
+        # Set the User Interface
         self.setupUI()
 
         # Connect events
@@ -35,52 +48,41 @@ class DatasetWizard(QtWidgets.QWizard):
         self.HTMLloadUrlButton.clicked.connect(self.loadHTMLFile)
 
         # Initialize an empty dataset
-        self.dataset = pd.Series()
+        self.loadDataset(self.datasetID)
 
-        self.exec_()
+        # Connect the page changed signal
+        self.currentIdChanged.connect(self.updateDataset)
+        self.accepted.connect(lambda: self.updateDataset(-100))
 
-        
+    def loadDataset(self, datasetID):
+        """
+        Loads the dataset information associated with the selected datasetID
+        """
 
-    def nextId(self):
-        print(self.currentId())
+        if datasetID == None:
+            if self.parent.datasetTable.empty:
+                self.datasetID = 900000
+            elif (max(self.parent.datasetTable.index) < 900000):
+                self.datasetID = 900000
+            else:
+                self.datasetID = max(self.parent.datasetTable.index) + 1
+            self.dataset = pd.Series()
 
-        # Page 2: Data Source
-        if self.currentId() == 1:
-
-            # Data Source Select Box
-            selection = self.sourceBox.checkedId()
-            
-            # PyForecast Dataloader
-            if selection == 0:
-                nextID_ = 2
-            
-            # File Import
-            elif selection == 1:
-                nextID_ = 3
-
-            # From URL
-            elif selection == 2:
-                nextID_ = 4
-
-            # Composite
-            elif selection == 3:
-                nextID_ = 5
-
-        elif self.currentId() in [2,3,5,7]:
-            nextID_ = 6
-        elif self.currentId() == 4:
-            selection = self.URLButtonGroup.checkedId()
-            if selection == 0:
-                nextID_ = 7
-        elif self.currentId() == 6:
-            nextID_ = -1
-        
         else:
-            nextID_ = self.currentPage().nextId()
+            self.dataset = self.parent.datasetTable.loc[datasetID]
+            self.datasetTypeField.setCurrentText(self.dataset['DatasetType'])
+            self.datasetAgencyField.setText(self.dataset['DatasetAgency'])
+            self.datasetNameField.setText(self.dataset['DatasetName'])
+            self.datasetIDField.setText(self.dataset['DatasetExternalID'])
+            self.parameterCodeField.setText(self.dataset["DatasetParameterCode"])
+            self.parameterNameField.setText(self.dataset["DatasetParameter"])
+            self.parameterUnitField.setText(self.dataset['DatasetUnits'])
 
-        # IF the current ID is 0 (metadata page), save the metadata
-        if self.currentId() == 0:
+        return
 
+    def updateDataset(self, newID):
+
+        if newID > self.metadataID:
             self.dataset["DatasetType"] = self.datasetTypeField.currentText()
             self.dataset["DatasetName"] = self.datasetNameField.text()
             self.dataset["DatasetParameter"] = self.parameterNameField.text()
@@ -89,9 +91,73 @@ class DatasetWizard(QtWidgets.QWizard):
             self.dataset["DatasetUnits"] = self.parameterUnitField.text()
             self.dataset["DatasetAgency"] = self.datasetAgencyField.text()
 
+        if newID == -100:
+
+            selection = self.sourceBox.checkedId()
+
+            if selection == 1:
+                self.dataset["DatasetDataloader"] = "IMPORTED_FILE"
+                self.dataset[
+                    "DatasetImportFileName"] = self.importFileName + "?" + self.dateColSelect.currentText() + "?" + self.fileDatasetSelect.currentText()
+
+            self.dataset.name = self.datasetID
+            self.returnDatasetSignal.emit(self.dataset)
+            print("returning")
+
+        return
+
+    def nextId(self):
+        """
+        Function to tell the dialog window which screen to advance to
+        when the user clicks next. Additionally, updates the dataset
+        table row on the backend
+        """
+
+        currentID = self.currentId()
+
+        if currentID == self.metadataID:
+            nextID_ = self.dataSourceID
+
+        # Page 2: Data Source
+        elif currentID == self.dataSourceID:
+
+            # Data Source Select Box
+            selection = self.sourceBox.checkedId()
+
+            # PyForecast Dataloader
+            if selection == 0:
+                nextID_ = self.dataLoaderID
+
+            # File Import
+            elif selection == 1:
+                nextID_ = self.importID
+
+            # From URL
+            elif selection == 2:
+                nextID_ = self.urlID
+
+            # Composite
+            elif selection == 3:
+                nextID_ = self.compositeID
+
+        elif currentID in [self.importID]:
+
+            nextID_ = -1
+
+        elif currentID == self.urlID:
+            selection = self.URLButtonGroup.checkedId()
+            if selection == 0:
+                nextID_ = self.urlHTMLID
+
+        else:
+            nextID_ = -1
+
         return nextID_
 
     def loadHTMLFile(self):
+        """
+
+        """
         pd.set_option('max_colwidth', 200)
         self.HTMLtablePreview.setLineWrapMode(QtWidgets.QTextEdit.FixedPixelWidth)
         response = requests.get(self.HTMLurlEntry.text())
@@ -105,7 +171,7 @@ class DatasetWizard(QtWidgets.QWizard):
         if len(rawdata) == 0:
             self.HTMLnumTablesLabel.setText("No Tables found at this webpage...")
             return
-        self.HTMLtablePreview.setLineWrapColumnOrWidth(50*(rawdata[0].shape[1]+1))
+        self.HTMLtablePreview.setLineWrapColumnOrWidth(50 * (rawdata[0].shape[1] + 1))
         self.HTMLnumTablesLabel.setText("{0} tables found".format(len(rawdata)))
 
         rawHtml = rawdata[0].to_html(justify='center', col_space=50)
@@ -120,22 +186,23 @@ class DatasetWizard(QtWidgets.QWizard):
             if 'date' in col.lower() or 'time' in col.lower():
                 self.HTMLdateColSelect.setCurrentText(col)
 
-        self.HTMLfileDatasetSelect.setCurrentIndex(1 if len(rawdata[0].columns) > 0 else 0)  
+        self.HTMLfileDatasetSelect.setCurrentIndex(1 if len(rawdata[0].columns) > 0 else 0)
 
     def loadImportFile(self):
-        
+
         self.dateColSelect.clear()
         self.fileDatasetSelect.clear()
 
-        self.importFileName = QtWidgets.QFileDialog.getOpenFileName(self, "Import Flat File", "", "Flat Files (*.csv *.xlsx *.txt)")[0]
+        self.importFileName = \
+        QtWidgets.QFileDialog.getOpenFileName(self, "Import Flat File", "", "Flat Files (*.csv *.xlsx *.txt)")[0]
         if self.importFileName == "":
             return
-        
+
         self.fname.setText(self.importFileName)
 
         # if the file is an xlsx file, load it with pandas
         if '.xlsx' in self.importFileName.lower():
-            rawdata = pd.read_excel(self.importFileName, nrows=500,)
+            rawdata = pd.read_excel(self.importFileName, nrows=500, )
 
         # use the CSV library to sniff out the delimiter of the file if it's a csv or txt file
         else:
@@ -143,18 +210,20 @@ class DatasetWizard(QtWidgets.QWizard):
                 try:
                     dialect = Sniffer().sniff(readfile.read(1024))
                 except:
-                    loggingAndErrors.showErrorMessage(self,"Could not parse the file. Make sure the file is a proper flat file.")
+                    loggingAndErrors.showErrorMessage(self,
+                                                      "Could not parse the file. Make sure the file is a proper flat file.")
                     return
-            rawdata = pd.read_csv(self.importFileName, nrows=500, sep = dialect.delimiter,quotechar=dialect.quotechar, lineterminator=dialect.lineterminator.replace('\r', ''), skipinitialspace=True)
+            rawdata = pd.read_csv(self.importFileName, nrows=500, sep=dialect.delimiter, quotechar=dialect.quotechar,
+                                  lineterminator=dialect.lineterminator.replace('\r', ''), skipinitialspace=True)
         pd.set_option('max_colwidth', 200)
         self.filePreviewBox.setLineWrapMode(QtWidgets.QTextEdit.FixedPixelWidth)
-        self.filePreviewBox.setLineWrapColumnOrWidth(50*(rawdata.shape[1]+1))
-        
+        self.filePreviewBox.setLineWrapColumnOrWidth(50 * (rawdata.shape[1] + 1))
+
         rawHtml = rawdata.to_html(justify='center', col_space=50)
         rawHtml = rawHtml.replace("<th ", '<th bgcolor="oldlace" ')
         rawHtml = rawHtml.replace("<th>", '<th bgcolor="dimgrey" style="color: white">')
         self.filePreviewBox.setHtml(rawHtml)
-        
+
         self.dateColSelect.addItems(rawdata.columns)
         self.fileDatasetSelect.addItems(rawdata.columns)
 
@@ -162,9 +231,7 @@ class DatasetWizard(QtWidgets.QWizard):
             if 'date' in col.lower() or 'time' in col.lower():
                 self.dateColSelect.setCurrentText(col)
 
-        self.fileDatasetSelect.setCurrentIndex(1 if len(rawdata.columns) > 0 else 0)                
-
-
+        self.fileDatasetSelect.setCurrentIndex(1 if len(rawdata.columns) > 0 else 0)
 
     def setupUI(self):
         """
@@ -172,22 +239,23 @@ class DatasetWizard(QtWidgets.QWizard):
         """
 
         # Create Pages
-        self.metadataPage = QtWidgets.QWizardPage()     # pageID = 0
-        self.dataSourcePage = QtWidgets.QWizardPage()   # pageID = 1
-        self.dataLoaderPage = QtWidgets.QWizardPage()   # pageID = 2
-        self.importPage = QtWidgets.QWizardPage()       # pageID = 3
-        self.compositePage = QtWidgets.QWizardPage()    # pageID = 4
-        self.urlPage = QtWidgets.QWizardPage()          # pageID = 5
-        self.summaryPage = QtWidgets.QWizardPage()      # pageID = 6
-        self.urlPageHTML = QtWidgets.QWizardPage()      # pageID = 7
+        self.metadataPage = QtWidgets.QWizardPage()
+        self.dataSourcePage = QtWidgets.QWizardPage()
+        self.dataLoaderPage = QtWidgets.QWizardPage()
+        self.importPage = QtWidgets.QWizardPage()
+        self.compositePage = QtWidgets.QWizardPage()
+        self.urlPage = QtWidgets.QWizardPage()
+        self.urlPageHTML = QtWidgets.QWizardPage()
 
         # Set up the metadata page's GUI
         self.metadataPage.setTitle("Step 1: Dataset Metadata")
-        self.metadataPage.setSubTitle("Provide general information about this dataset. Information provided here will be referenced in other areas of the software.")
+        self.metadataPage.setSubTitle(
+            "Provide general information about this dataset. Information provided here will be referenced in other areas of the software.")
         layout = QtWidgets.QFormLayout()
 
         self.datasetTypeField = QtWidgets.QComboBox()
-        datasetTypes = list(set(self.parent.searchableDatasetsTable['DatasetType'])) + list(set(self.parent.additionalDatasetsTable['DatasetType'])) + ['OTHER']
+        datasetTypes = list(set(self.parent.searchableDatasetsTable['DatasetType'])) + list(
+            set(self.parent.additionalDatasetsTable['DatasetType'])) + ['OTHER']
         self.datasetTypeField.addItems(datasetTypes)
         self.datasetTypeField.setCurrentText("OTHER")
         self.datasetNameField = QtWidgets.QLineEdit()
@@ -211,10 +279,7 @@ class DatasetWizard(QtWidgets.QWizard):
         layout.addRow("Parameter ID", self.parameterCodeField)
         layout.addRow("Dataset Agency", self.datasetAgencyField)
 
-
         self.metadataPage.setLayout(layout)
-
-
 
         # Register metadata page's required fields
         self.metadataPage.registerField("datasetName*", self.datasetNameField)
@@ -234,7 +299,7 @@ class DatasetWizard(QtWidgets.QWizard):
         self.dataLoaderButton = QtWidgets.QRadioButton("PyForecast Dataloader")
         self.importButton = QtWidgets.QRadioButton("File Import")
         self.urlButton = QtWidgets.QRadioButton("From URL")
-        self.compositeButton = QtWidgets.QRadioButton("Composite")   
+        self.compositeButton = QtWidgets.QRadioButton("Composite")
 
         self.dataLoaderInfo = "Uses an existing PyForecast dataloader to load the dataset using the options you provided in the metadata."
         self.importInfo = "Imports the dataset from a flat file (csv, xlsx), using the dataset ID from the metadata to identify the correct column."
@@ -242,10 +307,10 @@ class DatasetWizard(QtWidgets.QWizard):
         self.compositeInfo = "Creates a new dataset from 2 or more existing datasets, by adding/subtracting and/or lag shifting"
 
         self.infoDict = {
-            "0":"<strong>Information:</strong><br>"+self.dataLoaderInfo,
-            "1":"<strong>Information:</strong><br>"+self.importInfo,
-            "2":"<strong>Information:</strong><br>"+self.urlInfo,
-            "3":"<strong>Information:</strong><br>"+self.compositeInfo
+            "0": "<strong>Information:</strong><br>" + self.dataLoaderInfo,
+            "1": "<strong>Information:</strong><br>" + self.importInfo,
+            "2": "<strong>Information:</strong><br>" + self.urlInfo,
+            "3": "<strong>Information:</strong><br>" + self.compositeInfo
         }
 
         self.sourceBox.addButton(self.dataLoaderButton, 0)
@@ -264,7 +329,6 @@ class DatasetWizard(QtWidgets.QWizard):
         layout2.addWidget(self.compositeButton)
         self.sourceGroupBox.setLayout(layout2)
 
-
         layout.addWidget(self.sourceGroupBox)
         layout.addWidget(self.infoBox)
 
@@ -272,14 +336,15 @@ class DatasetWizard(QtWidgets.QWizard):
 
         # Set up the dataloader page
         self.dataLoaderPage.setTitle("Step 3: Choose Dataloader")
-        self.dataLoaderPage.setSubTitle("Select the dataloader used to load this dataset. Make sure that the required metadata fields are filled in.")
+        self.dataLoaderPage.setSubTitle(
+            "Select the dataloader used to load this dataset. Make sure that the required metadata fields are filled in.")
 
         layout = QtWidgets.QVBoxLayout()
         self.dataLoaderSelect = QtWidgets.QComboBox()
         self.infoBoxDloader = QtWidgets.QTextEdit()
         self.infoBoxDloader.setReadOnly(True)
         self.dataLoaderSelect.addItems(self.dloaderNames)
-        self.infoBoxDloader.setHtml(self.dloaders[0].dataLoaderInfo()[1].replace("\n","<br>"))
+        self.infoBoxDloader.setHtml(self.dloaders[0].dataLoaderInfo()[1].replace("\n", "<br>"))
 
         layout2 = QtWidgets.QFormLayout()
         layout2.addRow("Dataloader selection", self.dataLoaderSelect)
@@ -289,28 +354,31 @@ class DatasetWizard(QtWidgets.QWizard):
         label.setText("<strong>Dataloader Information</strong>")
         layout.addWidget(label)
         layout.addWidget(self.infoBoxDloader)
-        
-        self.dataLoaderSelect.currentTextChanged.connect(lambda dloader: self.infoBoxDloader.setHtml(self.dloaders[self.dloaderNames.index(dloader)].dataLoaderInfo()[1].replace("\n","<br>")))
-        
+
+        self.dataLoaderSelect.currentTextChanged.connect(lambda dloader: self.infoBoxDloader.setHtml(
+            self.dloaders[self.dloaderNames.index(dloader)].dataLoaderInfo()[1].replace("\n", "<br>")))
+
         self.dataLoaderPage.setLayout(layout)
 
         # layout the import page
         self.importPage.setTitle("Step 3: Set Filename")
-        self.importPage.setSubTitle("Browse for the flat file (csv, xlsx) that you want to import and verify the data looks correct.")
+        self.importPage.setSubTitle(
+            "Browse for the flat file (csv, xlsx) that you want to import and verify the data looks correct.")
 
         layout = QtWidgets.QVBoxLayout()
         layout2 = QtWidgets.QHBoxLayout()
 
         label = QtWidgets.QLabel("Filename:")
-        label.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
+        label.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
         self.fname = QtWidgets.QLabel("No File Selected...")
-        self.fname.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
+        self.fname.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
         self.fileButton = QtWidgets.QPushButton("Browse")
-        self.fileButton.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
-        
+        self.fileButton.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
+
         layout2.addWidget(label)
         layout2.addWidget(self.fname)
-        layout2.addSpacerItem(QtWidgets.QSpacerItem(1000,10,QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum))
+        layout2.addSpacerItem(
+            QtWidgets.QSpacerItem(1000, 10, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum))
         layout2.addWidget(self.fileButton)
 
         layout.addLayout(layout2)
@@ -325,7 +393,8 @@ class DatasetWizard(QtWidgets.QWizard):
         layout.addWidget(self.filePreviewBox)
 
         layout2 = QtWidgets.QHBoxLayout()
-        layout2.addSpacerItem(QtWidgets.QSpacerItem(1000, 10, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum))
+        layout2.addSpacerItem(
+            QtWidgets.QSpacerItem(1000, 10, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum))
         layout2.addWidget(QtWidgets.QLabel("Which column contains the datetime?"))
         self.dateColSelect = QtWidgets.QComboBox()
         self.dateColSelect.setFixedWidth(240)
@@ -333,7 +402,8 @@ class DatasetWizard(QtWidgets.QWizard):
         layout.addLayout(layout2)
 
         layout2 = QtWidgets.QHBoxLayout()
-        layout2.addSpacerItem(QtWidgets.QSpacerItem(1000, 10, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum))
+        layout2.addSpacerItem(
+            QtWidgets.QSpacerItem(1000, 10, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum))
         layout2.addWidget(QtWidgets.QLabel("Which column contains the dataset?"))
         self.fileDatasetSelect = QtWidgets.QComboBox()
         self.fileDatasetSelect.setFixedWidth(240)
@@ -347,12 +417,11 @@ class DatasetWizard(QtWidgets.QWizard):
         self.compositePage.setTitle("Step 3: Create Composite Dataset")
         self.compositePage.setSubTitle("Create a linear combination of up to 10 datasets.")
 
-
         layout = QtWidgets.QVBoxLayout()
         label = QtWidgets.QLabel("")
         label.setTextFormat(QtCore.Qt.RichText)
         label.setWordWrap(True)
-        
+
         label.setText("""
         <strong>Information</strong><br>
         Use the table below to specify which datasets to combine. The <img src="resources/GraphicalResources/icons/plusIcon.png" width="10" height="10"/> button 
@@ -391,7 +460,8 @@ class DatasetWizard(QtWidgets.QWizard):
         self.URLInfoBox = QtWidgets.QLabel()
         self.URLInfoBox.setTextFormat(QtCore.Qt.RichText)
         self.URLInfoBox.setWordWrap(True)
-        self.URLInfoBox.setText("<strong>Information</strong><br>Check this box if the data you want to import resides in a HTML table somewhere at the URL you plan to specify.")
+        self.URLInfoBox.setText(
+            "<strong>Information</strong><br>Check this box if the data you want to import resides in a HTML table somewhere at the URL you plan to specify.")
         self.URLInfoPic = QtWidgets.QLabel()
         self.URLInfoPic.setPixmap(QtGui.QPixmap("resources/GraphicalResources/HTML_import_pic.png"))
 
@@ -409,22 +479,21 @@ class DatasetWizard(QtWidgets.QWizard):
                 return
             self.URLInfoBox.setText(info)
             self.URLInfoPic.setPixmap(pic)
-        
+
         self.URLButtonGroup.buttonClicked[int].connect(lambda id_: updateURLInfo(id_))
         layout.addWidget(self.URLInfoBox)
         layout.addWidget(self.URLInfoPic)
-        
 
         self.urlPage.setLayout(layout)
 
-
         # Setup the extended URL options page
         self.urlPageHTML.setTitle("Step 4: Find HTML Table")
-        self.urlPageHTML.setSubTitle("Locate the HTML Table and specify the where the dataset of interest is in that table.")
+        self.urlPageHTML.setSubTitle(
+            "Locate the HTML Table and specify the where the dataset of interest is in that table.")
         layout = QtWidgets.QVBoxLayout()
 
         self.HTMLurlEntry = QtWidgets.QLineEdit()
-        self.HTMLurlEntry.setSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Minimum )
+        self.HTMLurlEntry.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.HTMLurlEntry.setPlaceholderText("Enter the URL here: (e.g. https://www.ncdc.noaa.gov/teleconnections/pna")
         self.HTMLloadUrlButton = QtWidgets.QPushButton("Load")
         self.HTMLnumTablesLabel = QtWidgets.QLabel("Enter a URL and press 'Load' to find tables.")
@@ -442,7 +511,8 @@ class DatasetWizard(QtWidgets.QWizard):
         layout.addWidget(self.HTMLtablePreview)
 
         layout2 = QtWidgets.QHBoxLayout()
-        layout2.addSpacerItem(QtWidgets.QSpacerItem(1000, 10, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum))
+        layout2.addSpacerItem(
+            QtWidgets.QSpacerItem(1000, 10, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum))
         layout2.addWidget(QtWidgets.QLabel("Which column contains the datetime?"))
         self.HTMLdateColSelect = QtWidgets.QComboBox()
         self.HTMLdateColSelect.setFixedWidth(240)
@@ -450,7 +520,8 @@ class DatasetWizard(QtWidgets.QWizard):
         layout.addLayout(layout2)
 
         layout2 = QtWidgets.QHBoxLayout()
-        layout2.addSpacerItem(QtWidgets.QSpacerItem(1000, 10, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum))
+        layout2.addSpacerItem(
+            QtWidgets.QSpacerItem(1000, 10, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum))
         layout2.addWidget(QtWidgets.QLabel("Which column contains the dataset?"))
         self.HTMLfileDatasetSelect = QtWidgets.QComboBox()
         self.HTMLfileDatasetSelect.setFixedWidth(240)
@@ -459,36 +530,30 @@ class DatasetWizard(QtWidgets.QWizard):
         layout.addLayout(layout2)
         self.urlPageHTML.setLayout(layout)
 
-
-        # Lay out the summary page
-
-
-
-
-
         # Add pages to the wizard
-        self.addPage(self.metadataPage)
-        self.addPage(self.dataSourcePage)
-        self.addPage(self.dataLoaderPage)
-        self.addPage(self.importPage)
-        self.addPage(self.urlPage)
-        self.addPage(self.compositePage)
-        self.addPage(self.summaryPage)
-        self.addPage(self.urlPageHTML)
+        self.metadataID = self.addPage(self.metadataPage)
+        self.dataSourceID = self.addPage(self.dataSourcePage)
+        self.dataLoaderID = self.addPage(self.dataLoaderPage)
+        self.importID = self.addPage(self.importPage)
+        self.urlID = self.addPage(self.urlPage)
+        self.compositeID = self.addPage(self.compositePage)
+        self.urlHTMLID = self.addPage(self.urlPageHTML)
 
-        # 
-        
+        #
+
         return
 
     def returnDataset(self):
         """
         This is going to be a logic nightmare!
         """
-        
+
         return
+
 
 if __name__ == '__main__':
     import sys
+
     app = QtWidgets.QApplication(sys.argv)
     mw = DatasetWizard()
     mw.show()
