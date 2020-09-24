@@ -1275,7 +1275,20 @@ class ModelCreationTab(QtWidgets.QWidget):
         ### Create the left side dataset summary table ###
         # Create a vertical layout
         listLayout = QtWidgets.QVBoxLayout()
-        listLayout.setContentsMargins(5, 5, 5, 5)
+        #listLayout.setContentsMargins(2, 2, 2, 2)
+        listLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Model Training Period<strong>'))
+        self.summaryLayoutLabel1 = QtWidgets.QLabel('     Period: None')
+        listLayout.addWidget(self.summaryLayoutLabel1)
+        listLayout.addWidget(QtWidgets.QLabel(''))
+        listLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Predictand<strong>'))
+        self.summaryLayoutLabel2 = QtWidgets.QLabel('     Predictand: None')
+        self.summaryLayoutLabel3 = QtWidgets.QLabel('     Predictand Period: None')
+        self.summaryLayoutLabel4 = QtWidgets.QLabel('     Predictand Method: None')
+        listLayout.addWidget(self.summaryLayoutLabel2)
+        listLayout.addWidget(self.summaryLayoutLabel3)
+        listLayout.addWidget(self.summaryLayoutLabel4)
+        listLayout.addWidget(QtWidgets.QLabel(''))
+        listLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Predictors<strong>'))
 
         # Create the list widget
         self.summaryListWidget = SpreadSheetViewOperations(self.parent.datasetTable, self.parent.datasetOperationsTable,
@@ -1283,11 +1296,12 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Connect the summary list to change with the operations table
         listLayout.addWidget(self.summaryListWidget)
+        listLayout.addItem(QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding))
 
         # Force the background color to prevent bleed through of the SA color in the headings
         listLayoutWidget = QtWidgets.QWidget()
         listLayoutWidget.setLayout(listLayout)
-        listLayoutWidget.setStyleSheet("background-color:white;")
+        #listLayoutWidget.setStyleSheet("background-color:white;")
 
         # Add to the layout
         mainLayout.addWidget(listLayoutWidget)
@@ -1952,7 +1966,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         extendMethod = None
         if extendMethod is not None and extendMethod != 'None':
             # Fill the data with the applied operation
-            filledData = fill_missing(sourceData, fillMethod.lower(), fillLimit, order=fillOrder)
+            filledData = fill_missing(sourceData, extendMethod.lower(), extendLimit, order=None)
 
             # Promote and set the status of the filled data
             fillData = pd.DataFrame(filledData)
@@ -2145,16 +2159,18 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         nDays = self.periodEnd.date().toJulianDay() - self.periodStart.date().toJulianDay() + 1 #dates inclusive
         periodString = "R/" + startT.strftime("%Y-%m-%d") + "/P" + str(nDays) + "D/F12M" #(e.g. R/1978-02-01/P1M/F1Y)
-        print("Predictand Entries for the self.modelRunsTable: ")
-        print("--Model Training Period: " + minT.strftime("%Y-%m-%d") + "/" + maxT.strftime("%Y-%m-%d"))
-        print("--Predictand ID: " + str(predID))
-        print("--Predictand Period: " + periodString)
-        print("--Predictand Method: " + self.methodCombo.currentData())
-        # TODO: UPDATE self.modelRunsTable ENTRIES HERE
-        # self.parent.modelRunsTable.loc[0]['ModelTrainingPeriod'] = minT.strftime("%Y-%m-%d") + "/" + maxT.strftime("%Y-%m-%d")
-        # self.parent.modelRunsTable.loc[0]['Predictand'] = predID
-        # self.parent.modelRunsTable.loc[0]['PredictandPeriod'] = periodString
-        # self.parent.modelRunsTable.loc[0]['PredictandMethod'] = self.methodCombo.currentData()
+        #print("Predictand Entries for the self.modelRunsTable: ")
+        #print("--Model Training Period: " + minT.strftime("%Y-%m-%d") + "/" + maxT.strftime("%Y-%m-%d"))
+        #print("--Predictand ID: " + str(predID))
+        #print("--Predictand Period: " + periodString)
+        #print("--Predictand Method: " + self.methodCombo.currentData())
+        if self.parent.modelRunsTable.shape[0] < 1:
+            self.parent.modelRunsTable.loc[0] = [None] * self.parent.modelRunsTable.columns.shape[0]
+
+        self.parent.modelRunsTable.loc[0]['ModelTrainingPeriod'] = minT.strftime("%Y-%m-%d") + "/" + maxT.strftime("%Y-%m-%d")
+        self.parent.modelRunsTable.loc[0]['Predictand'] = predID
+        self.parent.modelRunsTable.loc[0]['PredictandPeriod'] = periodString
+        self.parent.modelRunsTable.loc[0]['PredictandMethod'] = self.methodCombo.currentData()
 
 
     def _updateTabDependencies(self, tabIndex):
@@ -2168,5 +2184,28 @@ class ModelCreationTab(QtWidgets.QWidget):
         if tabIndex == 3:
             # Update the summary boxes
             ##print('@@ debug statement')
+            # Update predictand options
+            if self.parent.modelRunsTable.shape[0] < 1:
+                self.summaryLayoutLabel1.setText('     Period: None')
+                self.summaryLayoutLabel1.setStyleSheet("color : red")
+                self.summaryLayoutLabel2.setText('     Predictand: None')
+                self.summaryLayoutLabel2.setStyleSheet("color : red")
+                self.summaryLayoutLabel3.setText('     Predictand Period: None')
+                self.summaryLayoutLabel3.setStyleSheet("color : red")
+                self.summaryLayoutLabel4.setText('     Predictand Method: None')
+                self.summaryLayoutLabel4.setStyleSheet("color : red")
+            else:
+                selDataset = self.parent.datasetTable.loc[self.parent.modelRunsTable.loc[0]['Predictand']]
+                selName = str(selDataset['DatasetName']) + ' (' + str(selDataset['DatasetAgency']) + ') ' + str(selDataset['DatasetParameter'])
+                self.summaryLayoutLabel1.setText('     Period: ' + str(self.parent.modelRunsTable.loc[0]['ModelTrainingPeriod']))
+                self.summaryLayoutLabel1.setStyleSheet("color : green")
+                self.summaryLayoutLabel2.setText('     Predictand: ' + selName)
+                self.summaryLayoutLabel2.setStyleSheet("color : green")
+                self.summaryLayoutLabel3.setText('     Predictand Period: ' + str(self.parent.modelRunsTable.loc[0]['PredictandPeriod']))
+                self.summaryLayoutLabel3.setStyleSheet("color : green")
+                self.summaryLayoutLabel4.setText('     Predictand Method: ' + str(self.parent.modelRunsTable.loc[0]['PredictandMethod']))
+                self.summaryLayoutLabel4.setStyleSheet("color : green")
+
+            # Load predictors table
             self.summaryListWidget.model().loadDataIntoModel(self.parent.datasetTable, self.parent.datasetOperationsTable)
 

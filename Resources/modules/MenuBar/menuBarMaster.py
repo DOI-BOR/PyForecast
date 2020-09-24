@@ -59,6 +59,7 @@ class menuBar(object):
             
             pickle.dump(self.datasetTable, writefile, pickle.HIGHEST_PROTOCOL)
             pickle.dump(self.dataTable, writefile, pickle.HIGHEST_PROTOCOL)
+            #pickle.dump(self.datasetOperationsTable, writefile, pickle.HIGHEST_PROTOCOL)
             #pickle.dump(self.modelRunsTable, writefile, pickle.HIGHEST_PROTOCOL)
             #pickle.dump(self.forecastEquationsTable, writefile, pickle.HIGHEST_PROTOCOL)
             #pickle.dump(self.forecastsTable, writefile, pickle.HIGHEST_PROTOCOL)
@@ -80,6 +81,7 @@ class menuBar(object):
         with open(fname, 'rb') as readfile:
             self.datasetTable = pickle.load(readfile)
             self.dataTable = pickle.load(readfile)
+            #self.datasetOperationsTable = pickle.load(readfile)
             #self.modelRunsTable = pickle.load(readfile)
             #self.forecastEquationsTable = pickle.load(readfile) 
             #self.forecastsTable = pickle.load(readfile)
