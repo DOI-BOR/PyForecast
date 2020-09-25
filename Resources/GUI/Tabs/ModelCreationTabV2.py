@@ -482,6 +482,10 @@ class ModelCreationTab(QtWidgets.QWidget):
             # Set aggregation option on UI
             if accumMethod == 'None':
                 self.layoutAggregationOptions.aggLabel2.setStyleSheet("color : red")
+                # Get default resampling method
+                defResampling = self.parent.datasetTable.loc[self.parent.datasetOperationsTable.loc[currentIndex].name[0]]['DatasetDefaultResampling']
+                defIdx = self.layoutAggregationOptions.predictorAggregationOptions.index(defResampling)
+                self.layoutAggregationOptions.radioButtons.button(defIdx).setChecked(True)
             else: #set defined aggregation scheme
                 self.layoutAggregationOptions.aggLabel2.setStyleSheet("color : green")
                 defIdx = self.layoutAggregationOptions.predictorAggregationOptions.index(accumMethod)
@@ -2308,7 +2312,7 @@ class ModelCreationTab(QtWidgets.QWidget):
             print('-------------------------')
             print('Beginning regression calculations...')
             self.rg = RegressionWorker.RegressionWorker(self.parent, modelRunTableEntry=self.parent.modelRunsTable.iloc[0])
-            #self.rg.setData()
+            self.rg.setData()
             #self.rg.run()
 
 
