@@ -16,6 +16,8 @@ from resources.GUI.CustomWidgets.customTabs import EnhancedTabWidget
 from resources.GUI.CustomWidgets.richTextButtons import richTextButton, richTextButtonCheckbox, richTextDescriptionButton
 from resources.GUI.CustomWidgets.SpreadSheet import SpreadSheetViewOperations
 from resources.GUI.WebMap import webMapView
+from resources.modules.StatisticalModelsTab import RegressionWorker
+
 # import pandas as pd
 import numpy as np
 from dateutil import parser
@@ -1477,12 +1479,18 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.summaryStartButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Start</strong>')
         self.summaryStartButton.setMaximumSize(125, 65)
 
+        # Add placeholder for potential error messages
+        self.summaryLayoutErrorLabel = QtWidgets.QLabel('')
+        self.summaryLayoutErrorLabel.setVisible(False)
+        self.summaryLayoutErrorLabel.setWordWrap(True)
+
         # Connect the start button to its action function
         self.summaryStartButton.clicked.connect(self._applySummaryStart)
 
         # Create an horizontal layout, aligned to the right
         summaryButtonsLayout = QtWidgets.QHBoxLayout()
         summaryButtonsLayout.setAlignment(QtCore.Qt.AlignRight)
+        summaryRightLayout.addWidget(self.summaryLayoutErrorLabel)
 
         summaryButtonsLayout.addWidget(self.summaryClearButton)
         summaryButtonsLayout.addWidget(self.summaryStartButton)
@@ -1491,6 +1499,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         summaryButtonsLayoutWidget = QtWidgets.QWidget()
         summaryButtonsLayoutWidget.setLayout(summaryButtonsLayout)
         summaryRightLayout.addWidget(summaryButtonsLayoutWidget)
+
 
         ## Add the summary right pane to the summary layout ##
         # Create the widget to wrap the layout
@@ -2136,18 +2145,36 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ### Reset the button state ###
         self.summaryStartButton.setChecked(False)
+        errorString = 'Model Errors: '
 
-        ### Check all required options are defined ###
-        # Check required self.modelRunsTable entries are defined
+        ### Check if a predictand has been selected
+        if self.parent.modelRunsTable.shape[0] < 1:
+            errorString += 'Select and define a valid predictand from the Forecast Target tab. '
 
-        ### Populate self.modelRunsTable ###
+        ### Get predictors ###
+        predPool = []
+        predPeriods = []
+        predMethods = []
+        predForced = []
+
+        for index, row in self.parent.datasetOperationsTable.iterrows():
+            predPool.append(row.name[0])
+            predPeriods.append(str(row['AccumulationPeriod']))
+            predMethods.append(str(row['AccumulationMethod']))
+            predForced.append(str(row['ForcingFlag']))
+
+        if len(predPool) < 1:
+            errorString += 'Select at least 1 predictor from the Predictors tab. '
+
+        if predPeriods.count('None') > 0 or predMethods.count('None') > 0 or predForced.count('None') > 0:
+            errorString += 'Fully define aggregation options for selected predictors on the Predictors tab. '
+
+        ### Get base model run definitions ###
         # Pre-processors
         preProcList = []
         for preProc in self.optionsPreprocessor:
             if preProc.isChecked():
                 preProcList.append(preProc.objectName())
-
-        self.parent.modelRunsTable.loc[0]['Preprocessors'] = preProcList
 
         # Regression algorithms
         regAlgs = []
@@ -2155,15 +2182,11 @@ class ModelCreationTab(QtWidgets.QWidget):
             if regAlg.isChecked():
                 regAlgs.append(regAlg.objectName())
 
-        self.parent.modelRunsTable.loc[0]['RegressionTypes'] = regAlgs
-
         # Feature selection algorithms
         selAlgs = []
         for selAlg in self.optionsSelection:
             if selAlg.isChecked():
                 selAlgs.append(selAlg.objectName())
-
-        self.parent.modelRunsTable.loc[0]['FeatureSelectionTypes'] = selAlgs
 
         # Scoring parameters
         scoreParams = []
@@ -2171,15 +2194,36 @@ class ModelCreationTab(QtWidgets.QWidget):
             if scoreParam.isChecked():
                 scoreParams.append(scoreParam.objectName())
 
-        self.parent.modelRunsTable.loc[0]['ScoringParameters'] = scoreParams
+        if len(preProcList) < 1 or len(regAlgs) < 1 or len(selAlgs) < 1 or len(scoreParams) < 1:
+            errorString += 'Select at least 1 Preprocessor, Regressor, Feature Selector, and Model Scoring option from the Options tab. '
 
         ### Apply operations to datasets ###
 
-        ### Generate predictors ###
+        ### Final go no-go ###
+        if len(errorString) > 20:
+            self.summaryLayoutErrorLabel.setText(errorString)
+            self.summaryLayoutErrorLabel.setStyleSheet("color : red")
+            self.summaryLayoutErrorLabel.setVisible(True)
+        else:
+            # Populate self.modelRunsTable with validated entries
+            self.parent.modelRunsTable.loc[0]['PredictorGroups'] = []
+            self.parent.modelRunsTable.loc[0]['PredictorGroupMapping'] = []
+            self.parent.modelRunsTable.loc[0]['PredictorPool'] = predPool
+            self.parent.modelRunsTable.loc[0]['PredictorForceFlag'] = predForced
+            self.parent.modelRunsTable.loc[0]['PredictorPeriods'] = predPeriods
+            self.parent.modelRunsTable.loc[0]['PredictorMethods'] = predMethods
+            self.parent.modelRunsTable.loc[0]['CrossValidationType'] = 'K-Fold (10 folds)'
+            self.parent.modelRunsTable.loc[0]['Preprocessors'] = preProcList
+            self.parent.modelRunsTable.loc[0]['RegressionTypes'] = regAlgs
+            self.parent.modelRunsTable.loc[0]['FeatureSelectionTypes'] = selAlgs
+            self.parent.modelRunsTable.loc[0]['ScoringParameters'] = scoreParams
+            ### Kick off the analysis ###
+            print(self.parent.modelRunsTable.iloc[0])
+            print('Beginning regression calculations...')
+            self.rg = RegressionWorker.RegressionWorker(self.parent, modelRunTableEntry=self.parent.modelRunsTable.iloc[0])
+            #self.rg.setData()
+            #self.rg.run()
 
-        ### Kick off the analysis ###
-        print('Beginning regression calculations...')
-        print('I am batman!')
 
     def applyPredictandAggregationOption(self):
         predictandData = self.targetSelect.currentData()
@@ -2221,6 +2265,7 @@ class ModelCreationTab(QtWidgets.QWidget):
             # Update the summary boxes
             ##print('@@ debug statement')
             # Update predictand options
+            self.summaryLayoutErrorLabel.setVisible(False)
             if self.parent.modelRunsTable.shape[0] < 1:
                 self.summaryLayoutLabel1.setText('     Period: None')
                 self.summaryLayoutLabel1.setStyleSheet("color : red")
