@@ -1143,6 +1143,7 @@ class ModelCreationTab(QtWidgets.QWidget):
                     regrText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(
                         self.parent.preProcessors[prKey]['name'], self.parent.preProcessors[prKey]['description'])
                     button = richTextDescriptionButton(self, regrText)
+                    button.setObjectName(str(prKey))
 
                     # Add the button to the layout and the tracking list
                     optionsPreprocessorLayout.addWidget(button, i, j, 1, 1)
@@ -1173,6 +1174,7 @@ class ModelCreationTab(QtWidgets.QWidget):
                     regrText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(
                         self.parent.regressors[regrKey]['name'], self.parent.regressors[regrKey]['description'])
                     button = richTextDescriptionButton(self, regrText)
+                    button.setObjectName(str(regrKey))
 
                     # Add the button to the layout and the tracking list
                     optionsRegressionLayout.addWidget(button, i, j, 1, 1)
@@ -1204,6 +1206,7 @@ class ModelCreationTab(QtWidgets.QWidget):
                         self.parent.featureSelectors[regrKey]['name'],
                         self.parent.featureSelectors[regrKey]['description'])
                     button = richTextDescriptionButton(self, regrText)
+                    button.setObjectName(str(regrKey))
 
                     # Add the button to the layout and the holding list
                     optionsSelectionLayout.addWidget(button, i, j, 1, 1)
@@ -1237,6 +1240,7 @@ class ModelCreationTab(QtWidgets.QWidget):
                         self.parent.scorers['info'][nameKey]['NAME'], self.parent.scorers['info'][nameKey]['WEBSITE'],
                         self.parent.scorers['info'][nameKey]['HTML'])
                     button = richTextDescriptionButton(self, regrText)
+                    button.setObjectName(str(nameKey))
 
                     # Add the button to the layout and the holding list
                     optionsScoringLayout.addWidget(button, i, j, 1, 1)
@@ -2133,9 +2137,41 @@ class ModelCreationTab(QtWidgets.QWidget):
         ### Reset the button state ###
         self.summaryStartButton.setChecked(False)
 
-        # Check all required options are defined
+        ### Check all required options are defined ###
         # Check required self.modelRunsTable entries are defined
 
+        ### Populate self.modelRunsTable ###
+        # Pre-processors
+        preProcList = []
+        for preProc in self.optionsPreprocessor:
+            if preProc.isChecked():
+                preProcList.append(preProc.objectName())
+
+        self.parent.modelRunsTable.loc[0]['Preprocessors'] = preProcList
+
+        # Regression algorithms
+        regAlgs = []
+        for regAlg in self.optionsRegression:
+            if regAlg.isChecked():
+                regAlgs.append(regAlg.objectName())
+
+        self.parent.modelRunsTable.loc[0]['RegressionTypes'] = regAlgs
+
+        # Feature selection algorithms
+        selAlgs = []
+        for selAlg in self.optionsSelection:
+            if selAlg.isChecked():
+                selAlgs.append(selAlg.objectName())
+
+        self.parent.modelRunsTable.loc[0]['FeatureSelectionTypes'] = selAlgs
+
+        # Scoring parameters
+        scoreParams = []
+        for scoreParam in self.optionsScoring:
+            if scoreParam.isChecked():
+                scoreParams.append(scoreParam.objectName())
+
+        self.parent.modelRunsTable.loc[0]['ScoringParameters'] = scoreParams
 
         ### Apply operations to datasets ###
 
