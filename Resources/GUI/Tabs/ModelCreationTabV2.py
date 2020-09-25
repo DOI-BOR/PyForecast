@@ -1122,6 +1122,37 @@ class ModelCreationTab(QtWidgets.QWidget):
         gb.setLayout(layout2)
         layoutMain.addWidget(gb)
 
+        ### Setup the cross-validation algorithms ###
+        ## Create the label ##
+        label = QtWidgets.QLabel()
+        label.setTextFormat(QtCore.Qt.RichText)
+        label.setText('<strong style="font-size: 18px">Cross-Validation Algorithms</strong>')
+        layoutMain.addWidget(label)
+        layoutMain.addWidget(QtWidgets.QLabel("Select one algorithm:"))
+
+        ## Set the boxes containing options into the layout grid ##
+        # Create and format the layout
+        crossValidationLayout = QtWidgets.QGridLayout()
+        crossValidationLayout.setContentsMargins(1, 1, 1, 1)
+
+        # Loop and fill the layout
+        self.optionsCrossValidators = []
+        numCrossValidators = len(self.parent.crossValidators.keys())
+        for i in range(int(numCrossValidators / 3) + 1 if numCrossValidators % 3 != 0 else int(numCrossValidators / 3)):
+            for j in range(3):
+                if (i * 3) + j < numCrossValidators:
+                    cvKey = list((self.parent.crossValidators.keys()))[(3 * i) + j]
+                    cvText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(
+                        self.parent.crossValidators[cvKey]['name'], self.parent.crossValidators[cvKey]['description'])
+                    button = richTextDescriptionButton(self, cvText)
+                    button.setObjectName(str(cvKey))
+
+                    # Add the button to the layout and the tracking list
+                    crossValidationLayout.addWidget(button, i, j, 1, 1)
+                    self.optionsCrossValidators.append(button)
+
+        layoutMain.addLayout(crossValidationLayout)
+
         ### Setup the preprocessing algorithms ###
         ## Create the label ##
         label = QtWidgets.QLabel()
@@ -1315,6 +1346,42 @@ class ModelCreationTab(QtWidgets.QWidget):
         ### Create the right side of the pane ###
         ## Create a vertical layout ##
         summaryRightLayout = QtWidgets.QVBoxLayout()
+
+        ## Layout the cross validators grid ##
+        # Create the label
+        crossValidatorLabelWidget = QtWidgets.QLabel('<strong style="font-size: 18px">Cross-Validators</strong>')
+
+        # Add the label into the right layout
+        summaryRightLayout.addWidget(crossValidatorLabelWidget)
+
+        # Create the grid layout
+        crossValidatorLayout = QtWidgets.QGridLayout()
+
+        # Loop and fill the preprocessor options
+        numCrossValidators = len(self.parent.crossValidators.keys())
+        counter = 0
+        for i in range(int(numCrossValidators/3) + 1 if numCrossValidators%3 != 0 else int(numCrossValidators/3)):
+            for j in range(3):
+                if (i*3)+j < numCrossValidators:
+                    cvKey = list((self.parent.crossValidators.keys()))[(3*i)+j]
+                    cvText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong>'.format(self.parent.crossValidators[cvKey]['name'])
+
+                    # Disable the button to prevent user adjustements
+                    button = richTextButtonCheckbox(cvText)
+                    button.setDisabled(True)
+
+                    # Add the button into the layout
+                    crossValidatorLayout.addWidget(button, i, j, 1, 1)
+
+                    # Link the button with the corresponding box on the options tab
+                    recipricalBox = self.optionsCrossValidators[counter]
+                    recipricalBox.updateLinkedButton.connect(button.update_from_exteral)
+                    counter += 1
+
+        # Wrap the layout in a widget and add to the layout
+        crossValidatorLayoutWidget = QtWidgets.QWidget()
+        crossValidatorLayoutWidget.setLayout(crossValidatorLayout)
+        summaryRightLayout.addWidget(crossValidatorLayoutWidget)
 
         ## Layout the preprocessors grid ##
         # Create the label
@@ -2170,6 +2237,13 @@ class ModelCreationTab(QtWidgets.QWidget):
             errorString += 'Fully define aggregation options for selected predictors on the Predictors tab. '
 
         ### Get base model run definitions ###
+
+        # Cross validators
+        crossVals = []
+        for crossVal in self.optionsCrossValidators:
+            if crossVal.isChecked():
+                crossVals.append(crossVal.objectName())
+
         # Pre-processors
         preProcList = []
         for preProc in self.optionsPreprocessor:
@@ -2197,6 +2271,9 @@ class ModelCreationTab(QtWidgets.QWidget):
         if len(preProcList) < 1 or len(regAlgs) < 1 or len(selAlgs) < 1 or len(scoreParams) < 1:
             errorString += 'Select at least 1 Preprocessor, Regressor, Feature Selector, and Model Scoring option from the Options tab. '
 
+        if len(crossVals) != 1:
+            errorString += 'Select 1 Cross-Validation algorithm. '
+
         ### Apply operations to datasets ###
 
         ### Final go no-go ###
@@ -2212,13 +2289,15 @@ class ModelCreationTab(QtWidgets.QWidget):
             self.parent.modelRunsTable.loc[0]['PredictorForceFlag'] = predForced
             self.parent.modelRunsTable.loc[0]['PredictorPeriods'] = predPeriods
             self.parent.modelRunsTable.loc[0]['PredictorMethods'] = predMethods
-            self.parent.modelRunsTable.loc[0]['CrossValidationType'] = 'K-Fold (10 folds)'
+            self.parent.modelRunsTable.loc[0]['CrossValidationType'] = crossVals[0]
             self.parent.modelRunsTable.loc[0]['Preprocessors'] = preProcList
             self.parent.modelRunsTable.loc[0]['RegressionTypes'] = regAlgs
             self.parent.modelRunsTable.loc[0]['FeatureSelectionTypes'] = selAlgs
             self.parent.modelRunsTable.loc[0]['ScoringParameters'] = scoreParams
             ### Kick off the analysis ###
+            print('---- MODEL RUN TABLE ----')
             print(self.parent.modelRunsTable.iloc[0])
+            print('-------------------------')
             print('Beginning regression calculations...')
             self.rg = RegressionWorker.RegressionWorker(self.parent, modelRunTableEntry=self.parent.modelRunsTable.iloc[0])
             #self.rg.setData()

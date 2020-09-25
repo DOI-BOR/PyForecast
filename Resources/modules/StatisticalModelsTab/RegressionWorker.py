@@ -413,7 +413,7 @@ if __name__ == '__main__':
             self.featureSelectors = {}
             self.crossValidators = {}
             self.scorers = {}
-            for file_ in os.listdir("resources/modules/StatisticalModelsTab/RegressionAlgorithms"):
+            for file_ in os.listdir("RegressionAlgorithms"):
                 if '.py' in file_:
                     scriptName = file_[:file_.index(".py")]
                     mod = importlib.import_module("resources.modules.StatisticalModelsTab.RegressionAlgorithms.{0}".format(scriptName))
@@ -423,7 +423,7 @@ if __name__ == '__main__':
                     self.regressors[scriptName]['website'] = self.regressors[scriptName]["module"].WEBSITE
                     self.regressors[scriptName]['description'] = self.regressors[scriptName]["module"].DESCRIPTION
 
-            for file_ in os.listdir("resources/modules/StatisticalModelsTab/PreProcessingAlgorithms"):
+            for file_ in os.listdir("PreProcessingAlgorithms"):
                 if '.py' in file_:
                     scriptName = file_[:file_.index(".py")]
                     mod = importlib.import_module("resources.modules.StatisticalModelsTab.PreProcessingAlgorithms.{0}".format(scriptName))
@@ -432,7 +432,7 @@ if __name__ == '__main__':
                     self.preProcessors[scriptName]["name"] = self.preProcessors[scriptName]["module"].NAME
                     self.preProcessors[scriptName]["description"] = self.preProcessors[scriptName]["module"].DESCRIPTION
             
-            for file_ in os.listdir("resources/modules/StatisticalModelsTab/FeatureSelectionAlgorithms"):
+            for file_ in os.listdir("FeatureSelectionAlgorithms"):
                 if '.py' in file_:
                     scriptName = file_[:file_.index(".py")]
                     mod = importlib.import_module("resources.modules.StatisticalModelsTab.FeatureSelectionAlgorithms.{0}".format(scriptName))
@@ -593,7 +593,7 @@ if __name__ == '__main__':
         if i%15 == 0:
             dfOut.to_csv("results_hindcasts8.csv")
             
-    
+
     # from resources.modules.StatisticalModelsTab import PredictionIntervalBootstrap
     # import time
     # import warnings
