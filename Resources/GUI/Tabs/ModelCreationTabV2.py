@@ -2175,13 +2175,18 @@ class ModelCreationTab(QtWidgets.QWidget):
         """
 
         ### Reset the dataset operations table ###
-        # Drop all rows in the table
+        # Drop all rows in the tables
+        self.parent.modelRunsTable.drop(self.parent.modelRunsTable.index, inplace=True)
         self.parent.datasetOperationsTable.drop(self.parent.datasetOperationsTable.index, inplace=True)
 
         # Update the table display elements
         self.summaryListWidget.model().loadDataIntoModel(self.parent.datasetTable, self.parent.datasetOperationsTable)
 
         ### Reset all processing options ###
+        # Reset the cross validation operations
+        for x in self.optionsCrossValidators:
+            x.updateToUnchecked()
+
         # Reset the preprocessing operations
         for x in self.optionsPreprocessor:
             x.updateToUnchecked()
@@ -2200,9 +2205,11 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ### Reset the button state ###
         self.summaryClearButton.setChecked(False)
+        self._updateTabDependencies(3)
 
         ### Emit change to the doublelist object ###
         self.layoutSimpleDoubleList.resetOutputItems()
+
 
     def _applySummaryStart(self):
         """
@@ -2268,11 +2275,12 @@ class ModelCreationTab(QtWidgets.QWidget):
             if scoreParam.isChecked():
                 scoreParams.append(scoreParam.objectName())
 
+        if len(crossVals) != 1:
+            errorString += 'Select 1 Cross-Validation algorithm from the Options tab. '
+
         if len(preProcList) < 1 or len(regAlgs) < 1 or len(selAlgs) < 1 or len(scoreParams) < 1:
             errorString += 'Select at least 1 Preprocessor, Regressor, Feature Selector, and Model Scoring option from the Options tab. '
 
-        if len(crossVals) != 1:
-            errorString += 'Select 1 Cross-Validation algorithm. '
 
         ### Apply operations to datasets ###
 
