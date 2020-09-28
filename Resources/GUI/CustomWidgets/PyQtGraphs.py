@@ -906,34 +906,66 @@ class TimeSeriesLinePlot(pg.PlotItem):
 
         return
 
-class TimeSeriesLineBarPlot():
+
+class TimeSeriesLineBarPlot:
 
     def __init__(self, parent=None):
         """
-
-
         """
         # todo: doc string
 
         # Create the new chart
         self.chart = QtChart.QChart()
-        self.chartView = None
+        self.chartView = QtChart.QChartView(self.chart)
+        self.chartView.setRenderHint(QtGui.QPainter.Antialiasing)
+
+        # Setup the formatting
+        self.chartView.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.MinimumExpanding)
+        self.chart.layout().setContentsMargins(0, 0, 0, 0) # Force the chart to fill the frame
+
+        # Enable the hover tooltip functionality
+        self.chart.setAcceptHoverEvents(True)
 
         # Create the bar series
         self.barSeries = QtChart.QBarSeries()
 
         # Create a list of of time series
         self.timeSeries = []
+        self.timeSeriesData = []
 
         # Create the axis variables
         self.barCategories = None
+        self.xAxis = None
+        self.yAxis = []
 
-    def createLinePlotItem(self, label, data):
+    def clear(self):
+        #todo: doc string
+
+        # Clear the data objects
+        self.timeSeries = []
+        self.timeSeriesData = []
+        self.barSeries = QtChart.QBarSeries()
+        self.barCategories = None
+
+        # Remove all series from the current chart
+        self.chart.removeAllSeries()
+
+        # Remove all axes from the current chart
+        self.chart.removeAxis(self.xAxis)
+        for axis in self.yAxis:
+            self.chart.removeAxis(axis)
+        self.yAxis = []
+
+    def createLinePlotItem(self, label, dataSeries, labels):
         """
         Setup the line plot items using the existing format
-
         """
         # todo: doc string
+
+        # Get the Data
+        # x = dataSeries.index.astype('int64').values / 1000000000  # Dates in seconds since epoch
+        y = dataSeries.values
+        x = np.arange(0, len(y), 1)[::-1]
 
         # Create the line series
         lineSeries = QtChart.QLineSeries()
@@ -942,16 +974,18 @@ class TimeSeriesLineBarPlot():
         lineSeries.setName(label)
 
         # Append the values into the series
-        for values in data:
-            lineSeries.append(QtCore.QPoint(values[0], values[1]))
+        for entry in range(0, len(x), 1):
+            lineSeries.append(QtCore.QPointF(x[entry], y[entry]))
 
         # Append the line series into the class list
         self.timeSeries.append(lineSeries)
 
+        # Append the data into holding array
+        self.timeSeriesData.append(dataSeries)
+
     def createBarPlotItem(self, label, data):
         """
         Create bar plots superimposed on the line plots
-
         """
         # todo: doc string
 
@@ -967,16 +1001,12 @@ class TimeSeriesLineBarPlot():
 
     def setBarCategories(self, barCategories):
         """
-
-
         """
 
         self.barCategories = barCategories
 
-
     def plot(self):
         """
-
         """
         # todo: doc string
 
@@ -991,30 +1021,60 @@ class TimeSeriesLineBarPlot():
         ### Format the charts ###
         ## Create custom x axes ##
         # Instantiate the bar axis object
-        xAxis = QtChart.QBarCategoryAxis()
+        self.xAxis = QtChart.QBarCategoryAxis()
 
         # Add the categories into the axis
-        xAxis.append(self.barCategories)
+        self.xAxis.append(self.barCategories)
 
         ## Set the x axis on all the series ##
         # Set the bar series
-        self.chart.setAxisX(xAxis, self.barSeries)
+        self.chart.setAxisX(self.xAxis, self.barSeries)
 
         # Loop and set the time series
         for series in self.timeSeries:
-            self.chart.setAxisX(xAxis, series)
+            self.chart.setAxisX(self.xAxis, series)
 
         ## Create the custom y axes ##
-        # Instatiate the axis object
-        yAxis = QtChart.QValueAxis()
 
         ## Set the x axis on all the series ##
-        # Set the bar series
-        self.chart.setAxisY(yAxis, self.barSeries)
-
         # Loop and set the time series
-        for series in self.timeSeries:
-            self.chart.setAxisY(yAxis, series)
+        if len(self.timeSeries) > 0:
+            # Create the right axis associated with the predictor
+            axisY = QtChart.QValueAxis()
+            axisY.setMax(np.nanmax(self.timeSeriesData[0].values) * 1.05)
+            axisY.setMin(np.nanmin(self.timeSeriesData[0].values) * 0.95)
+            axisY.setTickCount(9)
+
+            # Associate the axis with the series and add it to the plot
+            self.chart.addAxis(axisY, QtCore.Qt.AlignRight)
+            self.chart.setAxisY(axisY, self.timeSeries[0])
+            self.yAxis.append(axisY)
+
+            # Create the left axis associated with the target
+            axisY = QtChart.QValueAxis()
+            axisY.setMax(np.nanmax(self.timeSeriesData[1].values) * 1.05)
+            axisY.setMin(np.nanmin(self.timeSeriesData[1].values) * 0.95)
+            axisY.setTickCount(9)
+
+            # Associate the axis with the series and add it to the plot
+            self.chart.addAxis(axisY, QtCore.Qt.AlignLeft)
+            self.chart.setAxisY(axisY, self.timeSeries[1])
+            self.yAxis.append(axisY)
+
+        # Set the bar series
+        # Instatiate the axis object
+        barAxis = QtChart.QValueAxis()
+        barAxis.setVisible(False)
+
+        # Limit the range
+        barAxis.setMax(1)
+        barAxis.setMin(-1)
+
+        self.yAxis.append(barAxis)
+        self.chart.setAxisY(barAxis, self.barSeries)
+
+        ### Connect the bar with the tooltip ###
+        # self.barSeries.hovered.connect(self._tooltip)
 
         ### Show the legend ###
         # Define the legend
@@ -1024,10 +1084,103 @@ class TimeSeriesLineBarPlot():
         legend.setVisible(True)
 
         ### Set the chart to render ###
-        self.chartView = QtChart.QChartView(self.chart)
-        self.chartView.setRenderHint(QtGui.QPainter.Antialiasing)
+        self.chartView.update()
 
-        # Not sure if I need to do anything after this to get it render correctly
+    def _tooltip(self, point, state):
+
+        # if (m_tooltip == 0):
+        #     m_tooltip = new Callout(m_chart);
+        #
+        # if state:
+        #     m_tooltip->setText(QString("X: %1 \nY: %2 ").arg(point.x()).arg(point.y()));
+        #     m_tooltip->setAnchor(point);
+        #     m_tooltip->setZValue(11);
+        #     m_tooltip->updateGeometry();
+        #     m_tooltip->show();
+        #     } else {
+        #     m_tooltip->hide();
+
+        tooltip = Callout(self.chart)
+        tooltip.setText('Test')
+        tooltip.show()
+
+        print('@@')
+
+class Callout:
+
+    def __init__(self, chart):
+        self.graphicsItem = QtWidgets.QGraphicsItem(chart)
+        self.chart = chart
+
+    def boundingRect(self, m_rect):
+
+        # anchor = mapFromParent(m_chart->mapToPosition(m_anchor))
+        anchor = self.chart.position
+        rect  = QtCore.QRectF()
+        rect.setLeft(min(m_rect.left(), anchor.x()));
+        rect.setRight(max(m_rect.right(), anchor.x()));
+        rect.setTop(min(m_rect.top(), anchor.y()));
+        rect.setBottom(max(m_rect.bottom(), anchor.y()));
+        return rect
+
+    def paint(self, painter, text):
+
+        # m_rect = QtCore.QRect(0, 0, 150, 150)
+        QtGui.QPainterPath.addRoundedRect(self.rect, 5, 5)
+
+        # establish the position of the anchor point in relation to m_rect
+        above = self.anchor.y() <= self.rect.top();
+        aboveCenter = self.anchor.y() > self.rect.top() and self.anchor.y() <= self.rect.center().y();
+        belowCenter = self.anchor.y() > self.rect.center().y() and self.anchor.y() <= self.rect.bottom();
+        below = self.anchor.y() > self.rect.bottom();
+
+        onLeft = self.anchor.x() <= self.rect.left();
+        leftOfCenter = self.anchor.x() > self.rect.left() and self.anchor.x() <= self.rect.center().x();
+        rightOfCenter = self.anchor.x() > self.rect.center().x() and self.anchor.x() <= self.rect.right();
+        onRight = self.anchor.x() > self.rect.right();
+
+        # get the nearest m_rect corner.
+        x = (onRight + rightOfCenter) * self.rect.width();
+        y = (below + belowCenter) * self.rect.height();
+        cornerCase = (above and onLeft) or (above and onRight) or (below and onLeft) or (below and onRight);
+        vertical = abs(self.anchor.x() - x) > abs(self.anchor.y() - y);
+
+        x1 = x + leftOfCenter * 10 - rightOfCenter * 20 + cornerCase * ~vertical * (onLeft * 10 - onRight * 20);
+        y1 = y + aboveCenter * 10 - belowCenter * 20 + cornerCase * vertical * (above * 10 - below * 20);
+        point1 = QtCore.QPointF(x1, y1)
+
+        x2 = x + leftOfCenter * 20 - rightOfCenter * 10 + cornerCase * ~vertical * (onLeft * 20 - onRight * 10);
+        y2 = y + aboveCenter * 20 - belowCenter * 10 + cornerCase * vertical * (above * 20 - below * 10);
+        point2 = QtCore.QPointF(x2, y2)
+
+        QtGui.QPainterPath.moveTo(point1)
+        QtGui.QPainterPath.lineTo(self.anchor)
+        QtGui.QPainterPath.lineTo(point2)
+        QtGui.QPainterPath.simplified()
+
+        painter.setBrush(QtGui.QColor(255, 255, 255));
+        # painter.drawPath(path);
+        painter.drawText(self.rect, text);
+
+    def mousePressEvent(self, event):
+        event.setAccepted(True);
+
+    def setText(self, text):
+        m_textRect = QtGui.QFontMetrics.boundingRect(QtCore.QRect(0, 0, 150, 150), QtCore.Qt.AlignLeft, text)
+        m_textRect.translate(5, 5);
+        # prepareGeometryChange();
+
+        m_rect = m_textRect.adjusted(-5, -5, 5, 5);
+        self.rect = m_rect
+
+    def setAnchor(self, point):
+        self.anchor = point;
+
+
+    # def updateGeometry():
+    #     prepareGeometryChange();
+    #     setPos(m_chart->mapToPosition(m_anchor) + QPoint(10, -50));
+
 
 
 def sameUnits(unit1, unit2):
