@@ -19,6 +19,7 @@ from resources.GUI.WebMap import webMapView
 # import pandas as pd
 import numpy as np
 from dateutil import parser
+import copy
 
 from resources.modules.StatisticalModelsTab.Operations.Fill import *
 
@@ -451,72 +452,6 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Set the items into the simple layout
         predictorLayoutSimple.setLayout(layoutSimple)
 
-
-    def _updateSimpleLayoutAggregationOptions(self):
-        if self.layoutSimpleDoubleList.listOutput.currentIndex().row() >= 0:
-            # Get the current datasest index
-            currentIndex = self.layoutSimpleDoubleList.listOutput.datasetTable.index[self.layoutSimpleDoubleList.listOutput.currentIndex().row()]
-
-            # Get the current dataset and operations settings
-            datasetInfo = self.fillList.datasetTable.loc[currentIndex]["DatasetName"] + " - " + \
-                          self.fillList.datasetTable.loc[currentIndex]["DatasetParameter"] + " " + \
-                          str(self.fillList.datasetTable.loc[currentIndex].name)
-            accumMethod = str(self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationMethod'])
-            accumPeriod = str(self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationPeriod'])
-            predForcing = str(self.parent.datasetOperationsTable.loc[currentIndex]['ForcingFlag'])
-
-            self.layoutAggregationOptions.aggLabel1.setText('<strong style="font-size: 18px">Selected Predictor: ' + datasetInfo + '<strong>')
-            self.layoutAggregationOptions.aggLabel2.setText("     Accumulation Method: " + accumMethod)
-            self.layoutAggregationOptions.aggLabel3.setText("     Accumulation Period: " + accumPeriod)
-            self.layoutAggregationOptions.aggLabel4.setText("     Forced Flag: " + predForcing)
-
-            # Set date selector range
-            minT = parser.parse(str(np.sort(list(set(self.parent.dataTable.loc[(slice(None),currentIndex[0]),'Value'].index.get_level_values(0).values)))[0]))
-            maxT = parser.parse(str(np.sort(list(set(self.parent.dataTable.loc[(slice(None),currentIndex[0]),'Value'].index.get_level_values(0).values)))[-1]))
-            self.layoutAggregationOptions.periodStart.minimumDate = minT
-            self.layoutAggregationOptions.periodStart.maximumDate = maxT
-            self.layoutAggregationOptions.periodStart.setDate(minT)
-
-            # Set aggregation option on UI
-            if accumMethod == 'None':
-                self.layoutAggregationOptions.aggLabel2.setStyleSheet("color : red")
-            else: #set defined aggregation scheme
-                self.layoutAggregationOptions.aggLabel2.setStyleSheet("color : green")
-                defIdx = self.layoutAggregationOptions.predictorAggregationOptions.index(accumMethod)
-                self.layoutAggregationOptions.radioButtons.button(defIdx).setChecked(True)
-
-            # Set aggregation period on UI
-            if accumPeriod == 'None':
-                self.layoutAggregationOptions.aggLabel3.setStyleSheet("color : red")
-            else: #set defined resampling period options
-                self.layoutAggregationOptions.aggLabel3.setStyleSheet("color : green")
-                predPeriodItems = accumPeriod.split("/") #R/1978-03-01/P1M/F12M
-                self.layoutAggregationOptions.periodStart.setDate(parser.parse(predPeriodItems[1]))
-                predPeriodPStep = str(predPeriodItems[2])[-1]
-                a = self.layoutAggregationOptions.predictorResamplingOptions.index(predPeriodPStep)
-                self.layoutAggregationOptions.tStepChar.setCurrentIndex(self.layoutAggregationOptions.predictorResamplingOptions.index(predPeriodPStep))
-                predPeriodPNum = ''.join(map(str,[int(s) for s in predPeriodItems[2] if s.isdigit()]))
-                self.layoutAggregationOptions.tStepInteger.setValue(int(predPeriodPNum))
-                predPeriodFStep = str(predPeriodItems[3])[-1]
-                self.layoutAggregationOptions.freqChar.setCurrentIndex(self.layoutAggregationOptions.predictorResamplingOptions.index(predPeriodFStep))
-                predPeriodFNum = ''.join(map(str,[int(s) for s in predPeriodItems[3] if s.isdigit()]))
-                self.layoutAggregationOptions.freqInteger.setValue(int(predPeriodFNum))
-
-            # Set forcing flag on UI
-            if predForcing == 'None':
-                self.layoutAggregationOptions.aggLabel4.setStyleSheet("color : red")
-            else: #set defined forcing flag
-                self.layoutAggregationOptions.aggLabel4.setStyleSheet("color : green")
-                self.layoutAggregationOptions.predForceCheckBox.setChecked(predForcing == 'True')
-        else:
-            self.layoutAggregationOptions.aggLabel1.setText('<strong style="font-size: 18px">No Predictor Selected<strong>')
-            self.layoutAggregationOptions.aggLabel2.setText("     Accumulation Method: NA")
-            self.layoutAggregationOptions.aggLabel3.setText("     Accumulation Period: NA")
-            self.layoutAggregationOptions.aggLabel4.setText("     Forced Flag: NA")
-
-        self.layoutAggregationOptions.resamplingUpdate()
-
-
     def _createDataFillLayout(self, layoutFillSA):
         """
         Lays out the fill subtab in the expert predictor mode
@@ -921,35 +856,24 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.layoutDataDoubleList.listOutput.updateSignalToExternal.connect(self.windowList.refreshDatasetListFromExtenal)
         layoutWindowLeftLayout.addWidget(self.windowList)
 
+        # Connect the list widget to the right panel to adjust the display
+        self.windowList.currentRowChanged.connect(self._updateWindowOptionsOnDataset)
+
         ## Create the right panel ##
         # Create the layouts for subsequent use
         layoutWindowRightLayout = QtWidgets.QVBoxLayout()
         layoutWindowRightLayout.setContentsMargins(0, 0, 0, 0)
 
-        layoutWindowRightGridLayout = QtWidgets.QGridLayout()
-        layoutWindowRightGridLayout.setContentsMargins(0, 0, 0, 0)
+        layoutWindowRightOptionsLayout = QtWidgets.QGridLayout()
+        layoutWindowRightOptionsLayout.setContentsMargins(0, 0, 0, 0)
 
         ### Setup the upper plot ###
         # Create a line/bar plot object
-        dataPlot = TimeSeriesLineBarPlot()
-
-        # Add some random data to test
-        dataPlot.createBarPlotItem('test1', [0, 1, 2])
-        dataPlot.createBarPlotItem('test2', [3, 4, 6])
-        dataPlot.createBarPlotItem('test3', [7, 8, 9])
-
-        # Add some random timeseries data
-        # @@ These aren't referenced to the values, but to the positions ont eh cart
-        dataPlot.createLinePlotItem('test4', [[0, 2], [2, 4], [4, 6]])
-
-        # Set the bar categories
-        dataPlot.setBarCategories(['1', '2', '3'])
-
-        # Plot the data
-        dataPlot.plot()
+        self.layoutWindowPlot = TimeSeriesLineBarPlot()
+        self.layoutWindowPlot.plot()
 
         # Add into the main layout
-        layoutWindowRightGridLayout.addWidget(dataPlot.chartView, 0, 0, 1, 3)
+        layoutWindowRightLayout.addWidget(self.layoutWindowPlot.chartView)
 
         ### Create the date/lag widgets ###
         # todo: capture these values for each dataset on list change
@@ -957,73 +881,78 @@ class ModelCreationTab(QtWidgets.QWidget):
         ## Create the start time widget ##
         # Create the label
         periodStartLabel = QtWidgets.QLabel('Start Date:')
+        periodStartLabel.setSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Maximum)
 
         # Create the date widget
-        self.periodStartWindowLayout = QtWidgets.QDateTimeEdit()
-        self.periodStartWindowLayout.setDisplayFormat("MMMM d")
-        self.periodStartWindowLayout.setCalendarPopup(True)
-        self.periodStartWindowLayout.setMinimumDate(QtCore.QDate(QtCore.QDate().currentDate().year(), 1, 1))
-        self.periodStartWindowLayout.setMaximumDate(QtCore.QDate(QtCore.QDate().currentDate().year(), 12, 31))
+        self.periodStartWindow = QtWidgets.QDateTimeEdit()
+        self.periodStartWindow.setDisplayFormat("MMMM d")
+        self.periodStartWindow.setCalendarPopup(True)
+        self.periodStartWindow.setMinimumDate(QtCore.QDate(1900, 1, 1))
+        self.periodStartWindow.setMaximumDate(QtCore.QDate(QtCore.QDate().currentDate().year(), 12, 31))
+        self.periodStartWindow.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.Maximum)
 
         # Add the widgets to the layout
-        startLayout = QtWidgets.QHBoxLayout()
-        startLayout.setAlignment(QtCore.Qt.AlignLeft)
-        startLayout.addWidget(periodStartLabel, 1)
-        startLayout.addWidget(self.periodStartWindowLayout, 2)
+        periodLayout = QtWidgets.QHBoxLayout()
+        periodLayout.setAlignment(QtCore.Qt.AlignLeft)
+        periodLayout.addWidget(periodStartLabel)
+        periodLayout.addWidget(self.periodStartWindow)
 
-        startLayoutWidget = QtWidgets.QWidget()
-        startLayoutWidget.setLayout(startLayout)
-
-        layoutWindowRightGridLayout.addWidget(startLayoutWidget, 1, 0)
+        # startLayoutWidget = QtWidgets.QWidget()
+        # startLayoutWidget.setLayout(startLayout)
 
         ## Create the stop time widget ##
         # Create the label
         periodEndLabel = QtWidgets.QLabel('End Date:')
+        periodEndLabel.setSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Maximum)
 
         # Create the date widget
-        self.periodEndWindowLayout = QtWidgets.QDateTimeEdit()
-        self.periodEndWindowLayout.setDisplayFormat("MMMM d")
-        self.periodEndWindowLayout.setCalendarPopup(True)
-        self.periodEndWindowLayout.setMinimumDate(QtCore.QDate(QtCore.QDate().currentDate().year(), 1, 1))
-        self.periodEndWindowLayout.setMaximumDate(QtCore.QDate(QtCore.QDate().currentDate().year(), 12, 31))
+        self.periodEndWindow = QtWidgets.QDateTimeEdit()
+        self.periodEndWindow.setDisplayFormat("MMMM d")
+        self.periodEndWindow.setCalendarPopup(True)
+        self.periodEndWindow.setMinimumDate(QtCore.QDate(1900, 1, 1))
+        self.periodEndWindow.setMaximumDate(QtCore.QDate(QtCore.QDate().currentDate().year(), 12, 31))
+        self.periodEndWindow.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.Maximum)
 
         # Add the widgets to the layout
-        stopLayout = QtWidgets.QHBoxLayout()
-        stopLayout.setAlignment(QtCore.Qt.AlignLeft)
-        stopLayout.addWidget(periodEndLabel, 1)
-        stopLayout.addWidget(self.periodEndWindowLayout, 2)
-
-        stopLayoutWidget = QtWidgets.QWidget()
-        stopLayoutWidget.setLayout(stopLayout)
-        layoutWindowRightGridLayout.addWidget(stopLayoutWidget, 1, 1)
+        periodLayout.addWidget(periodEndLabel)
+        periodLayout.addWidget(self.periodEndWindow)
 
         ## Create the lag box widget ##
         # Create the label
         extendGapLabel = QtWidgets.QLabel('Lag Length')
-        # extendGapLabel.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        extendGapLabel.setSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Maximum)
 
         # Create the widget
-        self.layoutWindowLagLimit = QtWidgets.QTextEdit()
+        self.layoutWindowLagLimit = QtWidgets.QLineEdit()
         self.layoutWindowLagLimit.setPlaceholderText('30')
-        self.layoutWindowLagLimit.setFixedHeight(25)
-        # self.layoutWindowLagLimit.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        self.layoutWindowLagLimit.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.Maximum)
+        self.layoutWindowLagLimit.setReadOnly(True)
 
         # Add the widgets to the layout
-        lagLayout = QtWidgets.QHBoxLayout()
-        lagLayout.setAlignment(QtCore.Qt.AlignLeft)
-        lagLayout.addWidget(extendGapLabel, 1)
-        lagLayout.addWidget(self.layoutWindowLagLimit, 2)
+        periodLayout.addWidget(extendGapLabel)
+        periodLayout.addWidget(self.layoutWindowLagLimit)
 
-        lagLayoutWidget = QtWidgets.QWidget()
-        lagLayoutWidget.setLayout(lagLayout)
-        layoutWindowRightGridLayout.addWidget(lagLayoutWidget, 1, 2)
+        periodLayoutWidget = QtWidgets.QWidget()
+        periodLayoutWidget.setLayout(periodLayout)
+        layoutWindowRightLayout.addWidget(periodLayoutWidget)
+
+        ### Connect the plot widgets together with the plotting routines ###
+        self.periodStartWindow.dateChanged.connect(self._updateWindowPlot)
+        self.periodEndWindow.dateChanged.connect(self._updateWindowPlot)
+
+        ### Create a line to delineate the selector from the selector options ###
+        lineA = QtWidgets.QFrame()
+        lineA.setFrameShape(QtWidgets.QFrame.HLine)
+        layoutWindowRightLayout.addWidget(lineA)
 
         ### Add the aggregation options ###
         # Create the widget
         self.layoutWindowAggregationGroup = AggregationOptions(False, orientation='horizontal')
+        self.layoutWindowAggregationGroup.setSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Maximum)
 
         # Add it into the page
-        layoutWindowRightGridLayout.addWidget(self.layoutWindowAggregationGroup, 2, 0)
+        layoutWindowRightLayout.addWidget(self.layoutWindowAggregationGroup)
+        layoutWindowRightLayout.setAlignment(QtCore.Qt.AlignHCenter)
 
         ### Create clear and apply buttons to apply operations ###
         # Create the clear button
@@ -1032,7 +961,6 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Link the button to the clear function
         self.layoutWindowClearButton.clicked.connect(self._applyWindowClearToDataset)
-        self.layoutWindowClearButton.clicked.connect(self._updateWindowSubtab)
 
         # Create the apply button
         self.layoutWindowApplyButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Apply</strong>')
@@ -1052,11 +980,8 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ## Create the full layout ##
         # Add the items to the right layout
-        rightGridWidget = QtWidgets.QWidget()
-        rightGridWidget.setLayout(layoutWindowRightGridLayout)
-        layoutWindowRightLayout.addWidget(rightGridWidget)
-
         layoutWindowRightLayout.addWidget(buttonLayoutWidget)
+        layoutWindowRightLayout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter)
 
         # Create the horizontal layout
         layoutWindow = QtWidgets.QHBoxLayout()
@@ -1596,6 +1521,72 @@ class ModelCreationTab(QtWidgets.QWidget):
     def setPredictorExpertStack(self):
         self.stackedPredictorWidget.setCurrentIndex(1)
 
+    def _updateSimpleLayoutAggregationOptions(self):
+        # todo: doc string
+
+        if self.layoutSimpleDoubleList.listOutput.currentIndex().row() >= 0:
+            # Get the current datasest index
+            currentIndex = self.layoutSimpleDoubleList.listOutput.datasetTable.index[self.layoutSimpleDoubleList.listOutput.currentIndex().row()]
+
+            # Get the current dataset and operations settings
+            datasetInfo = self.fillList.datasetTable.loc[currentIndex]["DatasetName"] + " - " + \
+                          self.fillList.datasetTable.loc[currentIndex]["DatasetParameter"] + " " + \
+                          str(self.fillList.datasetTable.loc[currentIndex].name)
+            accumMethod = str(self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationMethod'])
+            accumPeriod = str(self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationPeriod'])
+            predForcing = str(self.parent.datasetOperationsTable.loc[currentIndex]['ForcingFlag'])
+
+            self.layoutAggregationOptions.aggLabel1.setText('<strong style="font-size: 18px">Selected Predictor: ' + datasetInfo + '<strong>')
+            self.layoutAggregationOptions.aggLabel2.setText("     Accumulation Method: " + accumMethod)
+            self.layoutAggregationOptions.aggLabel3.setText("     Accumulation Period: " + accumPeriod)
+            self.layoutAggregationOptions.aggLabel4.setText("     Forced Flag: " + predForcing)
+
+            # Set date selector range
+            minT = parser.parse(str(np.sort(list(set(self.parent.dataTable.loc[(slice(None),currentIndex[0]),'Value'].index.get_level_values(0).values)))[0]))
+            maxT = parser.parse(str(np.sort(list(set(self.parent.dataTable.loc[(slice(None),currentIndex[0]),'Value'].index.get_level_values(0).values)))[-1]))
+            self.layoutAggregationOptions.periodStart.minimumDate = minT
+            self.layoutAggregationOptions.periodStart.maximumDate = maxT
+            self.layoutAggregationOptions.periodStart.setDate(minT)
+
+            # Set aggregation option on UI
+            if accumMethod == 'None':
+                self.layoutAggregationOptions.aggLabel2.setStyleSheet("color : red")
+            else: #set defined aggregation scheme
+                self.layoutAggregationOptions.aggLabel2.setStyleSheet("color : green")
+                defIdx = self.layoutAggregationOptions.predictorAggregationOptions.index(accumMethod)
+                self.layoutAggregationOptions.radioButtons.button(defIdx).setChecked(True)
+
+            # Set aggregation period on UI
+            if accumPeriod == 'None':
+                self.layoutAggregationOptions.aggLabel3.setStyleSheet("color : red")
+            else: #set defined resampling period options
+                self.layoutAggregationOptions.aggLabel3.setStyleSheet("color : green")
+                predPeriodItems = accumPeriod.split("/") #R/1978-03-01/P1M/F12M
+                self.layoutAggregationOptions.periodStart.setDate(parser.parse(predPeriodItems[1]))
+                predPeriodPStep = str(predPeriodItems[2])[-1]
+                a = self.layoutAggregationOptions.predictorResamplingOptions.index(predPeriodPStep)
+                self.layoutAggregationOptions.tStepChar.setCurrentIndex(self.layoutAggregationOptions.predictorResamplingOptions.index(predPeriodPStep))
+                predPeriodPNum = ''.join(map(str,[int(s) for s in predPeriodItems[2] if s.isdigit()]))
+                self.layoutAggregationOptions.tStepInteger.setValue(int(predPeriodPNum))
+                predPeriodFStep = str(predPeriodItems[3])[-1]
+                self.layoutAggregationOptions.freqChar.setCurrentIndex(self.layoutAggregationOptions.predictorResamplingOptions.index(predPeriodFStep))
+                predPeriodFNum = ''.join(map(str,[int(s) for s in predPeriodItems[3] if s.isdigit()]))
+                self.layoutAggregationOptions.freqInteger.setValue(int(predPeriodFNum))
+
+            # Set forcing flag on UI
+            if predForcing == 'None':
+                self.layoutAggregationOptions.aggLabel4.setStyleSheet("color : red")
+            else: #set defined forcing flag
+                self.layoutAggregationOptions.aggLabel4.setStyleSheet("color : green")
+                self.layoutAggregationOptions.predForceCheckBox.setChecked(predForcing == 'True')
+        else:
+            self.layoutAggregationOptions.aggLabel1.setText('<strong style="font-size: 18px">No Predictor Selected<strong>')
+            self.layoutAggregationOptions.aggLabel2.setText("     Accumulation Method: NA")
+            self.layoutAggregationOptions.aggLabel3.setText("     Accumulation Period: NA")
+            self.layoutAggregationOptions.aggLabel4.setText("     Forced Flag: NA")
+
+        self.layoutAggregationOptions.resamplingUpdate()
+
     def _applySimpleOptions(self):
         """
         Applies the attributes from the simple predictor page into the dataset operations table
@@ -1979,82 +1970,77 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.layoutExtendPlot.updateData(sourceData, 'Status', sourceUnits)
         self.layoutExtendPlot.displayDatasets()
 
-
-    def _updateWindowSubtab(self):
-        """
-        Updates the state of the extend subtab methods pane based on the method selector
-
-        """
-        # todo: build this when the aggregation group is stable
-
-        # Switch the stacked widgets
-        # self.stackedExtendLayout.setCurrentIndex(self.layoutExtendMethodSelector.currentIndex())
-        #
-        # # Update the gap limit visibility
-        # if self.layoutExtendMethodSelector.currentIndex() > 0:
-        #     self.layoutExtendDurationLabel.setVisible(True)
-        #     self.layoutExtendDurationLimit.setVisible(True)
-        # else:
-        #     self.layoutExtendDurationLabel.setVisible(False)
-        #     self.layoutExtendDurationLimit.setVisible(False)
-        pass
-
     def _updateWindowOptionsOnDataset(self):
         """
-        Displays the correct information for the selected dataset in the fill pane
+        Displays the correct information for the selected dataset in the window pane
 
         """
-        # todo: build this function when the aggregation function is stable
 
         # Get the current datasest index
-        # currentIndex = self.extendList.datasetTable.index[self.extendList.currentIndex().row()]
-        #
-        # # Get the options for the item
-        # extendMethod = self.parent.datasetOperationsTable.loc[currentIndex]['ExtendMethod']
-        # extendDuration = self.parent.datasetOperationsTable.loc[currentIndex]['ExtendDuration']
-        # # If needed, can extract more information based on the fill method here
-        #
-        # # # Get the options for the selector and stack
-        # extendOptionsIndex = [x for x in range(self.layoutExtendMethodSelector.count()) if self.layoutExtendMethodSelector.itemText(x) == extendMethod]
-        # if extendOptionsIndex:
-        #     extendOptionsIndex = extendOptionsIndex[0]
-        # else:
-        #     extendOptionsIndex = 0
-        #
-        # self.stackedExtendLayout.setCurrentIndex(extendOptionsIndex)
-        # self.layoutExtendMethodSelector.setCurrentIndex(extendOptionsIndex)
-        #
-        # # Set the values into the widgets
-        # # Correct this issue
-        # self.layoutExtendDurationLimit.setText(str(extendDuration))
-        pass
+        currentIndex = self.windowList.datasetTable.index[self.windowList.currentIndex().row()]
+
+        # Get the current dataset and operations settings
+        datasetInfo = self.windowList.datasetTable.loc[currentIndex]["DatasetName"] + " - " + \
+                      self.windowList.datasetTable.loc[currentIndex]["DatasetParameter"] + " " + \
+                      str(self.windowList.datasetTable.loc[currentIndex].name)
+        accumMethod = str(self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationMethod'])
+        accumPeriod = str(self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationPeriod'])
+        predForcing = str(self.parent.datasetOperationsTable.loc[currentIndex]['ForcingFlag'])
+
+        # Set date selector range
+        minT = parser.parse(str(np.sort(list(set(self.parent.dataTable.loc[(slice(None),currentIndex[0]),'Value'].index.get_level_values(0).values)))[0]))
+        maxT = parser.parse(str(np.sort(list(set(self.parent.dataTable.loc[(slice(None),currentIndex[0]),'Value'].index.get_level_values(0).values)))[-1]))
+        self.layoutWindowAggregationGroup.periodStart.minimumDate = minT
+        self.layoutWindowAggregationGroup.periodStart.maximumDate = maxT
+        self.layoutWindowAggregationGroup.periodStart.setDate(minT)
+
+        # Set aggregation option on UI
+        if accumMethod != 'None':
+            defIdx = self.layoutWindowAggregationGroup.predictorAggregationOptions.index(accumMethod)
+            self.layoutWindowAggregationGroup.radioButtons.button(defIdx).setChecked(True)
+
+        # Set aggregation period on UI
+        if accumPeriod != 'None':
+            predPeriodItems = accumPeriod.split("/") #R/1978-03-01/P1M/F12M
+            self.layoutWindowAggregationGroup.periodStart.setDate(parser.parse(predPeriodItems[1]))
+            predPeriodPStep = str(predPeriodItems[2])[-1]
+            a = self.layoutWindowAggregationGroup.predictorResamplingOptions.index(predPeriodPStep)
+            self.layoutWindowAggregationGroup.tStepChar.setCurrentIndex(self.layoutWindowAggregationGroup.predictorResamplingOptions.index(predPeriodPStep))
+            predPeriodPNum = ''.join(map(str,[int(s) for s in predPeriodItems[2] if s.isdigit()]))
+            self.layoutWindowAggregationGroup.tStepInteger.setValue(int(predPeriodPNum))
+            predPeriodFStep = str(predPeriodItems[3])[-1]
+            self.layoutWindowAggregationGroup.freqChar.setCurrentIndex(self.layoutWindowAggregationGroup.predictorResamplingOptions.index(predPeriodFStep))
+            predPeriodFNum = ''.join(map(str,[int(s) for s in predPeriodItems[3] if s.isdigit()]))
+            self.layoutWindowAggregationGroup.freqInteger.setValue(int(predPeriodFNum))
+
+        # Set forcing flag on UI
+        if predForcing != 'None':
+            self.layoutWindowAggregationGroup.predForceCheckBox.setChecked(predForcing == 'True')
+
+        self.layoutWindowAggregationGroup.resamplingUpdate()
+
+        # Update the plot
+        self._updateWindowPlot()
 
     def _applyWindowOptionsToDataset(self):
         """
         Applies the fill attributes to a dataset
 
         """
-        # todo: build this function when the aggregation widget is stable
 
-        # Extract the fill limit
-        # try:
-        #     extendLimit = int(self.layoutExtendDurationLimit.toPlainText())
-        # except:
-        #     extendLimit = None
-        #
-        # # Get the method to be utilized
-        # extendMethod = self.layoutExtendMethodSelector.currentText()
-        #
-        # # Get the current dataset
-        # currentIndex = self.extendList.datasetTable.index[self.extendList.currentIndex().row()]
-        #
-        # # Set the values
-        # self.parent.datasetOperationsTable.loc[currentIndex]['ExtendMethod'] = extendMethod
-        # self.parent.datasetOperationsTable.loc[currentIndex]['ExtendDuration'] = extendLimit
-        #
-        # # Clear the button click
-        # self.layoutExtendApplyButton.setChecked(False)
-        pass
+        # Get the current active index
+        currentIndex = self.windowList.datasetTable.index[self.windowList.currentIndex().row()]
+
+        # Apply the attributes into the data table
+        self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationMethod'] = self.layoutWindowAggregationGroup.selectedAggOption
+        self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationDateStart'] = self.layoutWindowAggregationGroup.periodStart.dateTime().toString("yyyy-MM-dd")
+        self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationDateStop'] = \
+            (parser.parse(str(np.sort(list(set(self.parent.dataTable.loc[(slice(None), currentIndex[0]), 'Value'].index.get_level_values(0).values)))[-1]))).strftime("%Y-%m-%d")
+        self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationPeriod'] = self.layoutWindowAggregationGroup.selectedAggPeriod
+        self.parent.datasetOperationsTable.loc[currentIndex]['ForcingFlag'] = str(self.layoutWindowAggregationGroup.predForceCheckBox.checkState() == 2)
+
+        # Set the button to clear
+        self.layoutWindowApplyButton.setChecked(False)
 
     def _applyWindowClearToDataset(self):
         """
@@ -2063,16 +2049,78 @@ class ModelCreationTab(QtWidgets.QWidget):
         """
 
         # Get the current dataset
-        currentIndex = self.extendList.datasetTable.index[self.extendList.currentIndex().row()]
+        currentIndex = self.windowList.datasetTable.index[self.extendList.currentIndex().row()]
 
         # Set the values
         self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationMethod'] = None
         self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationDateStart'] = None
         self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationDateStop'] = None
+        self.parent.datasetOperationsTable.loc[currentIndex]['AccumulationPeriod'] = None
+        self.parent.datasetOperationsTable.loc[currentIndex]['ForcingFlag'] = None
 
         # Clear the button click
         self.layouWindowClearButton.setChecked(False)
 
+    def _updateWindowPlot(self):
+        """
+        Updates the plot within the window subtab
+
+        """
+
+        ### Get the data from the widgets ###
+        startDate = self.periodStartWindow.dateTime().toPyDateTime()
+        endDate = self.periodEndWindow.dateTime().toPyDateTime()
+        numberOfDays = (endDate - startDate).days + 1
+
+        ### Push the number of days back into the widget ###
+        self.layoutWindowLagLimit.setText(str(numberOfDays))
+
+        ### Update the plot with the dataset and interpolation ###
+        # Get the source and fill dataset. This copies it to avoid changing the source data
+        currentIndex = self.windowList.datasetTable.index[self.windowList.currentIndex().row()]
+        sourceData = self.parent.dataTable.loc[(slice(None), currentIndex), 'Value']
+        sourceData = sourceData.droplevel('DatasetInternalID')
+        sourceUnits = self.parent.datasetTable.loc[currentIndex[0]]['DatasetUnits']
+
+        # Extract the target dataset
+        targetData = self.parent.dataTable.loc[(slice(None), self.targetSelect.currentData().name), 'Value']
+        targetData = targetData.droplevel('DatasetInternalID')
+        targetUnits = self.parent.datasetTable.loc[self.targetSelect.currentData().name]['DatasetUnits']
+
+        # Window the data between the start and end dates
+        sourceData = sourceData[startDate:endDate]
+        targetData = targetData[startDate:endDate]
+
+        # Calculate the correlation based on the lag
+        if startDate <= endDate:
+            # Start date is before the end date, so lag is positive. Calculate a nonzero correlation to display.
+            # Cross correlation between the source and target datasets
+            correlation = np.correlate(targetData.values - np.nanmean(targetData.values), sourceData.values - np.nanmean(sourceData.values), "same") / \
+                          (np.nanstd(targetData.values) * np.nanstd(sourceData.values) * len(targetData.values))
+
+        else:
+            # Start date is after the end date, so the lag is negative. Return a zero correlation
+            correlation = np.zeros(np.abs(numberOfDays))
+
+        # Add some random data to test
+        self.layoutWindowPlot.clear()
+
+        # Create the x axis labels
+        categories = np.floor(np.arange(-len(sourceData)/2, len(sourceData)/2, 1))
+        categories = [str(x) for x in categories]
+
+        # Set the correlation into the plot as a bar series
+        self.layoutWindowPlot.createBarPlotItem('Correlation', correlation)
+
+        # Add some random timeseries data
+        self.layoutWindowPlot.createLinePlotItem('Predictor', sourceData, categories)
+        self.layoutWindowPlot.createLinePlotItem('Target', targetData, categories)
+
+        # Set the bar categories
+        self.layoutWindowPlot.setBarCategories(categories)
+
+        # Plot the data
+        self.layoutWindowPlot.plot()
 
     def _applySummaryClear(self):
         """
