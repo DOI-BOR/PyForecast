@@ -752,9 +752,9 @@ function buttonPress() {
 // Function to print a formatted message to the console 
 // when users click the 'Add Dataset' button on watersheds
 function HUCPress() {
-
     //iterate over the checked boxes
     var datasetList = Array();
+    var msg = "";
     var parameterList = document.getElementsByClassName("HUC_SELECT");
     for (i=0; i<parameterList.length; i++) {
         item = parameterList[i];
@@ -766,11 +766,14 @@ function HUCPress() {
     }
     datasetList.forEach(function(dataset){
         if (dataset == 'PRISM') {
-            console.log("HUC:" + window.num + ":PARAM:" + dataset);
+            //console.log("HUC:" + window.num + ":PARAM:" + dataset);
+            msg = msg + "~~~HUC:" + window.num + ":PARAM:" + dataset;
         } else {
-            console.log("ID:" + dataset)
+            //console.log("ID:" + dataset)
+            msg = msg + "~~~ID:" + dataset;
         }
-    })
+    });
+    console.log(msg);
 
     // close the popup
     window.pop._close();

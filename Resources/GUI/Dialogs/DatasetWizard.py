@@ -97,8 +97,7 @@ class DatasetWizard(QtWidgets.QWizard):
 
             if selection == 1:
                 self.dataset["DatasetDataloader"] = "IMPORTED_FILE"
-                self.dataset[
-                    "DatasetImportFileName"] = self.importFileName + "?" + self.dateColSelect.currentText() + "?" + self.fileDatasetSelect.currentText()
+                self.dataset["DatasetImportFileName"] = self.importFileName + "?" + self.dateColSelect.currentText() + "?" + self.fileDatasetSelect.currentText()
 
             self.dataset.name = self.datasetID
             self.returnDatasetSignal.emit(self.dataset)

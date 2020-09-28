@@ -1,3 +1,10 @@
+"""
+Script Name:    PyQtGraphs.py
+
+Description:    Contains all the subclassed plots
+                for NextFlow software.
+"""
+
 
 # Import Libraries
 import pyqtgraph as pg
@@ -18,7 +25,6 @@ try:
 except:
     print("not using OpenGL for plots.")
 
-
 pg.PlotItem.clear = PyQtGraphOverrides.PLOTITEM_clear_
 pg.InfiniteLine.setMouseHover = PyQtGraphOverrides.INFINITELINE_setMouseHover_
 pg.InfiniteLine.mouseDragEvent = PyQtGraphOverrides.INFINITELINE_mouseDragEvent_
@@ -27,6 +33,7 @@ pg.InfiniteLine.mouseDragEvent = PyQtGraphOverrides.INFINITELINE_mouseDragEvent_
 #pg.LinearRegionItem.hoverEvent = PyQtGraphOverrides.LINEARREGION_hoverEvent_
 #pg.LinearRegionItem.mouseDragEvent = PyQtGraphOverrides.LINEARREGION_mouseDragEvent_
 
+# List to keep track of which units are equalivant. Used to condense units on plot axes
 EQUIVALENCY_LISTS = [
     ["INCHES", "INCH", "IN", "IN.", '"'],
     ['FEET', 'FOOT', 'FT', 'FT.', "'"],
@@ -38,15 +45,13 @@ EQUIVALENCY_LISTS = [
     ['UNITLESS'],
 ]
 
-
-
 # Create a custom Legend for the Time Series Plots
 class TimeSeriesLegend(pg.LegendItem):
 
     def __init__(self, size = None, offset = None):
         
         # Instantiate the legend Item
-        pg.LegendItem.__init__(self, size, offset)
+        pg.LegendItem.__init__(self, size, offset, brush = (200,200,200,100))
     
     def addItem(self, item, name):
 
@@ -104,6 +109,8 @@ class DateTimeAxis(pg.AxisItem):
             return [datetime.utcfromtimestamp(value).strftime('%Y-%m') for value in values]
         return [datetime.utcfromtimestamp(value).strftime('%Y-%m-%d') for value in values]
 
+
+# Create a datetime axis to specifically display years only
 class DateTimeAxis_years(pg.AxisItem):
 
     def __init__(self, *args, **kwargs):
@@ -113,6 +120,7 @@ class DateTimeAxis_years(pg.AxisItem):
     def tickStrings(self, values, scale, spacing):
 
         return [datetime.utcfromtimestamp(value).strftime('%Y') for value in values]
+
 
 # Create a graphics layout for the ModelTab graphs
 class ModelTabPlots(pg.GraphicsLayoutWidget):
@@ -146,6 +154,7 @@ class ModelTabPlots(pg.GraphicsLayoutWidget):
 
         return
 
+
 # Create a Graphics Layout Widget to display all the plots in one widget
 class DataTabPlots(pg.GraphicsLayoutWidget):
     
@@ -164,8 +173,8 @@ class DataTabPlots(pg.GraphicsLayoutWidget):
         self.colors = [
             (255, 61, 0), 
             (0, 145, 234),
-            (255, 214, 0), 
-            (0, 200, 83), 
+            (0, 200, 83),
+            (189, 157, 0),
             (255, 103, 32), 
             (170, 0, 255), 
             (141, 110, 99), 
@@ -179,7 +188,6 @@ class DataTabPlots(pg.GraphicsLayoutWidget):
         # Instantiate the plots
         self.timeSeriesPlot = TimeSeriesLinePlot(parent=self)
         self.timeSliderPlot = TimeSliderPlot(self)
-        #self.spaghettiPlot = SpaghettiPlot(self)
 
         # Add the plots
         self.addItem(self.timeSeriesPlot, row=0, col=0, rowspan=7)
@@ -228,7 +236,7 @@ class DataTabPlots(pg.GraphicsLayoutWidget):
             plotNames = ['']
 
         # Perform an update on the timeseries plot
-        self.timeSeriesPlot.updateData(plotData, plotNames, plotUnits)
+        # self.timeSeriesPlot.updateData(plotData, plotNames, plotUnits)
 
         # If there is more than one dataset, 
         self.timeSeriesPlot.displayDatasets(datasets)
@@ -769,7 +777,7 @@ class TimeSeriesLinePlot(pg.PlotItem):
                     self.circleItems_axis2[j].setData([date], [yval])
                     legendCount += 1
 
-    def displayDatasets(self, datasetInternalIDs):
+    def displayDatasets(self, datasets):
         """
         datasets = [100103, 313011, ...]
         """
@@ -800,22 +808,22 @@ class TimeSeriesLinePlot(pg.PlotItem):
         self.legend.setParentItem(self.vb)
 
         # Keep track of current datasets
-        # self.datasets = datasets
+        self.datasets = datasets
 
         # Primary units for left hand axis
-        primaryUnits = self.unitAttributes[0].upper()
+        primaryUnits = self.parent.parent.parent.datasetTable.loc[datasets[0]]['DatasetUnits'].upper()
         y2UnitList = []
 
         # Create a new item for each dataset
-        for i, dataset in enumerate(datasetInternalIDs):
+        for i, dataset in enumerate(datasets):
 
             # Get the Dataset Title
-            d = self.datasets.loc[:, (dataset)]
-            title = self.datasetsNames[i]
+            d = self.parent.parent.parent.datasetTable.loc[dataset]
+            title = d['DatasetName'] + ': ' + d['DatasetParameter']
 
             # Get the Data
-            x = self.datasets.loc[:, (dataset)].index.astype('int64').values/1000000000 # Dates in seconds since epoch
-            y = self.datasets.loc[:, (dataset)].values
+            x = np.array(self.parent.parent.parent.dataTable.loc[(slice(None), dataset), 'Value'].index.get_level_values(0).astype('int64')) / 1000000000  # Dates in seconds since epoch
+            y = self.parent.parent.parent.dataTable.loc[(slice(None), dataset), 'Value'].values
 
             # Check if there is data to plot!
             if any([x.size == 0, x.shape != y.shape]):
@@ -826,7 +834,7 @@ class TimeSeriesLinePlot(pg.PlotItem):
             self.xMin = np.nanmin([self.xMin, np.nanmin(x)])
 
             # Figure out which axis to plot on
-            unitsEquivalent = sameUnits(primaryUnits, self.unitAttributes[i].upper())
+            unitsEquivalent = sameUnits(primaryUnits, d['DatasetUnits'])
             if unitsEquivalent[0]:
                 
                 self.yMax = np.nanmax([self.yMax, np.nanmax(y)])
@@ -844,7 +852,7 @@ class TimeSeriesLinePlot(pg.PlotItem):
 
                 # set the data for the i-th second axis item
                 self.items_axis2[i].setData(x, y, name = title, connect='finite')
-                self.items_axis2[i].units = sameUnits(d['DatasetUnits'], self.unitAttributes[i].upper())[1].lower()
+                self.items_axis2[i].units = sameUnits(d['DatasetUnits'], d['DatasetUnits'])[1].lower()
                 self.items_axis2[i].isActive = True
                 y2UnitList.append(self.items_axis2[i].units)
 

@@ -67,10 +67,10 @@ class datasetTab(object):
         self.datasetTab.boundingBoxButton.clicked.connect(          lambda x: self.beginDatasetAreaSearch("bounding"))
         self.datasetTab.hucSelectionButton.clicked.connect(         lambda x: self.beginDatasetAreaSearch("watershed"))
         self.datasetTab.boxHucSearchButton.clicked.connect(         lambda x: self.areaSearchForDatasets())
-        self.datasetTab.prismButton.clicked.connect(                lambda x: self.addWatershedClimateDivisionDataset(self.prismCompleter.selectedDataset['DatasetExternalID'].iloc[0], 'PRISM') if self.prismCompleter.selectedDataset['DatasetExternalID'] else False)
-        self.datasetTab.nrccButton.clicked.connect(                 lambda x: self.addWatershedClimateDivisionDataset(self.nrccCompleter.selectedDataset['DatasetExternalID'].iloc[0], 'NRCC') if self.nrccCompleter.selectedDataset['DatasetExternalID'] else False)
-        self.datasetTab.pdsiButton.clicked.connect(                 lambda x: self.addWatershedClimateDivisionDataset(self.climCompleter.selectedDataset['DatasetExternalID'].iloc[0], 'PDSI') if self.climCompleter.selectedDataset['DatasetExternalID'] else False)
-        self.datasetTab.spiButton.clicked.connect(                  lambda x: self.addWatershedClimateDivisionDataset(self.climCompleter.selectedDataset['DatasetExternalID'].iloc[0], 'SPI') if self.climCompleter.selectedDataset['DatasetExternalID'] else False)
+        self.datasetTab.prismButton.clicked.connect(                lambda x: self.addWatershedClimateDivisionDataset(self.prismCompleter.selectedDataset['DatasetExternalID'].iloc[0], 'PRISM') if not self.prismCompleter.selectedDataset['DatasetExternalID'].empty else False)
+        self.datasetTab.nrccButton.clicked.connect(                 lambda x: self.addWatershedClimateDivisionDataset(self.nrccCompleter.selectedDataset['DatasetExternalID'].iloc[0], 'NRCC') if not self.nrccCompleter.selectedDataset['DatasetExternalID'].empty else False)
+        self.datasetTab.pdsiButton.clicked.connect(                 lambda x: self.addWatershedClimateDivisionDataset(self.climCompleter.selectedDataset['DatasetExternalID'].iloc[0], 'PDSI') if not self.climCompleter.selectedDataset['DatasetExternalID'].empty else False)
+        self.datasetTab.spiButton.clicked.connect(                  lambda x: self.addWatershedClimateDivisionDataset(self.climCompleter.selectedDataset['DatasetExternalID'].iloc[0], 'SPEI') if not self.climCompleter.selectedDataset['DatasetExternalID'].empty else False)
         self.datasetTab.climButton.clicked.connect(                 lambda x: self.addDataset(self.datasetTab.climInput.currentData().name))
         self.datasetTab.keywordSearchBox.returnPressed.connect(     lambda: self.searchForDataset(self.datasetTab.keywordSearchBox.text()))
         self.datasetTab.addiButton.clicked.connect(                 lambda x: self.openUserDefinedDatasetEditor())
@@ -211,7 +211,7 @@ class datasetTab(object):
         return
 
 
-    def addDataset(self, datasetInternalID = None):
+    def addDataset(self, datasetInternalID = None, refresh_gui = True):
         """
         Adds the dataset defined by the datasetInternalID to the self.datasetTable table.
         This function also updates the dataset list in the GUI.
@@ -220,6 +220,7 @@ class datasetTab(object):
             datasetInternalID -> The DatasetInternalID associated with the dataset to add. The ID's are 
                                  found in the dataset catalogs.
         """
+        print("FF: ", refresh_gui)
 
         # Check to make sure that this dataset in not already in the datasetTable
         if datasetInternalID in list(self.datasetTable.index):
@@ -243,13 +244,15 @@ class datasetTab(object):
         # Append the dataset to the dataset table
         self.datasetTable = self.datasetTable.append(dataset, ignore_index = False)
 
-        # Refresh the dataset list view
-        self.datasetTab.selectedDatasetsWidget.setDatasetTable(self.datasetTable)
-        self.datasetTab.selectedDatasetsLabel.setText("{0} DATASETS HAVE BEEN SELECTED:".format(len(self.datasetTable)))
+        if refresh_gui:
 
-        # Also refresh the dataset lists elsewhere in the software
-        self.dataTab.datasetList.setDatasetTable(self.datasetTable)
-        self.modelTab.datasetList.setDatasetTable(self.datasetTable)
+            # Refresh the dataset list view
+            self.datasetTab.selectedDatasetsWidget.setDatasetTable(self.datasetTable)
+            self.datasetTab.selectedDatasetsLabel.setText("{0} DATASETS HAVE BEEN SELECTED:".format(len(self.datasetTable)))
+
+            # Also refresh the dataset lists elsewhere in the software
+            self.dataTab.datasetList.setDatasetTable(self.datasetTable)
+            self.modelTab.datasetList.setDatasetTable(self.datasetTable)
 
         return
     
@@ -350,12 +353,25 @@ class datasetTab(object):
         self.modelTab.datasetList.setDatasetTable(self.datasetTable)
 
 
-    def addDatasetsFromWebMap(self, datasetAdditionMessage):
+    def addDatasetsFromWebMap(self, datasetAdditionMessage, refresh_gui = True):
         """
         This function reads in console messages from the web map. Those messages
         are generated when a user selects the 'add dataset' buttons on the pop-ups.
         This function correctly routes the data from those messages
         """
+
+        # List Case: user selected multiple datasets
+        if "~~~" in datasetAdditionMessage:
+
+            # Get the individual datasets
+            datasets = datasetAdditionMessage.split("~~~")[1:]
+            refresh = [False for i in datasets]
+            refresh[-1] = True
+
+            # Re-feed each dataset back into this function
+            list(map(self.addDatasetsFromWebMap, datasets, refresh))
+
+            return
 
         # Simplest case: user selected a point dataset
         if 'ID:' in datasetAdditionMessage:
@@ -364,7 +380,7 @@ class datasetTab(object):
             datasetID = int(datasetAdditionMessage.split(':')[1])
 
             # Add the dataset
-            self.addDataset(datasetID)
+            self.addDataset(datasetID, refresh_gui)
         
         # User selected an area dataset
         elif 'HUC:' in datasetAdditionMessage or 'PDSI:' in datasetAdditionMessage:
@@ -376,7 +392,7 @@ class datasetTab(object):
             datasetType = datasetAdditionMessage.split(':')[3]
 
             # Add the dataset
-            self.addWatershedClimateDivisionDataset(areaNumber, datasetType)
+            self.addWatershedClimateDivisionDataset(areaNumber, datasetType, refresh_gui)
 
         # Other javascript messages
         else:
@@ -385,7 +401,7 @@ class datasetTab(object):
         return
 
 
-    def addWatershedClimateDivisionDataset(self, areaNumber = None, datasetType = None):
+    def addWatershedClimateDivisionDataset(self, areaNumber = None, datasetType = None, refresh_gui = True):
         """
         Adds the watershed and datatype dataset to the datasetTable
 
@@ -415,8 +431,11 @@ class datasetTab(object):
             )]
 
         # Add the datasets to the dataset Table
-        for datasetID in list(datasets.index):
-            self.addDataset(datasetID)
+        datasetList = list(datasets.index)
+        refreshList = [False for i in datasetList]
+        refreshList[-1] = refresh_gui
+        for i, datasetID in enumerate(datasetList):
+            self.addDataset(datasetID, refreshList[i])
 
         return
 

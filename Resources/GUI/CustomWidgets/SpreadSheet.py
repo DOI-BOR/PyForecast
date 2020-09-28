@@ -468,8 +468,11 @@ class SpreadSheetView(QtWidgets.QTableView):
 
         # Check the selection to see if we should enable the interpolate action
         # We only enable for single-column, starting and ending with real numbers
+        print("S: ", len(self.getSelectedColumns()))
         if len(self.getSelectedColumns()) == 1:
+            print("S: ", self.model().data(selection[0]).value())
             if str(self.model().data(selection[0]).value()) not in ['None','nan','NaN']:
+                print("S: ", self.model().data(selection[-1]).value())
                 if str(self.model().data(selection[-1]).value()) not in ['None','nan','NaN']:
                     self.interpAction.setEnabled(True)
                 else:
@@ -498,8 +501,8 @@ class SpreadSheetView(QtWidgets.QTableView):
         """
         This function returns the selected dataset ID numbers 
         """
-        cols = [self.model().datasetIndexedList[idx.column()] for idx in self.selectionModel().selectedColumns()]
-        
+        cols = [i.column() for i in self.selectionModel().selection().indexes()]
+
         return list(set(cols))
 
 

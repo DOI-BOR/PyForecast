@@ -107,6 +107,8 @@ class DatasetListHTMLFormatted(QtWidgets.QListWidget):
 
         self.buttonText = buttonText
         self.useIcon = useIcon
+        if self.useIcon:
+            self.HTML_formatting = DEFAULT_HTML_ICON_FORMAT
         self.buttonList = []
         self.addButtons = addButtons
 
