@@ -7,6 +7,7 @@ import numpy as np
 class LOO():
 
     NAME = 'Leave One Out Cross Validation'
+    DESCRIPTION = 'Partitions datasets into sub samples equal to the number of timesteps. For a dataset with 30 timesteps,  models will be trained using 29 data points and validatde with the remaining data point.'
 
     def yield_samples(self, X, Y):
 
@@ -25,6 +26,7 @@ class LOO():
 class KFOLD_5():
     
     NAME = "5-Fold Cross Validation"
+    DESCRIPTION = 'Partitions datasets into 5 equal size sub samples. Train models using 4 data subsets and validate with the remaining subset.'
 
     def yield_samples(self, X, Y):
 
@@ -43,6 +45,7 @@ class KFOLD_5():
 class KFOLD_10():
 
     NAME = "10-Fold Cross Validation"
+    DESCRIPTION = 'Partitions datasets into 10 equal size sub samples. Train models using 9 data subsets and validate with the remaining subset.'
 
     def yield_samples(self, X, Y):
 

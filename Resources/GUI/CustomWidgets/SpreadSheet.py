@@ -717,6 +717,8 @@ class SpreadSheetViewOperations(QtWidgets.QTableView):
 
         # Set up a signal/slot to resize columns when the model is reset
         self.model().modelReset.connect(self.resizeColumns)
+        self.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)  # +++
         # self.clicked.connect(self._updateSelection)
         # self.model().updateSelectionSignal.connect(self._updateSelection)
 

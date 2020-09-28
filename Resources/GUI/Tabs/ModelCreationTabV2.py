@@ -16,6 +16,8 @@ from resources.GUI.CustomWidgets.customTabs import EnhancedTabWidget
 from resources.GUI.CustomWidgets.richTextButtons import richTextButton, richTextButtonCheckbox, richTextDescriptionButton
 from resources.GUI.CustomWidgets.SpreadSheet import SpreadSheetViewOperations
 from resources.GUI.WebMap import webMapView
+from resources.modules.StatisticalModelsTab import RegressionWorker
+
 # import pandas as pd
 import numpy as np
 from dateutil import parser
@@ -1045,6 +1047,37 @@ class ModelCreationTab(QtWidgets.QWidget):
         gb.setLayout(layout2)
         layoutMain.addWidget(gb)
 
+        ### Setup the cross-validation algorithms ###
+        ## Create the label ##
+        label = QtWidgets.QLabel()
+        label.setTextFormat(QtCore.Qt.RichText)
+        label.setText('<strong style="font-size: 18px">Cross-Validation Algorithms</strong>')
+        layoutMain.addWidget(label)
+        layoutMain.addWidget(QtWidgets.QLabel("Select one algorithm:"))
+
+        ## Set the boxes containing options into the layout grid ##
+        # Create and format the layout
+        crossValidationLayout = QtWidgets.QGridLayout()
+        crossValidationLayout.setContentsMargins(1, 1, 1, 1)
+
+        # Loop and fill the layout
+        self.optionsCrossValidators = []
+        numCrossValidators = len(self.parent.crossValidators.keys())
+        for i in range(int(numCrossValidators / 3) + 1 if numCrossValidators % 3 != 0 else int(numCrossValidators / 3)):
+            for j in range(3):
+                if (i * 3) + j < numCrossValidators:
+                    cvKey = list((self.parent.crossValidators.keys()))[(3 * i) + j]
+                    cvText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(
+                        self.parent.crossValidators[cvKey]['name'], self.parent.crossValidators[cvKey]['description'])
+                    button = richTextDescriptionButton(self, cvText)
+                    button.setObjectName(str(cvKey))
+
+                    # Add the button to the layout and the tracking list
+                    crossValidationLayout.addWidget(button, i, j, 1, 1)
+                    self.optionsCrossValidators.append(button)
+
+        layoutMain.addLayout(crossValidationLayout)
+
         ### Setup the preprocessing algorithms ###
         ## Create the label ##
         label = QtWidgets.QLabel()
@@ -1068,6 +1101,7 @@ class ModelCreationTab(QtWidgets.QWidget):
                     regrText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(
                         self.parent.preProcessors[prKey]['name'], self.parent.preProcessors[prKey]['description'])
                     button = richTextDescriptionButton(self, regrText)
+                    button.setObjectName(str(prKey))
 
                     # Add the button to the layout and the tracking list
                     optionsPreprocessorLayout.addWidget(button, i, j, 1, 1)
@@ -1098,6 +1132,7 @@ class ModelCreationTab(QtWidgets.QWidget):
                     regrText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(
                         self.parent.regressors[regrKey]['name'], self.parent.regressors[regrKey]['description'])
                     button = richTextDescriptionButton(self, regrText)
+                    button.setObjectName(str(regrKey))
 
                     # Add the button to the layout and the tracking list
                     optionsRegressionLayout.addWidget(button, i, j, 1, 1)
@@ -1129,6 +1164,7 @@ class ModelCreationTab(QtWidgets.QWidget):
                         self.parent.featureSelectors[regrKey]['name'],
                         self.parent.featureSelectors[regrKey]['description'])
                     button = richTextDescriptionButton(self, regrText)
+                    button.setObjectName(str(regrKey))
 
                     # Add the button to the layout and the holding list
                     optionsSelectionLayout.addWidget(button, i, j, 1, 1)
@@ -1162,6 +1198,7 @@ class ModelCreationTab(QtWidgets.QWidget):
                         self.parent.scorers['info'][nameKey]['NAME'], self.parent.scorers['info'][nameKey]['WEBSITE'],
                         self.parent.scorers['info'][nameKey]['HTML'])
                     button = richTextDescriptionButton(self, regrText)
+                    button.setObjectName(str(nameKey))
 
                     # Add the button to the layout and the holding list
                     optionsScoringLayout.addWidget(button, i, j, 1, 1)
@@ -1200,7 +1237,20 @@ class ModelCreationTab(QtWidgets.QWidget):
         ### Create the left side dataset summary table ###
         # Create a vertical layout
         listLayout = QtWidgets.QVBoxLayout()
-        listLayout.setContentsMargins(5, 5, 5, 5)
+        #listLayout.setContentsMargins(2, 2, 2, 2)
+        listLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Model Training Period<strong>'))
+        self.summaryLayoutLabel1 = QtWidgets.QLabel('     Period: None')
+        listLayout.addWidget(self.summaryLayoutLabel1)
+        listLayout.addWidget(QtWidgets.QLabel(''))
+        listLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Predictand<strong>'))
+        self.summaryLayoutLabel2 = QtWidgets.QLabel('     Predictand: None')
+        self.summaryLayoutLabel3 = QtWidgets.QLabel('     Predictand Period: None')
+        self.summaryLayoutLabel4 = QtWidgets.QLabel('     Predictand Method: None')
+        listLayout.addWidget(self.summaryLayoutLabel2)
+        listLayout.addWidget(self.summaryLayoutLabel3)
+        listLayout.addWidget(self.summaryLayoutLabel4)
+        listLayout.addWidget(QtWidgets.QLabel(''))
+        listLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Predictors<strong>'))
 
         # Create the list widget
         self.summaryListWidget = SpreadSheetViewOperations(self.parent.datasetTable, self.parent.datasetOperationsTable,
@@ -1208,11 +1258,12 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Connect the summary list to change with the operations table
         listLayout.addWidget(self.summaryListWidget)
+        listLayout.addItem(QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding))
 
         # Force the background color to prevent bleed through of the SA color in the headings
         listLayoutWidget = QtWidgets.QWidget()
         listLayoutWidget.setLayout(listLayout)
-        listLayoutWidget.setStyleSheet("background-color:white;")
+        #listLayoutWidget.setStyleSheet("background-color:white;")
 
         # Add to the layout
         mainLayout.addWidget(listLayoutWidget)
@@ -1220,6 +1271,42 @@ class ModelCreationTab(QtWidgets.QWidget):
         ### Create the right side of the pane ###
         ## Create a vertical layout ##
         summaryRightLayout = QtWidgets.QVBoxLayout()
+
+        ## Layout the cross validators grid ##
+        # Create the label
+        crossValidatorLabelWidget = QtWidgets.QLabel('<strong style="font-size: 18px">Cross-Validators</strong>')
+
+        # Add the label into the right layout
+        summaryRightLayout.addWidget(crossValidatorLabelWidget)
+
+        # Create the grid layout
+        crossValidatorLayout = QtWidgets.QGridLayout()
+
+        # Loop and fill the preprocessor options
+        numCrossValidators = len(self.parent.crossValidators.keys())
+        counter = 0
+        for i in range(int(numCrossValidators/3) + 1 if numCrossValidators%3 != 0 else int(numCrossValidators/3)):
+            for j in range(3):
+                if (i*3)+j < numCrossValidators:
+                    cvKey = list((self.parent.crossValidators.keys()))[(3*i)+j]
+                    cvText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong>'.format(self.parent.crossValidators[cvKey]['name'])
+
+                    # Disable the button to prevent user adjustements
+                    button = richTextButtonCheckbox(cvText)
+                    button.setDisabled(True)
+
+                    # Add the button into the layout
+                    crossValidatorLayout.addWidget(button, i, j, 1, 1)
+
+                    # Link the button with the corresponding box on the options tab
+                    recipricalBox = self.optionsCrossValidators[counter]
+                    recipricalBox.updateLinkedButton.connect(button.update_from_exteral)
+                    counter += 1
+
+        # Wrap the layout in a widget and add to the layout
+        crossValidatorLayoutWidget = QtWidgets.QWidget()
+        crossValidatorLayoutWidget.setLayout(crossValidatorLayout)
+        summaryRightLayout.addWidget(crossValidatorLayoutWidget)
 
         ## Layout the preprocessors grid ##
         # Create the label
@@ -1384,12 +1471,18 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.summaryStartButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Start</strong>')
         self.summaryStartButton.setMaximumSize(125, 65)
 
+        # Add placeholder for potential error messages
+        self.summaryLayoutErrorLabel = QtWidgets.QLabel('')
+        self.summaryLayoutErrorLabel.setVisible(False)
+        self.summaryLayoutErrorLabel.setWordWrap(True)
+
         # Connect the start button to its action function
         self.summaryStartButton.clicked.connect(self._applySummaryStart)
 
         # Create an horizontal layout, aligned to the right
         summaryButtonsLayout = QtWidgets.QHBoxLayout()
         summaryButtonsLayout.setAlignment(QtCore.Qt.AlignRight)
+        summaryRightLayout.addWidget(self.summaryLayoutErrorLabel)
 
         summaryButtonsLayout.addWidget(self.summaryClearButton)
         summaryButtonsLayout.addWidget(self.summaryStartButton)
@@ -1398,6 +1491,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         summaryButtonsLayoutWidget = QtWidgets.QWidget()
         summaryButtonsLayoutWidget.setLayout(summaryButtonsLayout)
         summaryRightLayout.addWidget(summaryButtonsLayoutWidget)
+
 
         ## Add the summary right pane to the summary layout ##
         # Create the widget to wrap the layout
@@ -1518,12 +1612,11 @@ class ModelCreationTab(QtWidgets.QWidget):
     def setPredictorDefaultStack(self):
         self.stackedPredictorWidget.setCurrentIndex(0)
 
-    def setPredictorExpertStack(self):
+    def setPredictorExpertStack(self):      
         self.stackedPredictorWidget.setCurrentIndex(1)
 
     def _updateSimpleLayoutAggregationOptions(self):
-        # todo: doc string
-
+        #todo: doc string
         if self.layoutSimpleDoubleList.listOutput.currentIndex().row() >= 0:
             # Get the current datasest index
             currentIndex = self.layoutSimpleDoubleList.listOutput.datasetTable.index[self.layoutSimpleDoubleList.listOutput.currentIndex().row()]
@@ -1551,6 +1644,10 @@ class ModelCreationTab(QtWidgets.QWidget):
             # Set aggregation option on UI
             if accumMethod == 'None':
                 self.layoutAggregationOptions.aggLabel2.setStyleSheet("color : red")
+                # Get default resampling method
+                defResampling = self.parent.datasetTable.loc[self.parent.datasetOperationsTable.loc[currentIndex].name[0]]['DatasetDefaultResampling']
+                defIdx = self.layoutAggregationOptions.predictorAggregationOptions.index(defResampling)
+                self.layoutAggregationOptions.radioButtons.button(defIdx).setChecked(True)
             else: #set defined aggregation scheme
                 self.layoutAggregationOptions.aggLabel2.setStyleSheet("color : green")
                 defIdx = self.layoutAggregationOptions.predictorAggregationOptions.index(accumMethod)
@@ -1943,7 +2040,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         extendMethod = None
         if extendMethod is not None and extendMethod != 'None':
             # Fill the data with the applied operation
-            filledData = fill_missing(sourceData, fillMethod.lower(), fillLimit, order=fillOrder)
+            filledData = fill_missing(sourceData, extendMethod.lower(), extendLimit, order=None)
 
             # Promote and set the status of the filled data
             fillData = pd.DataFrame(filledData)
@@ -2129,13 +2226,18 @@ class ModelCreationTab(QtWidgets.QWidget):
         """
 
         ### Reset the dataset operations table ###
-        # Drop all rows in the table
+        # Drop all rows in the tables
+        self.parent.modelRunsTable.drop(self.parent.modelRunsTable.index, inplace=True)
         self.parent.datasetOperationsTable.drop(self.parent.datasetOperationsTable.index, inplace=True)
 
         # Update the table display elements
         self.summaryListWidget.model().loadDataIntoModel(self.parent.datasetTable, self.parent.datasetOperationsTable)
 
         ### Reset all processing options ###
+        # Reset the cross validation operations
+        for x in self.optionsCrossValidators:
+            x.updateToUnchecked()
+
         # Reset the preprocessing operations
         for x in self.optionsPreprocessor:
             x.updateToUnchecked()
@@ -2154,9 +2256,11 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ### Reset the button state ###
         self.summaryClearButton.setChecked(False)
+        self._updateTabDependencies(3)
 
         ### Emit change to the doublelist object ###
         self.layoutSimpleDoubleList.resetOutputItems()
+
 
     def _applySummaryStart(self):
         """
@@ -2166,18 +2270,98 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ### Reset the button state ###
         self.summaryStartButton.setChecked(False)
+        errorString = 'Model Errors: '
 
-        # Check all required options are defined
-        # Check required self.modelRunsTable entries are defined
+        ### Check if a predictand has been selected
+        if self.parent.modelRunsTable.shape[0] < 1:
+            errorString += 'Select and define a valid predictand from the Forecast Target tab. '
+
+        ### Get predictors ###
+        predPool = []
+        predPeriods = []
+        predMethods = []
+        predForced = []
+
+        for index, row in self.parent.datasetOperationsTable.iterrows():
+            predPool.append(row.name[0])
+            predPeriods.append(str(row['AccumulationPeriod']))
+            predMethods.append(str(row['AccumulationMethod']))
+            predForced.append(str(row['ForcingFlag']))
+
+        if len(predPool) < 1:
+            errorString += 'Select at least 1 predictor from the Predictors tab. '
+
+        if predPeriods.count('None') > 0 or predMethods.count('None') > 0 or predForced.count('None') > 0:
+            errorString += 'Fully define aggregation options for selected predictors on the Predictors tab. '
+
+        ### Get base model run definitions ###
+
+        # Cross validators
+        crossVals = []
+        for crossVal in self.optionsCrossValidators:
+            if crossVal.isChecked():
+                crossVals.append(crossVal.objectName())
+
+        # Pre-processors
+        preProcList = []
+        for preProc in self.optionsPreprocessor:
+            if preProc.isChecked():
+                preProcList.append(preProc.objectName())
+
+        # Regression algorithms
+        regAlgs = []
+        for regAlg in self.optionsRegression:
+            if regAlg.isChecked():
+                regAlgs.append(regAlg.objectName())
+
+        # Feature selection algorithms
+        selAlgs = []
+        for selAlg in self.optionsSelection:
+            if selAlg.isChecked():
+                selAlgs.append(selAlg.objectName())
+
+        # Scoring parameters
+        scoreParams = []
+        for scoreParam in self.optionsScoring:
+            if scoreParam.isChecked():
+                scoreParams.append(scoreParam.objectName())
+
+        if len(crossVals) != 1:
+            errorString += 'Select 1 Cross-Validation algorithm from the Options tab. '
+
+        if len(preProcList) < 1 or len(regAlgs) < 1 or len(selAlgs) < 1 or len(scoreParams) < 1:
+            errorString += 'Select at least 1 Preprocessor, Regressor, Feature Selector, and Model Scoring option from the Options tab. '
 
 
         ### Apply operations to datasets ###
 
-        ### Generate predictors ###
+        ### Final go no-go ###
+        if len(errorString) > 20:
+            self.summaryLayoutErrorLabel.setText(errorString)
+            self.summaryLayoutErrorLabel.setStyleSheet("color : red")
+            self.summaryLayoutErrorLabel.setVisible(True)
+        else:
+            # Populate self.modelRunsTable with validated entries
+            self.parent.modelRunsTable.loc[0]['PredictorGroups'] = []
+            self.parent.modelRunsTable.loc[0]['PredictorGroupMapping'] = []
+            self.parent.modelRunsTable.loc[0]['PredictorPool'] = predPool
+            self.parent.modelRunsTable.loc[0]['PredictorForceFlag'] = predForced
+            self.parent.modelRunsTable.loc[0]['PredictorPeriods'] = predPeriods
+            self.parent.modelRunsTable.loc[0]['PredictorMethods'] = predMethods
+            self.parent.modelRunsTable.loc[0]['CrossValidationType'] = crossVals[0]
+            self.parent.modelRunsTable.loc[0]['Preprocessors'] = preProcList
+            self.parent.modelRunsTable.loc[0]['RegressionTypes'] = regAlgs
+            self.parent.modelRunsTable.loc[0]['FeatureSelectionTypes'] = selAlgs
+            self.parent.modelRunsTable.loc[0]['ScoringParameters'] = scoreParams
+            ### Kick off the analysis ###
+            print('---- MODEL RUN TABLE ----')
+            print(self.parent.modelRunsTable.iloc[0])
+            print('-------------------------')
+            print('Beginning regression calculations...')
+            self.rg = RegressionWorker.RegressionWorker(self.parent, modelRunTableEntry=self.parent.modelRunsTable.iloc[0])
+            self.rg.setData()
+            #self.rg.run()
 
-        ### Kick off the analysis ###
-        print('Beginning regression calculations...')
-        print('I am batman!')
 
     def applyPredictandAggregationOption(self):
         predictandData = self.targetSelect.currentData()
@@ -2193,16 +2377,18 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         nDays = self.periodEnd.date().toJulianDay() - self.periodStart.date().toJulianDay() + 1 #dates inclusive
         periodString = "R/" + startT.strftime("%Y-%m-%d") + "/P" + str(nDays) + "D/F12M" #(e.g. R/1978-02-01/P1M/F1Y)
-        print("Predictand Entries for the self.modelRunsTable: ")
-        print("--Model Training Period: " + minT.strftime("%Y-%m-%d") + "/" + maxT.strftime("%Y-%m-%d"))
-        print("--Predictand ID: " + str(predID))
-        print("--Predictand Period: " + periodString)
-        print("--Predictand Method: " + self.methodCombo.currentData())
-        # TODO: UPDATE self.modelRunsTable ENTRIES HERE
-        # self.parent.modelRunsTable.loc[0]['ModelTrainingPeriod'] = minT.strftime("%Y-%m-%d") + "/" + maxT.strftime("%Y-%m-%d")
-        # self.parent.modelRunsTable.loc[0]['Predictand'] = predID
-        # self.parent.modelRunsTable.loc[0]['PredictandPeriod'] = periodString
-        # self.parent.modelRunsTable.loc[0]['PredictandMethod'] = self.methodCombo.currentData()
+        #print("Predictand Entries for the self.modelRunsTable: ")
+        #print("--Model Training Period: " + minT.strftime("%Y-%m-%d") + "/" + maxT.strftime("%Y-%m-%d"))
+        #print("--Predictand ID: " + str(predID))
+        #print("--Predictand Period: " + periodString)
+        #print("--Predictand Method: " + self.methodCombo.currentData())
+        if self.parent.modelRunsTable.shape[0] < 1:
+            self.parent.modelRunsTable.loc[0] = [None] * self.parent.modelRunsTable.columns.shape[0]
+
+        self.parent.modelRunsTable.loc[0]['ModelTrainingPeriod'] = minT.strftime("%Y-%m-%d") + "/" + maxT.strftime("%Y-%m-%d")
+        self.parent.modelRunsTable.loc[0]['Predictand'] = predID
+        self.parent.modelRunsTable.loc[0]['PredictandPeriod'] = periodString
+        self.parent.modelRunsTable.loc[0]['PredictandMethod'] = self.methodCombo.currentData()
 
 
     def _updateTabDependencies(self, tabIndex):
@@ -2216,5 +2402,29 @@ class ModelCreationTab(QtWidgets.QWidget):
         if tabIndex == 3:
             # Update the summary boxes
             ##print('@@ debug statement')
+            # Update predictand options
+            self.summaryLayoutErrorLabel.setVisible(False)
+            if self.parent.modelRunsTable.shape[0] < 1:
+                self.summaryLayoutLabel1.setText('     Period: None')
+                self.summaryLayoutLabel1.setStyleSheet("color : red")
+                self.summaryLayoutLabel2.setText('     Predictand: None')
+                self.summaryLayoutLabel2.setStyleSheet("color : red")
+                self.summaryLayoutLabel3.setText('     Predictand Period: None')
+                self.summaryLayoutLabel3.setStyleSheet("color : red")
+                self.summaryLayoutLabel4.setText('     Predictand Method: None')
+                self.summaryLayoutLabel4.setStyleSheet("color : red")
+            else:
+                selDataset = self.parent.datasetTable.loc[self.parent.modelRunsTable.loc[0]['Predictand']]
+                selName = str(selDataset['DatasetName']) + ' (' + str(selDataset['DatasetAgency']) + ') ' + str(selDataset['DatasetParameter'])
+                self.summaryLayoutLabel1.setText('     Period: ' + str(self.parent.modelRunsTable.loc[0]['ModelTrainingPeriod']))
+                self.summaryLayoutLabel1.setStyleSheet("color : green")
+                self.summaryLayoutLabel2.setText('     Predictand: ' + selName)
+                self.summaryLayoutLabel2.setStyleSheet("color : green")
+                self.summaryLayoutLabel3.setText('     Predictand Period: ' + str(self.parent.modelRunsTable.loc[0]['PredictandPeriod']))
+                self.summaryLayoutLabel3.setStyleSheet("color : green")
+                self.summaryLayoutLabel4.setText('     Predictand Method: ' + str(self.parent.modelRunsTable.loc[0]['PredictandMethod']))
+                self.summaryLayoutLabel4.setStyleSheet("color : green")
+
+            # Load predictors table
             self.summaryListWidget.model().loadDataIntoModel(self.parent.datasetTable, self.parent.datasetOperationsTable)
 

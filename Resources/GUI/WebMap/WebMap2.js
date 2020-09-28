@@ -390,6 +390,12 @@ function createPopups() {
            
 
         })
+        // For each layer, create a tooltip
+        layer.on("mouseover", function(e) {
+            //console.log(e.layer.feature.properties.DatasetName);
+            e.layer.unbindTooltip();
+            e.layer.bindTooltip(e.layer.feature.properties.DatasetName).openTooltip();
+        })
         
         // For each layer, create a popup on click
         layer.on("click", function(e) {

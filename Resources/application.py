@@ -229,6 +229,7 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
             self.crossValidators[cv] = {}
             self.crossValidators[cv]["module"] = class_
             self.crossValidators[cv]["name"] = class_.NAME
+            self.crossValidators[cv]["description"] = class_.DESCRIPTION
         
         mod = importlib.import_module("resources.modules.StatisticalModelsTab.ModelScoring")
         self.scorers["class"] = getattr(mod, "Scorers")
