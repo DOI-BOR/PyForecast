@@ -212,6 +212,7 @@ class AggregationOptions(QtWidgets.QWidget):
             else:
                 # Setup a horizontal orientation
                 layoutVertical = QtWidgets.QVBoxLayout()
+                layoutVertical.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter)
 
                 # Cast the layout to a widget
                 layout1Widget = QtWidgets.QWidget()
@@ -219,9 +220,10 @@ class AggregationOptions(QtWidgets.QWidget):
 
                 # Create a horizontal layout
                 layoutHorizontal = QtWidgets.QHBoxLayout()
-                layoutHorizontal.addWidget(layout1Widget)
-                layoutHorizontal.addWidget(self.resamplingGroup)
-                layoutHorizontal.addWidget(self.radioGroup)
+                layoutHorizontal.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter)
+                # layoutHorizontal.addWidget(layout1Widget, QtCore.Qt.AlignCenter)
+                layoutHorizontal.addWidget(self.resamplingGroup, QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter)
+                layoutHorizontal.addWidget(self.radioGroup, QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter)
 
                 # Cast the layout to a widget
                 layoutHorizontalWidget = QtWidgets.QWidget()
@@ -231,7 +233,7 @@ class AggregationOptions(QtWidgets.QWidget):
                 layoutVertical.addWidget(layoutHorizontalWidget)
                 layoutVertical.addWidget(self.predForceCheckBox)
 
-                layoutVertical.addItem(QtGui.QSpacerItem(20, 10, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding))
+                # layoutVertical.addItem(QtGui.QSpacerItem(20, 10, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Maximum))
                 self.setLayout(layoutVertical)
 
 
