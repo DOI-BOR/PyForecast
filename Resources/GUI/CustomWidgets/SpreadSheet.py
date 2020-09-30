@@ -639,7 +639,7 @@ class SpreadSheetModelOperations(QtCore.QAbstractItemModel):
                 # Get property values from the table
                 val = QtCore.QVariant(str(self.operationsTable.iloc[index.column(), index.row() - 1]))
         # Color cells with None values
-        elif role == QtCore.Qt.ForegroundRole and len(self.operationsTable) > 0 and index.row() >= 5:
+        elif role == QtCore.Qt.ForegroundRole and len(self.operationsTable) > 0 and index.row() >= 7:
             tempVal = str(self.operationsTable.iloc[index.column(), index.row() - 1])
             if tempVal == "None":
                 val = QtGui.QBrush(QtCore.Qt.red)
@@ -661,7 +661,7 @@ class SpreadSheetModelOperations(QtCore.QAbstractItemModel):
         """
 
         replacementDict = {'FillMethod': " Fill Method", 'FillMaximumGap': " Fill Maximum Gap", 'FillOrder': " Fill Order",
-                           'ExtendMethod': " Extend Method", 'ExtendDuration': " Extend Duration",
+                           'ExtendMethod': " Extend Method", 'ExtendDuration': " Extend Duration", 'ExtendFilter': " Extend Filter",
                            'AccumulationMethod': " Accumulation Method", 'AccumulationDateStart': " Accumulation Date Start",
                            'AccumulationDateStop': " Accumulation Date Stop", 'DatasetOperationsOptions': " Dataset Additional Options",
                            'AccumulationPeriod':"Accumulation Period", 'ForcingFlag':"Forcing Flag"}

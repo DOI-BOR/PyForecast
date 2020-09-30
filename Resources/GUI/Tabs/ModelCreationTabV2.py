@@ -1335,7 +1335,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Create the grid layout
         crossValidatorLayout = QtWidgets.QGridLayout()
 
-        # Loop and fill the preprocessor options
+        # Loop and fill the cross validation options
         numCrossValidators = len(self.parent.crossValidators.keys())
         counter = 0
         for i in range(int(numCrossValidators/3) + 1 if numCrossValidators%3 != 0 else int(numCrossValidators/3)):
@@ -2460,8 +2460,9 @@ class ModelCreationTab(QtWidgets.QWidget):
             print('-------------------------')
             print('Beginning regression calculations...')
             self.rg = RegressionWorker.RegressionWorker(self.parent, modelRunTableEntry=self.parent.modelRunsTable.iloc[0])
-            self.rg.setData()
+            #self.rg.setData()
             #self.rg.run()
+            a=1
 
 
     def applyPredictandAggregationOption(self):
