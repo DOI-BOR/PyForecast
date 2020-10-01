@@ -106,4 +106,4 @@ def dataLoader(stationDict, startDate, endDate):
     df = pd.DataFrame(pd.to_numeric(dataPoints), columns=[grid + ' | ' + stationID + ' | ' + pcode + ' | ' + unit], index=pd.date_range(startDate, endDate))
 
     # Return the data
-    return df
+    return df.round(3)

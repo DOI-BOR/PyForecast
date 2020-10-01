@@ -1,12 +1,12 @@
 QMainWindow {
     background: #007396;
-    font-family: 'Segoe UI';
+    font-family: "Segoe UI";
     font-size: 15px;
     color: #003E51
 }
 QMenuBar { 
     background-color: #d2d2d2;
-    font-family: 'Segoe UI';
+    font-family: "Segoe UI";
     color: black;
     border-bottom: 1px solid darkgray
 }
@@ -19,12 +19,12 @@ QStackedWidget {
 }
 QWidget#EnhancedTabWidget {
     background: #003E51;
-    font-family: 'Segoe UI';
+    font-family: "Segoe UI";
     font-size: 15px;
 }
 QWidget#EnhancedTabWidget_tint {
     background: #002b39;
-    font-family: 'Segoe UI';
+    font-family: "Segoe UI";
     font-size: 15px;
 }
 QWidget#EnhancedTabWidget QWidget#TabLabel {
@@ -71,7 +71,7 @@ QWidget#EnhancedTabWidget_tint QLabel#LabelIcon {
 }
 QTabBar {
     color: #d6d6d6;
-    font-family: 'Segoe UI Semibold';
+    font-family: "Segoe UI Semibold";
 }
 
 QTabBar::tab {
@@ -129,7 +129,7 @@ QTabWidget::pane {
 
 QTabWidget {
     background: #e8e8e8;
-    font-family: 'Segoe UI';
+    font-family: "Segoe UI";
     font-size: 15px;
     color: #003E51;
 }
@@ -142,7 +142,7 @@ QSplitter::handle:horizontal {
     
 }
 QLabel {
-    font-family: 'Open Sans Regular', "Open Sans SemiBold", "Open Sans";
+    font-family: "Open Sans Regular", "Open Sans SemiBold", "Open Sans";
     color: #003E51;
     padding-left: 7px;
     padding-right: 7px;
@@ -165,7 +165,7 @@ QListWidget#ModelTargetList {
     border: 1px solid darkgray;
 }
 QLineEdit {
-    font-family: 'Open Sans Light', "Open Sans Regular", "Open Sans", "Arial";
+    font-family: "Open Sans Light", "Open Sans Regular", "Open Sans", "Arial";
     border: 0px;
     margin-left: 5px;
     margin-right: 5px;
@@ -190,7 +190,7 @@ QComboBox {
     border-radius: 0px;
     padding: 1px 18px 1px 3px;
     min-width: 6em;
-    font-family: 'Open Sans Light', "Open Sans Regular", "Open Sans", "Arial";
+    font-family: "Open Sans Light", "Open Sans Regular", "Open Sans", "Arial";
     background: #F0F0F0;
 }
 QSpinBox {
@@ -202,7 +202,7 @@ QSpinBox {
     border-radius: 0px;
     padding: 1px 18px 1px 3px;
     min-width: 6em;
-    font-family: 'Open Sans Light', "Open Sans Regular", "Open Sans", "Arial";
+    font-family: "Open Sans Light", "Open Sans Regular", "Open Sans", "Arial";
     background: #F0F0F0;
 }
 QComboBox:editable {
@@ -253,7 +253,7 @@ QTableView {
     border: 0px;
 }
 QDateTimeEdit {
-    font-family: 'Open Sans Light', "Open Sans Regular", "Open Sans", "Arial";
+    font-family: "Open Sans Light", "Open Sans Regular", "Open Sans", "Arial";
     border: 0px;
     margin-left: 5px;
     margin-right: 5px;
