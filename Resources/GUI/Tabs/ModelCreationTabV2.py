@@ -18,12 +18,12 @@ from resources.GUI.CustomWidgets.SpreadSheet import SpreadSheetViewOperations
 from resources.GUI.WebMap import webMapView
 from resources.modules.StatisticalModelsTab import RegressionWorker
 
-# import pandas as pd
+import pandas as pd
 import numpy as np
 from dateutil import parser
-import copy
 
-from resources.modules.StatisticalModelsTab.Operations.Fill import *
+from resources.modules.StatisticalModelsTab.Operations.Fill import fill_missing
+from resources.modules.StatisticalModelsTab.Operations.Extend import extend
 
 class ModelCreationTab(QtWidgets.QWidget):
     """
@@ -561,18 +561,23 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ### Create the nearest page ###
         nearestLayout = QtWidgets.QGridLayout()
+        nearestLayout.setContentsMargins(0, 0, 0, 0)
 
         ### Create the linear page ###
         linearLayout = QtWidgets.QGridLayout()
+        linearLayout.setContentsMargins(0, 0, 0, 0)
 
         ### Create the quadratic page ###
         quadradicLayout = QtWidgets.QGridLayout()
+        quadradicLayout.setContentsMargins(0, 0, 0, 0)
 
         ### Create the cubic page ###
         cubicLayout = QtWidgets.QGridLayout()
+        cubicLayout.setContentsMargins(0, 0, 0, 0)
 
         ### Create the polynomial page ###
         polyLayout = QtWidgets.QGridLayout()
+        polyLayout.setContentsMargins(0, 0, 0, 0)
 
         ### Create the stacked layout ###
         # Initialize the layout
@@ -652,9 +657,6 @@ class ModelCreationTab(QtWidgets.QWidget):
         ### Connect the stacked widget with the selection combo box ###
         self.layoutFillMethodSelector.currentIndexChanged.connect(self._updateFillSubtab)
 
-        ### Connect the fill plot with the layout options ###
-        # todo: build this
-
         ### Create the full layout ###
         layoutFill = QtWidgets.QHBoxLayout()
 
@@ -703,7 +705,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         layoutExtendRightLayout = QtWidgets.QVBoxLayout()
 
         # Set the options available for filling the data
-        extendOptions = ['None', 'Fourier']
+        extendOptions = ['None', 'Linear', 'Fourier']
 
         # Create and add a dropdown selector with the available options
         layoutExtendRightLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Extend Method<strong>'))
@@ -720,42 +722,88 @@ class ModelCreationTab(QtWidgets.QWidget):
         lineA.setFrameShape(QtWidgets.QFrame.HLine)
         layoutExtendRightLayout.addWidget(lineA)
 
-        # Create the fill limit label
-        self.layoutExtendDurationLabel = QtWidgets.QLabel('Extension Duration')
-        self.layoutExtendDurationLabel.setVisible(False)
-
-        # Create the fill limit widget
-        self.layoutExtendDurationLimit = QtWidgets.QLineEdit()
-        self.layoutExtendDurationLimit.setPlaceholderText('30')
-        self.layoutExtendDurationLimit.setVisible(False)
-
-        # Create the layout for the fill limit
-        extendGapLayout = QtWidgets.QHBoxLayout()
-        extendGapLayout.setAlignment(QtCore.Qt.AlignTop)
-        extendGapLayout.setContentsMargins(0, 0, 0, 0)
-
-        extendGapLayout.addWidget(self.layoutExtendDurationLabel, 1, QtCore.Qt.AlignLeft)
-        extendGapLayout.addWidget(self.layoutExtendDurationLimit, 5, QtCore.Qt.AlignLeft)
-
-        # Add the limit into the main page
-        extendGapLayoutWidget = QtWidgets.QWidget()
-        extendGapLayoutWidget.setSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Maximum)
-        extendGapLayoutWidget.setLayout(extendGapLayout)
-
-        layoutExtendRightLayout.addWidget(extendGapLayoutWidget)
-
         # Adjust the layout of the widgets
         layoutExtendRightLayout.setAlignment(QtCore.Qt.AlignTop)
 
         ### Create the none page ###
-        noneLayout = QtWidgets.QGridLayout()
+        noneLayout = QtWidgets.QVBoxLayout()
+        noneLayout.setContentsMargins(0, 0, 0, 6)
+
+        ### Create the linear page ###
+        ## Create the main vertical layout ##
+        linearLayout = QtWidgets.QVBoxLayout()
+        linearLayout.setContentsMargins(0, 0, 0, 6)
+
+        ## Create the horizontal layout for the first row ##
+        linearHorizontalLayout = QtWidgets.QHBoxLayout()
+        linearHorizontalLayout.setContentsMargins(0, 0, 0, 0)
+
+        # Create the fill limit label
+        self.layoutExtendLinearDurationLabel = QtWidgets.QLabel('Extension Duration')
+        self.layoutExtendLinearDurationLabel.setVisible(False)
+
+        # Create the fill limit widget
+        self.layoutExtendLinearDurationLimit = QtWidgets.QLineEdit()
+        self.layoutExtendLinearDurationLimit.setPlaceholderText('30')
+        self.layoutExtendLinearDurationLimit.setVisible(False)
+
+        # Add both widgets to the horizontal layout
+        linearHorizontalLayout.addWidget(self.layoutExtendLinearDurationLabel)
+        linearHorizontalLayout.addWidget(self.layoutExtendLinearDurationLimit)
+
+        ## Add the horizontal layout into the linear vertical layout ##
+        # Wrap the layout in a widget
+        horizontalWidget = QtWidgets.QWidget()
+        horizontalWidget.setLayout(linearHorizontalLayout)
+
+        # Add the widget into the vertical layout
+        linearLayout.addWidget(horizontalWidget)
 
         ### Create the fourier page ###
-        fourierLayout = QtWidgets.QGridLayout()
+        ## Create the main vertical layout ##
+        fourierLayout = QtWidgets.QVBoxLayout()
+        fourierLayout.setContentsMargins(0, 0, 0, 6)
+
+        ## Create the horizontal layout for the first row ##
+        fourierHorizontalLayout = QtWidgets.QHBoxLayout()
+        fourierHorizontalLayout.setContentsMargins(0, 0, 0, 0)
+
+        # Create the fill limit label
+        self.layoutExtendFourierDurationLabel = QtWidgets.QLabel('Extension Duration')
+        self.layoutExtendFourierDurationLabel.setVisible(False)
+
+        # Create the fill limit widget
+        self.layoutExtendFourierDurationLimit = QtWidgets.QLineEdit()
+        self.layoutExtendFourierDurationLimit.setPlaceholderText('30')
+        self.layoutExtendFourierDurationLimit.setVisible(False)
+
+        # Create the filter label
+        self.layoutExtendFourierFilterLabel = QtWidgets.QLabel('Filter Duration')
+        self.layoutExtendFourierFilterLabel.setVisible(False)
+
+        # Create the fill filter widget
+        self.layoutExtendFourierFilter = QtWidgets.QComboBox()
+        self.layoutExtendFourierFilter.addItems(['Day', 'Week', 'Month', 'Year'])
+        self.layoutExtendFourierFilter.setVisible(False)
+
+        # Add the widgets into the horizontal layout
+        fourierHorizontalLayout.addWidget(self.layoutExtendFourierDurationLabel)
+        fourierHorizontalLayout.addWidget(self.layoutExtendFourierDurationLimit)
+        fourierHorizontalLayout.addWidget(self.layoutExtendFourierFilterLabel)
+        fourierHorizontalLayout.addWidget(self.layoutExtendFourierFilter)
+
+        ## Add the horizontal layout into the linear vertical layout ##
+        # Wrap the layout in a widget
+        horizontalWidget = QtWidgets.QWidget()
+        horizontalWidget.setLayout(fourierHorizontalLayout)
+
+        # Add the widget into the vertical layout
+        fourierLayout.addWidget(horizontalWidget)
 
         ### Create the stacked layout ###
         # Initialize the layout
         self.stackedExtendLayout = QtWidgets.QStackedLayout()
+        # self.stackedExtendLayout.setContentsMargins(0, 0, 0, 4)
 
         # Wrap it in a widget and set visibility to false. If this is not done, a small, annoying popup window will
         # be opened separate from the main window
@@ -768,6 +816,11 @@ class ModelCreationTab(QtWidgets.QWidget):
         noneWidget.setLayout(noneLayout)
         noneWidget.setSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Maximum)
         self.stackedExtendLayout.addWidget(noneWidget)
+
+        linearWidget = QtWidgets.QWidget()
+        linearWidget.setLayout(linearLayout)
+        linearWidget.setSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Maximum)
+        self.stackedExtendLayout.addWidget(linearWidget)
 
         fourierWidget = QtWidgets.QWidget()
         fourierWidget.setLayout(fourierLayout)
@@ -1282,7 +1335,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Create the grid layout
         crossValidatorLayout = QtWidgets.QGridLayout()
 
-        # Loop and fill the preprocessor options
+        # Loop and fill the cross validation options
         numCrossValidators = len(self.parent.crossValidators.keys())
         counter = 0
         for i in range(int(numCrossValidators/3) + 1 if numCrossValidators%3 != 0 else int(numCrossValidators/3)):
@@ -1926,16 +1979,32 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         """
 
-        # Switch the stacked widgets
+        ### Switch the stacked widgets ###
         self.stackedExtendLayout.setCurrentIndex(self.layoutExtendMethodSelector.currentIndex())
 
+        ### Set all options to false and reenable if active ###
+        ## Linear widgets ##
+        self.layoutExtendLinearDurationLabel.setVisible(False)
+        self.layoutExtendLinearDurationLimit.setVisible(False)
+
+        ## Fourier widgets ##
+        self.layoutExtendFourierDurationLabel.setVisible(False)
+        self.layoutExtendFourierDurationLimit.setVisible(False)
+        self.layoutExtendFourierFilterLabel.setVisible(False)
+        self.layoutExtendFourierFilter.setVisible(False)
+
         # Update the gap limit visibility
-        if self.layoutExtendMethodSelector.currentIndex() > 0:
-            self.layoutExtendDurationLabel.setVisible(True)
-            self.layoutExtendDurationLimit.setVisible(True)
-        else:
-            self.layoutExtendDurationLabel.setVisible(False)
-            self.layoutExtendDurationLimit.setVisible(False)
+        if self.layoutExtendMethodSelector.currentIndex() == 1:
+            # Update visibility for the linear option
+            self.layoutExtendLinearDurationLabel.setVisible(True)
+            self.layoutExtendLinearDurationLimit.setVisible(True)
+
+        elif self.layoutExtendMethodSelector.currentIndex() == 2:
+            # Update visibility for the fourier option
+            self.layoutExtendFourierDurationLabel.setVisible(True)
+            self.layoutExtendFourierDurationLimit.setVisible(True)
+            self.layoutExtendFourierFilterLabel.setVisible(True)
+            self.layoutExtendFourierFilter.setVisible(True)
 
     def _updateExtendOptionsOnDataset(self):
         """
@@ -1949,24 +2018,41 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Get the options for the item
         extendMethod = self.parent.datasetOperationsTable.loc[currentIndex]['ExtendMethod']
         extendDuration = self.parent.datasetOperationsTable.loc[currentIndex]['ExtendDuration']
-        # If needed, can extract more information based on the fill method here
+        extendFilter = self.parent.datasetOperationsTable.loc[currentIndex]['ExtendFilter']
 
-        # # Get the options for the selector and stack
+        # Get the options for the selector and stack
         extendOptionsIndex = [x for x in range(self.layoutExtendMethodSelector.count()) if self.layoutExtendMethodSelector.itemText(x) == extendMethod]
         if extendOptionsIndex:
             extendOptionsIndex = extendOptionsIndex[0]
         else:
             extendOptionsIndex = 0
 
+        # Toggle the stack to the correct display
         self.stackedExtendLayout.setCurrentIndex(extendOptionsIndex)
+
+        # Toggle the method selector to the correct display
         self.layoutExtendMethodSelector.setCurrentIndex(extendOptionsIndex)
 
-        # Set the values into the widgets
-        # Correct this issue
-        self.layoutExtendDurationLimit.setText(str(extendDuration))
+        # Set the options based on set option
+        if extendOptionsIndex == 1:
+            # Set the linear options
+            self.layoutExtendLinearDurationLimit.setText(str(extendDuration))
+
+        elif extendOptionsIndex == 2:
+            # Set the fourier options
+            self.layoutExtendFourierDurationLimit.setText(str(extendMethod))
+
+            if extendFilter == 'Day':
+                self.layoutExtendFourierFilter.setCurrentIndex(0)
+            if extendFilter == 'Week':
+                self.layoutExtendFourierFilter.setCurrentIndex(1)
+            if extendFilter == 'Month':
+                self.layoutExtendFourierFilter.setCurrentIndex(2)
+            if extendFilter == 'Year':
+                self.layoutExtendFourierFilter.setCurrentIndex(3)
 
         # Update the plot on the tab
-        self._updateExtendPlot(currentIndex, extendMethod, extendDuration)
+        self._updateExtendPlot(currentIndex, extendMethod, extendDuration, extendFilter)
 
     def _applyExtendOptionsToDataset(self):
         """
@@ -1974,27 +2060,36 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         """
 
-        # Extract the fill limit
-        try:
-            extendLimit = int(self.layoutExtendDurationLimit.text())
-        except:
-            extendLimit = None
-
+        ### Extract the data from the GUI ###
         # Get the method to be utilized
         extendMethod = self.layoutExtendMethodSelector.currentText()
+
+        # Parse the output based on the method
+        if extendMethod == 'Linear':
+            # Extract the information from the linear stack
+            extendLimit = int(self.layoutExtendLinearDurationLimit.text())
+            extendFilter = None
+
+        elif extendMethod == 'Fourier':
+            # Extract the information from the fourier stack
+            extendLimit = int(self.layoutExtendFourierDurationLimit.text())
+            extendFilter = self.layoutExtendFourierFilter.currentText()
 
         # Get the current dataset
         currentIndex = self.extendList.datasetTable.index[self.extendList.currentIndex().row()]
 
-        # Set the values
-        self.parent.datasetOperationsTable.loc[currentIndex]['ExtendMethod'] = extendMethod
-        self.parent.datasetOperationsTable.loc[currentIndex]['ExtendDuration'] = extendLimit
+        ### Determine if a fill has been added to the data ###
+        if self.parent.datasetOperationsTable.loc[currentIndex]['FillMethod'] is not None:
+            # Set the values
+            self.parent.datasetOperationsTable.loc[currentIndex]['ExtendMethod'] = extendMethod
+            self.parent.datasetOperationsTable.loc[currentIndex]['ExtendDuration'] = extendLimit
+            self.parent.datasetOperationsTable.loc[currentIndex]['ExtendFilter'] = extendLimit
+
+            # Update the plot on the tab
+            self._updateExtendPlot(currentIndex, extendMethod, extendLimit, extendFilter)
 
         # Clear the button click
         self.layoutExtendApplyButton.setChecked(False)
-
-        # Update the plot on the tab
-        self._updateExtendPlot(currentIndex, extendMethod, extendLimit)
 
     def _applyExtendClearToDataset(self):
         """
@@ -2008,6 +2103,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Set the values
         self.parent.datasetOperationsTable.loc[currentIndex]['ExtendMethod'] = None
         self.parent.datasetOperationsTable.loc[currentIndex]['ExtendDuration'] = None
+        self.parent.datasetOperationsTable.loc[currentIndex]['ExtendFilter'] = None
 
         # Clear the button click
         self.layoutFillClearButton.setChecked(False)
@@ -2016,7 +2112,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.layoutExtendMethodSelector.setCurrentIndex(0)
         self._updateExtendSubtab()
 
-    def _updateExtendPlot(self, currentIndex, extendMethod, extendLimit):
+    def _updateExtendPlot(self, currentIndex, extendMethod, extendLimit, extendFilter):
         """
         Updates the plot on the extend subtab
 
@@ -2037,28 +2133,33 @@ class ModelCreationTab(QtWidgets.QWidget):
         sourceData = sourceData.droplevel('DatasetInternalID')
         sourceUnits = self.parent.datasetTable.loc[currentIndex[0]]['DatasetUnits']
 
-        extendMethod = None
+        ### Extract the data from the fill chart ###
+        fillMethod = self.parent.datasetOperationsTable.loc[currentIndex]['FillMethod']
+        fillDuration = self.parent.datasetOperationsTable.loc[currentIndex]['FillMaximumGap']
+        fillOrder = self.parent.datasetOperationsTable.loc[currentIndex]['FillOrder']
+
         if extendMethod is not None and extendMethod != 'None':
             # Fill the data with the applied operation
-            filledData = fill_missing(sourceData, extendMethod.lower(), extendLimit, order=None)
+            extendedData, lostDensity = extend(sourceData, fillMethod.lower(), fillDuration, fillOrder,
+                                               extendMethod.lower(), extendLimit, extendFilter)
 
             # Promote and set the status of the filled data
-            fillData = pd.DataFrame(filledData)
-            fillData['Status'] = 'Filled'
-            fillData.set_index(['Status'], append=True, inplace=True)
+            extendedData = pd.DataFrame(extendedData)
+            extendedData['Status'] = 'Extended'
+            extendedData.set_index(['Status'], append=True, inplace=True)
 
             # Promote and set the status of the source data
             sourceData = pd.DataFrame(sourceData)
-            sourceData['Status'] = 'Not Filled'
+            sourceData['Status'] = 'Not Extended'
             sourceData.set_index(['Status'], append=True, inplace=True)
 
             # Stack it together with the existing data
-            sourceData = pd.concat([fillData, sourceData]).sort_index()
+            sourceData = pd.concat([extendedData, sourceData]).sort_index()
 
         else:
             # No filled data is present. Promote back to a dataframe and add the plotting label
             sourceData = pd.DataFrame(sourceData)
-            sourceData['Status'] = 'Not Filled'
+            sourceData['Status'] = 'Not Extended'
 
             # Convert to a multiinstance table
             sourceData.set_index(['Status'], append=True, inplace=True)
@@ -2359,8 +2460,9 @@ class ModelCreationTab(QtWidgets.QWidget):
             print('-------------------------')
             print('Beginning regression calculations...')
             self.rg = RegressionWorker.RegressionWorker(self.parent, modelRunTableEntry=self.parent.modelRunsTable.iloc[0])
-            self.rg.setData()
+            #self.rg.setData()
             #self.rg.run()
+            a=1
 
 
     def applyPredictandAggregationOption(self):
