@@ -21,6 +21,7 @@ from resources.modules.StatisticalModelsTab import RegressionWorker
 import pandas as pd
 import numpy as np
 from dateutil import parser
+from statsmodels.tsa.stattools import ccf
 
 from resources.modules.StatisticalModelsTab.Operations.Fill import fill_missing
 from resources.modules.StatisticalModelsTab.Operations.Extend import extend
@@ -2293,19 +2294,19 @@ class ModelCreationTab(QtWidgets.QWidget):
         if startDate <= endDate:
             # Start date is before the end date, so lag is positive. Calculate a nonzero correlation to display.
             # Cross correlation between the source and target datasets
-            correlation = np.correlate(targetData.values - np.nanmean(targetData.values), sourceData.values - np.nanmean(sourceData.values), "same") / \
-                          (np.nanstd(targetData.values) * np.nanstd(sourceData.values) * len(targetData.values))
+            correlation = ccf(targetData.values, sourceData.values)
 
         else:
             # Start date is after the end date, so the lag is negative. Return a zero correlation
-            correlation = np.zeros(np.abs(numberOfDays))
+            correlation = np.zeros((numberOfDays, 2))
+            correlation[:, 0] = np.arange(np.abs(numberOfDays))
+            correlation[:, 1] = np.zeros(np.abs(numberOfDays))
 
         # Add some random data to test
         self.layoutWindowPlot.clear()
 
         # Create the x axis labels
-        categories = np.floor(np.arange(-len(sourceData)/2, len(sourceData)/2, 1))
-        categories = [str(x) for x in categories]
+        categories = [str(x) for x in correlation[:, 0]]
 
         # Set the correlation into the plot as a bar series
         self.layoutWindowPlot.createBarPlotItem('Correlation', correlation)
