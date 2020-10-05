@@ -104,10 +104,11 @@ class RegressionWorker(QtCore.QRunnable):
                 print('all zero variable detected at position:', i)
                 popindex.append(i) 
                 continue
-            if np.isnan(data.loc[self.excludeYears[0]]):
-                print('missing exclude year at: ', i)
-                popindex.append(i)
-                continue
+            if self.excludeYears[0] in data.index:
+                if np.isnan(data.loc[self.excludeYears[0]]):
+                    print('missing exclude year at: ', i)
+                    popindex.append(i)
+                    continue
             #print(data)
             idx = list(filter(lambda date: date not in self.excludeYears, data.index))
             self.xTraining.append(list(data.loc[idx])) # Training Data
@@ -132,7 +133,12 @@ class RegressionWorker(QtCore.QRunnable):
 
         # Set the forced predictors
         print("force flag", self.modelRunTableEntry['PredictorForceFlag'])
-        self.forcedPredictors = ba.bitarray(self.modelRunTableEntry['PredictorForceFlag'])
+        # Check if forced predictors is an array of strings or booleans
+        if isinstance(self.modelRunTableEntry['PredictorForceFlag'][0], (int, float)):
+            self.forcedPredictors = ba.bitarray(self.modelRunTableEntry['PredictorForceFlag'])
+        else:
+            self.forcedPredictors = ba.bitarray(
+                [True if x == "True" else False for x in self.modelRunTableEntry['PredictorForceFlag']])
 
         # Add any missing data for the current water year to the arrays
         maxListLength = max([len(i) for i in self.xTraining])
@@ -380,7 +386,7 @@ if __name__ == '__main__':
             self.featureSelectors = {}
             self.crossValidators = {}
             self.scorers = {}
-            for file_ in os.listdir("resources/modules/StatisticalModelsTab/RegressionAlgorithms"):
+            for file_ in os.listdir("RegressionAlgorithms"):
                 if '.py' in file_:
                     scriptName = file_[:file_.index(".py")]
                     mod = importlib.import_module(
@@ -391,7 +397,7 @@ if __name__ == '__main__':
                     self.regressors[scriptName]['website'] = self.regressors[scriptName]["module"].WEBSITE
                     self.regressors[scriptName]['description'] = self.regressors[scriptName]["module"].DESCRIPTION
 
-            for file_ in os.listdir("resources/modules/StatisticalModelsTab/PreProcessingAlgorithms"):
+            for file_ in os.listdir("PreProcessingAlgorithms"):
                 if '.py' in file_:
                     scriptName = file_[:file_.index(".py")]
                     mod = importlib.import_module(
@@ -401,7 +407,7 @@ if __name__ == '__main__':
                     self.preProcessors[scriptName]["name"] = self.preProcessors[scriptName]["module"].NAME
                     self.preProcessors[scriptName]["description"] = self.preProcessors[scriptName]["module"].DESCRIPTION
 
-            for file_ in os.listdir("resources/modules/StatisticalModelsTab/FeatureSelectionAlgorithms"):
+            for file_ in os.listdir("FeatureSelectionAlgorithms"):
                 if '.py' in file_:
                     scriptName = file_[:file_.index(".py")]
                     mod = importlib.import_module(

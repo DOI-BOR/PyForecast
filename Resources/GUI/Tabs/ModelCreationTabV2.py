@@ -2443,8 +2443,8 @@ class ModelCreationTab(QtWidgets.QWidget):
             self.summaryLayoutErrorLabel.setVisible(True)
         else:
             # Populate self.modelRunsTable with validated entries
-            self.parent.modelRunsTable.loc[0]['PredictorGroups'] = []
-            self.parent.modelRunsTable.loc[0]['PredictorGroupMapping'] = []
+            #self.parent.modelRunsTable.loc[0]['PredictorGroups'] = []
+            #self.parent.modelRunsTable.loc[0]['PredictorGroupMapping'] = []
             self.parent.modelRunsTable.loc[0]['PredictorPool'] = predPool
             self.parent.modelRunsTable.loc[0]['PredictorForceFlag'] = predForced
             self.parent.modelRunsTable.loc[0]['PredictorPeriods'] = predPeriods
@@ -2460,8 +2460,8 @@ class ModelCreationTab(QtWidgets.QWidget):
             print('-------------------------')
             print('Beginning regression calculations...')
             self.rg = RegressionWorker.RegressionWorker(self.parent, modelRunTableEntry=self.parent.modelRunsTable.iloc[0])
-            #self.rg.setData()
-            #self.rg.run()
+            self.rg.setData()
+            self.rg.run()
             a=1
 
 
@@ -2487,7 +2487,8 @@ class ModelCreationTab(QtWidgets.QWidget):
         if self.parent.modelRunsTable.shape[0] < 1:
             self.parent.modelRunsTable.loc[0] = [None] * self.parent.modelRunsTable.columns.shape[0]
 
-        self.parent.modelRunsTable.loc[0]['ModelTrainingPeriod'] = minT.strftime("%Y-%m-%d") + "/" + maxT.strftime("%Y-%m-%d")
+        #self.parent.modelRunsTable.loc[0]['ModelTrainingPeriod'] = minT.strftime("%Y-%m-%d") + "/" + maxT.strftime("%Y-%m-%d")
+        self.parent.modelRunsTable.loc[0]['ModelTrainingPeriod'] = minT.strftime("%Y") + "/" + maxT.strftime("%Y") + "/1900"
         self.parent.modelRunsTable.loc[0]['Predictand'] = predID
         self.parent.modelRunsTable.loc[0]['PredictandPeriod'] = periodString
         self.parent.modelRunsTable.loc[0]['PredictandMethod'] = self.methodCombo.currentData()

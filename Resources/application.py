@@ -132,8 +132,8 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
                 "Predictand",           # E.g. 100302 (datasetInternalID)
                 "PredictandPeriod",     # E.g. R/1978-03-01/P1M/F12M (starting in march of 1978, over a 1 month period, recurring once a year.)
                 "PredictandMethod",     # E.g. Accumulation, Average, Max, etc
-                "PredictorGroups",      # E.g. ["SNOTEL SITES", "CLIMATE INDICES", ...]
-                "PredictorGroupMapping",# E.g. [0, 0, 0, 1, 4, 2, 1, 3, ...] maps each predictor in the pool to a predictor group
+                #"PredictorGroups",      # E.g. ["SNOTEL SITES", "CLIMATE INDICES", ...]
+                #"PredictorGroupMapping",# E.g. [0, 0, 0, 1, 4, 2, 1, 3, ...] maps each predictor in the pool to a predictor group
                 "PredictorPool",        # E.g. [100204, 100101, ...]
                 "PredictorForceFlag",   # E.g. [False, False, True, ...]
                 "PredictorPeriods",     # E.g. [R/1978-03-01/P1M/F12M, R/1978-03-01/P1M/F12M, ...]
