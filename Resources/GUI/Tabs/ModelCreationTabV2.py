@@ -623,7 +623,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ### Create the plot that shows the result of the selection ###
         # Create the plot
-        self.layoutFillPlot = DatasetTimeseriesPlots(None)
+        self.layoutFillPlot = DatasetTimeSeriesPlot(self)
         self.layoutFillPlot.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
 
         # Add it into the layout
