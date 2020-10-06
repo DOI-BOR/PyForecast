@@ -1,5 +1,5 @@
 """
-Script Name:    ModelCreationTabV2.py
+Script Name:    ModelCreationTab.py
 
 Description:    Defines the layout for the Model Creation Tab. Includes all the sub-widgets
                 for the stacked widget.
@@ -16,15 +16,15 @@ from resources.GUI.CustomWidgets.customTabs import EnhancedTabWidget
 from resources.GUI.CustomWidgets.richTextButtons import richTextButton, richTextButtonCheckbox, richTextDescriptionButton
 from resources.GUI.CustomWidgets.SpreadSheet import SpreadSheetViewOperations
 from resources.GUI.WebMap import webMapView
-from resources.modules.StatisticalModelsTab import RegressionWorker
+from resources.modules.ModelCreationTab import RegressionWorker
 
 import pandas as pd
 import numpy as np
 from dateutil import parser
 from statsmodels.tsa.stattools import ccf
 
-from resources.modules.StatisticalModelsTab.Operations.Fill import fill_missing
-from resources.modules.StatisticalModelsTab.Operations.Extend import extend
+from resources.modules.ModelCreationTab.Operations.Fill import fill_missing
+from resources.modules.ModelCreationTab.Operations.Extend import extend
 
 class ModelCreationTab(QtWidgets.QWidget):
     """
@@ -623,7 +623,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ### Create the plot that shows the result of the selection ###
         # Create the plot
-        self.layoutFillPlot = DatasetTimeSeriesPlot(self)
+        self.layoutFillPlot = DatasetTimeseriesPlots(self)
         self.layoutFillPlot.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
 
         # Add it into the layout

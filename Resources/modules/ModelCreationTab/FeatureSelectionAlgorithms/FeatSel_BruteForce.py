@@ -1,4 +1,4 @@
-from resources.modules.StatisticalModelsTab import ModelScoring
+from resources.modules.ModelCreationTab import ModelScoring
 import bitarray as ba
 import numpy as np
 

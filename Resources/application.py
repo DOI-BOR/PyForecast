@@ -24,7 +24,7 @@ from resources.modules.DatasetTab import datasetTabMaster
 from resources.modules.DataTab import dataTabMaster
 from resources.modules.MenuBar import menuBarMaster
 from resources.modules.ForecastsTab import forecastTabMaster
-from resources.modules.StatisticalModelsTab import StatisticalModelsTabMaster
+from resources.modules.ModelCreationTab import StatisticalModelsTabMaster
 from resources.modules.Miscellaneous import initUserOptions
 from datetime import datetime
 import configparser
@@ -197,42 +197,42 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
         self.scorers = {}
         
         # Load the modules
-        for file_ in os.listdir("resources/modules/StatisticalModelsTab/RegressionAlgorithms"):
+        for file_ in os.listdir("resources/modules/ModelCreationTab/RegressionAlgorithms"):
             if '.py' in file_:
                 scriptName = file_[:file_.index(".py")]
-                mod = importlib.import_module("resources.modules.StatisticalModelsTab.RegressionAlgorithms.{0}".format(scriptName))
+                mod = importlib.import_module("resources.modules.ModelCreationTab.RegressionAlgorithms.{0}".format(scriptName))
                 self.regressors[scriptName] = {}
                 self.regressors[scriptName]["module"] = getattr(mod, "Regressor")
                 self.regressors[scriptName]["name"] = self.regressors[scriptName]["module"].NAME
                 self.regressors[scriptName]['website'] = self.regressors[scriptName]["module"].WEBSITE
                 self.regressors[scriptName]['description'] = self.regressors[scriptName]["module"].DESCRIPTION
 
-        for file_ in os.listdir("resources/modules/StatisticalModelsTab/PreProcessingAlgorithms"):
+        for file_ in os.listdir("resources/modules/ModelCreationTab/PreProcessingAlgorithms"):
             if '.py' in file_:
                 scriptName = file_[:file_.index(".py")]
-                mod = importlib.import_module("resources.modules.StatisticalModelsTab.PreProcessingAlgorithms.{0}".format(scriptName))
+                mod = importlib.import_module("resources.modules.ModelCreationTab.PreProcessingAlgorithms.{0}".format(scriptName))
                 self.preProcessors[scriptName] = {}
                 self.preProcessors[scriptName]["module"] = getattr(mod, "preprocessor")
                 self.preProcessors[scriptName]["name"] = self.preProcessors[scriptName]["module"].NAME
                 self.preProcessors[scriptName]["description"] = self.preProcessors[scriptName]["module"].DESCRIPTION
         
-        for file_ in os.listdir("resources/modules/StatisticalModelsTab/FeatureSelectionAlgorithms"):
+        for file_ in os.listdir("resources/modules/ModelCreationTab/FeatureSelectionAlgorithms"):
             if '.py' in file_:
                 scriptName = file_[:file_.index(".py")]
-                mod = importlib.import_module("resources.modules.StatisticalModelsTab.FeatureSelectionAlgorithms.{0}".format(scriptName))
+                mod = importlib.import_module("resources.modules.ModelCreationTab.FeatureSelectionAlgorithms.{0}".format(scriptName))
                 self.featureSelectors[scriptName] = {}
                 self.featureSelectors[scriptName]["module"] = getattr(mod, "FeatureSelector")
                 self.featureSelectors[scriptName]["name"] = self.featureSelectors[scriptName]["module"].NAME
                 self.featureSelectors[scriptName]["description"] = self.featureSelectors[scriptName]["module"].DESCRIPTION
         
-        mod = importlib.import_module("resources.modules.StatisticalModelsTab.CrossValidationAlgorithms")
+        mod = importlib.import_module("resources.modules.ModelCreationTab.CrossValidationAlgorithms")
         for cv, class_ in inspect.getmembers(mod, inspect.isclass):
             self.crossValidators[cv] = {}
             self.crossValidators[cv]["module"] = class_
             self.crossValidators[cv]["name"] = class_.NAME
             self.crossValidators[cv]["description"] = class_.DESCRIPTION
         
-        mod = importlib.import_module("resources.modules.StatisticalModelsTab.ModelScoring")
+        mod = importlib.import_module("resources.modules.ModelCreationTab.ModelScoring")
         self.scorers["class"] = getattr(mod, "Scorers")
         self.scorers['info'] = self.scorers["class"].INFO
         self.scorers["module"] = mod
