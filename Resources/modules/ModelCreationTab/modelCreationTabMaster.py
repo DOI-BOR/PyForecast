@@ -4,7 +4,7 @@ from resources.modules.Miscellaneous import loggingAndErrors
 from PyQt5 import QtCore, QtGui
 import pandas as pd
 
-class statisticalModelsTab(object):
+class modelCreationTab(object):
     """
     STATISTICAL MODELS TAB
     The Statistical Models Tab contains tools for creating

@@ -24,7 +24,7 @@ from resources.modules.DatasetTab import datasetTabMaster
 from resources.modules.DataTab import dataTabMaster
 from resources.modules.MenuBar import menuBarMaster
 from resources.modules.ForecastsTab import forecastTabMaster
-from resources.modules.ModelCreationTab import StatisticalModelsTabMaster
+from resources.modules.ModelCreationTab import modelCreationTabMaster
 from resources.modules.Miscellaneous import initUserOptions
 from datetime import datetime
 import configparser
@@ -36,7 +36,7 @@ import importlib
 import pickle
 
 
-class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMaster.datasetTab, dataTabMaster.dataTab, menuBarMaster.menuBar, StatisticalModelsTabMaster.statisticalModelsTab, forecastTabMaster.forecastsTab):
+class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMaster.datasetTab, dataTabMaster.dataTab, menuBarMaster.menuBar, modelCreationTabMaster.modelCreationTab, forecastTabMaster.forecastsTab):
     """
     GLOBAL APPLICATION INITIALIZATION
     This section of the script deals with the initialization of the software. These subroutines 
