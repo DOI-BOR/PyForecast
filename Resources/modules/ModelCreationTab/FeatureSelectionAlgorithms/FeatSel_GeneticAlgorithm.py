@@ -58,7 +58,7 @@ Description:    Genetic Algorithm is a feature scheme that
 
 import bitarray as ba
 import importlib
-from resources.modules.StatisticalModelsTab import ModelScoring
+from resources.modules.ModelCreationTab import ModelScoring
 import numpy as np
 
 class FeatureSelector(object):

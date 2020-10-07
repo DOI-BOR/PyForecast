@@ -11,7 +11,7 @@ Description:    Computes a composite predictor by
 """
 
 import numpy as np
-from resources.modules.StatisticalModelsTab import CrossValidationAlgorithms, ModelScoring
+from resources.modules.ModelCreationTab import CrossValidationAlgorithms, ModelScoring
 
 class Regressor(object):
     """
