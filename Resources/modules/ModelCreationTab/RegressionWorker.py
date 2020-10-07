@@ -18,7 +18,7 @@ sys.path.append(os.getcwd())
 from resources.modules.Miscellaneous.DataProcessor import resampleDataSet
 import multiprocessing as mp
 import bitarray as ba
-from resources.modules.StatisticalModelsTab.ModelScoring import sortScores
+from resources.modules.ModelCreationTab.ModelScoring import sortScores
 from operator import itemgetter
 from itertools import repeat
 from sklearn.cluster import KMeans
@@ -104,10 +104,11 @@ class RegressionWorker(QtCore.QRunnable):
                 print('all zero variable detected at position:', i)
                 popindex.append(i) 
                 continue
-            if np.isnan(data.loc[self.excludeYears[0]]):
-                print('missing exclude year at: ', i)
-                popindex.append(i)
-                continue
+            if self.excludeYears[0] in data.index:
+                if np.isnan(data.loc[self.excludeYears[0]]):
+                    print('missing exclude year at: ', i)
+                    popindex.append(i)
+                    continue
             #print(data)
             idx = list(filter(lambda date: date not in self.excludeYears, data.index))
             self.xTraining.append(list(data.loc[idx])) # Training Data
@@ -132,7 +133,12 @@ class RegressionWorker(QtCore.QRunnable):
 
         # Set the forced predictors
         print("force flag", self.modelRunTableEntry['PredictorForceFlag'])
-        self.forcedPredictors = ba.bitarray(self.modelRunTableEntry['PredictorForceFlag'])
+        # Check if forced predictors is an array of strings or booleans
+        if isinstance(self.modelRunTableEntry['PredictorForceFlag'][0], (int, float)):
+            self.forcedPredictors = ba.bitarray(self.modelRunTableEntry['PredictorForceFlag'])
+        else:
+            self.forcedPredictors = ba.bitarray(
+                [True if x == "True" else False for x in self.modelRunTableEntry['PredictorForceFlag']])
 
         # Add any missing data for the current water year to the arrays
         maxListLength = max([len(i) for i in self.xTraining])
@@ -259,7 +265,7 @@ if __name__ == '__main__':
     import importlib
     import inspect
     import sys
-    from resources.modules.StatisticalModelsTab import PredictionIntervalBootstrap2 as PredictionIntervalBootstrap
+    from resources.modules.ModelCreationTab import PredictionIntervalBootstrap2 as PredictionIntervalBootstrap
 
     import random
     warnings.filterwarnings("ignore")
@@ -380,45 +386,45 @@ if __name__ == '__main__':
             self.featureSelectors = {}
             self.crossValidators = {}
             self.scorers = {}
-            for file_ in os.listdir("resources/modules/StatisticalModelsTab/RegressionAlgorithms"):
+            for file_ in os.listdir("RegressionAlgorithms"):
                 if '.py' in file_:
                     scriptName = file_[:file_.index(".py")]
                     mod = importlib.import_module(
-                        "resources.modules.StatisticalModelsTab.RegressionAlgorithms.{0}".format(scriptName))
+                        "resources.modules.ModelCreationTab.RegressionAlgorithms.{0}".format(scriptName))
                     self.regressors[scriptName] = {}
                     self.regressors[scriptName]["module"] = getattr(mod, "Regressor")
                     self.regressors[scriptName]["name"] = self.regressors[scriptName]["module"].NAME
                     self.regressors[scriptName]['website'] = self.regressors[scriptName]["module"].WEBSITE
                     self.regressors[scriptName]['description'] = self.regressors[scriptName]["module"].DESCRIPTION
 
-            for file_ in os.listdir("resources/modules/StatisticalModelsTab/PreProcessingAlgorithms"):
+            for file_ in os.listdir("PreProcessingAlgorithms"):
                 if '.py' in file_:
                     scriptName = file_[:file_.index(".py")]
                     mod = importlib.import_module(
-                        "resources.modules.StatisticalModelsTab.PreProcessingAlgorithms.{0}".format(scriptName))
+                        "resources.modules.ModelCreationTab.PreProcessingAlgorithms.{0}".format(scriptName))
                     self.preProcessors[scriptName] = {}
                     self.preProcessors[scriptName]["module"] = getattr(mod, "preprocessor")
                     self.preProcessors[scriptName]["name"] = self.preProcessors[scriptName]["module"].NAME
                     self.preProcessors[scriptName]["description"] = self.preProcessors[scriptName]["module"].DESCRIPTION
 
-            for file_ in os.listdir("resources/modules/StatisticalModelsTab/FeatureSelectionAlgorithms"):
+            for file_ in os.listdir("FeatureSelectionAlgorithms"):
                 if '.py' in file_:
                     scriptName = file_[:file_.index(".py")]
                     mod = importlib.import_module(
-                        "resources.modules.StatisticalModelsTab.FeatureSelectionAlgorithms.{0}".format(scriptName))
+                        "resources.modules.ModelCreationTab.FeatureSelectionAlgorithms.{0}".format(scriptName))
                     self.featureSelectors[scriptName] = {}
                     self.featureSelectors[scriptName]["module"] = getattr(mod, "FeatureSelector")
                     self.featureSelectors[scriptName]["name"] = self.featureSelectors[scriptName]["module"].NAME
                     self.featureSelectors[scriptName]["description"] = self.featureSelectors[scriptName][
                         "module"].DESCRIPTION
 
-            mod = importlib.import_module("resources.modules.StatisticalModelsTab.CrossValidationAlgorithms")
+            mod = importlib.import_module("resources.modules.ModelCreationTab.CrossValidationAlgorithms")
             for cv, class_ in inspect.getmembers(mod, inspect.isclass):
                 self.crossValidators[cv] = {}
                 self.crossValidators[cv]["module"] = class_
                 self.crossValidators[cv]["name"] = class_.NAME
 
-            mod = importlib.import_module("resources.modules.StatisticalModelsTab.ModelScoring")
+            mod = importlib.import_module("resources.modules.ModelCreationTab.ModelScoring")
             self.scorers["class"] = getattr(mod, "Scorers")
             self.scorers['info'] = self.scorers["class"].INFO
             self.scorers["module"] = mod
@@ -580,7 +586,7 @@ if __name__ == '__main__':
     #         for file_ in os.listdir("RegressionAlgorithms"):
     #             if '.py' in file_:
     #                 scriptName = file_[:file_.index(".py")]
-    #                 mod = importlib.import_module("resources.modules.StatisticalModelsTab.RegressionAlgorithms.{0}".format(scriptName))
+    #                 mod = importlib.import_module("resources.modules.ModelCreationTab.RegressionAlgorithms.{0}".format(scriptName))
     #                 self.regressors[scriptName] = {}
     #                 self.regressors[scriptName]["module"] = getattr(mod, "Regressor")
     #                 self.regressors[scriptName]["name"] = self.regressors[scriptName]["module"].NAME
@@ -590,7 +596,7 @@ if __name__ == '__main__':
     #         for file_ in os.listdir("PreProcessingAlgorithms"):
     #             if '.py' in file_:
     #                 scriptName = file_[:file_.index(".py")]
-    #                 mod = importlib.import_module("resources.modules.StatisticalModelsTab.PreProcessingAlgorithms.{0}".format(scriptName))
+    #                 mod = importlib.import_module("resources.modules.ModelCreationTab.PreProcessingAlgorithms.{0}".format(scriptName))
     #                 self.preProcessors[scriptName] = {}
     #                 self.preProcessors[scriptName]["module"] = getattr(mod, "preprocessor")
     #                 self.preProcessors[scriptName]["name"] = self.preProcessors[scriptName]["module"].NAME
@@ -599,19 +605,19 @@ if __name__ == '__main__':
     #         for file_ in os.listdir("FeatureSelectionAlgorithms"):
     #             if '.py' in file_:
     #                 scriptName = file_[:file_.index(".py")]
-    #                 mod = importlib.import_module("resources.modules.StatisticalModelsTab.FeatureSelectionAlgorithms.{0}".format(scriptName))
+    #                 mod = importlib.import_module("resources.modules.ModelCreationTab.FeatureSelectionAlgorithms.{0}".format(scriptName))
     #                 self.featureSelectors[scriptName] = {}
     #                 self.featureSelectors[scriptName]["module"] = getattr(mod, "FeatureSelector")
     #                 self.featureSelectors[scriptName]["name"] = self.featureSelectors[scriptName]["module"].NAME
     #                 self.featureSelectors[scriptName]["description"] = self.featureSelectors[scriptName]["module"].DESCRIPTION
     #
-    #         mod = importlib.import_module("resources.modules.StatisticalModelsTab.CrossValidationAlgorithms")
+    #         mod = importlib.import_module("resources.modules.ModelCreationTab.CrossValidationAlgorithms")
     #         for cv, class_ in inspect.getmembers(mod, inspect.isclass):
     #             self.crossValidators[cv] = {}
     #             self.crossValidators[cv]["module"] = class_
     #             self.crossValidators[cv]["name"] = class_.NAME
     #
-    #         mod = importlib.import_module("resources.modules.StatisticalModelsTab.ModelScoring")
+    #         mod = importlib.import_module("resources.modules.ModelCreationTab.ModelScoring")
     #         self.scorers["class"] = getattr(mod, "Scorers")
     #         self.scorers['info'] = self.scorers["class"].INFO
     #         self.scorers["module"] = mod
@@ -758,7 +764,7 @@ if __name__ == '__main__':
     #         dfOut.to_csv("results_hindcasts8.csv")
     #
 
-    # from resources.modules.StatisticalModelsTab import PredictionIntervalBootstrap
+    # from resources.modules.ModelCreationTab import PredictionIntervalBootstrap
     # import time
     # import warnings
     # import random
@@ -843,8 +849,8 @@ if __name__ == '__main__':
     #     cval = equation['Method'].split("/")[3]
     #     model = [True if i == '1' else False for i in equation['Model']] + [True]
     #     XY_ = XY[:, model]
-    #     preproc_ = importlib.import_module("resources.modules.StatisticalModelsTab.PreProcessingAlgorithms.{0}".format(preproc))
-    #     regressor_ = importlib.import_module("resources.modules.StatisticalModelsTab.RegressionAlgorithms.{0}".format(regr))
+    #     preproc_ = importlib.import_module("resources.modules.ModelCreationTab.PreProcessingAlgorithms.{0}".format(preproc))
+    #     regressor_ = importlib.import_module("resources.modules.ModelCreationTab.RegressionAlgorithms.{0}".format(regr))
     #     results = PredictionIntervalBootstrap.computePredictionInterval(XY_, preproc_.preprocessor, regressor_.Regressor, cval)
 
     #     # Histogram up that prediction!

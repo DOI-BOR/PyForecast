@@ -226,13 +226,13 @@ if __name__ == '__main__':
     regr = {}
     cv = {}
     pp = {}
-    for file_ in os.listdir("resources/modules/StatisticalModelsTab/RegressionAlgorithms"):
+    for file_ in os.listdir("resources/modules/ModelCreationTab/RegressionAlgorithms"):
         if '.py' in file_:
-            mod = importlib.import_module("resources.modules.StatisticalModelsTab.RegressionAlgorithms.{0}".format(file_[:file_.index(".py")]))
+            mod = importlib.import_module("resources.modules.ModelCreationTab.RegressionAlgorithms.{0}".format(file_[:file_.index(".py")]))
             regr[file_[:file_.index(".py")]] = getattr(mod, "Regressor").NAME
-    for file_ in os.listdir("resources/modules/StatisticalModelsTab/PreProcessingAlgorithms"):
+    for file_ in os.listdir("resources/modules/ModelCreationTab/PreProcessingAlgorithms"):
         if '.py' in file_:
-            mod = importlib.import_module("resources.modules.StatisticalModelsTab.PreProcessingAlgorithms.{0}".format(file_[:file_.index(".py")]))
+            mod = importlib.import_module("resources.modules.ModelCreationTab.PreProcessingAlgorithms.{0}".format(file_[:file_.index(".py")]))
             pp[file_[:file_.index(".py")]] = getattr(mod, "preprocessor").NAME
     
 
@@ -250,14 +250,14 @@ if __name__ == '__main__':
     widg.setMinimumHeight(700)
 
     widg.crossValidators = {}
-    mod = importlib.import_module("resources.modules.StatisticalModelsTab.CrossValidationAlgorithms")
+    mod = importlib.import_module("resources.modules.ModelCreationTab.CrossValidationAlgorithms")
     for cv, class_ in inspect.getmembers(mod, inspect.isclass):
         widg.crossValidators[cv] = {}
         widg.crossValidators[cv]["module"] = class_
         widg.crossValidators[cv]["name"] = class_.NAME
 
     widg.scorers = {}
-    mod = importlib.import_module("resources.modules.StatisticalModelsTab.ModelScoring")
+    mod = importlib.import_module("resources.modules.ModelCreationTab.ModelScoring")
     widg.scorers["class"] = getattr(mod, "Scorers")
     widg.scorers['info'] = widg.scorers["class"].INFO
     widg.scorers["module"] = mod

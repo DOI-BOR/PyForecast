@@ -17,7 +17,7 @@ import  subprocess
 from    PyQt5   import  QtWidgets, \
                         QtCore, \
                         QtGui
-from    resources.GUI.Tabs  import  DatasetsTab, DataTab, ModelCreationTabV2, ForecastsTab
+from    resources.GUI.Tabs  import  DatasetsTab, DataTab, ModelCreationTab, ForecastsTab
 from    resources.GUI.CustomWidgets import SVGIcon, customTabs
 
 myappid = u'reclamation.PyForecastv3.2b'
@@ -60,7 +60,7 @@ class UI_MainWindow(object):
         self.dataTab = DataTab.DataTab(self)
         tabWidget.addTab(self.dataTab, "Data", "resources/graphicalResources/icons/trending_up-24px.svg", "#FFFFFF", iconSize = (24,24) )
 
-        self.modelTab = ModelCreationTabV2.ModelCreationTab(self)
+        self.modelTab = ModelCreationTab.ModelCreationTab(self)
         tabWidget.addTab(self.modelTab, "Create Models", "resources/graphicalResources/icons/chart_bar-24px.svg", "#FFFFFF", iconSize = (24,24) )
 
         self.forecastsTab = ForecastsTab.ForecastsTab(self)

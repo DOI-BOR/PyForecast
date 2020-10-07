@@ -6,7 +6,7 @@ Description:    Defines an algorithm to perform
                 using a radial basis function kernel.
 """
 
-from resources.modules.StatisticalModelsTab import CrossValidationAlgorithms, ModelScoring
+from resources.modules.ModelCreationTab import CrossValidationAlgorithms, ModelScoring
 import numpy as np
 import sys
 from sklearn.svm import SVR
