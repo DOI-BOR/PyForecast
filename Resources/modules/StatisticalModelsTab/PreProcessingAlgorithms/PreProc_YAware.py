@@ -129,6 +129,7 @@ class preprocessor(object):
 
             # Concatenate a row of 1's to the data so that we can compute an intercept
             X_ = self.xdata[:,i].copy()
+            X_ = X_[~np.isnan(self.ydata)]
             Y_ = self.ydata[~np.isnan(X_)]
             X_ = X_[~np.isnan(X_)]
             X_ = np.concatenate((np.ones(shape=X_.shape[0]).reshape(-1,1), X_.reshape(-1,1)), 1)
