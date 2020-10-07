@@ -11,16 +11,16 @@ class modelCreationTab(object):
     new statistical models (i.e. forecast equations). 
     """
 
-    def initializeStatisticalModelsTab(self):
+    def initializeModelCreationTab(self):
         """
         Initialize the Tab
         """
-        self.connectEventsStatisticalModelsTab()
+        self.connectEventsModelCreationTab()
 
         return
 
 
-    def connectEventsStatisticalModelsTab(self):
+    def connectEventsModelCreationTab(self):
         """
         Connects all the signal/slot events for the dataset tab
         """
@@ -47,7 +47,7 @@ class modelCreationTab(object):
 
         return
 
-    def changedTabsStatisticalModelsPage(self, index):
+    def changedTabsModelCreationPage(self, index):
         """
         Handles changing the stacked widget when a user clicks one of the hover 
         labels on the left side.

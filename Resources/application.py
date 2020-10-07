@@ -247,7 +247,7 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
         # Set-up all the tabs and menu bars
         self.initializeDatasetTab()
         self.initializeDataTab()
-        self.initializeStatisticalModelsTab()
+        self.initializeModelCreationTab()
         self.initializeForecastsTab()
         self.setupMenuBar()
 
