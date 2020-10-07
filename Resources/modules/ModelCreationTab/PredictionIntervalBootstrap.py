@@ -99,10 +99,10 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     import pandas as pd
     import bitarray as ba
-    from resources.modules.StatisticalModelsTab.RegressionAlgorithms import Regr_GammaGLM, Regr_MultipleLinearRegressor
+    from resources.modules.ModelCreationTab.RegressionAlgorithms import Regr_GammaGLM, Regr_MultipleLinearRegressor
     from resources.modules.Miscellaneous.DataProcessor import resampleDataSet
-    from resources.modules.StatisticalModelsTab import RegressionWorker
-    #from resources.modules.StatisticalModelsTab.PreProcessingAlgorithms import PreProc_NoPreProcessing
+    from resources.modules.ModelCreationTab import RegressionWorker
+    #from resources.modules.ModelCreationTab.PreProcessingAlgorithms import PreProc_NoPreProcessing
     import warnings
     warnings.filterwarnings("ignore")
     

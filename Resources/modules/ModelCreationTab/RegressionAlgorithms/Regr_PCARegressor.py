@@ -5,7 +5,7 @@ Description:    Performs PCA Regression as defined by
                 https://ncss-wpengine.netdna-ssl.com/wp-content/themes/ncss/pdf/Procedures/NCSS/Principal_Components_Regression.pdf
 """
 
-from resources.modules.StatisticalModelsTab import CrossValidationAlgorithms, ModelScoring
+from resources.modules.ModelCreationTab import CrossValidationAlgorithms, ModelScoring
 import numpy as np
 import sys
 
