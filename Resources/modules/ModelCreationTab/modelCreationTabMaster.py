@@ -28,6 +28,23 @@ class modelCreationTab(object):
 
         return
 
+    def resetModelCreationTab(self):
+        #TODO: Need to update the predictor list boxes with what is in the loaded tables
+        self.modelTab.summaryListWidget.model().loadDataIntoModel(self.datasetTable, self.datasetOperationsTable)
+        for idx, rows in self.datasetOperationsTable.iterrows():
+            dsetRow = self.datasetTable.loc[idx[0]]
+            self.modelTab.layoutSimpleDoubleList.listOutput.datasetTable.loc[(idx[0], idx[1]), list(self.datasetTable.columns)] = list(dsetRow)
+
+        self.modelTab.layoutDataDoubleList.updateLinkedOperationsTables()
+        self.modelTab.layoutSimpleDoubleList.listInput.refreshDatasetList()
+        self.modelTab.layoutSimpleDoubleList.listOutput.refreshDatasetList()
+
+        # Emit for the updated linked doublelists
+        self.modelTab.layoutSimpleDoubleList.updatedLinkedList.emit(self.modelTab.layoutSimpleDoubleList.listInput, self.modelTab.layoutSimpleDoubleList.listOutput)
+        self.modelTab.layoutSimpleDoubleList.updatedOutputList.emit()
+
+        return
+
 
     def connectEventsModelCreationTab(self):
         """
@@ -922,7 +939,7 @@ class modelCreationTab(object):
         self.datasetOperationsTable.drop(self.datasetOperationsTable.index, inplace=True)
 
         # Update the table display elements
-        self.modelTab.modelTab.summaryListWidget.model().loadDataIntoModel(self.datasetTable, self.datasetOperationsTable)
+        self.modelTab.summaryListWidget.model().loadDataIntoModel(self.datasetTable, self.datasetOperationsTable)
 
         ### Reset all processing options ###
         # Reset the cross validation operations
@@ -1161,3 +1178,7 @@ class modelCreationTab(object):
 
             # Load predictors table
             self.modelTab.summaryListWidget.model().loadDataIntoModel(self.datasetTable, self.datasetOperationsTable)
+
+        if tabIndex == 4:
+            a=1
+

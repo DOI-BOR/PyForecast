@@ -82,27 +82,27 @@ class menuBar(object):
             try:
                 self.datasetTable = pickle.load(readfile)
             except:
-                print('No datasetTable in saved forecast file...')
+                print('WARNING: No datasetTable in saved forecast file...')
             try:
                 self.dataTable = pickle.load(readfile)
             except:
-                print('No dataTable in saved forecast file...')
+                print('WARNING: No dataTable in saved forecast file...')
             try:
                 self.datasetOperationsTable = pickle.load(readfile)
             except:
-                print('No datasetOperationsTable in saved forecast file...')
+                print('WARNING: No datasetOperationsTable in saved forecast file...')
             try:
                 self.modelRunsTable = pickle.load(readfile)
             except:
-                print('No modelRunsTable in saved forecast file...')
+                print('WARNING: No modelRunsTable in saved forecast file...')
             try:
                 self.forecastEquationsTable = pickle.load(readfile)
             except:
-                print('No forecastEquationsTable in saved forecast file...')
+                print('WARNING: No forecastEquationsTable in saved forecast file...')
             try:
                 self.forecastsTable = pickle.load(readfile)
             except:
-                print('No forecastsTable in saved forecast file...')
+                print('WARNING: No forecastsTable in saved forecast file...')
             #with open('resources/temp/user_options.txt', 'w') as writefile:
             #    writefile.write(pickle.load(readfile))
         
@@ -111,3 +111,4 @@ class menuBar(object):
         # Apply the files and tables to the tabs
         self.resetDatasetTab()
         self.resetDataTab()
+        self.resetModelCreationTab()
