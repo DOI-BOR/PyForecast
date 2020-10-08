@@ -4,6 +4,8 @@ from PyQt5 import QtCore, QtGui
 
 import pandas as pd
 import numpy as np
+import datetime
+from itertools import compress
 from dateutil import parser
 from statsmodels.tsa.stattools import ccf
 
@@ -1049,6 +1051,47 @@ class modelCreationTab(object):
             self.rg.setData()
             self.rg.run()
             a=1
+
+            ### Populate self.forecastEquationsTable ###
+            print('Populating forecast equations table...')
+            self.forecastEquationsTable.drop(self.forecastEquationsTable.index, inplace=True)
+            resultCounter = 0
+            for result in self.rg.resultsList:
+                self.forecastEquationsTable.loc[resultCounter] = [None] * self.forecastEquationsTable.columns.shape[0]
+                resultPredictors = self.rg.resultsList[resultCounter]['Model']
+
+                self.forecastEquationsTable.loc[resultCounter]['EquationSource'] = 'PyForecast'
+                # self.parent.forecastEquationsTable.loc[resultCounter]['EquationComment'] = ''
+                self.forecastEquationsTable.loc[resultCounter]['ModelTrainingPeriod'] = \
+                self.modelRunsTable.loc[0]['ModelTrainingPeriod']
+                self.forecastEquationsTable.loc[resultCounter]['EquationPredictand'] = \
+                self.modelRunsTable.loc[0]['Predictand']
+                self.forecastEquationsTable.loc[resultCounter]['PredictandPeriod'] = \
+                self.modelRunsTable.loc[0]['PredictandPeriod']
+                self.forecastEquationsTable.loc[resultCounter]['PredictandMethod'] = \
+                self.modelRunsTable.loc[0]['PredictandMethod']
+                self.forecastEquationsTable.loc[resultCounter]['EquationCreatedOn'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                # self.forecastEquationsTable.loc[resultCounter]['EquationIssueDate'] = ''
+                self.forecastEquationsTable.loc[resultCounter]['EquationMethod'] = \
+                self.rg.resultsList[resultCounter]['Method']
+                self.forecastEquationsTable.loc[resultCounter]['EquationSkill'] = \
+                self.rg.resultsList[resultCounter]['Score']
+                self.forecastEquationsTable.loc[resultCounter]['EquationPredictors'] = list(compress(predPool, resultPredictors))
+                self.forecastEquationsTable.loc[resultCounter]['PredictorPeriods'] = list(compress(predPeriods, resultPredictors))
+                self.forecastEquationsTable.loc[resultCounter]['PredictorMethods'] = list(compress(predMethods, resultPredictors))
+                # self.forecastEquationsTable.loc[resultCounter]['DirectEquation'] = ''
+                resultCounter += 1
+
+            if len(self.rg.resultsList) >= 1:
+                # bestModel = self.rg.resultsList[0]
+                # print("\nA total of {0} models were assessed".format(len(self.rg.resultsList)))
+                # print("\nThe best model found was: ")
+                # print("\t-> Predictors: {0}".format(''.join(['1' if i else '0' for i in bestModel['Model']])))
+                # print("\t-> Method:     {0}".format(bestModel["Method"]))
+                # print("\t-> Scores:     {0}".format(bestModel['Score']))
+                self.modelTab.summaryLayoutErrorLabel.setText('Success! ' + str(len(self.rg.resultsList)) + ' models were evaluated...')
+                self.modelTab.summaryLayoutErrorLabel.setStyleSheet("color : green")
+                self.modelTab.summaryLayoutErrorLabel.setVisible(True)
 
 
     def applyPredictandAggregationOption(self):
