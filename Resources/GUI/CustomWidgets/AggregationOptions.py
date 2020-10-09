@@ -1,5 +1,6 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
 from resources.GUI.CustomWidgets.richTextButtons import richTextButton
+from .DatasetList_HTML_Formatted import DatasetListHTMLFormattedMultiple
 
 class AggregationOptions(QtWidgets.QWidget):
 
@@ -28,6 +29,8 @@ class AggregationOptions(QtWidgets.QWidget):
 
         # Create the overall layout objects
         layout1 = QtWidgets.QVBoxLayout()
+        layout1.setContentsMargins(0, 0, 0, 0)
+
         if scrollable:
             scrollarea = QtWidgets.QScrollArea(self)
             scrollarea.setWidgetResizable(True)
@@ -39,13 +42,15 @@ class AggregationOptions(QtWidgets.QWidget):
 
         #########################################################################
         # Display selected predictor info
-        self.aggLabel1 = QtWidgets.QLabel('<strong style="font-size: 18px">No Predictor Selected<strong>')
-        self.aggLabel1.setWordWrap(True)
-        #self.aggLabel1.setMinimumSize(self.sizeHint())
+        self.activeSelection = DatasetListHTMLFormattedMultiple(self, addButtons=False)
+        self.activeSelection.setContentsMargins(0, 0, 0, 0)
+        self.activeSelection.setFixedHeight(114)
+        self.activeSelection.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+
         self.aggLabel2 = QtWidgets.QLabel("     Accumulation Method: NA")
         self.aggLabel3 = QtWidgets.QLabel("     Accumulation Period: NA")
         self.aggLabel4 = QtWidgets.QLabel("     Forced Flag: NA")
-        layout1.addWidget(self.aggLabel1)
+        layout1.addWidget(self.activeSelection)
         layout1.addWidget(self.aggLabel2)
         layout1.addWidget(self.aggLabel3)
         layout1.addWidget(self.aggLabel4)
@@ -152,6 +157,7 @@ class AggregationOptions(QtWidgets.QWidget):
             if orientation == 'vertical':
                 # Setup a vertical layout orientation
                 layoutVertical = QtWidgets.QVBoxLayout()
+                layoutVertical.setContentsMargins(0, 0, 0, 0)
 
                 # Cast the layout to a widget
                 layout1Widget = QtWidgets.QWidget()
@@ -169,6 +175,7 @@ class AggregationOptions(QtWidgets.QWidget):
             else:
                 # Setup a horizontal orientation
                 layoutVertical = QtWidgets.QVBoxLayout()
+                layoutVertical.setContentsMargins(0, 0, 0, 0)
 
                 # Cast the layout to a widget
                 layout1Widget = QtWidgets.QWidget()
@@ -195,6 +202,7 @@ class AggregationOptions(QtWidgets.QWidget):
             if orientation == 'vertical':
                 # Setup a vertical layout orientation
                 layoutVertical = QtWidgets.QVBoxLayout()
+                layoutVertical.setContentsMargins(0, 0, 0, 0)
 
                 # Cast the layout to a widget
                 layout1Widget = QtWidgets.QWidget()
@@ -213,6 +221,7 @@ class AggregationOptions(QtWidgets.QWidget):
                 # Setup a horizontal orientation
                 layoutVertical = QtWidgets.QVBoxLayout()
                 layoutVertical.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter)
+                layoutVertical.setContentsMargins(0, 0, 0, 0)
 
                 # Cast the layout to a widget
                 layout1Widget = QtWidgets.QWidget()

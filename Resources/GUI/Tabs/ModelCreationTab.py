@@ -374,6 +374,10 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.datasetList.updateSignalToExternal.connect(self.layoutSimpleDoubleList.update)
 
         ## Create the objects on the right side ##
+        configurationLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Dataset Configuration<strong>')
+        configurationLabel.setContentsMargins(0, 10, 0, 0)
+
+
         # Aggregation options widget
         self.layoutAggregationOptions = AggregationOptions(False, orientation='vertical')
 
@@ -421,6 +425,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Create the right side options layout
         layoutSimpleOptions = QtWidgets.QVBoxLayout()
         layoutSimpleOptions.setAlignment(QtCore.Qt.AlignTop)
+        layoutSimpleOptions.addWidget(configurationLabel)
         layoutSimpleOptions.addWidget(self.layoutAggregationOptions)
         layoutSimpleOptions.addWidget(self.layoutSimpleFill)
         layoutSimpleOptions.addWidget(self.layoutSimpleExtend)

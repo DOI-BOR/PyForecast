@@ -42,6 +42,19 @@ DEFAULT_HTML_ICON_FORMAT = """
 </table>
 """
 
+INSTANCE_HTML_ICON_FORMAT = """
+<table>
+    <tr>
+        <td style="padding-left: 2px; padding-right: 10px;" align="left" valign="middle"><img src="{0}"></th>
+        <td align="left"><strong style="color:#007396; font-size:14px">${DatasetName}</strong><br>
+                <strong>ID: </strong>${DatasetExternalID}<br>
+                <strong>Type: </strong>${DatasetAgency} ${DatasetType}<br>
+                <strong>Parameter: </strong>${DatasetParameter}</th><br>
+                <b>Instance: </b>${DatasetInstanceID}
+    </tr>
+</table>
+"""
+
 datasetIcons = {
     "streamflow":       os.path.abspath("resources/graphicalResources/icons/directions_boat-24px.svg"),
     "inflow":           os.path.abspath("resources/graphicalResources/icons/waves-24px.svg"),
@@ -365,7 +378,8 @@ class DatasetListHTMLFormattedMultiple(QtWidgets.QListWidget):
     buttonPressSignal = QtCore.pyqtSignal(int)
     updateSignalToExternal = QtCore.pyqtSignal(pd.DataFrame)
 
-    def __init__(self, parent=None, buttonText=None, useIcon=True, addButtons=True, objectName=None, inputDataset=None):
+    def __init__(self, parent=None, buttonText=None, useIcon=True, addButtons=True, objectName=None,
+                 HTML_formatting='default', inputDataset=None):
         """
         arguments:
             datasetTable =
@@ -408,12 +422,17 @@ class DatasetListHTMLFormattedMultiple(QtWidgets.QListWidget):
             self.datasetTable.set_index(['DatasetInternalID', 'DatasetInstanceID'], inplace=True)
 
         self.parent = parent
-
         self.unique = False
-        self.HTML_formatting = INSTANCE_HTML_FORMAT
+
+        if HTML_formatting == 'default':
+            self.HTML_formatting = INSTANCE_HTML_FORMAT
+        else:
+            self.HTML_formatting = HTML_formatting
 
         self.buttonText = buttonText
         self.useIcon = useIcon
+        if self.useIcon:
+            self.HTML_formatting = INSTANCE_HTML_ICON_FORMAT
         self.buttonList = []
         self.addButtons = addButtons
 
@@ -490,7 +509,8 @@ class DatasetListHTMLFormattedMultiple(QtWidgets.QListWidget):
         if isinstance(self.datasetTable, pd.DataFrame):
             iterator = list(self.datasetTable.iterrows())
         elif isinstance(self.datasetTable, pd.Series):
-            iterator = [(0, self.datasetTable)]
+            iterator = [(self.datasetTable.name, self.datasetTable)]
+            # iterator = self.datasetTable
 
         if self.datasetTable is not None:
             for i, dataset in iterator:

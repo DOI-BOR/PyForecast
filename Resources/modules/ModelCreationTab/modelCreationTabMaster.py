@@ -69,7 +69,8 @@ class modelCreationTab(object):
 
         ### Connect the simple setup page ###
         # Link the doublelist to the output
-        self.modelTab.layoutSimpleDoubleList.listOutput.currentRowChanged.connect(self.updateSimpleLayoutAggregationOptions)
+        # self.modelTab.layoutSimpleDoubleList.listOutput.currentRowChanged.connect(self.updateSimpleLayoutAggregationOptions)
+        self.modelTab.layoutSimpleDoubleList.listOutput.itemSelectionChanged.connect(self.updateSimpleLayoutAggregationOptions)
 
         # Set the button actions
         self.modelTab.layoutSimpleClearButton.clicked.connect(self.applySimpleClear)
@@ -282,7 +283,7 @@ class modelCreationTab(object):
     def updateSimpleLayoutAggregationOptions(self):
         #todo: doc string
 
-        if self.modelTab.layoutSimpleDoubleList.listOutput.currentIndex().row() >= 0:
+        if len(self.modelTab.layoutSimpleDoubleList.listOutput.selectedIndexes()) > 0:
             # Get the current datasest index
             currentIndex = self.modelTab.layoutSimpleDoubleList.listOutput.datasetTable.index[self.modelTab.layoutSimpleDoubleList.listOutput.currentIndex().row()]
 
@@ -294,7 +295,9 @@ class modelCreationTab(object):
             accumPeriod = str(self.datasetOperationsTable.loc[currentIndex]['AccumulationPeriod'])
             predForcing = str(self.datasetOperationsTable.loc[currentIndex]['ForcingFlag'])
 
-            self.modelTab.layoutAggregationOptions.aggLabel1.setText('<strong style="font-size: 18px">Selected Predictor: ' + datasetInfo + '<strong>')
+            # Update the dataset list with the single display option
+            self.modelTab.layoutAggregationOptions.activeSelection.refreshDatasetListFromExtenal(self.modelTab.layoutSimpleDoubleList.listOutput.datasetTable.loc[currentIndex])
+
             self.modelTab.layoutAggregationOptions.aggLabel2.setText("     Accumulation Method: " + accumMethod)
             self.modelTab.layoutAggregationOptions.aggLabel3.setText("     Accumulation Period: " + accumPeriod)
             self.modelTab.layoutAggregationOptions.aggLabel4.setText("     Forced Flag: " + predForcing)
@@ -342,7 +345,7 @@ class modelCreationTab(object):
                 self.modelTab.layoutAggregationOptions.aggLabel4.setStyleSheet("color : green")
                 self.modelTab.layoutAggregationOptions.predForceCheckBox.setChecked(predForcing == 'True')
         else:
-            self.modelTab.layoutAggregationOptions.aggLabel1.setText('<strong style="font-size: 18px">No Predictor Selected<strong>')
+            self.modelTab.layoutAggregationOptions.activeSelection.refreshDatasetListFromExtenal(None)
             self.modelTab.layoutAggregationOptions.aggLabel2.setText("     Accumulation Method: NA")
             self.modelTab.layoutAggregationOptions.aggLabel3.setText("     Accumulation Period: NA")
             self.modelTab.layoutAggregationOptions.aggLabel4.setText("     Forced Flag: NA")
