@@ -5,6 +5,8 @@ import numpy as np
 SCORING_RULES = {
     "R2":       True,
     "ADJ_R2":   True,
+    "MAE":      False,
+    "RMSE":     False,
     "MSE":      False,
     "AIC":      False,
     "AIC_C":    False,
