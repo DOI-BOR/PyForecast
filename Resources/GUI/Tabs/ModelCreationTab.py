@@ -14,7 +14,7 @@ from resources.GUI.CustomWidgets.AggregationOptions import AggregationOptions
 from resources.GUI.CustomWidgets.PyQtGraphs import ModelTabPlots, TimeSeriesLineBarPlot, DatasetTimeseriesPlots
 from resources.GUI.CustomWidgets.customTabs import EnhancedTabWidget
 from resources.GUI.CustomWidgets.richTextButtons import richTextButton, richTextButtonCheckbox, richTextDescriptionButton
-from resources.GUI.CustomWidgets.SpreadSheet import SpreadSheetViewOperations
+from resources.GUI.CustomWidgets.SpreadSheet import SpreadSheetViewOperations, SpreadSheetViewForecastEquations
 from resources.GUI.WebMap import webMapView
 from resources.modules.ModelCreationTab.modelCreationTabMaster import *
 
@@ -1510,6 +1510,13 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Create a vertical layout
         leftLayout = QtWidgets.QVBoxLayout()
 
+        # Create the cross-validators list
+        resultCrossValLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Cross-Validators<strong>')
+        leftLayout.addWidget(resultCrossValLabel)
+
+        resultCrossValList = QtWidgets.QListWidget()
+        leftLayout.addWidget(resultCrossValList)
+
         # Create the preprocessing list
         resultPreprocessingLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Preprocessors<strong>')
         leftLayout.addWidget(resultPreprocessingLabel)
@@ -1523,13 +1530,6 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         resultsRegressorsList = QtWidgets.QListWidget()
         leftLayout.addWidget(resultsRegressorsList)
-
-        # Create the selection list
-        resultsSelectorsLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Selectors<strong>')
-        leftLayout.addWidget(resultsSelectorsLabel)
-
-        resultsSelectorsList = QtWidgets.QListWidget()
-        leftLayout.addWidget(resultsSelectorsList)
 
         ### Create the right side items ###
         ## Create the initial layouts ##
@@ -1551,7 +1551,9 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.resultsResidualYearPlot = QtWidgets.QTableWidget()
 
         ## Create the table to show the metrics ##
-        self.resultsMetricTable = QtWidgets.QTableWidget()
+        #self.resultsMetricTable = QtWidgets.QTableWidget()
+        # Create the list widget
+        self.resultsMetricTable = SpreadSheetViewForecastEquations(self.parent.forecastEquationsTable, parent=self)
 
         ## Add items into the layouts ##
         # Add the subplots to the vertical layout

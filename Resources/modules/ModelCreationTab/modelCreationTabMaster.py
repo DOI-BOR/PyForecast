@@ -56,8 +56,6 @@ class modelCreationTab(object):
     def clickOption(self, selectedOptions, optionList):
         for i in selectedOptions:
             for j in optionList:
-                print(i)
-                print(j.objectName())
                 if i == j.objectName():
                     j.click()
         return
@@ -1080,17 +1078,16 @@ class modelCreationTab(object):
             self.modelRunsTable.loc[0]['FeatureSelectionTypes'] = selAlgs
             self.modelRunsTable.loc[0]['ScoringParameters'] = scoreParams
             ### Kick off the analysis ###
-            print('---- MODEL RUN TABLE ----')
+            print('INFO: ---- MODEL RUN TABLE ----')
             print(self.modelRunsTable.iloc[0])
             print('-------------------------')
-            print('Beginning regression calculations...')
+            print('INFO: Beginning regression calculations...')
             self.rg = RegressionWorker.RegressionWorker(self.modelTab.parent, modelRunTableEntry=self.modelRunsTable.iloc[0])
             self.rg.setData()
             self.rg.run()
-            a=1
 
             ### Populate self.forecastEquationsTable ###
-            print('Populating forecast equations table...')
+            print('INFO: Populating forecast equations table...')
             self.forecastEquationsTable.drop(self.forecastEquationsTable.index, inplace=True)
             resultCounter = 0
             for result in self.rg.resultsList:
@@ -1129,6 +1126,9 @@ class modelCreationTab(object):
                 self.modelTab.summaryLayoutErrorLabel.setText('Success! ' + str(len(self.rg.resultsList)) + ' models were evaluated...')
                 self.modelTab.summaryLayoutErrorLabel.setStyleSheet("color : green")
                 self.modelTab.summaryLayoutErrorLabel.setVisible(True)
+
+            #TODO: JR - clean this up after you hook up the results tab
+            self.forecastEquationsTable.to_csv('out'+  datetime.datetime.now().strftime("%m%d%Y%H%M%S") + '.csv')
 
 
     def applyPredictandAggregationOption(self):
@@ -1200,7 +1200,7 @@ class modelCreationTab(object):
             self.modelTab.summaryListWidget.model().loadDataIntoModel(self.datasetTable, self.datasetOperationsTable)
 
         if tabIndex == 4:
-            a=1
+            self.modelTab.resultsMetricTable.model().loadDataIntoModel(self.forecastEquationsTable)
 
 
 

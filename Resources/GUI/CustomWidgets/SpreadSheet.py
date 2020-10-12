@@ -742,6 +742,197 @@ class SpreadSheetViewOperations(QtWidgets.QTableView):
         # self.setSelection(selectedBox, QtCore.QItemSelectionModel.Select)
 
 
+class SpreadSheetModelForecastEquations(QtCore.QAbstractItemModel):
+    """
+    The SpeadsheetModel is a Qt model that works on top of PyForecast's
+    DataTable to display data in the SpreadsheetView.
+    """
+
+    updateSelectionSignal = QtCore.pyqtSignal(int, int)
+
+    def __init__(self, parent=None):
+        """
+        """
+        QtCore.QAbstractItemModel.__init__(self)
+        # self.parent = parent
+        self.initialized = False
+        self.setParent(parent)
+
+        return
+
+    def loadDataIntoModel(self, forecastEquationsTable):
+        """
+        Loads a PyForecast DataTable into the model.
+self.   forecastEquationsTable = pd.DataFrame(
+            index = pd.Index([], dtype=int, name='ForecastEquationID'),
+            columns = [
+                "EquationSource",       # e.g. 'PyForecast','NRCS', 'CustomImport'
+                "EquationComment",      # E.g. 'Equation Used for 2000-2010 Forecasts'
+                "ModelTrainingPeriod",  # E.g. 1978-10-01/2019-09-30
+                "EquationPredictand",   # E.g. 103011
+                "PredictandPeriod",     # R/1978-03-01/P1M/F12M (starting in march of 1978, over a 1 month period, recurring once a year.)
+                "PredictandMethod",     # E.g. Accumulation, Average, Max, etc
+                "EquationCreatedOn",    # E.g. 2019-10-04
+                "EquationIssueDate",    # E.g. 2019-02-01
+                "EquationMethod",       # E.g. Pipeline string (e.g. PIPE/PreProc_Logistic/Regr_Gamma/KFOLD_5)
+                "EquationSkill",        # E.g. Score metric dictionary (e.g. {"AIC_C": 433, "ADJ_R2":0.32, ...})
+                "EquationPredictors",   # E.g. [100204, 100101, 500232]
+                "PredictorPeriods",     # E.g. [R/1978-03-01/P1M/F12M, R/1978-03-01/P1M/F12M, R/1978-03-01/P1M/F12M]
+                "PredictorMethods",     # E.g. ['Average', 'First', 'Max']
+                "DirectEquation"        # E.g. Mainly for import equations where we don't want to compute models on the fly
+                                        #      e.g. "DIRECT/Regr_MultipleLinearRegressor/3.4,2.2,-1.33/133.2"
+            ]
+        )
+
+        generated lists/tables:
+        filters
+        1. Pre-processors
+        2. Regression methods
+        3. Predictors
+        main table columns
+        - ForecastEquationID
+        - Predictors
+        - Skill Score 1
+        - Skill Score 2
+        - ...
+
+        """
+
+        # Let the view know we're resetting the model
+        self.beginResetModel()
+
+        # Create references to the main table
+        self.equationsTable = forecastEquationsTable
+
+        # If the datasets are empty, we initialize an empty indexArray and return
+        self.indexArray = []
+        self.datasetIndex = OrderedDict()
+        self.initialized = True
+        self.endResetModel()
+        self.datasetIndexedList = []
+
+        if len(self.equationsTable) == 0:
+            return
+
+        # Create an index array to layout the basic structure of the table. This is has the number of datasets as the
+        # columns and the number of parameters, plus one, as the rows
+        self.indexArray = [[self.createIndex(i, j) for j in range(0, len(self.equationsTable.index), 1)]
+                            for i in range(0, len(self.equationsTable.columns) + 1, 1)]
+
+        # Let the view know we're done resetting the model
+        self.initialized = True
+        self.endResetModel()
+
+        return
+
+    def columnCount(self, parent=QtCore.QModelIndex()):
+        """
+        If the model is initialized, return the number of columns
+        in the index array. Otherwise, return 0
+        """
+        if self.initialized:
+            if len(self.indexArray) > 0:
+                return len(self.indexArray[0])
+
+        return 0
+
+    def rowCount(self, parent=QtCore.QModelIndex()):
+        """
+        If the model is initialized, return the number of rows
+        in the index array. Otherwise, return 0
+        """
+        if self.initialized:
+            return len(self.indexArray)
+
+        return 0
+
+    def index(self, row, column, parent = QtCore.QModelIndex()):
+        """
+        Return the index associated with the tableview's row and column
+        """
+        return self.indexArray[row][column]
+
+    def data(self, index, role=QtCore.Qt.DisplayRole):
+        """
+        This function returns the data associated with the index if the
+        role is the displayRole. If the role is the ForegroundRole, the
+        function returns the color red for undefined user options.
+        """
+
+        if role == QtCore.Qt.DisplayRole and len(self.equationsTable) > 0:
+            val = QtCore.QVariant(str(self.equationsTable.iloc[index.column(), index.row() - 1]))
+        else:
+            val = QtCore.QVariant()
+
+        return val
+
+
+    def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
+        """
+        This function formats the row and column headers by checking the orientation
+        and returning the correct QVariants from the data table
+        """
+
+        # Check for the vertical orientation and return the date if true
+        if role == QtCore.Qt.DisplayRole:
+            try:
+                val = QtCore.QVariant(self.equationsTable.columns[section - 1])
+            except:
+                val = QtCore.QVariant()
+        else:
+            val = QtCore.QVariant()
+
+        return val
+
+
+    def parent(self, index):
+        """
+        Returns an empty model index to allow selection
+
+        """
+
+        return QtCore.QModelIndex()
+
+
+class SpreadSheetViewForecastEquations(QtWidgets.QTableView):
+    """
+    """
+
+    def __init__(self, forecastEquationsTable, parent=None):
+        """
+        """
+
+        # Instantiate the inheirence variables
+        QtWidgets.QTableView.__init__(self)
+        self.parent = parent
+        self.setModel(SpreadSheetModelForecastEquations(self))
+
+        # Set up a highlight color for the spreadsheet
+        self.highlightColor = QtGui.QColor(0, 115, 150)
+        colorCode = '#%02x%02x%02x' % (self.highlightColor.red(), self.highlightColor.green(), self.highlightColor.blue())
+
+        # Set the display properties for the spreadsheet
+        self.setStyleSheet(open(os.path.abspath('resources/GUI/stylesheets/spreadsheet.qss'), 'r').read().format(colorCode))
+        self.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
+        self.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
+
+        # Set the dataframes into the object
+        self.equations = forecastEquationsTable
+
+        # Set up a signal/slot to resize columns when the model is reset
+        self.model().modelReset.connect(self.resizeColumns)
+        self.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)  
+
+
+    def resizeColumns(self):
+        """
+        This function resizes the table columns to be 150 pixels wide
+        """
+        [self.setColumnWidth(i, 150) for i in range(self.model().columnCount())]
+
+        return
+
 
 # FOR TESTING
 #-----------------------------------------------
