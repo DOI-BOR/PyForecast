@@ -1551,8 +1551,6 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.resultsResidualYearPlot = QtWidgets.QTableWidget()
 
         ## Create the table to show the metrics ##
-        #self.resultsMetricTable = QtWidgets.QTableWidget()
-        # Create the list widget
         self.resultsMetricTable = SpreadSheetViewForecastEquations(self.parent.forecastEquationsTable, parent=self)
 
         ## Add items into the layouts ##
@@ -1574,6 +1572,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Add items into the main right layout
         rightLayout.addWidget(rightLayoutHorizontalWidget)
+        rightLayout.addSpacerItem(QtWidgets.QSpacerItem(1, 1, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum))
         rightLayout.addWidget(self.resultsMetricTable)
 
         ### Add the items into the layout ###

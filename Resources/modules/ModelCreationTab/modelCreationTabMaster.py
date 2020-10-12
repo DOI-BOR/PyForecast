@@ -1091,6 +1091,9 @@ class modelCreationTab(object):
             self.forecastEquationsTable.drop(self.forecastEquationsTable.index, inplace=True)
             resultCounter = 0
             for result in self.rg.resultsList:
+                if resultCounter >= 1000:
+                    break
+
                 self.forecastEquationsTable.loc[resultCounter] = [None] * self.forecastEquationsTable.columns.shape[0]
                 resultPredictors = self.rg.resultsList[resultCounter]['Model']
 

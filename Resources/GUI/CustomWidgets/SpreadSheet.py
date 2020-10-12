@@ -664,7 +664,7 @@ class SpreadSheetModelOperations(QtCore.QAbstractItemModel):
                            'ExtendMethod': " Extend Method", 'ExtendDuration': " Extend Duration", 'ExtendFilter': " Extend Filter",
                            'AccumulationMethod': " Accumulation Method", 'AccumulationDateStart': " Accumulation Date Start",
                            'AccumulationDateStop': " Accumulation Date Stop", 'DatasetOperationsOptions': " Dataset Additional Options",
-                           'AccumulationPeriod':"Accumulation Period", 'ForcingFlag':"Forcing Flag"}
+                           'AccumulationPeriod': " Accumulation Period", 'ForcingFlag': " Forcing Flag"}
 
         # Check for horizontal orientation and return the column name if true
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
@@ -763,7 +763,7 @@ class SpreadSheetModelForecastEquations(QtCore.QAbstractItemModel):
     def loadDataIntoModel(self, forecastEquationsTable):
         """
         Loads a PyForecast DataTable into the model.
-self.   forecastEquationsTable = pd.DataFrame(
+        self.forecastEquationsTable = pd.DataFrame(
             index = pd.Index([], dtype=int, name='ForecastEquationID'),
             columns = [
                 "EquationSource",       # e.g. 'PyForecast','NRCS', 'CustomImport'
@@ -816,8 +816,8 @@ self.   forecastEquationsTable = pd.DataFrame(
 
         # Create an index array to layout the basic structure of the table. This is has the number of datasets as the
         # columns and the number of parameters, plus one, as the rows
-        self.indexArray = [[self.createIndex(i, j) for j in range(0, len(self.equationsTable.index), 1)]
-                            for i in range(0, len(self.equationsTable.columns) + 1, 1)]
+        self.indexArray = [[self.createIndex(i, j) for j in range(0, len(self.equationsTable.columns), 1)]
+                            for i in range(0, len(self.equationsTable.index), 1)]
 
         # Let the view know we're done resetting the model
         self.initialized = True
@@ -860,7 +860,7 @@ self.   forecastEquationsTable = pd.DataFrame(
         """
 
         if role == QtCore.Qt.DisplayRole and len(self.equationsTable) > 0:
-            val = QtCore.QVariant(str(self.equationsTable.iloc[index.column(), index.row() - 1]))
+            val = QtCore.QVariant(str(self.equationsTable.iloc[index.row(), index.column()]))
         else:
             val = QtCore.QVariant()
 
@@ -873,12 +873,14 @@ self.   forecastEquationsTable = pd.DataFrame(
         and returning the correct QVariants from the data table
         """
 
+        # Check for horizontal orientation and return the column name if true
+        if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
+            val = QtCore.QVariant(self.equationsTable.columns[section])
+
         # Check for the vertical orientation and return the date if true
-        if role == QtCore.Qt.DisplayRole:
-            try:
-                val = QtCore.QVariant(self.equationsTable.columns[section - 1])
-            except:
-                val = QtCore.QVariant()
+        elif orientation == QtCore.Qt.Vertical and role == QtCore.Qt.DisplayRole:
+            val = QtCore.QVariant(str(self.equationsTable.index[section]))
+
         else:
             val = QtCore.QVariant()
 
@@ -890,7 +892,6 @@ self.   forecastEquationsTable = pd.DataFrame(
         Returns an empty model index to allow selection
 
         """
-
         return QtCore.QModelIndex()
 
 
@@ -921,8 +922,7 @@ class SpreadSheetViewForecastEquations(QtWidgets.QTableView):
 
         # Set up a signal/slot to resize columns when the model is reset
         self.model().modelReset.connect(self.resizeColumns)
-        self.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)  
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
 
     def resizeColumns(self):
