@@ -1072,6 +1072,7 @@ class ModelCreationTab(QtWidgets.QWidget):
                     crossValidationLayout.addWidget(button, i, j, 1, 1)
                     self.optionsCrossValidators.append(button)
 
+
         layoutMain.addLayout(crossValidationLayout)
 
         ### Setup the preprocessing algorithms ###

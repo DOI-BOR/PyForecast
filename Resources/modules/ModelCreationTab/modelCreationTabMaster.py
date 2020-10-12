@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from resources.modules.Miscellaneous import loggingAndErrors
-from PyQt5 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 import pandas as pd
 import numpy as np
@@ -29,7 +29,6 @@ class modelCreationTab(object):
         return
 
     def resetModelCreationTab(self):
-        #TODO: Need to update the predictor list boxes with what is in the loaded tables
         self.modelTab.summaryListWidget.model().loadDataIntoModel(self.datasetTable, self.datasetOperationsTable)
         for idx, rows in self.datasetOperationsTable.iterrows():
             dsetRow = self.datasetTable.loc[idx[0]]
@@ -43,6 +42,24 @@ class modelCreationTab(object):
         self.modelTab.layoutSimpleDoubleList.updatedLinkedList.emit(self.modelTab.layoutSimpleDoubleList.listInput, self.modelTab.layoutSimpleDoubleList.listOutput)
         self.modelTab.layoutSimpleDoubleList.updatedOutputList.emit()
 
+        #TODO: Fix crash-bug when adding new predictors after loading from *.fcst file
+        a = 1
+
+        self.clickOption([self.modelRunsTable.loc[0]['CrossValidationType']], self.modelTab.optionsCrossValidators)
+        self.clickOption(self.modelRunsTable.loc[0]['RegressionTypes'], self.modelTab.optionsRegression)
+        self.clickOption(self.modelRunsTable.loc[0]['FeatureSelectionTypes'], self.modelTab.optionsSelection)
+        self.clickOption(self.modelRunsTable.loc[0]['ScoringParameters'], self.modelTab.optionsScoring)
+        self.clickOption(self.modelRunsTable.loc[0]['Preprocessors'], self.modelTab.optionsPreprocessor)
+
+        return
+
+    def clickOption(self, selectedOptions, optionList):
+        for i in selectedOptions:
+            for j in optionList:
+                print(i)
+                print(j.objectName())
+                if i == j.objectName():
+                    j.click()
         return
 
 
@@ -1184,4 +1201,6 @@ class modelCreationTab(object):
 
         if tabIndex == 4:
             a=1
+
+
 

@@ -227,6 +227,7 @@ class richTextButtonCheckbox(QtWidgets.QPushButton):
             self.setChecked(False)
             self.__lbl.setText(self.richTextUnChecked)
 
+
 class richTextButton(QtWidgets.QPushButton):
 
     def __init__(self, text=None):
