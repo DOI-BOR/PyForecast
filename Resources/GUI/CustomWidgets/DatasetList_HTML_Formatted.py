@@ -510,6 +510,15 @@ class DatasetListHTMLFormatted(QtWidgets.QListWidget):
         # Trigger a table refresh
         self.refreshDatasetList()
 
+    def updateColors(self):
+        """
+        Triggers a manual color update on the list between full list refreshes
+
+        """
+
+        for entry in range(0, self.count(), 1):
+            self.item(entry).setBackground(self.itemColors[entry])
+
 
 class DatasetListHTMLFormattedMultiple(QtWidgets.QListWidget):
     """
@@ -596,12 +605,13 @@ class DatasetListHTMLFormattedMultiple(QtWidgets.QListWidget):
 
         return
 
-    def setDatasetTable(self, datasetTable=None):
+    def setDatasetTable(self, datasetTable=None, itemColors=None):
         """
         Sets the datasetTable for the list.
         """
 
         self.datasetTable = datasetTable
+        self.itemColors = itemColors
         self.refreshDatasetList()
 
         return
@@ -660,8 +670,8 @@ class DatasetListHTMLFormattedMultiple(QtWidgets.QListWidget):
             iterator = list(self.datasetTable.iterrows())
         elif isinstance(self.datasetTable, pd.Series):
             iterator = [(self.datasetTable.name, self.datasetTable)]
-            # iterator = self.datasetTable
 
+        row = 0
         if self.datasetTable is not None:
             for i, dataset in iterator:
 
@@ -671,7 +681,7 @@ class DatasetListHTMLFormattedMultiple(QtWidgets.QListWidget):
 
                 # Set the item colors
                 if self.itemColors is not None:
-                    item.setBackground(self.itemColors[i])
+                    item.setBackground(self.itemColors[row])
 
                 # set the item's text to the HTML formatted version of the dataset
                 htmlString = self.substituteFormatString(item.data(QtCore.Qt.UserRole), i[1])
@@ -729,6 +739,9 @@ class DatasetListHTMLFormattedMultiple(QtWidgets.QListWidget):
                 item.setSizeHint(QtCore.QSize(0, widget.sizeHint().height() + 15))
                 self.addItem(item)
                 self.setItemWidget(item, widget)
+
+                # Increment the row counter to get the correct coloration
+                row += 1
 
         # Send the signal to update other objects that reference this list, passing the updated dataframe
         self.updateSignalToExternal.emit(pd.DataFrame(self.datasetTable))
@@ -789,6 +802,15 @@ class DatasetListHTMLFormattedMultiple(QtWidgets.QListWidget):
         subString = pattern2.sub(lambda m: replacementDict[re.escape(m.group(0))], self.HTML_formatting)
 
         return subString
+
+    def updateColors(self):
+        """
+        Triggers a manual color update on the list between full list refreshes
+
+        """
+
+        for entry in range(0, self.count(), 1):
+            self.item(entry).setBackground(self.itemColors[entry])
 
     def refreshDatasetListFromExtenal(self, datasetTable):
         """

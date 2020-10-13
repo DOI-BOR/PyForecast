@@ -440,7 +440,8 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
     updatedOutputList = QtCore.pyqtSignal()
     updatedLinkedList = QtCore.pyqtSignal(DatasetListHTMLFormatted, DatasetListHTMLFormattedMultiple)
 
-    def __init__(self, initialDataframe, inputTitle, outputTitle, parent=None, operations_dataframe=None):
+    def __init__(self, initialDataframe, inputTitle, outputTitle, inputDefaultColor=QtCore.Qt.white,
+                 outputDefaultColor=QtCore.Qt.white, parent=None, operations_dataframe=None):
         """
         Constructor for the DoubleList widget class. This creates side-by-side linked lists. The user is able to move
         data entries from the left list to the right list to include the dataset in the analysis. The datasets in the
@@ -463,6 +464,10 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
         layout = QtWidgets.QHBoxLayout(self)
         self.listInput = DatasetListHTMLFormatted()
         self.listOutput = DatasetListHTMLFormattedMultiple()
+
+        # Set the default colors when moving items
+        self.inputDefaultColor = inputDefaultColor
+        self.outputDefaultColor = outputDefaultColor
 
         # Create the title widgets
         inputTitleWidget = QtWidgets.QLabel(inputTitle)
@@ -597,6 +602,13 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
         self.listInput.clear()
         self.listOutput.clear()
 
+        # Clear coloration on the lists
+        if self.listInput.itemColors is not None:
+            self.listInput.itemColors = [self.inputDefaultColor for x in range(0, self.listInput.count(), 1)]
+
+        if self.listOutput.itemColors is not None:
+            self.listOutput.itemColors = [self.outputDefaultColor for x in range(0, self.listInput.count(), 1)]
+
         # Add the items to the input list and refresh the input list
         self.listInput.datasetTable = self.dataset_dataframe
         self.listInput.refreshDatasetList()
@@ -620,8 +632,14 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
 
         """
 
-        # Clear the input and output lists
+        # Clear the output lists
         self.listOutput.datasetTable.drop(self.listOutput.datasetTable.index, inplace=True)
+
+        # Clear the coloration
+        if self.listOutput.itemColors is not None:
+            self.listOutput.itemColors = []
+
+        # Update the GUI
         self.listOutput.refreshDatasetList()
 
         # Emit for the updated linked doublelists
@@ -670,6 +688,10 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
 
         # Clear the output list
         self.listOutput.datasetTable = self.listOutput.datasetTable.drop(self.listOutput.datasetTable.index)
+
+        # Clear the color list
+        if self.listOutput.itemColors is not None:
+            self.listOutput.itemColors = []
 
         # Trigger refreshes of the input and output lists
         self.listOutput.refreshDatasetList()
@@ -726,6 +748,9 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
         # Remove from the input table
         self.listOutput.datasetTable.drop(self.listOutput.datasetTable.iloc[input_row_index].name, inplace=True)
 
+        # Remove the coloration from the index
+        del self.listOutput.itemColors[input_row_index]
+
         # Trigger refreshes of the input and output lists
         self.listInput.refreshDatasetList()
         self.listOutput.refreshDatasetList()
@@ -781,6 +806,10 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
 
         self.listOutput.datasetTable.loc[(rows.name, i_number_of_existing), :] = rows
 
+        # Add an entry into the color table
+        if self.listOutput.itemColors is not None:
+            self.listOutput.itemColors.append(self.outputDefaultColor)
+
         # Trigger refreshes of the input and output lists
         if refresh:
             self.listInput.refreshDatasetList()
@@ -815,6 +844,12 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
         ia_indices[i_current_index] = ia_indices[i_current_index - 1]
         ia_indices[i_current_index - 1] = i_current_row
 
+        # Swap the color indices if active
+        if self.listOutput.itemColors is not None:
+            currentValue = self.listOutput.itemColors[i_current_index]
+            self.listOutput.itemColors[i_current_index] = self.listOutput.itemColors[i_current_index - 1]
+            self.listOutput.itemColors[i_current_index - 1] = currentValue
+
         # Reindex the table
         self.listOutput.datasetTable = self.listOutput.datasetTable.reindex(self.listOutput.datasetTable.index[ia_indices])
 
@@ -848,6 +883,12 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
         i_current_index = np.argwhere(ia_indices == i_current_row).flatten()[0]
         ia_indices[i_current_index] = ia_indices[i_current_index + 1]
         ia_indices[i_current_index + 1] = i_current_row
+
+        # Swap the color indices if active
+        if self.listOutput.itemColors is not None:
+            currentValue = self.listOutput.itemColors[i_current_index]
+            self.listOutput.itemColors[i_current_index] = self.listOutput.itemColors[i_current_index + 1]
+            self.listOutput.itemColors[i_current_index + 1] = currentValue
 
         # Reindex the table
         self.listOutput.datasetTable = self.listOutput.datasetTable.reindex(self.listOutput.datasetTable.index[ia_indices])

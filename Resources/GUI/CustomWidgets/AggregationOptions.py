@@ -46,14 +46,7 @@ class AggregationOptions(QtWidgets.QWidget):
         self.activeSelection.setContentsMargins(0, 0, 0, 0)
         self.activeSelection.setFixedHeight(114)
         self.activeSelection.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
-
-        self.aggLabel2 = QtWidgets.QLabel("     Accumulation Method: NA")
-        self.aggLabel3 = QtWidgets.QLabel("     Accumulation Period: NA")
-        self.aggLabel4 = QtWidgets.QLabel("     Forced Flag: NA")
         layout1.addWidget(self.activeSelection)
-        layout1.addWidget(self.aggLabel2)
-        layout1.addWidget(self.aggLabel3)
-        layout1.addWidget(self.aggLabel4)
 
         #########################################################################
         # Set predictor resampling period
