@@ -8,7 +8,7 @@ Description:    Defines the layout for the Model Creation Tab. Includes all the 
 # Import Libraries
 from PyQt5 import QtWidgets, QtCore, QtGui
 
-from resources.GUI.CustomWidgets.DatasetList_HTML_Formatted import DatasetListHTMLFormatted, DatasetListHTMLFormattedMultiple
+from resources.GUI.CustomWidgets.DatasetList_HTML_Formatted import ListHTMLFormatted, DatasetListHTMLFormatted, DatasetListHTMLFormattedMultiple
 from resources.GUI.CustomWidgets.DoubleList import DoubleListMultipleInstance
 from resources.GUI.CustomWidgets.AggregationOptions import AggregationOptions
 from resources.GUI.CustomWidgets.PyQtGraphs import ModelTabPlots, TimeSeriesLineBarPlot, DatasetTimeseriesPlots
@@ -1526,21 +1526,22 @@ class ModelCreationTab(QtWidgets.QWidget):
         resultCrossValLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Cross-Validators<strong>')
         leftLayout.addWidget(resultCrossValLabel)
 
-        resultCrossValList = QtWidgets.QListWidget()
+        # resultCrossValList = QtWidgets.QListWidget()
+        resultCrossValList = ListHTMLFormatted()
         leftLayout.addWidget(resultCrossValList)
 
         # Create the preprocessing list
         resultPreprocessingLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Preprocessors<strong>')
         leftLayout.addWidget(resultPreprocessingLabel)
 
-        resultPreprocessorsList = QtWidgets.QListWidget()
+        resultPreprocessorsList = ListHTMLFormatted()
         leftLayout.addWidget(resultPreprocessorsList)
 
         # Create the regression list
         resultsRegressorsLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Regressors<strong>')
         leftLayout.addWidget(resultsRegressorsLabel)
 
-        resultsRegressorsList = QtWidgets.QListWidget()
+        resultsRegressorsList = ListHTMLFormatted()
         leftLayout.addWidget(resultsRegressorsList)
 
         ### Create the right side items ###
