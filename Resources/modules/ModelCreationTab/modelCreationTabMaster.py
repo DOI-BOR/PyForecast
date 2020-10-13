@@ -1094,6 +1094,7 @@ class modelCreationTab(object):
             print(self.modelRunsTable.iloc[0])
             print('-------------------------')
             print('INFO: Beginning regression calculations...')
+            self.rg = None
             self.rg = RegressionWorker.RegressionWorker(self.modelTab.parent, modelRunTableEntry=self.modelRunsTable.iloc[0])
             self.rg.setData()
             self.rg.run()
@@ -1111,20 +1112,14 @@ class modelCreationTab(object):
 
                 self.forecastEquationsTable.loc[resultCounter]['EquationSource'] = 'PyForecast'
                 # self.parent.forecastEquationsTable.loc[resultCounter]['EquationComment'] = ''
-                self.forecastEquationsTable.loc[resultCounter]['ModelTrainingPeriod'] = \
-                self.modelRunsTable.loc[0]['ModelTrainingPeriod']
-                self.forecastEquationsTable.loc[resultCounter]['EquationPredictand'] = \
-                self.modelRunsTable.loc[0]['Predictand']
-                self.forecastEquationsTable.loc[resultCounter]['PredictandPeriod'] = \
-                self.modelRunsTable.loc[0]['PredictandPeriod']
-                self.forecastEquationsTable.loc[resultCounter]['PredictandMethod'] = \
-                self.modelRunsTable.loc[0]['PredictandMethod']
+                self.forecastEquationsTable.loc[resultCounter]['ModelTrainingPeriod'] = self.modelRunsTable.loc[0]['ModelTrainingPeriod']
+                self.forecastEquationsTable.loc[resultCounter]['EquationPredictand'] = self.modelRunsTable.loc[0]['Predictand']
+                self.forecastEquationsTable.loc[resultCounter]['PredictandPeriod'] = self.modelRunsTable.loc[0]['PredictandPeriod']
+                self.forecastEquationsTable.loc[resultCounter]['PredictandMethod'] = self.modelRunsTable.loc[0]['PredictandMethod']
                 self.forecastEquationsTable.loc[resultCounter]['EquationCreatedOn'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 # self.forecastEquationsTable.loc[resultCounter]['EquationIssueDate'] = ''
-                self.forecastEquationsTable.loc[resultCounter]['EquationMethod'] = \
-                self.rg.resultsList[resultCounter]['Method']
-                self.forecastEquationsTable.loc[resultCounter]['EquationSkill'] = \
-                self.rg.resultsList[resultCounter]['Score']
+                self.forecastEquationsTable.loc[resultCounter]['EquationMethod'] = self.rg.resultsList[resultCounter]['Method']
+                self.forecastEquationsTable.loc[resultCounter]['EquationSkill'] = self.rg.resultsList[resultCounter]['Score']
                 self.forecastEquationsTable.loc[resultCounter]['EquationPredictors'] = list(compress(predPool, resultPredictors))
                 self.forecastEquationsTable.loc[resultCounter]['PredictorPeriods'] = list(compress(predPeriods, resultPredictors))
                 self.forecastEquationsTable.loc[resultCounter]['PredictorMethods'] = list(compress(predMethods, resultPredictors))

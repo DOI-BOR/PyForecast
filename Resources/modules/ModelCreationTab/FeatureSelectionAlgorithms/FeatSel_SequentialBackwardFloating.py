@@ -120,7 +120,7 @@ class FeatureSelector(object):
 
         # Store the results in the more comprehensive resultsList
         self.parent.resultsList.append(
-            {"Model":modelStr, "Score":score, 
+            {"Model":list(model), "Score":score,
              "Method":"PIPE/{0}/{1}/{2}".format(self.parent.preprocessor.FILE_NAME, 
                                       self.regressionName,  
                                       self.regression.crossValidation)})
