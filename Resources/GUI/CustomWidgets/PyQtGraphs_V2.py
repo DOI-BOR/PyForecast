@@ -84,9 +84,11 @@ def condenseUnits(unitList):
         unit_simplified = sameUnits(unit, unit)[1]
         condensedList.append(unit_simplified)
         equiv_list = [sameUnits(unit_simplified, i) for i in unitList[1:]]
+        j=0
         for i, res in enumerate(equiv_list):
             if res[0]:
-                unitList.pop(i+1)
+                unitList.pop(i+1-j)
+                j += 1
         unitList.pop(0)
 
     return condensedList
@@ -937,7 +939,7 @@ class BarAndLinePlot(pg.PlotItem):
         # ITERATE OVER 'barData' MEMBERS AND ACTIVATE THE ITEMS
         for j, dataset in enumerate(barData):
 
-            k = i + j + 1
+            k = i + j
 
             # CHECK IF THERE IS DATA TO PLOT
             if dataset.size == 0:
@@ -973,6 +975,18 @@ class BarAndLinePlot(pg.PlotItem):
 
         # DO SOME FINAL WORK WITH THE RANGES AND EXTENTS
         if not any([np.isinf(self.xMax), np.isinf(self.xMin), np.isinf(self.yMax), np.isinf(self.yMin)]):
+            self.setLimits(xMin=self.xMin, xMax=self.xMax, yMin=self.yMin, yMax=self.yMax)
+            self.setRange(xRange=(self.xMin, self.xMax), yRange=(self.yMin, self.yMax))
+
+        elif np.isinf(self.yMax):
+            self.yMax = self.yMax2
+            self.yMin = self.yMin2
+            self.setLimits(xMin=self.xMin, xMax=self.xMax, yMin=self.yMin, yMax=self.yMax)
+            self.setRange(xRange=(self.xMin, self.xMax), yRange=(self.yMin, self.yMax))
+
+        elif np.isinf(self.yMax2):
+            self.yMax2 = self.yMax
+            self.yMin2 = self.yMin
             self.setLimits(xMin=self.xMin, xMax=self.xMax, yMin=self.yMin, yMax=self.yMax)
             self.setRange(xRange=(self.xMin, self.xMax), yRange=(self.yMin, self.yMax))
 
@@ -1119,7 +1133,7 @@ class ModelTabTargetPlot(pg.GraphicsLayoutWidget):
         self.brush_cycler = [pg.mkBrush(pg.mkColor(color)) for color in self.colors]
 
         # ADD PLOT
-        self.plot = TimeSeriesPlot(self)
+        self.plot = BarAndLinePlot(self, xAxis='datetime')
         self.addItem(self.plot, 0, 0)
 
         return
@@ -1129,12 +1143,16 @@ class ModelTabTargetPlot(pg.GraphicsLayoutWidget):
         self.plot.clear()
 
     def displayData(self, x, y, units, labels):
-
-        self.plot.setData(x, y.reshape(1,-1), np.array([[]]), units, labels)
-        x = x.astype('int64')/1000000000
+        barWidth = 86400*300
+        self.plot.setData(x, np.array([[]]), y.reshape(1,-1), units, labels, barWidth, spacing=0)
+        #self.plot.setData(x, y.reshape(1,-1), np.array([[]]), units, labels)
+        x2 = x.astype('int64')/1000000000
         medianBar = pg.PlotCurveItem(parent = self.plot, pen = pg.mkPen((28,217,151,140), width=9), antialias=False, connect='finite')
-        medianBar.setData([x[0], x[-1]], 2*[np.nanmedian(y)], name='median')
+        medianBar.setData([x2[0], x2[-1]], 2*[np.nanmedian(y)], name='Median Value')
         self.plot.addItem(medianBar)
+        xAxis = self.plot.getAxis('bottom')
+        ticks = [i.year for i in x]
+        xAxis.setTicks([[(x2[j], str(v)) for j, v in enumerate(ticks)]])
 
         return
 
