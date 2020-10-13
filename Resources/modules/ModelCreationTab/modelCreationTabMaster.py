@@ -1171,7 +1171,14 @@ class modelCreationTab(object):
         ### Get the current index the widget has been changed to ###
         # currentIndex = self.workflowWidget.currentIndex()
         ##print(tabIndex)
-
+        
+        if tabIndex == 1:
+            if self.modelTab.defaultPredictorButton.isChecked():
+                self.modelTab.stackedPredictorWidget.setCurrentIndex(0)
+                self.modelTab.layoutPredictorSimpleAnalysis.setVisible(True)
+            elif self.modelTab.expertPredictorButton.isChecked():
+                self.modelTab.stackedPredictorWidget.setCurrentIndex(1)
+                self.modelTab.layoutPredictorExpertAnalysis.setVisible(True)
 
         if tabIndex == 3:
             # Update the summary boxes
@@ -1202,8 +1209,10 @@ class modelCreationTab(object):
             # Load predictors table
             self.modelTab.summaryListWidget.model().loadDataIntoModel(self.datasetTable, self.datasetOperationsTable)
 
-        if tabIndex == 4:
+        elif tabIndex == 4:
             self.modelTab.resultsMetricTable.model().loadDataIntoModel(self.forecastEquationsTable)
+
+
 
 
 
