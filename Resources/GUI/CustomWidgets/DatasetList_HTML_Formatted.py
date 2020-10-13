@@ -15,14 +15,18 @@ import sys
 import re
 
 # Defaults
-DEFAULT_HTML_FORMAT = """
+LIST_DEFAULT_HTML_FORMAT = """
+<b style="color:#007396; font-size:14px">{Text}</b><br>
+"""
+
+DATASET_DEFAULT_HTML_FORMAT = """
 <b style="color:#007396; font-size:14px">${DatasetName}</b><br>
     <b>ID: </b>${DatasetExternalID}<br>
     <b>Type: </b>${DatasetAgency} ${DatasetType}<br>
     <b>Parameter: </b>${DatasetParameter}
 """
 
-INSTANCE_HTML_FORMAT = """
+DATASET_INSTANCE_HTML_FORMAT = """
 <b style="color:#007396; font-size:14px">${DatasetName}</b><br>
     <b>ID: </b>${DatasetExternalID}<br>
     <b>Type: </b>${DatasetAgency} ${DatasetType}<br>
@@ -30,7 +34,7 @@ INSTANCE_HTML_FORMAT = """
     <b>Instance: </b>${DatasetInstanceID}
 """
 
-DEFAULT_HTML_ICON_FORMAT = """
+DATASET_DEFAULT_HTML_ICON_FORMAT = """
 <table>
     <tr>
         <td style="padding-left: 2px; padding-right: 10px;" align="left" valign="middle"><img src="{0}"></th>
@@ -42,7 +46,7 @@ DEFAULT_HTML_ICON_FORMAT = """
 </table>
 """
 
-INSTANCE_HTML_ICON_FORMAT = """
+DATASET_INSTANCE_HTML_ICON_FORMAT = """
 <table>
     <tr>
         <td style="padding-left: 2px; padding-right: 10px;" align="left" valign="middle"><img src="{0}"></th>
@@ -89,6 +93,138 @@ empty_dataset_list = pd.DataFrame(
             ]
         )
 
+class ListHTMLFormatted(QtWidgets.QListWidget):
+    """
+    This subclass of the QListWidget displays data using a HTML string.
+    """
+
+    updateSignalToExternal = QtCore.pyqtSignal(list)
+
+    def __init__(self, parent=None, itemList=None, HTML_formatting='default', objectName=None,
+                 buttonText=None, addButtons=True):
+        # todo: doc string
+
+        # Initialize the QT list parent object
+        QtWidgets.QListWidget.__init__(self, objectName=objectName)
+
+        # Create a reference to the parent, as well as to the datasetTable
+        self.itemList = itemList
+        self.parent = parent
+
+        # Set the HTML formatting
+        if HTML_formatting == 'default':
+            self.HTML_formatting = LIST_DEFAULT_HTML_FORMAT
+        else:
+            self.HTML_formatting = HTML_formatting
+
+        # Configure the buttons
+        self.buttonText = buttonText
+        self.buttonList = []
+        self.addButtons = addButtons
+
+        # Set the widget configuration
+        self.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
+        self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        self.verticalScrollBar().setSingleStep(15)
+
+        # Construct the list
+        self.refreshItemList()
+
+
+    def setDatasetTable(self, itemList=None):
+        """
+        Sets the datasetTable for the list.
+        """
+
+        self.itemList = itemList
+        self.refreshItemList()
+
+        return
+
+    def refreshItemList(self):
+        """
+        Refreshes the list of datasets to reflect the original dataframe.
+        """
+
+        # Clear the listwidget's items
+        self.clear()
+        self.buttonList = []
+
+        if self.itemList is not None:
+            for feature in self.itemList:
+
+                # Create a new item for the widget and assign the dataset to the item's userRole
+                item = QtWidgets.QListWidgetItem()
+                item.setData(QtCore.Qt.UserRole, feature)
+
+                # set the item's text to the HTML formatted version of the dataset
+                htmlString = self.substituteFormatString(feature)
+
+                item.setText(htmlString)
+                item.setForeground(QtGui.QBrush(QtGui.QColor(0,0,0,0)))
+
+                # Create a widget to display the formatted text (and a button if enabled)
+                layout = QtWidgets.QVBoxLayout()
+                textBox = QtWidgets.QLabel(item.text())
+                textBox.setTextFormat(QtCore.Qt.RichText)
+                layout.addWidget(textBox)
+                if len(feature) >= 900000 and self.addButtons:
+                    self.buttonList.append(QtWidgets.QPushButton("Configure"))
+                    self.buttonList[-1].setCheckable(True)
+                    self.buttonList[-1].toggled.connect(self.findSelectedButton)
+                    layout.addWidget(self.buttonList[-1])
+                elif self.buttonText != None:
+                    self.buttonList.append(QtWidgets.QPushButton(self.buttonText))
+                    self.buttonList[-1].setCheckable(True)
+                    self.buttonList[-1].toggled.connect(self.findSelectedButton)
+                    layout.addWidget(self.buttonList[-1])
+                else:
+                    self.buttonList.append(QtWidgets.QPushButton(""))
+                    self.buttonList[-1].setCheckable(True)
+                widget = QtWidgets.QWidget(objectName = 'listItemWidget')
+                widget.setLayout(layout)
+
+                # Add the item to the listwidget
+                item.setSizeHint(QtCore.QSize(0, widget.sizeHint().height()))
+                self.addItem(item)
+                self.setItemWidget(item, widget)
+
+        return
+
+    def substituteFormatString(self, itemText):
+        """
+        Substitutes the HTML format string with actual values from the dataset.
+        """
+
+        subString = re.sub('{Text}', itemText, self.HTML_formatting)
+
+        return subString
+
+    def findSelectedButton(self, dummy):
+        for i, button in enumerate(self.buttonList):
+            if button.isChecked():
+                button.setChecked(False)
+                self.buttonPressSignal.emit(self.datasetTable.iloc[i].name)
+
+        return
+
+    def selectionChanged(self, *args, **kwargs):
+        """
+        Emits a signal with the updated items to allow other items to utilize the selected information
+
+        """
+
+        ### Filter the list to the selected rows ###
+        # Get the selected indices
+        selectedIndices = [self.row(x) for x in self.selectedItems()]
+
+        # Get the corresponding list items
+        selectedItems = [self.itemList[x] for x in selectedIndices]
+
+        ### Emit the signal with the downselected list ###
+        self.updateSignalToExternal.emit(selectedItems)
+
+
 class DatasetListHTMLFormatted(QtWidgets.QListWidget):
     """
     This subclass of the QListWidget displays dataset from the PyForecast DatasetTable
@@ -99,7 +235,7 @@ class DatasetListHTMLFormatted(QtWidgets.QListWidget):
     updateSignalToExternal = QtCore.pyqtSignal(pd.DataFrame)
 
     def __init__(self, parent=None, datasetTable=empty_dataset_list, HTML_formatting='default',
-                 buttonText=None, useIcon=True, addButtons=True, objectName=None):
+                 buttonText=None, useIcon=True, addButtons=True, objectName=None, itemColors=None):
         """
         arguments:
             datasetTable =
@@ -112,18 +248,22 @@ class DatasetListHTMLFormatted(QtWidgets.QListWidget):
         self.datasetTable = datasetTable
         self.parent = parent
 
+        # Set the HTML formatting
+        self.useIcon = useIcon
         if HTML_formatting == 'default':
-            self.HTML_formatting = DEFAULT_HTML_FORMAT
+            self.HTML_formatting = DATASET_DEFAULT_HTML_FORMAT
+        elif self.useIcon:
+            self.HTML_formatting = DATASET_DEFAULT_HTML_ICON_FORMAT
         else:
             self.HTML_formatting = HTML_formatting
 
-
+        # Configure the buttons
         self.buttonText = buttonText
-        self.useIcon = useIcon
-        if self.useIcon:
-            self.HTML_formatting = DEFAULT_HTML_ICON_FORMAT
         self.buttonList = []
         self.addButtons = addButtons
+
+        # Configure the colors
+        self.itemColors = itemColors
 
         # Set the widget configuration
         self.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
@@ -144,7 +284,6 @@ class DatasetListHTMLFormatted(QtWidgets.QListWidget):
         self.refreshDatasetList()
 
         return
-
 
 
     def defineContextMenu(self, menuItems = None):
@@ -211,8 +350,6 @@ class DatasetListHTMLFormatted(QtWidgets.QListWidget):
                 # Create a new item for the widget and assign the dataset to the item's userRole
                 item = QtWidgets.QListWidgetItem()
                 item.setData(QtCore.Qt.UserRole, dataset)
-
-
 
                 # set the item's text to the HTML formatted version of the dataset
                 htmlString = self.substituteFormatString(item.data(QtCore.Qt.UserRole))
@@ -425,14 +562,14 @@ class DatasetListHTMLFormattedMultiple(QtWidgets.QListWidget):
         self.unique = False
 
         if HTML_formatting == 'default':
-            self.HTML_formatting = INSTANCE_HTML_FORMAT
+            self.HTML_formatting = DATASET_INSTANCE_HTML_FORMAT
         else:
             self.HTML_formatting = HTML_formatting
 
         self.buttonText = buttonText
         self.useIcon = useIcon
         if self.useIcon:
-            self.HTML_formatting = INSTANCE_HTML_ICON_FORMAT
+            self.HTML_formatting = DATASET_INSTANCE_HTML_ICON_FORMAT
         self.buttonList = []
         self.addButtons = addButtons
 
