@@ -325,10 +325,6 @@ class modelCreationTab(object):
             # Update the dataset list with the single display option
             self.modelTab.layoutAggregationOptions.activeSelection.refreshDatasetListFromExtenal(self.modelTab.layoutSimpleDoubleList.listOutput.datasetTable.loc[currentIndex])
 
-            self.modelTab.layoutAggregationOptions.aggLabel2.setText("     Accumulation Method: " + accumMethod)
-            self.modelTab.layoutAggregationOptions.aggLabel3.setText("     Accumulation Period: " + accumPeriod)
-            self.modelTab.layoutAggregationOptions.aggLabel4.setText("     Forced Flag: " + predForcing)
-
             # Set date selector range
             minT = parser.parse(str(np.sort(list(set(self.dataTable.loc[(slice(None),currentIndex[0]),'Value'].index.get_level_values(0).values)))[0]))
             maxT = parser.parse(str(np.sort(list(set(self.dataTable.loc[(slice(None),currentIndex[0]),'Value'].index.get_level_values(0).values)))[-1]))
@@ -336,23 +332,26 @@ class modelCreationTab(object):
             self.modelTab.layoutAggregationOptions.periodStart.maximumDate = maxT
             self.modelTab.layoutAggregationOptions.periodStart.setDate(minT)
 
+            # Set the list coloration
+            if accumMethod == 'None' or accumPeriod == 'None' or predForcing == 'None':
+                self.modelTab.layoutSimpleDoubleList.listOutput.itemColors[self.modelTab.layoutSimpleDoubleList.listOutput.currentIndex().row()] = QtCore.Qt.darkGray
+                self.modelTab.layoutSimpleDoubleList.listOutput.updateColors()
+            else:
+                self.modelTab.layoutSimpleDoubleList.listOutput.itemColors[self.modelTab.layoutSimpleDoubleList.listOutput.currentIndex().row()] = QtCore.Qt.white
+                self.modelTab.layoutSimpleDoubleList.listOutput.updateColors()
+
             # Set aggregation option on UI
             if accumMethod == 'None':
-                self.modelTab.layoutAggregationOptions.aggLabel2.setStyleSheet("color : red")
                 # Get default resampling method
                 defResampling = self.datasetTable.loc[self.datasetOperationsTable.loc[currentIndex].name[0]]['DatasetDefaultResampling']
                 defIdx = self.modelTab.layoutAggregationOptions.predictorAggregationOptions.index(defResampling)
                 self.modelTab.layoutAggregationOptions.radioButtons.button(defIdx).setChecked(True)
             else: #set defined aggregation scheme
-                self.modelTab.layoutAggregationOptions.aggLabel2.setStyleSheet("color : green")
                 defIdx = self.modelTab.layoutAggregationOptions.predictorAggregationOptions.index(accumMethod)
                 self.modelTab.layoutAggregationOptions.radioButtons.button(defIdx).setChecked(True)
 
             # Set aggregation period on UI
-            if accumPeriod == 'None':
-                self.modelTab.layoutAggregationOptions.aggLabel3.setStyleSheet("color : red")
-            else: #set defined resampling period options
-                self.modelTab.layoutAggregationOptions.aggLabel3.setStyleSheet("color : green")
+            if accumPeriod != 'None':
                 predPeriodItems = accumPeriod.split("/") #R/1978-03-01/P1M/F12M
                 self.modelTab.layoutAggregationOptions.periodStart.setDate(parser.parse(predPeriodItems[1]))
                 predPeriodPStep = str(predPeriodItems[2])[-1]
@@ -366,18 +365,13 @@ class modelCreationTab(object):
                 self.modelTab.layoutAggregationOptions.freqInteger.setValue(int(predPeriodFNum))
 
             # Set forcing flag on UI
-            if predForcing == 'None':
-                self.modelTab.layoutAggregationOptions.aggLabel4.setStyleSheet("color : red")
-            else: #set defined forcing flag
-                self.modelTab.layoutAggregationOptions.aggLabel4.setStyleSheet("color : green")
+            if predForcing != 'None':
                 self.modelTab.layoutAggregationOptions.predForceCheckBox.setChecked(predForcing == 'True')
         else:
             self.modelTab.layoutAggregationOptions.activeSelection.refreshDatasetListFromExtenal(None)
-            self.modelTab.layoutAggregationOptions.aggLabel2.setText("     Accumulation Method: NA")
-            self.modelTab.layoutAggregationOptions.aggLabel3.setText("     Accumulation Period: NA")
-            self.modelTab.layoutAggregationOptions.aggLabel4.setText("     Forced Flag: NA")
 
         self.modelTab.layoutAggregationOptions.resamplingUpdate()
+
 
     def applySimpleOptions(self):
         """
@@ -397,18 +391,15 @@ class modelCreationTab(object):
             currentIndex = self.modelTab.layoutSimpleDoubleList.listOutput.datasetTable.index[rowIdx]
 
             # Apply selected options
-            self.datasetOperationsTable.loc[currentIndex]['AccumulationMethod'] = \
-                self.modelTab.layoutAggregationOptions.selectedAggOption
-            self.datasetOperationsTable.loc[currentIndex]['AccumulationDateStart'] = \
-                self.modelTab.layoutAggregationOptions.periodStart.dateTime().toString("yyyy-MM-dd")
+            self.datasetOperationsTable.loc[currentIndex]['AccumulationMethod'] = self.modelTab.layoutAggregationOptions.selectedAggOption
+            self.datasetOperationsTable.loc[currentIndex]['AccumulationDateStart'] = self.modelTab.layoutAggregationOptions.periodStart.dateTime().toString("yyyy-MM-dd")
             self.datasetOperationsTable.loc[currentIndex]['AccumulationDateStop'] = \
                 (parser.parse(str(np.sort(list(set(self.dataTable.loc[(slice(None),currentIndex[0]),'Value'].index.get_level_values(0).values)))[-1]))).strftime("%Y-%m-%d")
-            self.datasetOperationsTable.loc[currentIndex]['AccumulationPeriod'] = \
-                self.modelTab.layoutAggregationOptions.selectedAggPeriod
-            self.datasetOperationsTable.loc[currentIndex]['ForcingFlag'] = \
-                str(self.modelTab.layoutAggregationOptions.predForceCheckBox.checkState() == 2)
+            self.datasetOperationsTable.loc[currentIndex]['AccumulationPeriod'] = self.modelTab.layoutAggregationOptions.selectedAggPeriod
+            self.datasetOperationsTable.loc[currentIndex]['ForcingFlag'] = str(self.modelTab.layoutAggregationOptions.predForceCheckBox.checkState() == 2)
 
         self.updateSimpleLayoutAggregationOptions()
+
 
     def applySimpleClear(self):
         """
@@ -1170,6 +1161,9 @@ class modelCreationTab(object):
         self.modelRunsTable.loc[0]['Predictand'] = predID
         self.modelRunsTable.loc[0]['PredictandPeriod'] = periodString
         self.modelRunsTable.loc[0]['PredictandMethod'] = self.modelTab.methodCombo.currentData()
+
+        # Set the coloration to white
+        self.modelTab.layoutSimpleDoubleList.listOutput.itemColors[self.modelTab.layoutSimpleDoubleList.listOutput.currentIndex().row()] = QtCore.Qt.white
 
 
     def updateTabDependencies(self, tabIndex):

@@ -377,9 +377,14 @@ class ModelCreationTab(QtWidgets.QWidget):
         """
 
         ## Create the DoubleList selector object ##
+        # Create the output list
         self.layoutSimpleDoubleList = DoubleListMultipleInstance(self.parent.datasetTable,
                                                                  '<strong style="font-size: 18px">Available Datasets<strong>',
-                                                                 '<strong style="font-size: 18px">Selected Datasets<strong>')
+                                                                 '<strong style="font-size: 18px">Selected Datasets<strong>',
+                                                                 outputDefaultColor=QtCore.Qt.darkGray)
+
+        # Update the output colors to show that the list will be active
+        self.layoutSimpleDoubleList.listOutput.itemColors = []
 
         # Connect the DoubleList with the dataset hmtl list to keep everything in sync. This will automatically
         # populate the DoubleList entries
@@ -398,16 +403,14 @@ class ModelCreationTab(QtWidgets.QWidget):
                                                           '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(
                                                               'Fill data',
                                                               'Automatically fill the selected time series using default properties'))
-        # self.layoutSimpleFill2 = QtWidgets.QCheckBox("Fill data: Automatically fill the selected time series using default properties")
-        # self.layoutSimpleFill2.setChecked(False)
+        self.layoutSimpleFill.setDisabled(True)
 
         # Simple extend
         self.layoutSimpleExtend = richTextDescriptionButton(self,
                                                             '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(
                                                                 'Extend data',
                                                                 'Automatically extend the selected time series using default properties'))
-        # self.layoutSimpleExtend2 = QtWidgets.QCheckBox("Extend data: Automatically extend the selected time series using default properties")
-        # self.layoutSimpleExtend2.setChecked(False)
+        self.layoutSimpleExtend.setDisabled(True)
 
         ### Create clear and apply buttons to apply operations ###
         # Create the clear button
