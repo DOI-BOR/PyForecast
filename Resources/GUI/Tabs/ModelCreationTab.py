@@ -263,6 +263,14 @@ class ModelCreationTab(QtWidgets.QWidget):
         tabWidget.addTab(layoutExtendSA, 'Extend')
         tabWidget.addTab(layoutWindowSA, 'Window')
 
+        # The SA can be added directly to the stack, but will result in a window flash at program start. Wrapping in a
+        # secondary layout prevents the startup issue. 
+        simplePredictorLayout = QtWidgets.QVBoxLayout()
+        simplePredictorLayout.setContentsMargins(0, 0, 0, 0)
+        simplePredictorLayout.addWidget(self.layoutPredictorSimpleAnalysis)
+        simplePredictorWidget = QtWidgets.QWidget()
+        simplePredictorWidget.setLayout(simplePredictorLayout)
+
         # Add to the expert layout
         self.layoutPredictorExpertAnalysis.addWidget(tabWidget)
         expertPredictorWidget = QtWidgets.QWidget()
@@ -270,7 +278,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Create the stacked widget to handle to toggle between simple and expert analyses
         self.stackedPredictorWidget = QtWidgets.QStackedLayout()
-        self.stackedPredictorWidget.addWidget(self.layoutPredictorSimpleAnalysis)
+        self.stackedPredictorWidget.addWidget(simplePredictorWidget)
         self.stackedPredictorWidget.addWidget(expertPredictorWidget)
 
         self.stackedPredictorWidget.setCurrentIndex(0)
