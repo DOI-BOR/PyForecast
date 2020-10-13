@@ -428,7 +428,7 @@ class modelCreationTab(object):
 
         ### Update the widget pane ###
         # Switch the stacked widgets
-        self.modelTab.stackedFillLayout.setCurrentIndex(self.layoutFillMethodSelector.currentIndex())
+        self.modelTab.stackedFillLayout.setCurrentIndex(self.modelTab.layoutFillMethodSelector.currentIndex())
 
         # Update the gap limit visibility
         if self.modelTab.layoutFillMethodSelector.currentIndex() > 0:
@@ -601,7 +601,7 @@ class modelCreationTab(object):
         """
 
         ### Switch the stacked widgets ###
-        self.modelTab.stackedExtendLayout.setCurrentIndex(self.layoutExtendMethodSelector.currentIndex())
+        self.modelTab.stackedExtendLayout.setCurrentIndex(self.modelTab.layoutExtendMethodSelector.currentIndex())
 
         ### Set all options to false and reenable if active ###
         ## Linear widgets ##

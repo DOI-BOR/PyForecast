@@ -602,7 +602,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Add the stacked layout to the main layout
         layoutFillRightLayout.addWidget(stackedWidget)
-        stackedWidget.setVisible(True)
+        stackedWidget.setVisible(False)
 
         ### Create the plot that shows the result of the selection ###
         # Create the plot
