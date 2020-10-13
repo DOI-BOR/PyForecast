@@ -12,6 +12,7 @@ from statsmodels.tsa.stattools import ccf
 from resources.modules.ModelCreationTab import RegressionWorker
 from resources.modules.ModelCreationTab.Operations.Fill import fill_missing
 from resources.modules.ModelCreationTab.Operations.Extend import extend
+from resources.modules.Miscellaneous.DataProcessor import resampleDataSet
 
 class modelCreationTab(object):
     """
@@ -242,7 +243,18 @@ class modelCreationTab(object):
 
         # Handle the actual plotting
         self.modelTab.dataPlot.plot.getAxis('left').setLabel(units)
-        self.modelTab.dataPlot.displayDatasets(datasetID, period, method, function)
+
+        resampledData = resampleDataSet(
+            self.dataTable.loc[(slice(None), datasetID), 'Value'],
+            period,
+            method,
+            function
+        ).dropna()
+
+        x = resampledData.index.get_level_values(0)
+        y = resampledData.values
+
+        self.modelTab.dataPlot.displayData(x, y, [units], [dataset['DatasetParameter'] + ': ' + dataset['DatasetName']])
 
         # Set a title for the plot
         self.modelTab.dataPlot.plot.setTitle('<strong style="font-family: Open Sans, Arial;">{4} {0} - {1} {2} {3}</strong>'.format(start_dt.strftime("%b %d"), end_dt.strftime("%b %d"), methodText.title(), dataset['DatasetParameter'], dataset['DatasetName'] ))

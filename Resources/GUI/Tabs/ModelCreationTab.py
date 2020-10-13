@@ -12,6 +12,7 @@ from resources.GUI.CustomWidgets.DatasetList_HTML_Formatted import DatasetListHT
 from resources.GUI.CustomWidgets.DoubleList import DoubleListMultipleInstance
 from resources.GUI.CustomWidgets.AggregationOptions import AggregationOptions
 from resources.GUI.CustomWidgets.PyQtGraphs import ModelTabPlots, TimeSeriesLineBarPlot, DatasetTimeseriesPlots
+from resources.GUI.CustomWidgets.PyQtGraphs_V2 import ModelTabTargetPlot
 from resources.GUI.CustomWidgets.customTabs import EnhancedTabWidget
 from resources.GUI.CustomWidgets.richTextButtons import richTextButton, richTextButtonCheckbox, richTextDescriptionButton
 from resources.GUI.CustomWidgets.SpreadSheet import SpreadSheetViewOperations, SpreadSheetViewForecastEquations
@@ -50,7 +51,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         widg = QtWidgets.QWidget()
         widg.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
         layout = QtWidgets.QGridLayout()
-        self.dataPlot = ModelTabPlots(self, objectName='ModelTabPlot')
+        self.dataPlot = ModelTabTargetPlot(self, objectName='ModelTabPlot')
         self.dataPlot.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.targetSelect = QtWidgets.QComboBox()
         self.datasetList = DatasetListHTMLFormatted(self, datasetTable = self.parent.datasetTable, addButtons=False)

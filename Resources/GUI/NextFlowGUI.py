@@ -45,7 +45,7 @@ class UI_MainWindow(object):
             QtGui.QFontDatabase.addApplicationFont("resources/GraphicalResources/fonts/{0}".format(fontFile))
 
         # Stylesheet
-        self.setStyleSheet(open(os.path.abspath('resources/GUI/stylesheets/main.qss')).read())
+        self.setStyleSheet(open(os.path.abspath('resources/GUI/stylesheets/main.qss'), 'r').read())
         
         # Menu
         self.appMenu = MenuBar()

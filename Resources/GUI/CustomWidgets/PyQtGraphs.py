@@ -29,10 +29,9 @@ pg.PlotItem.clear = PyQtGraphOverrides.PLOTITEM_clear_
 pg.InfiniteLine.setMouseHover = PyQtGraphOverrides.INFINITELINE_setMouseHover_
 pg.InfiniteLine.mouseDragEvent = PyQtGraphOverrides.INFINITELINE_mouseDragEvent_
 
-# NEEDS SOME WORK
-#pg.LinearRegionItem.hoverEvent = PyQtGraphOverrides.LINEARREGION_hoverEvent_
-#pg.LinearRegionItem.mouseDragEvent = PyQtGraphOverrides.LINEARREGION_mouseDragEvent_
-
+"""
+PLOTTING RESOURCE - STATIC LISTS
+"""
 # List to keep track of which units are equalivant. Used to condense units on plot axes
 EQUIVALENCY_LISTS = [
     ["INCHES", "INCH", "IN", "IN.", '"'],
@@ -45,6 +44,9 @@ EQUIVALENCY_LISTS = [
     ['UNITLESS'],
 ]
 
+"""
+PLOTTING RESOURCE - INTERACTIVE LEGEND
+"""
 # Create a custom Legend for the Time Series Plots
 class TimeSeriesLegend(pg.LegendItem):
 
@@ -87,7 +89,9 @@ class TimeSeriesLegend(pg.LegendItem):
 
         self.setGeometry(0, 0, width+60, height)
 
-
+"""
+PLOTTING RESOURCE - DATE AXIS (YYYY-MM-DD DISPLAY)
+"""
 # Create a special Axis to display below the Time Series Plots
 class DateTimeAxis(pg.AxisItem):
 
@@ -110,6 +114,9 @@ class DateTimeAxis(pg.AxisItem):
         return [datetime.utcfromtimestamp(value).strftime('%Y-%m-%d') for value in values]
 
 
+"""
+PLOTTING RESOURCE - DATE AXIS (YEAR DISPLAY)
+"""
 # Create a datetime axis to specifically display years only
 class DateTimeAxis_years(pg.AxisItem):
 
@@ -121,7 +128,9 @@ class DateTimeAxis_years(pg.AxisItem):
 
         return [datetime.utcfromtimestamp(value).strftime('%Y') for value in values]
 
+"""
 
+"""
 # Create a graphics layout for the ModelTab graphs
 class ModelTabPlots(pg.GraphicsLayoutWidget):
 

@@ -12,7 +12,7 @@ from    PyQt5   import  QtWidgets, \
                         QtGui
 from resources.GUI.CustomWidgets.DatasetList_HTML_Formatted import DatasetListHTMLFormatted
 from resources.GUI.CustomWidgets import SVGIcon, customTabs
-from resources.GUI.CustomWidgets.PyQtGraphs import DataTabPlots
+from resources.GUI.CustomWidgets.PyQtGraphs_V2 import DataTabPlots
 from resources.GUI.CustomWidgets.SpreadSheet import SpreadSheetView
 import  sys
 import  os
