@@ -263,17 +263,28 @@ class ModelCreationTab(QtWidgets.QWidget):
         tabWidget.addTab(layoutExtendSA, 'Extend')
         tabWidget.addTab(layoutWindowSA, 'Window')
 
+        # The SA can be added directly to the stack, but will result in a window flash at program start. Wrapping in a
+        # secondary layout with the visibility cll from modelCreationTabMaster prevents the startup issue.
+        self.layoutPredictorSimpleAnalysis.setVisible(False)
+        simplePredictorLayout = QtWidgets.QVBoxLayout()
+        simplePredictorLayout.setContentsMargins(0, 0, 0, 0)
+        simplePredictorLayout.addWidget(self.layoutPredictorSimpleAnalysis)
+        simplePredictorWidget = QtWidgets.QWidget()
+        simplePredictorWidget.setLayout(simplePredictorLayout)
+        simplePredictorWidget.setVisible(False)
+
         # Add to the expert layout
         self.layoutPredictorExpertAnalysis.addWidget(tabWidget)
         expertPredictorWidget = QtWidgets.QWidget()
         expertPredictorWidget.setLayout(self.layoutPredictorExpertAnalysis)
+        expertPredictorWidget.setVisible(False)
 
         # Create the stacked widget to handle to toggle between simple and expert analyses
         self.stackedPredictorWidget = QtWidgets.QStackedLayout()
-        self.stackedPredictorWidget.addWidget(self.layoutPredictorSimpleAnalysis)
+        self.stackedPredictorWidget.addWidget(simplePredictorWidget)
         self.stackedPredictorWidget.addWidget(expertPredictorWidget)
 
-        self.stackedPredictorWidget.setCurrentIndex(0)
+        self.defaultPredictorButton.setChecked(True)
         self.defaultPredictorButton.clicked.connect(self.setPredictorDefaultStack)
         self.expertPredictorButton.clicked.connect(self.setPredictorExpertStack)
         
@@ -602,7 +613,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Add the stacked layout to the main layout
         layoutFillRightLayout.addWidget(stackedWidget)
-        stackedWidget.setVisible(True)
+        stackedWidget.setVisible(False)
 
         ### Create the plot that shows the result of the selection ###
         # Create the plot
