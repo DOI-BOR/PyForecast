@@ -275,18 +275,19 @@ class DatasetListHTMLFormatted(QtWidgets.QListWidget):
 
         return
 
-    def setDatasetTable(self, datasetTable = None):
+    def setDatasetTable(self, datasetTable=None, itemColors=None):
         """
         Sets the datasetTable for the list.
         """
     
         self.datasetTable = datasetTable
         self.refreshDatasetList()
+        self.itemColors = itemColors
 
         return
 
 
-    def defineContextMenu(self, menuItems = None):
+    def defineContextMenu(self, menuItems=None):
         """
         This function assigns a context menu to the widget. For example,
         if 'menuItems' is ['Remove Dataset', 'Save', 'Send to Excel'], the 
@@ -350,6 +351,10 @@ class DatasetListHTMLFormatted(QtWidgets.QListWidget):
                 # Create a new item for the widget and assign the dataset to the item's userRole
                 item = QtWidgets.QListWidgetItem()
                 item.setData(QtCore.Qt.UserRole, dataset)
+
+                # Set the item colors
+                if self.itemColors is not None:
+                    item.setBackground(self.itemColors[i])
 
                 # set the item's text to the HTML formatted version of the dataset
                 htmlString = self.substituteFormatString(item.data(QtCore.Qt.UserRole))
@@ -516,7 +521,7 @@ class DatasetListHTMLFormattedMultiple(QtWidgets.QListWidget):
     updateSignalToExternal = QtCore.pyqtSignal(pd.DataFrame)
 
     def __init__(self, parent=None, buttonText=None, useIcon=True, addButtons=True, objectName=None,
-                 HTML_formatting='default', inputDataset=None):
+                 HTML_formatting='default', inputDataset=None, itemColors=None):
         """
         arguments:
             datasetTable =
@@ -558,20 +563,28 @@ class DatasetListHTMLFormattedMultiple(QtWidgets.QListWidget):
             self.datasetTable = empty_dataset_list_multiple
             self.datasetTable.set_index(['DatasetInternalID', 'DatasetInstanceID'], inplace=True)
 
+        # Define the parent class
         self.parent = parent
+
+        # Set whether the list will be unique
         self.unique = False
 
+        # Setup the HTML formatting
+        self.useIcon = useIcon
         if HTML_formatting == 'default':
             self.HTML_formatting = DATASET_INSTANCE_HTML_FORMAT
+        elif self.useIcon:
+            self.HTML_formatting = DATASET_INSTANCE_HTML_ICON_FORMAT
         else:
             self.HTML_formatting = HTML_formatting
 
+        # Create the butten formatting
         self.buttonText = buttonText
-        self.useIcon = useIcon
-        if self.useIcon:
-            self.HTML_formatting = DATASET_INSTANCE_HTML_ICON_FORMAT
         self.buttonList = []
         self.addButtons = addButtons
+
+        # Set the colors for the list
+        self.itemColors = itemColors
 
         # Set the widget configuration
         self.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
@@ -655,6 +668,10 @@ class DatasetListHTMLFormattedMultiple(QtWidgets.QListWidget):
                 # Create a new item for the widget and assign the dataset to the item's userRole
                 item = QtWidgets.QListWidgetItem()
                 item.setData(QtCore.Qt.UserRole, dataset)
+
+                # Set the item colors
+                if self.itemColors is not None:
+                    item.setBackground(self.itemColors[i])
 
                 # set the item's text to the HTML formatted version of the dataset
                 htmlString = self.substituteFormatString(item.data(QtCore.Qt.UserRole), i[1])
