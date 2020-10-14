@@ -257,12 +257,10 @@ class modelCreationTab(object):
         else:
             function = None
 
-
-
         # DONT ALLOW EMPTY DATASETS TO BE PLOTTED
-        print(datasetID)
-        print(set(self.dataTable.index.get_level_values(1)))
-        print(datasetID in self.dataTable.index.get_level_values(1))
+        #print(datasetID)
+        #print(set(self.dataTable.index.get_level_values(1)))
+        #print(datasetID in self.dataTable.index.get_level_values(1))
         if datasetID not in self.dataTable.index.get_level_values(1):
             self.modelTab.dataPlot.clearPlots()
             return
@@ -1155,7 +1153,7 @@ class modelCreationTab(object):
                 self.modelTab.summaryLayoutErrorLabel.setVisible(True)
 
             #TODO: JR - clean this up after you hook up the results tab
-            self.forecastEquationsTable.to_csv('out'+  datetime.datetime.now().strftime("%m%d%Y%H%M%S") + '.csv')
+            #self.forecastEquationsTable.to_csv('out'+  datetime.datetime.now().strftime("%m%d%Y%H%M%S") + '.csv')
 
 
     def applyPredictandAggregationOption(self):
@@ -1196,9 +1194,11 @@ class modelCreationTab(object):
         # todo: doc string
         modelIdx = self.modelTab.resultsMetricTable.selectionModel().selectedRows()[0].row()
         forecastEquationTableEntry = self.modelTab.parent.forecastEquationsTable.iloc[modelIdx]
-        print('Selected Model: ' + str(modelIdx))
-        print(forecastEquationTableEntry)
+        #print('Selected Model: ' + str(modelIdx))
+        #print(forecastEquationTableEntry)
         self.modelTab.modelResult = Model(self.modelTab.parent, forecastEquationTableEntry)
+        self.modelTab.modelResult.generate()
+        a=1
 
 
     def updateTabDependencies(self, tabIndex):
