@@ -6,8 +6,9 @@ from resources.modules.Miscellaneous.DataProcessor import resampleDataSet
 
 class Model(object):
 
-    def __init__(self, parent = None, forecastEquationTableEntry = None, *args, **kwargs):
+    def __init__(self, parent = None, forecastEquationTableEntry = None):
         self.parent = parent
+        self.forecastEquation = forecastEquationTableEntry
 
         # Get Model identifiers
         method = forecastEquationTableEntry['EquationMethod'].split('/')

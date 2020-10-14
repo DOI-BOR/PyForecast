@@ -63,6 +63,8 @@ class modelCreationTab(object):
         self.clickOption(self.modelRunsTable.loc[0]['ScoringParameters'], self.modelTab.optionsScoring)
         self.clickOption(self.modelRunsTable.loc[0]['Preprocessors'], self.modelTab.optionsPreprocessor)
 
+        self.modelTab.resultsMetricTable.model().loadDataIntoModel(self.forecastEquationsTable)
+
         return
 
     def clickOption(self, selectedOptions, optionList):
@@ -1196,9 +1198,36 @@ class modelCreationTab(object):
         forecastEquationTableEntry = self.modelTab.parent.forecastEquationsTable.iloc[modelIdx]
         #print('Selected Model: ' + str(modelIdx))
         #print(forecastEquationTableEntry)
+        QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
         self.modelTab.modelResult = Model(self.modelTab.parent, forecastEquationTableEntry)
         self.modelTab.modelResult.generate()
-        a=1
+        QtWidgets.QApplication.restoreOverrideCursor()
+
+        # Update UI with  selected model metadata
+        self.modelTab.resultSelectedList.clear()
+        self.modelTab.resultSelectedList.addItem('Regression Range (years): ' + str(self.modelTab.modelResult.trainingDates))
+        self.modelTab.resultSelectedList.addItem('Predictand Y: ' + str(self.modelTab.parent.datasetTable.loc[self.modelTab.modelResult.yID].DatasetName) + str(self.modelTab.parent.datasetTable.loc[self.modelTab.modelResult.yID].DatasetParameter))
+        equation = 'Y = '
+        for i in range(len(self.modelTab.modelResult.xIDs)):
+            self.modelTab.resultSelectedList.addItem('Predictor X' + str(i+1) + ': ' + str(
+                self.modelTab.parent.datasetTable.loc[self.modelTab.modelResult.xIDs[i]].DatasetName) + ' - ' + str(
+                self.modelTab.parent.datasetTable.loc[self.modelTab.modelResult.xIDs[i]].DatasetParameter))
+            coef = self.modelTab.modelResult.regression.coef[i]
+            const = 'X' + str(i+1)
+            if coef >= 0:
+                equation = equation + ' + (' + ("%0.5f" % coef) + ')' + const
+            else:
+                equation = equation + ' - (' + ("%0.5f" % (coef * -1.0)) + ')' + const
+        if self.modelTab.modelResult.regression.intercept >= 0:
+            equation = equation + ' + ' + ("%0.5f" % self.modelTab.modelResult.regression.intercept)
+        else:
+            equation = equation + ' - ' + ("%0.5f" % (self.modelTab.modelResult.regression.intercept * -1.0))
+        self.modelTab.resultSelectedList.addItem('Regression Equation: ' + equation)
+        for scorer in self.modelTab.modelResult.regression.scoringParameters:
+            regScore =self.modelTab.modelResult.regression.scores[scorer]
+            cvScore = self.modelTab.modelResult.regression.cv_scores[scorer]
+            self.modelTab.resultSelectedList.addItem(scorer + ' score (Regular | Cross-Validated): ' + ("%0.5f" % regScore) + ' | ' + ("%0.5f" % cvScore))
+
 
 
     def updateTabDependencies(self, tabIndex):

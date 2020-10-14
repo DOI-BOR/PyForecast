@@ -1525,27 +1525,26 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Create a vertical layout
         leftLayout = QtWidgets.QVBoxLayout()
 
-        # Create the cross-validators list
-        resultCrossValLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Cross-Validators<strong>')
-        leftLayout.addWidget(resultCrossValLabel)
+        # Create the list of model filters
+        resultFilterLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Model Filters<strong>')
+        leftLayout.addWidget(resultFilterLabel)
 
-        # resultCrossValList = QtWidgets.QListWidget()
-        resultCrossValList = ListHTMLFormatted()
-        leftLayout.addWidget(resultCrossValList)
+        self.resultFilterList = ListHTMLFormatted()
+        leftLayout.addWidget(self.resultFilterList)
 
-        # Create the preprocessing list
-        resultPreprocessingLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Preprocessors<strong>')
-        leftLayout.addWidget(resultPreprocessingLabel)
+        # Create a list for the selected model metadata
+        resultSelectedLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Selected Model Info<strong>')
+        leftLayout.addWidget(resultSelectedLabel)
 
-        resultPreprocessorsList = ListHTMLFormatted()
-        leftLayout.addWidget(resultPreprocessorsList)
+        self.resultSelectedList = QtWidgets.QListWidget()
+        leftLayout.addWidget(self.resultSelectedList)
 
         # Create the regression list
-        resultsRegressorsLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Regressors<strong>')
-        leftLayout.addWidget(resultsRegressorsLabel)
+        #resultsRegressorsLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Regressors<strong>')
+        #leftLayout.addWidget(resultsRegressorsLabel)
 
-        resultsRegressorsList = ListHTMLFormatted()
-        leftLayout.addWidget(resultsRegressorsList)
+        #resultsRegressorsList = ListHTMLFormatted()
+        #leftLayout.addWidget(resultsRegressorsList)
 
         ### Create the right side items ###
         ## Create the initial layouts ##
@@ -1587,9 +1586,9 @@ class ModelCreationTab(QtWidgets.QWidget):
         rightLayoutHorizontalWidget.setLayout(rightLayoutHorizontal)
 
         # Add items into the main right layout
-        rightLayout.addWidget(rightLayoutHorizontalWidget)
-        rightLayout.addSpacerItem(QtWidgets.QSpacerItem(1, 1, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum))
         rightLayout.addWidget(self.resultsMetricTable)
+        rightLayout.addSpacerItem(QtWidgets.QSpacerItem(1, 1, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum))
+        rightLayout.addWidget(rightLayoutHorizontalWidget)
 
         ### Add the items into the layout ###
         # Create the horizontal layout
