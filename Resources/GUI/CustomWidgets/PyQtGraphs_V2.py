@@ -850,7 +850,6 @@ class BarAndLinePlot(pg.PlotItem):
         return pi
 
     def clearPlots(self):
-        print("CELARING")
         # CLEAR ANY EXISTING DATA
         for j, item in enumerate(self.bar_items):
             if item.isActive:
@@ -1189,7 +1188,6 @@ class ModelTabTargetPlot(pg.GraphicsLayoutWidget):
         ticks = [i.year for i in x]
         xAxis.setTicks([[(x2[j], str(v)) for j, v in enumerate(ticks)]])
         buff = (np.nanmax(y) - np.nanmin(y))/10
-        print(buff)
         self.plot.setLimits(xMin=self.plot.xMin, xMax=self.plot.xMax, yMin=self.plot.yMin-buff, yMax=self.plot.yMax+buff)
         self.plot.setRange(xRange=(self.plot.xMin, self.plot.xMax), yRange=(self.plot.yMin-buff, self.plot.yMax+buff))
         self.plot.viewbox_axis_2.setLimits(xMin=self.plot.xMin, xMax=self.plot.xMax, yMin=self.plot.yMin-buff, yMax=self.plot.yMax+buff)
@@ -1270,8 +1268,6 @@ class DataTabPlots(pg.GraphicsLayoutWidget):
         min_date = self.dataTable.index.get_level_values(0).min()
         max_date = self.dataTable.index.get_level_values(0).max()
 
-        print('md', min_date)
-        print('md', max_date)
 
         # GET THE X ARRAY
         x = pd.date_range(start=min_date, end=max_date, freq='D')
@@ -1312,7 +1308,6 @@ class DataTabPlots(pg.GraphicsLayoutWidget):
         units = y1_units + units
         labels = y1_labels + labels
 
-        print(units, labels)
 
         # PLOT
         self.timeSeriesPlot.setData(x.values, y1, y2, units, labels)
