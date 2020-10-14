@@ -241,6 +241,16 @@ class modelCreationTab(object):
         else:
             function = None
 
+
+
+        # DONT ALLOW EMPTY DATASETS TO BE PLOTTED
+        print(datasetID)
+        print(set(self.dataTable.index.get_level_values(1)))
+        print(datasetID in self.dataTable.index.get_level_values(1))
+        if datasetID not in self.dataTable.index.get_level_values(1):
+            self.modelTab.dataPlot.clearPlots()
+            return
+
         # Handle the actual plotting
         self.modelTab.dataPlot.plot.getAxis('left').setLabel(units)
 

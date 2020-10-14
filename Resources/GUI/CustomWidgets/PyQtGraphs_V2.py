@@ -849,6 +849,38 @@ class BarAndLinePlot(pg.PlotItem):
         pi.isActive = False
         return pi
 
+    def clearPlots(self):
+        print("CELARING")
+        # CLEAR ANY EXISTING DATA
+        for j, item in enumerate(self.bar_items):
+            if item.isActive:
+                item.isActive = False
+                self.viewbox_axis_2.removeItem(item)
+                self.viewbox_axis_2.removeItem(self.bar_items_highlight[j])
+
+        self.clear()
+
+        self.setLimits(xMin=0, xMax=1, yMin=0, yMax=1)
+        self.viewbox_axis_2.setLimits(xMin=0, xMax=1, yMin=0, yMax=1)
+        self.setRange(xRange=(0, 1), yRange=(0, 1))
+        self.viewbox_axis_2.setRange(xRange=(0, 1), yRange=(0, 1))
+
+        self.setTitle("")
+
+        # REMOVE THE OLD LEGEND
+        try:
+            self.legend.scene().removeItem(self.legend)
+        except:
+            pass
+
+        self.no_data_text_item = pg.TextItem(
+            html='<div style="color:#4e4e4e"><h1>Oops!</h1><br> Looks like there is no data to display.<br>Select a dataset from the list to view data.</div>')
+        self.addItem(self.no_data_text_item)
+        self.no_data_text_item.setPos(0.5, 0.5)
+
+        return
+
+
     def setData(self, x, lineData, barData, units, labels, barWidth, spacing = 0):
         """
 
@@ -895,7 +927,10 @@ class BarAndLinePlot(pg.PlotItem):
         self.yMax2 = -np.inf
 
         # REMOVE THE OLD LEGEND
-        self.legend.scene().removeItem(self.legend)
+        try:
+            self.legend.scene().removeItem(self.legend)
+        except:
+            pass
 
         # CREATE A NEW LEGEND
         self.legend = TimeSeriesLegend(size=None, offset=(30, 30))
@@ -1140,7 +1175,7 @@ class ModelTabTargetPlot(pg.GraphicsLayoutWidget):
 
     def clearPlots(self):
 
-        self.plot.clear()
+        self.plot.clearPlots()
 
     def displayData(self, x, y, units, labels):
         barWidth = 86400*300
@@ -1148,12 +1183,17 @@ class ModelTabTargetPlot(pg.GraphicsLayoutWidget):
         #self.plot.setData(x, y.reshape(1,-1), np.array([[]]), units, labels)
         x2 = x.astype('int64')/1000000000
         medianBar = pg.PlotCurveItem(parent = self.plot, pen = pg.mkPen((28,217,151,140), width=9), antialias=False, connect='finite')
-        medianBar.setData([x2[0], x2[-1]], 2*[np.nanmedian(y)], name='Median Value')
+        medianBar.setData([x2[0], x2[-1]], 2*[np.nanmedian(y)], name='Median Value: <strong>{0} {1}</strong>'.format(round(np.nanmedian(y),3), units[0]))
         self.plot.addItem(medianBar)
         xAxis = self.plot.getAxis('bottom')
         ticks = [i.year for i in x]
         xAxis.setTicks([[(x2[j], str(v)) for j, v in enumerate(ticks)]])
-
+        buff = (np.nanmax(y) - np.nanmin(y))/10
+        print(buff)
+        self.plot.setLimits(xMin=self.plot.xMin, xMax=self.plot.xMax, yMin=self.plot.yMin-buff, yMax=self.plot.yMax+buff)
+        self.plot.setRange(xRange=(self.plot.xMin, self.plot.xMax), yRange=(self.plot.yMin-buff, self.plot.yMax+buff))
+        self.plot.viewbox_axis_2.setLimits(xMin=self.plot.xMin, xMax=self.plot.xMax, yMin=self.plot.yMin-buff, yMax=self.plot.yMax+buff)
+        self.plot.viewbox_axis_2.setRange(xRange=(self.plot.xMin, self.plot.xMax), yRange=(self.plot.yMin-buff, self.plot.yMax+buff))
         return
 
 
