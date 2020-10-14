@@ -36,7 +36,17 @@ class modelCreationTab(object):
             dsetRow = self.datasetTable.loc[idx[0]]
             self.modelTab.layoutSimpleDoubleList.listOutput.datasetTable.loc[(idx[0], idx[1]), list(self.datasetTable.columns)] = list(dsetRow)
 
+        # Set the expert doublelist
         self.modelTab.layoutDataDoubleList.updateLinkedOperationsTables()
+
+        # Update the simple double list
+        self.modelTab.layoutSimpleDoubleList.listOutput.itemColors = [QtCore.Qt.white for x in self.datasetOperationsTable.iterrows()]
+        for idx, rows in self.datasetOperationsTable.iterrows():
+            if self.datasetOperationsTable.loc[rows]['AccumulationMethod'] == 'None' or \
+               self.datasetOperationsTable.loc[rows]['AccumulationPeriod'] == 'None' or \
+               self.datasetOperationsTable.loc[rows]['ForcingFlag'] == 'None':
+                self.modelTab.layoutSimpleDoubleList.listOutput.itemColors[idx] = QtCore.Qt.darkGray
+
         self.modelTab.layoutSimpleDoubleList.listInput.refreshDatasetList()
         self.modelTab.layoutSimpleDoubleList.listOutput.refreshDatasetList()
 
