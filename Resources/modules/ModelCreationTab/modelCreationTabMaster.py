@@ -13,6 +13,7 @@ from resources.modules.ModelCreationTab import RegressionWorker
 from resources.modules.ModelCreationTab.Operations.Fill import fill_missing
 from resources.modules.ModelCreationTab.Operations.Extend import extend
 from resources.modules.Miscellaneous.DataProcessor import resampleDataSet
+from resources.modules.Miscellaneous.generateModel import Model
 
 class modelCreationTab(object):
     """
@@ -150,6 +151,11 @@ class modelCreationTab(object):
 
         # Connect the start button to its action function
         self.modelTab.summaryStartButton.clicked.connect(self.applySummaryStart)
+
+
+        ### Connect the results page ###
+        self.selectedModel = self.modelTab.resultsMetricTable.selectionModel()
+        self.selectedModel.selectionChanged.connect(self.generateModelResult)
 
 
         return
@@ -1174,6 +1180,15 @@ class modelCreationTab(object):
 
         # Set the coloration to white
         self.modelTab.layoutSimpleDoubleList.listOutput.itemColors[self.modelTab.layoutSimpleDoubleList.listOutput.currentIndex().row()] = QtCore.Qt.white
+
+
+    def generateModelResult(self, selected, deselected):
+        # todo: doc string
+        modelIdx = self.modelTab.resultsMetricTable.selectionModel().selectedRows()[0].row()
+        forecastEquationTableEntry = self.modelTab.parent.forecastEquationsTable.iloc[modelIdx]
+        print('Selected Model: ' + str(modelIdx))
+        print(forecastEquationTableEntry)
+        self.modelTab.modelResult = Model(self.modelTab.parent, forecastEquationTableEntry)
 
 
     def updateTabDependencies(self, tabIndex):
