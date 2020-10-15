@@ -442,6 +442,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         layoutSimpleOptions.setAlignment(QtCore.Qt.AlignTop)
         layoutSimpleOptions.addWidget(configurationLabel)
         layoutSimpleOptions.addWidget(self.layoutAggregationOptions)
+        layoutSimpleOptions.addSpacerItem(QtWidgets.QSpacerItem(10, 10, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Expanding))
         layoutSimpleOptions.addWidget(self.layoutSimpleFill)
         layoutSimpleOptions.addWidget(self.layoutSimpleExtend)
         layoutSimpleOptions.addWidget(buttonLayoutWidget)
