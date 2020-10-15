@@ -1466,6 +1466,9 @@ class ModelCreationTab(QtWidgets.QWidget):
         scoringLayoutWidget.setLayout(scoringLayout)
         summaryRightLayout.addWidget(scoringLayoutWidget)
 
+        ## Add a spacer to prevent strange box sizes ##
+        summaryRightLayout.addSpacerItem(QtWidgets.QSpacerItem(10, 10, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.MinimumExpanding))
+
         ## Set a horizontal break line ##
         # Create a line to delineate the selector from the selector options
         lineA = QtWidgets.QFrame()
