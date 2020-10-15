@@ -130,8 +130,8 @@ class richTextButtonCheckbox(QtWidgets.QPushButton):
 
         self.__lbl.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         self.__lbl.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents)
-        self.__lbl.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.__lbl.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.__lbl.setTextFormat(QtCore.Qt.RichText)
         self.__lyt.addWidget(self.__lbl)
 
@@ -258,7 +258,7 @@ class richTextButton(QtWidgets.QPushButton):
         self.__lbl.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         self.__lbl.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents)
         self.__lbl.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.__lbl.setTextFormat(QtCore.Qt.RichText)
         self.__lyt.addWidget(self.__lbl)
 
