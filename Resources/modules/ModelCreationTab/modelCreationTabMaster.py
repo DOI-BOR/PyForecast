@@ -63,7 +63,7 @@ class modelCreationTab(object):
         self.clickOption(self.modelRunsTable.loc[0]['ScoringParameters'], self.modelTab.optionsScoring)
         self.clickOption(self.modelRunsTable.loc[0]['Preprocessors'], self.modelTab.optionsPreprocessor)
 
-        self.modelTab.resultsMetricTable.model().loadDataIntoModel(self.forecastEquationsTable)
+        self.modelTab.resultsMetricTable.loadDataIntoModel(self.forecastEquationsTable)
 
         return
 
@@ -166,8 +166,8 @@ class modelCreationTab(object):
 
 
         ### Connect the results page ###
-        self.selectedModel = self.modelTab.resultsMetricTable.selectionModel()
-        self.selectedModel.selectionChanged.connect(self.generateModelResult)
+        # self.selectedModel = self.modelTab.resultsMetricTable.spreadsheetView
+        # self.selectedModel.selectionChanged.connect(self.generateModelResult)
 
 
         return
@@ -1201,7 +1201,7 @@ class modelCreationTab(object):
         self.modelRunsTable.loc[0]['PredictandMethod'] = self.modelTab.methodCombo.currentData()
 
         # Set the coloration to white
-        self.modelTab.layoutSimpleDoubleList.listOutput.itemColors[self.modelTab.layoutSimpleDoubleList.listOutput.currentIndex().row()] = QtCore.Qt.white
+        # self.modelTab.layoutSimpleDoubleList.listOutput.itemColors[self.modelTab.layoutSimpleDoubleList.listOutput.currentIndex().row()] = QtCore.Qt.white
 
 
     def generateModelResult(self, selected, deselected):
@@ -1287,7 +1287,7 @@ class modelCreationTab(object):
             self.modelTab.summaryListWidget.model().loadDataIntoModel(self.datasetTable, self.datasetOperationsTable)
 
         elif tabIndex == 4:
-            self.modelTab.resultsMetricTable.model().loadDataIntoModel(self.forecastEquationsTable)
+            self.modelTab.resultsMetricTable.loadDataIntoModel(self.forecastEquationsTable)
 
 
 

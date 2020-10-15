@@ -15,7 +15,7 @@ from resources.GUI.CustomWidgets.PyQtGraphs import ModelTabPlots, TimeSeriesLine
 from resources.GUI.CustomWidgets.PyQtGraphs_V2 import ModelTabTargetPlot, FillExtendTabPlots
 from resources.GUI.CustomWidgets.customTabs import EnhancedTabWidget
 from resources.GUI.CustomWidgets.richTextButtons import richTextButton, richTextButtonCheckbox, richTextDescriptionButton
-from resources.GUI.CustomWidgets.SpreadSheet import SpreadSheetViewOperations, SpreadSheetViewForecastEquations
+from resources.GUI.CustomWidgets.SpreadSheet import SpreadSheetViewOperations, SpreadSheetForecastEquations
 from resources.GUI.WebMap import webMapView
 from resources.modules.ModelCreationTab.modelCreationTabMaster import *
 
@@ -1526,36 +1526,46 @@ class ModelCreationTab(QtWidgets.QWidget):
         """
 
         ### Create the left side dataset summary table ###
-        # Create a vertical layout
-        leftLayout = QtWidgets.QVBoxLayout()
+        # Create a horizontal layout
+        topLayout = QtWidgets.QHBoxLayout()
 
         # Create the list of model filters
-        resultFilterLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Model Filters<strong>')
-        leftLayout.addWidget(resultFilterLabel)
+        ## Create the table to show the metrics ##
+        topInfoLayoutTable = QtWidgets.QVBoxLayout()
 
-        self.resultFilterList = ListHTMLFormatted()
-        leftLayout.addWidget(self.resultFilterList)
+        resultSelectedLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Available Regressions<strong>')
+        topInfoLayoutTable.addWidget(resultSelectedLabel)
+
+        self.resultsMetricTable = SpreadSheetForecastEquations(self.parent.forecastEquationsTable, parent=self)
+        topInfoLayoutTable.addWidget(self.resultsMetricTable)
+
+        topInfoLayoutTableWidget = QtWidgets.QWidget()
+        topInfoLayoutTableWidget.setLayout(topInfoLayoutTable)
+        topInfoLayoutTableWidget.setContentsMargins(0, 0, 0, 0)
+
+        topLayout.addWidget(topInfoLayoutTableWidget)
 
         # Create a list for the selected model metadata
+        topInfoLayout = QtWidgets.QVBoxLayout()
+
         resultSelectedLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Selected Model Info<strong>')
-        leftLayout.addWidget(resultSelectedLabel)
+        topInfoLayout.addWidget(resultSelectedLabel)
 
         self.resultSelectedList = QtWidgets.QListWidget()
-        leftLayout.addWidget(self.resultSelectedList)
+        topInfoLayout.addWidget(self.resultSelectedList)
 
-        # Create the regression list
-        #resultsRegressorsLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Regressors<strong>')
-        #leftLayout.addWidget(resultsRegressorsLabel)
+        topInfoLayoutWidget = QtWidgets.QWidget()
+        topInfoLayoutWidget.setLayout(topInfoLayout)
+        topInfoLayoutWidget.setContentsMargins(0, 0, 0, 0)
 
-        #resultsRegressorsList = ListHTMLFormatted()
-        #leftLayout.addWidget(resultsRegressorsList)
+        topLayout.addWidget(topInfoLayoutWidget)
 
         ### Create the right side items ###
         ## Create the initial layouts ##
-        rightLayout = QtWidgets.QVBoxLayout()
+        bottomLayout = QtWidgets.QHBoxLayout()
 
-        rightLayoutHorizontal = QtWidgets.QHBoxLayout()
-        rightLayoutHorizontal.setContentsMargins(0, 0, 0, 0)
+        bottomLayoutHorizontal = QtWidgets.QHBoxLayout()
+        bottomLayoutHorizontal.setContentsMargins(0, 0, 0, 0)
 
         rightLayoutVertical = QtWidgets.QVBoxLayout()
         rightLayoutVertical.setContentsMargins(0, 0, 0, 0)
@@ -1569,9 +1579,6 @@ class ModelCreationTab(QtWidgets.QWidget):
         ## Create the lower right residual/year plot ##
         self.resultsResidualYearPlot = QtWidgets.QTableWidget()
 
-        ## Create the table to show the metrics ##
-        self.resultsMetricTable = SpreadSheetViewForecastEquations(self.parent.forecastEquationsTable, parent=self)
-
         ## Add items into the layouts ##
         # Add the subplots to the vertical layout
         rightLayoutVertical.addWidget(self.resultsInflowYearPlot)
@@ -1582,37 +1589,35 @@ class ModelCreationTab(QtWidgets.QWidget):
         rightLayoutVerticalWidget.setLayout(rightLayoutVertical)
 
         # Add items to the horizontal layout
-        rightLayoutHorizontal.addWidget(self.resultsObservedForecstPlot)
-        rightLayoutHorizontal.addWidget(rightLayoutVerticalWidget)
+        bottomLayoutHorizontal.addWidget(self.resultsObservedForecstPlot)
+        bottomLayoutHorizontal.addWidget(rightLayoutVerticalWidget)
 
         # Wrap the horizontal layout as a widget
         rightLayoutHorizontalWidget = QtWidgets.QWidget()
-        rightLayoutHorizontalWidget.setLayout(rightLayoutHorizontal)
+        rightLayoutHorizontalWidget.setLayout(bottomLayoutHorizontal)
 
         # Add items into the main right layout
-        rightLayout.addWidget(self.resultsMetricTable)
-        rightLayout.addSpacerItem(QtWidgets.QSpacerItem(1, 1, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum))
-        rightLayout.addWidget(rightLayoutHorizontalWidget)
+        bottomLayout.addWidget(rightLayoutHorizontalWidget)
 
         ### Add the items into the layout ###
         # Create the horizontal layout
-        layoutMain = QtWidgets.QHBoxLayout()
+        layoutMain = QtWidgets.QVBoxLayout()
 
         ## Add the left layout ##
         # Promote the layout to a widget
-        leftLayoutWidget = QtWidgets.QWidget()
-        leftLayoutWidget.setLayout(leftLayout)
+        topLayoutWidget = QtWidgets.QWidget()
+        topLayoutWidget.setLayout(topLayout)
 
         # Add it to the layout
-        layoutMain.addWidget(leftLayoutWidget, 1)
+        layoutMain.addWidget(topLayoutWidget)
 
         ## Add the right layout ##
         # Promote the right layout to a widget
-        rightLayoutWidget = QtWidgets.QWidget()
-        rightLayoutWidget.setLayout(rightLayout)
+        bottomLayoutWidget = QtWidgets.QWidget()
+        bottomLayoutWidget.setLayout(bottomLayout)
 
         # Add it into the layout
-        layoutMain.addWidget(rightLayoutWidget, 2)
+        layoutMain.addWidget(bottomLayoutWidget)
 
         ## Add into the scrollable area ##
         layoutMainWidget = QtWidgets.QWidget()
