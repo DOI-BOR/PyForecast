@@ -12,7 +12,7 @@ from resources.GUI.CustomWidgets.DatasetList_HTML_Formatted import ListHTMLForma
 from resources.GUI.CustomWidgets.DoubleList import DoubleListMultipleInstance
 from resources.GUI.CustomWidgets.AggregationOptions import AggregationOptions
 from resources.GUI.CustomWidgets.PyQtGraphs import ModelTabPlots, TimeSeriesLineBarPlot, DatasetTimeseriesPlots
-from resources.GUI.CustomWidgets.PyQtGraphs_V2 import ModelTabTargetPlot
+from resources.GUI.CustomWidgets.PyQtGraphs_V2 import ModelTabTargetPlot, FillExtendTabPlots
 from resources.GUI.CustomWidgets.customTabs import EnhancedTabWidget
 from resources.GUI.CustomWidgets.richTextButtons import richTextButton, richTextButtonCheckbox, richTextDescriptionButton
 from resources.GUI.CustomWidgets.SpreadSheet import SpreadSheetViewOperations, SpreadSheetViewForecastEquations
@@ -276,14 +276,14 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Add to the expert layout
         self.layoutPredictorExpertAnalysis.addWidget(tabWidget)
-        expertPredictorWidget = QtWidgets.QWidget()
-        expertPredictorWidget.setLayout(self.layoutPredictorExpertAnalysis)
-        expertPredictorWidget.setVisible(False)
+        self.expertPredictorWidget = QtWidgets.QWidget()
+        self.expertPredictorWidget.setLayout(self.layoutPredictorExpertAnalysis)
+        self.expertPredictorWidget.setVisible(False)
 
         # Create the stacked widget to handle to toggle between simple and expert analyses
         self.stackedPredictorWidget = QtWidgets.QStackedLayout()
         self.stackedPredictorWidget.addWidget(simplePredictorWidget)
-        self.stackedPredictorWidget.addWidget(expertPredictorWidget)
+        self.stackedPredictorWidget.addWidget(self.expertPredictorWidget)
 
         self.defaultPredictorButton.setChecked(True)
         self.defaultPredictorButton.clicked.connect(self.setPredictorDefaultStack)
@@ -621,7 +621,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ### Create the plot that shows the result of the selection ###
         # Create the plot
-        self.layoutFillPlot = DatasetTimeseriesPlots(self)
+        self.layoutFillPlot = FillExtendTabPlots(self)
         self.layoutFillPlot.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
 
         # Add it into the layout
@@ -815,7 +815,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ### Create the plot that shows the result of the selection ###
         # Create the plot
-        self.layoutExtendPlot = DatasetTimeseriesPlots(None)
+        self.layoutExtendPlot = FillExtendTabPlots()
         self.layoutExtendPlot.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
 
         # Add it into the layout

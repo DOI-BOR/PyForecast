@@ -1337,6 +1337,102 @@ class DataTabPlots(pg.GraphicsLayoutWidget):
         return
 
 
+class FillExtendTabPlots(pg.GraphicsLayoutWidget):
+
+    def __init__(self, parent = None):
+
+        # INSTANTIATE THE WIDGET AND CREATE A REFERENCE TO THE PARENT
+        pg.GraphicsLayoutWidget.__init__(self, parent)
+        self.parent = parent
+
+        # SET MINIMUM ROW SIZE FOR ROWS
+        [self.ci.layout.setRowMinimumHeight(i, 30) for i in range(9)]
+
+        # CREATE A COLOR CYCLER
+        self.colors = [
+            (255, 61, 0),
+            (0, 145, 234),
+            (0, 200, 83),
+            (189, 157, 0),
+            (255, 103, 32),
+            (170, 0, 255),
+            (141, 110, 99),
+            (198, 255, 0),
+            (29, 233, 182),
+            (136, 14, 79)
+        ]
+
+        self.pen_cycler = [pg.mkPen(pg.mkColor(color), width=1.5) for color in self.colors]
+        self.brush_cycler = [pg.mkBrush(pg.mkColor(color)) for color in self.colors]
+
+        # Get a reference to the datasetTable and the dataTable
+        self.datasetTable = None
+        self.level = None
+        self.units = None
+
+        # INSTANTIATE THE PLOTS
+        self.timeSeriesPlot = TimeSeriesPlot(self)
+
+        # ADD TO LAYOUT
+        self.addItem(self.timeSeriesPlot, row=0, col=0, rowspan=7)
+
+        return
+
+    def clearPlots(self):
+
+        self.timeSeriesPlot.clear()
+
+        return
+
+
+    def updateData(self, dataframe, level, units):
+        # todo: doc string
+
+        self.datasetTable = dataframe
+        self.level = level
+        self.units = units
+
+    def displayDatasets(self):
+        """
+
+        @param datasets:
+        @return:
+        """
+
+        # Get all data on the specified level
+        if self.level is not None:
+            # Get the location of the index attribute in the index vector
+            columnIndex = [x for x in range(0, len(self.datasetTable.index.names), 1) if
+                           self.datasetTable.index.names[x] == self.level][0]
+
+            # Find the unique entries to be plotted
+            datasetLabels = list(set([x[columnIndex] for x in self.datasetTable.index]))
+
+            # Define plot names
+            plotUnits = [self.units for x in datasetLabels]
+
+            # Remove the value field label from the data
+            plotData = [self.datasetTable.loc[(slice(None), datasetLabels[x]), 'Value'].values for x in range(0, len(datasetLabels))]
+            plotData = np.atleast_2d(plotData)
+
+            # Get the plot locations
+            plotLocations = self.datasetTable.loc[(slice(None), datasetLabels[0]), 'Value'].index.droplevel(1).values
+
+            # Perform an update on the timeseries plot
+            self.timeSeriesPlot.setData(plotLocations, plotData, [], plotUnits, datasetLabels)
+
+
+        return
+
+    def updateData(self, dataframe, level, units):
+        # todo: doc string
+
+        self.datasetTable = dataframe
+        self.level = level
+        self.units = units
+
+
+
 #=======================================================================================================================
 # DEBUG GRAPHICSLAYOUTWIDGET
 #=======================================================================================================================
