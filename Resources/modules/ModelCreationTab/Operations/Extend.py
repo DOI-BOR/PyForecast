@@ -154,6 +154,16 @@ def extend(dataSeries, fillMethod, fillDuration, fillOrder, extendMethod, n_pred
     # Fill the data
     dataFilled = fill_missing(dataSeries, fillMethod, fillDuration, order=fillOrder)
 
+    # Strip NaNs from the start of the series
+    stopIndex = -1
+    for x in range(0, len(dataFilled.values), 1):
+        if np.isnan(dataFilled.values[x]):
+            stopIndex = x
+        else:
+            break
+
+    dataFilled = dataFilled[stopIndex + 1:]
+
     # Calculate the timestep of the data
     # todo: this needs to look across the time series
     # timeDifference = dataFilled.index[1:] - dataFilled.index[0:len(dataFilled.index)-1]

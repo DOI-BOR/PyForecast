@@ -537,7 +537,7 @@ class modelCreationTab(object):
         fillOrder = int(self.modelTab.layoutFillOrder.currentText())
 
         # Get the current dataset
-        currentIndex = self.modelTab.fillList.datasetTable.index[self.fillList.currentIndex().row()]
+        currentIndex = self.modelTab.fillList.datasetTable.index[self.modelTab.fillList.currentIndex().row()]
 
         # Set the values
         self.datasetOperationsTable.loc[currentIndex]['FillMethod'] = fillMethod
@@ -545,7 +545,7 @@ class modelCreationTab(object):
         self.datasetOperationsTable.loc[currentIndex]['FillOrder'] = fillOrder
 
         # Clear the button click
-        self.modelTab.modelTab.layoutFillApplyButton.setChecked(False)
+        self.modelTab.layoutFillApplyButton.setChecked(False)
 
         # Update the plot on the tab
         self.updateFillPlot(currentIndex, fillMethod, fillLimit, fillOrder)
@@ -671,7 +671,7 @@ class modelCreationTab(object):
         extendFilter = self.datasetOperationsTable.loc[currentIndex]['ExtendFilter']
 
         # Get the options for the selector and stack
-        extendOptionsIndex = [x for x in range(self.layoutExtendMethodSelector.count()) if self.layoutExtendMethodSelector.itemText(x) == extendMethod]
+        extendOptionsIndex = [x for x in range(self.modelTab.layoutExtendMethodSelector.count()) if self.modelTab.layoutExtendMethodSelector.itemText(x) == extendMethod]
         if extendOptionsIndex:
             extendOptionsIndex = extendOptionsIndex[0]
         else:
@@ -715,7 +715,12 @@ class modelCreationTab(object):
         extendMethod = self.modelTab.layoutExtendMethodSelector.currentText()
 
         # Parse the output based on the method
-        if extendMethod == 'Linear':
+        if extendMethod == 'None':
+            extendMethod = None
+            extendLimit = None
+            extendFilter = None
+
+        elif extendMethod == 'Linear':
             # Extract the information from the linear stack
             extendLimit = int(self.modelTab.layoutExtendLinearDurationLimit.text())
             extendFilter = None
@@ -726,20 +731,18 @@ class modelCreationTab(object):
             extendFilter = self.modelTab.layoutExtendFourierFilter.currentText()
 
         # Get the current dataset
-        currentIndex = self.modelTab.extendList.datasetTable.index[self.extendList.currentIndex().row()]
+        currentIndex = self.modelTab.extendList.datasetTable.index[self.modelTab.extendList.currentIndex().row()]
 
-        ### Determine if a fill has been added to the data ###
-        if self.datasetOperationsTable.loc[currentIndex]['FillMethod'] is not None:
-            # Set the values
-            self.datasetOperationsTable.loc[currentIndex]['ExtendMethod'] = extendMethod
-            self.datasetOperationsTable.loc[currentIndex]['ExtendDuration'] = extendLimit
-            self.datasetOperationsTable.loc[currentIndex]['ExtendFilter'] = extendLimit
-
-            # Update the plot on the tab
-            self.updateExtendPlot(currentIndex, extendMethod, extendLimit, extendFilter)
+        # Set the fill values on the data
+        self.datasetOperationsTable.loc[currentIndex]['ExtendMethod'] = extendMethod
+        self.datasetOperationsTable.loc[currentIndex]['ExtendDuration'] = extendLimit
+        self.datasetOperationsTable.loc[currentIndex]['ExtendFilter'] = extendLimit
 
         # Clear the button click
         self.modelTab.layoutExtendApplyButton.setChecked(False)
+
+        # Update the plot on the tab
+        self.updateExtendPlot(currentIndex, extendMethod, extendLimit, extendFilter)
 
     def applyExtendClearToDataset(self):
         """
@@ -793,6 +796,14 @@ class modelCreationTab(object):
             extendedData, lostDensity = extend(sourceData, fillMethod.lower(), fillDuration, fillOrder,
                                                extendMethod.lower(), extendLimit, extendFilter)
 
+            # Add missing source days into the extended data
+            addIndices = [x for x in sourceData.index if x not in extendedData]
+            extendedData = extendedData.append(pd.Series(np.ones(len(addIndices)) * np.NaN, index=addIndices, name='Value'))
+
+            # Add the missing extend dats into the source data
+            addIndices = [x for x in extendedData.index if x not in sourceData]
+            sourceData = sourceData.append(pd.Series(np.ones(len(addIndices)) * np.NaN, index=addIndices, name='Value'))
+
             # Promote and set the status of the filled data
             extendedData = pd.DataFrame(extendedData)
             extendedData['Status'] = 'Extended'
@@ -805,6 +816,7 @@ class modelCreationTab(object):
 
             # Stack it together with the existing data
             sourceData = pd.concat([extendedData, sourceData]).sort_index()
+            # sourceData = pd.concat([extendedData, sourceData])
 
         else:
             # No filled data is present. Promote back to a dataframe and add the plotting label
@@ -1243,7 +1255,7 @@ class modelCreationTab(object):
                 self.modelTab.layoutPredictorSimpleAnalysis.setVisible(True)
             elif self.modelTab.expertPredictorButton.isChecked():
                 self.modelTab.stackedPredictorWidget.setCurrentIndex(1)
-                self.modelTab.layoutPredictorExpertAnalysis.setVisible(True)
+                self.modelTab.expertPredictorWidget.setVisible(True)
 
         if tabIndex == 3:
             # Update the summary boxes
