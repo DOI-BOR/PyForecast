@@ -1345,9 +1345,6 @@ class FillExtendTabPlots(pg.GraphicsLayoutWidget):
         pg.GraphicsLayoutWidget.__init__(self, parent)
         self.parent = parent
 
-        # SET MINIMUM ROW SIZE FOR ROWS
-        [self.ci.layout.setRowMinimumHeight(i, 30) for i in range(9)]
-
         # CREATE A COLOR CYCLER
         self.colors = [
             (255, 61, 0),
