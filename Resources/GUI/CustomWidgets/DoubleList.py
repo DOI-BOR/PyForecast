@@ -942,6 +942,13 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
         self.listInput.datasetTable = copy.copy(inputList.datasetTable)
         self.listOutput.datasetTable = copy.copy(outputList.datasetTable)
 
+        # Refresh the coloration
+        if self.listInput.itemColors is not None:
+            self.listInput.itemColors = [self.inputDefaultColor for x in self.listInput.datasetTable]
+
+        if self.listOutput.itemColors is not None:
+            self.listOutput.itemColors = [self.outputDefaultColor for x in self.listOutput.datasetTable]
+
         # Refresh the object
         self.listInput.refreshDatasetList()
         self.listOutput.refreshDatasetList()
