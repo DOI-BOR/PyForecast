@@ -134,6 +134,9 @@ class Regressor(object):
         # Compute the predictions
         self.y_p = self.predict(self.x)
 
+        # Compute the score
+        self.scores = self.score(self.y, self.y_p_cv, self.x.shape[1])
+
         # Perform the cross-validation if needed
         if crossValidate:
 

@@ -756,16 +756,7 @@ class SpreadSheetForecastEquations(QtWidgets.QWidget):
         self.view = QtWidgets.QTableView(self)
 
         # Set the dataframes into the object
-        cols = [0, 1, 2, 3, 4, 5, 6, 7, 11, 12, 13]
-        data = forecastEquationsTable.drop(forecastEquationsTable.columns[cols], axis=1)
-        if len(data) == 0:
-            data['PIPE'] = ''
-            data['PreProcessingMethod'] = ''
-            data['RegressionMethod'] = ''
-            data['CrossValidation'] = ''
-        else:
-            data[['PIPE','Pre-ProcessingMethod','RegressionMethod','CrossValidation']] = data['EquationMethod'].str.split('/',expand=True)
-        data.drop('PIPE', axis=1, inplace=True)
+        data = self.processData(forecastEquationsTable)
         self.equations = forecastEquationsTable
 
         # Create the combo box and set visibility to False
@@ -787,6 +778,7 @@ class SpreadSheetForecastEquations(QtWidgets.QWidget):
         self.view.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
         self.view.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
         self.view.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+        self.view.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
 
         # Add the filtering into the plot
         self.model = QtGui.QStandardItemModel(10, len(data.columns))
@@ -823,11 +815,7 @@ class SpreadSheetForecastEquations(QtWidgets.QWidget):
         # todo: doc string
 
         # Load the data
-        cols = [0, 1, 2, 3, 4, 5, 6, 7, 11, 12, 13]
-        data = data.drop(data.columns[cols], axis=1)
-        if len(data) > 0:
-            data[['PIPE','PreProcessingMethod','RegressionMethod','CrossValidation']] = data['EquationMethod'].str.split('/',expand=True)
-        data.drop('PIPE', axis=1, inplace=True)
+        data = self.processData(data)
         self.equations = data
 
         self.datasetIndexedList = []
@@ -854,6 +842,26 @@ class SpreadSheetForecastEquations(QtWidgets.QWidget):
         [[self.model.setItem(i, j, QtGui.QStandardItem(self.datasetIndexedList[i][j])) for j in range(0, len(self.datasetIndexedList[0]), 1)]
          for i in range(0, len(self.datasetIndexedList), 1)]
         self.view.resizeColumnsToContents()
+
+
+    def processData(self, dataTable):
+        cols = [0, 1, 2, 3, 4, 5, 6, 7, 11, 12, 13]
+        data = dataTable.drop(dataTable.columns[cols], axis=1)
+        if len(data) == 0:
+            data['PIPE'] = ''
+            data['PreProcessingMethod'] = ''
+            data['RegressionMethod'] = ''
+            data['CrossValidation'] = ''
+            data['ModelIndex'] = ''
+        else:
+            data[['PIPE', 'Pre-ProcessingMethod', 'RegressionMethod', 'CrossValidation']] = data[
+                'EquationMethod'].str.split('/', expand=True)
+            data['ModelIndex'] = data.index
+            data = data.astype({"ModelIndex": int})
+        data.drop('PIPE', axis=1, inplace=True)
+        data = data[data.columns[::-1]]
+        return data
+
 
     def selectionChanged(self, QItemSelection, QItemSelection_1):
         # todo: doc string

@@ -1208,10 +1208,12 @@ class modelCreationTab(object):
         # todo: doc string
 
         # Get model info
-        modelIdx = self.modelTab.resultsMetricTable.view.selectionModel().selectedRows()[0].row()
-        forecastEquationTableEntry = self.modelTab.parent.forecastEquationsTable.iloc[modelIdx]
-        #print('Selected Model: ' + str(modelIdx))
-        #print(forecastEquationTableEntry)
+        tableIdx = self.modelTab.resultsMetricTable.view.selectionModel().currentIndex()
+        modelIdx = tableIdx.siblingAtColumn(0).data()
+        try:
+            forecastEquationTableEntry = self.modelTab.parent.forecastEquationsTable.iloc[int(modelIdx)]
+        except:
+            return
 
         # Rebuild model
         QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
@@ -1230,29 +1232,40 @@ class modelCreationTab(object):
         self.modelTab.resultSelectedList.addItem('----- MODEL VARIABLES -----')
         self.modelTab.resultSelectedList.addItem('Predictand Y: ' + str(self.modelTab.parent.datasetTable.loc[self.modelTab.selectedModel.yID].DatasetName) + ' - ' + str(self.modelTab.parent.datasetTable.loc[self.modelTab.selectedModel.yID].DatasetParameter))
         equation = 'Y ='
+        hasCoefs = True
         for i in range(len(self.modelTab.selectedModel.xIDs)):
             self.modelTab.resultSelectedList.addItem('Predictor X' + str(i+1) + ': ' + str(
                 self.modelTab.parent.datasetTable.loc[self.modelTab.selectedModel.xIDs[i]].DatasetName) + ' - ' + str(
                 self.modelTab.parent.datasetTable.loc[self.modelTab.selectedModel.xIDs[i]].DatasetParameter))
-            coef = self.modelTab.selectedModel.regression.coef[i]
-            const = 'X' + str(i+1)
-            if coef >= 0:
-                equation = equation + ' + (' + ("%0.5f" % coef) + ')' + const
+            try:
+                if hasCoefs:
+                    coef = self.modelTab.selectedModel.regression.coef[i]
+                    const = 'X' + str(i+1)
+                    if coef >= 0:
+                        equation = equation + ' + (' + ("%0.5f" % coef) + ')' + const
+                    else:
+                        equation = equation + ' - (' + ("%0.5f" % (coef * -1.0)) + ')' + const
+            except:
+                hasCoefs = False
+
+        self.modelTab.resultSelectedList.addItem(' ')
+        if hasCoefs:
+            self.modelTab.resultSelectedList.addItem('----- MODEL EQUATION -----')
+            if self.modelTab.selectedModel.regression.intercept >= 0:
+                equation = equation + ' + ' + ("%0.5f" % self.modelTab.selectedModel.regression.intercept)
             else:
-                equation = equation + ' - (' + ("%0.5f" % (coef * -1.0)) + ')' + const
-        self.modelTab.resultSelectedList.addItem(' ')
-        self.modelTab.resultSelectedList.addItem('----- MODEL EQUATION -----')
-        if self.modelTab.selectedModel.regression.intercept >= 0:
-            equation = equation + ' + ' + ("%0.5f" % self.modelTab.selectedModel.regression.intercept)
-        else:
-            equation = equation + ' - ' + ("%0.5f" % (self.modelTab.selectedModel.regression.intercept * -1.0))
-        self.modelTab.resultSelectedList.addItem('' + equation)
-        self.modelTab.resultSelectedList.addItem(' ')
+                equation = equation + ' - ' + ("%0.5f" % (self.modelTab.selectedModel.regression.intercept * -1.0))
+            self.modelTab.resultSelectedList.addItem('' + equation)
+            self.modelTab.resultSelectedList.addItem(' ')
         self.modelTab.resultSelectedList.addItem('----- MODEL SCORES (Regular | Cross-Validated) -----')
         for scorer in self.modelTab.selectedModel.regression.scoringParameters:
-            regScore =self.modelTab.selectedModel.regression.scores[scorer]
-            cvScore = self.modelTab.selectedModel.regression.cv_scores[scorer]
-            self.modelTab.resultSelectedList.addItem(scorer + ': ' + ("%0.5f" % regScore) + ' | ' + ("%0.5f" % cvScore))
+            try:
+                regScore =self.modelTab.selectedModel.regression.scores[scorer]
+                cvScore = self.modelTab.selectedModel.regression.cv_scores[scorer]
+                self.modelTab.resultSelectedList.addItem(scorer + ': ' + ("%0.5f" % regScore) + ' | ' + ("%0.5f" % cvScore))
+            except:
+                pass
+
 
 
 
