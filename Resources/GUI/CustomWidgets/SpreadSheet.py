@@ -755,6 +755,19 @@ class SpreadSheetForecastEquations(QtWidgets.QWidget):
         self.parent = parent
         self.view = QtWidgets.QTableView(self)
 
+        # Set the dataframes into the object
+        cols = [0, 1, 2, 3, 4, 5, 6, 7, 11, 12, 13]
+        data = forecastEquationsTable.drop(forecastEquationsTable.columns[cols], axis=1)
+        if len(data) == 0:
+            data['PIPE'] = ''
+            data['PreProcessingMethod'] = ''
+            data['RegressionMethod'] = ''
+            data['CrossValidation'] = ''
+        else:
+            data[['PIPE','Pre-ProcessingMethod','RegressionMethod','CrossValidation']] = data['EquationMethod'].str.split('/',expand=True)
+        data.drop('PIPE', axis=1, inplace=True)
+        self.equations = forecastEquationsTable
+
         # Create the combo box and set visibility to False
         self.comboBox = QtWidgets.QComboBox(self)
         self.comboBox.setVisible(False)
@@ -773,18 +786,19 @@ class SpreadSheetForecastEquations(QtWidgets.QWidget):
         self.setStyleSheet(open(os.path.abspath('resources/GUI/stylesheets/spreadsheet.qss'), 'r').read().format(colorCode))
         self.view.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
         self.view.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
+        self.view.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
 
         # Add the filtering into the plot
-        self.model = QtGui.QStandardItemModel(10, len(forecastEquationsTable.columns))
-        self.model.setHorizontalHeaderLabels(forecastEquationsTable.columns)
+        self.model = QtGui.QStandardItemModel(10, len(data.columns))
+        self.model.setHorizontalHeaderLabels(data.columns)
 
         self.proxy = QtCore.QSortFilterProxyModel(self)
         self.proxy.setSourceModel(self.model)
         self.view.setModel(self.proxy)
 
         # Enable sorting
-        self.view.setSortingEnabled(True)
-        self.view.sortByColumn(0, QtCore.Qt.AscendingOrder)
+        #self.view.setSortingEnabled(True)
+        #self.view.sortByColumn(0, QtCore.Qt.AscendingOrder)
 
         # Enable the headers to stretch
         self.view.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
@@ -796,20 +810,24 @@ class SpreadSheetForecastEquations(QtWidgets.QWidget):
         self.horizontalHeader = self.view.horizontalHeader()
         self.horizontalHeader.sectionClicked.connect(self.on_view_horizontalHeader_sectionClicked)
 
-        # Set the dataframes into the object
-        self.equations = forecastEquationsTable
-
         # Set the size policies
         self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding)
         self.view.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding)
+        #self.view.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
 
         # Enable scrolling
         self.view.setAutoScroll(True)
+
 
     def loadDataIntoModel(self, data):
         # todo: doc string
 
         # Load the data
+        cols = [0, 1, 2, 3, 4, 5, 6, 7, 11, 12, 13]
+        data = data.drop(data.columns[cols], axis=1)
+        if len(data) > 0:
+            data[['PIPE','PreProcessingMethod','RegressionMethod','CrossValidation']] = data['EquationMethod'].str.split('/',expand=True)
+        data.drop('PIPE', axis=1, inplace=True)
         self.equations = data
 
         self.datasetIndexedList = []
@@ -835,10 +853,12 @@ class SpreadSheetForecastEquations(QtWidgets.QWidget):
         # Add the values into the columns
         [[self.model.setItem(i, j, QtGui.QStandardItem(self.datasetIndexedList[i][j])) for j in range(0, len(self.datasetIndexedList[0]), 1)]
          for i in range(0, len(self.datasetIndexedList), 1)]
+        self.view.resizeColumnsToContents()
 
     def selectionChanged(self, QItemSelection, QItemSelection_1):
         # todo: doc string
         # overrides the existing function
+        a=1
         pass
 
     def resizeColumns(self):

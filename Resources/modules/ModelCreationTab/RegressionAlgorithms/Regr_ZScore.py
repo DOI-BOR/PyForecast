@@ -68,9 +68,6 @@ class Regressor(object):
         # Convert all the x data to z-scores
         self.z = (self.x - np.nanmean(self.x)) / np.nanstd(self.x)
 
-        # Create a 10-fold cross-validator
-        TenFoldValidator = getattr(CrossValidationAlgorithms, "KFOLD_10")
-
         # Create an R2 Scorer
         scorer = getattr(ModelScoring, 'R2')
 
@@ -82,7 +79,7 @@ class Regressor(object):
             y_p_cv = np.array([], dtype=np.float32)
 
             # Iterate over the cross validation samples and compute regression scores
-            for xsample, ysample, xtest, _ in TenFoldValidator.yield_samples(X = self.z[:,i], Y = self.y):
+            for xsample, ysample, xtest, _ in self.crossValidator.yield_samples(X = self.z[:,i], Y = self.y):
 
                  # Concatenate a row of 1's to the data so that we can compute an intercept
                 X_ = np.concatenate((np.ones(shape=xsample.shape[0]).reshape(-1,1), xsample), 1)
@@ -99,4 +96,9 @@ class Regressor(object):
             self.r_scores.append(scorer(self.y, y_p_cv, 1))
 
         # Note at this point that some r2 scores may be negative
-        # To combat that, we 
+        # To combat that, we
+
+    def fit(self, x, y, crossValidate = False):
+        """
+        """
+

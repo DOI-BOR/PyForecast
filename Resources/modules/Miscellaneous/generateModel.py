@@ -54,16 +54,6 @@ class Model(object):
 
             data.set_axis([idx.year if idx.month < 10 else idx.year + 1 for idx in data.index], axis=0, inplace=True)
             data = data.loc[self.trainingDates[0]: self.trainingDates[1]]
-            if data.apply(lambda x: x == 0 or np.isnan(x)).all():
-                print('all zero variable detected at position:', i)
-                popindex.append(i)
-                continue
-            if self.excludeYears[0] in data.index:
-                if np.isnan(data.loc[self.excludeYears[0]]):
-                    print('missing exclude year at: ', i)
-                    popindex.append(i)
-                    continue
-            # print(data)
             idx = list(filter(lambda date: date not in self.excludeYears, data.index))
             self.xTraining.append(list(data.loc[idx]))  # Training Data
 
@@ -90,6 +80,18 @@ class Model(object):
         self.preprocessor = self.preprocessorClass(np.concatenate([self.xTraining, self.yTraining], axis=1))
         proc_xTraining = self.preprocessor.getTransformedX()
         proc_yTraining = self.preprocessor.getTransformedY()
+
+        # Remove Nans
+        xNans = np.argwhere(np.isnan(proc_xTraining))
+        yNans = np.argwhere(np.isnan(proc_yTraining))
+        popIndex = []
+        for item in xNans:
+            popIndex.append(item[0])
+        for item in yNans:
+            popIndex.append(item[0])
+        proc_xTraining = np.delete(proc_xTraining, popIndex, axis=0)
+        proc_yTraining = np.delete(proc_yTraining, popIndex, axis=0)
+
         # Run regression
         self.regression.fit(proc_xTraining, proc_yTraining, True)
 

@@ -166,8 +166,8 @@ class modelCreationTab(object):
 
 
         ### Connect the results page ###
-        # self.selectedModel = self.modelTab.resultsMetricTable.spreadsheetView
-        # self.selectedModel.selectionChanged.connect(self.generateModelResult)
+        self.selectionModel = self.modelTab.resultsMetricTable.view.selectionModel()
+        self.selectionModel.selectionChanged.connect(self.generateSelectedModel)
 
 
         return
@@ -1166,8 +1166,8 @@ class modelCreationTab(object):
                 self.modelTab.summaryLayoutErrorLabel.setStyleSheet("color : green")
                 self.modelTab.summaryLayoutErrorLabel.setVisible(True)
 
-            #TODO: JR - clean this up after you hook up the results tab
-            #self.forecastEquationsTable.to_csv('out'+  datetime.datetime.now().strftime("%m%d%Y%H%M%S") + '.csv')
+            print('INFO: Model run complete!')
+
 
 
     def applyPredictandAggregationOption(self):
@@ -1204,41 +1204,55 @@ class modelCreationTab(object):
         # self.modelTab.layoutSimpleDoubleList.listOutput.itemColors[self.modelTab.layoutSimpleDoubleList.listOutput.currentIndex().row()] = QtCore.Qt.white
 
 
-    def generateModelResult(self, selected, deselected):
+    def generateSelectedModel(self, selected, deselected):
         # todo: doc string
-        modelIdx = self.modelTab.resultsMetricTable.selectionModel().selectedRows()[0].row()
+
+        # Get model info
+        modelIdx = self.modelTab.resultsMetricTable.view.selectionModel().selectedRows()[0].row()
         forecastEquationTableEntry = self.modelTab.parent.forecastEquationsTable.iloc[modelIdx]
         #print('Selected Model: ' + str(modelIdx))
         #print(forecastEquationTableEntry)
+
+        # Rebuild model
         QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
-        self.modelTab.modelResult = Model(self.modelTab.parent, forecastEquationTableEntry)
-        self.modelTab.modelResult.generate()
+        self.modelTab.selectedModel = Model(self.modelTab.parent, forecastEquationTableEntry)
+        self.modelTab.selectedModel.generate()
         QtWidgets.QApplication.restoreOverrideCursor()
 
-        # Update UI with  selected model metadata
+        # Update UI with selected model metadata
         self.modelTab.resultSelectedList.clear()
-        self.modelTab.resultSelectedList.addItem('Regression Range (years): ' + str(self.modelTab.modelResult.trainingDates))
-        self.modelTab.resultSelectedList.addItem('Predictand Y: ' + str(self.modelTab.parent.datasetTable.loc[self.modelTab.modelResult.yID].DatasetName) + str(self.modelTab.parent.datasetTable.loc[self.modelTab.modelResult.yID].DatasetParameter))
-        equation = 'Y = '
-        for i in range(len(self.modelTab.modelResult.xIDs)):
+        self.modelTab.resultSelectedList.addItem('----- MODEL REGRESSION -----')
+        self.modelTab.resultSelectedList.addItem('Model Index: ' + str(modelIdx))
+        self.modelTab.resultSelectedList.addItem('Model Processes: ' + str(self.modelTab.selectedModel.forecastEquation.EquationMethod))
+        self.modelTab.resultSelectedList.addItem('Model Predictor IDs: ' + str(self.modelTab.selectedModel.forecastEquation.EquationPredictors))
+        self.modelTab.resultSelectedList.addItem('Range (years): ' + str(self.modelTab.selectedModel.trainingDates))
+        self.modelTab.resultSelectedList.addItem(' ')
+        self.modelTab.resultSelectedList.addItem('----- MODEL VARIABLES -----')
+        self.modelTab.resultSelectedList.addItem('Predictand Y: ' + str(self.modelTab.parent.datasetTable.loc[self.modelTab.selectedModel.yID].DatasetName) + ' - ' + str(self.modelTab.parent.datasetTable.loc[self.modelTab.selectedModel.yID].DatasetParameter))
+        equation = 'Y ='
+        for i in range(len(self.modelTab.selectedModel.xIDs)):
             self.modelTab.resultSelectedList.addItem('Predictor X' + str(i+1) + ': ' + str(
-                self.modelTab.parent.datasetTable.loc[self.modelTab.modelResult.xIDs[i]].DatasetName) + ' - ' + str(
-                self.modelTab.parent.datasetTable.loc[self.modelTab.modelResult.xIDs[i]].DatasetParameter))
-            coef = self.modelTab.modelResult.regression.coef[i]
+                self.modelTab.parent.datasetTable.loc[self.modelTab.selectedModel.xIDs[i]].DatasetName) + ' - ' + str(
+                self.modelTab.parent.datasetTable.loc[self.modelTab.selectedModel.xIDs[i]].DatasetParameter))
+            coef = self.modelTab.selectedModel.regression.coef[i]
             const = 'X' + str(i+1)
             if coef >= 0:
                 equation = equation + ' + (' + ("%0.5f" % coef) + ')' + const
             else:
                 equation = equation + ' - (' + ("%0.5f" % (coef * -1.0)) + ')' + const
-        if self.modelTab.modelResult.regression.intercept >= 0:
-            equation = equation + ' + ' + ("%0.5f" % self.modelTab.modelResult.regression.intercept)
+        self.modelTab.resultSelectedList.addItem(' ')
+        self.modelTab.resultSelectedList.addItem('----- MODEL EQUATION -----')
+        if self.modelTab.selectedModel.regression.intercept >= 0:
+            equation = equation + ' + ' + ("%0.5f" % self.modelTab.selectedModel.regression.intercept)
         else:
-            equation = equation + ' - ' + ("%0.5f" % (self.modelTab.modelResult.regression.intercept * -1.0))
-        self.modelTab.resultSelectedList.addItem('Regression Equation: ' + equation)
-        for scorer in self.modelTab.modelResult.regression.scoringParameters:
-            regScore =self.modelTab.modelResult.regression.scores[scorer]
-            cvScore = self.modelTab.modelResult.regression.cv_scores[scorer]
-            self.modelTab.resultSelectedList.addItem(scorer + ' score (Regular | Cross-Validated): ' + ("%0.5f" % regScore) + ' | ' + ("%0.5f" % cvScore))
+            equation = equation + ' - ' + ("%0.5f" % (self.modelTab.selectedModel.regression.intercept * -1.0))
+        self.modelTab.resultSelectedList.addItem('' + equation)
+        self.modelTab.resultSelectedList.addItem(' ')
+        self.modelTab.resultSelectedList.addItem('----- MODEL SCORES (Regular | Cross-Validated) -----')
+        for scorer in self.modelTab.selectedModel.regression.scoringParameters:
+            regScore =self.modelTab.selectedModel.regression.scores[scorer]
+            cvScore = self.modelTab.selectedModel.regression.cv_scores[scorer]
+            self.modelTab.resultSelectedList.addItem(scorer + ': ' + ("%0.5f" % regScore) + ' | ' + ("%0.5f" % cvScore))
 
 
 
@@ -1288,8 +1302,5 @@ class modelCreationTab(object):
 
         elif tabIndex == 4:
             self.modelTab.resultsMetricTable.loadDataIntoModel(self.forecastEquationsTable)
-
-
-
 
 
