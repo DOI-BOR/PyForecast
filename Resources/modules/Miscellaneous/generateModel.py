@@ -91,6 +91,7 @@ class Model(object):
             popIndex.append(item[0])
         proc_xTraining = np.delete(proc_xTraining, popIndex, axis=0)
         proc_yTraining = np.delete(proc_yTraining, popIndex, axis=0)
+        self.years = np.delete(idx, popIndex, axis=0)
 
         # Run regression
         self.regression.fit(proc_xTraining, proc_yTraining, True)

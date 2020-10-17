@@ -12,7 +12,7 @@ from resources.GUI.CustomWidgets.DatasetList_HTML_Formatted import ListHTMLForma
 from resources.GUI.CustomWidgets.DoubleList import DoubleListMultipleInstance
 from resources.GUI.CustomWidgets.AggregationOptions import AggregationOptions
 from resources.GUI.CustomWidgets.PyQtGraphs import ModelTabPlots, TimeSeriesLineBarPlot, DatasetTimeseriesPlots
-from resources.GUI.CustomWidgets.PyQtGraphs_V2 import ModelTabTargetPlot, FillExtendTabPlots
+from resources.GUI.CustomWidgets.PyQtGraphs_V2 import ModelTabTargetPlot, FillExtendTabPlots, ResultsTabPlots
 from resources.GUI.CustomWidgets.customTabs import EnhancedTabWidget
 from resources.GUI.CustomWidgets.richTextButtons import richTextButton, richTextButtonCheckbox, richTextDescriptionButton
 from resources.GUI.CustomWidgets.SpreadSheet import SpreadSheetViewOperations, SpreadSheetForecastEquations
@@ -1571,13 +1571,16 @@ class ModelCreationTab(QtWidgets.QWidget):
         rightLayoutVertical.setContentsMargins(0, 0, 0, 0)
 
         ## Create the main left observed/forecast plot ##
-        self.resultsObservedForecstPlot = QtWidgets.QTableWidget()
+        self.resultsObservedForecstPlot = ResultsTabPlots(self, xLabel='Observed', yLabel='Prediction')
+        self.resultsObservedForecstPlot.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
         ## Create the upper right inflow/year plot ##
-        self.resultsInflowYearPlot = QtWidgets.QTableWidget()
+        self.resultsInflowYearPlot = ResultsTabPlots(self, xLabel='Year', yLabel='Value')
+        self.resultsInflowYearPlot.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
         ## Create the lower right residual/year plot ##
-        self.resultsResidualYearPlot = QtWidgets.QTableWidget()
+        self.resultsResidualYearPlot = ResultsTabPlots(self, xLabel='Year', yLabel='Error')
+        self.resultsResidualYearPlot.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
         ## Add items into the layouts ##
         # Add the subplots to the vertical layout

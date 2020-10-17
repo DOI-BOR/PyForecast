@@ -285,7 +285,7 @@ class TimeSeriesPlot(pg.PlotItem):
         self.viewbox_axis_2.setRange(xRange=(0, 1), yRange=(0, 1))
 
         # INITIAL TEXT FOR EMPTY PLOT
-        self.no_data_text_item = pg.TextItem(html = '<div style="color:#4e4e4e"><h1>Oops!</h1><br> Looks like there is no data to display.<br>Select a dataset from the list to view data.</div>')
+        self.no_data_text_item = pg.TextItem(html = '<div style="color:#4e4e4e"><h1>Oops!</h1><br> Looks like there is no data to display.<br>Select a dataset to view data.</div>')
         self.addItem(self.no_data_text_item)
         self.no_data_text_item.setPos(0.5, 0.5)
 
@@ -535,7 +535,6 @@ class TimeSeriesPlot(pg.PlotItem):
         self.showGrid(True, True, 0.85)
 
         return
-
 
 
 class TimeSeriesSliderPlot(pg.PlotItem):
@@ -1063,7 +1062,7 @@ class BarAndLinePlot(pg.PlotItem):
 
 class ScatterPlot(TimeSeriesPlot):
 
-    def __init__(self, parent=None, *args):
+    def __init__(self, parent=None, objectName = None, *args):
 
         # USE TIME SERIES PLOT AS BASE CLASS
         TimeSeriesPlot.__init__(self, parent = parent, *args)
@@ -1130,6 +1129,7 @@ class ScatterPlot(TimeSeriesPlot):
         )
         pi.isActive = False
         return pi
+
 
 class LineErrorPlot(pg.PlotItem):
 
@@ -1428,6 +1428,95 @@ class FillExtendTabPlots(pg.GraphicsLayoutWidget):
         self.level = level
         self.units = units
 
+
+class ResultsTabPlots(pg.GraphicsLayoutWidget):
+
+    def __init__(self, parent = None, xLabel='', yLabel=''):
+
+        # INSTANTIATE THE WIDGET AND CREATE A REFERENCE TO THE PARENT
+        pg.GraphicsLayoutWidget.__init__(self, parent)
+        self.parent = parent
+
+        # Get a reference to the datasetTable and the dataTable
+        self.datasetTable = None
+
+        # INSTANTIATE THE PLOTS
+        self.resultPlot = pg.PlotItem()
+        self.resultPlot.getAxis('left').setLabel(yLabel, **{'font-size':'14pt'})
+        self.resultPlot.getAxis('bottom').setLabel(xLabel, **{'font-size':'14pt'})
+        self.resultPlot.addLegend(offset=[0, 0])
+        self.resultPlot.showGrid(True, True, 0.25)
+
+        self.no_data_text_item = pg.TextItem(html = '<div style="color:#4e4e4e"><h1>Oops!</h1><br> Looks like there is no data to display.<br>Select a dataset to view data.</div>')
+        self.resultPlot.addItem(self.no_data_text_item)
+        self.no_data_text_item.setPos(0.5, 0.5)
+
+        # ADD TO LAYOUT
+        self.addItem(self.resultPlot)
+        return
+
+
+    def updateScatterPlot(self, dataframe):
+        """
+
+        @param datasets:
+        @return:
+        """
+        self.datasetTable = dataframe
+        self.resultPlot.clear()
+        obs = self.datasetTable['Observed'].values
+        mod = self.datasetTable['Prediction'].values
+        modCv = self.datasetTable['CV-Prediction'].values
+
+        self.resultPlot.plot(x=obs, y=modCv, pen=None,  symbolBrush=(102,178,255), symbolPen='w', symbol='d', symbolSize=14, name="CV-Prediction")
+        z = np.polyfit(obs, modCv, 1)
+        p = np.poly1d(z)
+        self.resultPlot.plot(x=obs, y=p(obs), pen=pg.mkPen(color=(102, 178, 255), width=1, style=QtCore.Qt.DotLine))
+
+        self.resultPlot.plot(x=obs, y=mod, pen=None, symbolBrush=(0, 128,255), symbolPen='w', symbol='o', symbolSize=14, name="Prediction")
+        z = np.polyfit(obs, mod, 1)
+        p = np.poly1d(z)
+        self.resultPlot.plot(x=obs, y=p(obs), pen=pg.mkPen(color=(0, 128, 255), width=2, style=QtCore.Qt.DashLine))
+
+        return
+
+
+    def updateTimeSeriesPlot(self, dataframe):
+        """
+
+        @param datasets:
+        @return:
+        """
+        self.datasetTable = dataframe
+        self.resultPlot.clear()
+        idx = self.datasetTable['Years'].values
+        obs = self.datasetTable['Observed'].values
+        mod = self.datasetTable['Prediction'].values
+        modCv = self.datasetTable['CV-Prediction'].values
+        self.resultPlot.plot(x=idx, y=obs, pen=pg.mkPen(color=(0, 0, 0), width=3),  name="Observed")
+        self.resultPlot.plot(x=idx, y=mod, pen=pg.mkPen(color=(102, 178, 255), width=1, style=QtCore.Qt.DotLine),  name="CV-Prediction")
+        self.resultPlot.plot(x=idx, y=modCv, pen=pg.mkPen(color=(0, 128, 255), width=2),  name="Prediction")
+
+        return
+
+
+    def updateResidualPlot(self, dataframe):
+        """
+
+        @param datasets:
+        @return:
+        """
+        self.datasetTable = dataframe
+        self.resultPlot.clear()
+        idx = self.datasetTable['Years'].values
+        err = self.datasetTable['PredictionError'].values
+        errCv = self.datasetTable['CV-PredictionError'].values
+        #self.resultPlot.plot(x=idx, y=errCv, pen=pg.mkPen(color=(102,178,255), width=1),  name="CV-Error")
+        #self.resultPlot.plot(x=idx, y=err, pen=pg.mkPen(color=(0,128,255), width=2),  name="Error")
+        self.resultPlot.plot(x=idx, y=errCv, pen=None,  symbolBrush=(102,178,255), symbolPen='w', symbol='d', symbolSize=10, name="CV-Error")
+        self.resultPlot.plot(x=idx, y=err, pen=None, symbolBrush=(0,128,255), symbolPen='w', symbol='o', symbolSize=10, name="Error")
+
+        return
 
 
 #=======================================================================================================================

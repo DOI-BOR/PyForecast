@@ -1260,11 +1260,25 @@ class modelCreationTab(object):
         self.modelTab.resultSelectedList.addItem('----- MODEL SCORES (Regular | Cross-Validated) -----')
         for scorer in self.modelTab.selectedModel.regression.scoringParameters:
             try:
-                regScore =self.modelTab.selectedModel.regression.scores[scorer]
+                regScore = self.modelTab.selectedModel.regression.scores[scorer]
                 cvScore = self.modelTab.selectedModel.regression.cv_scores[scorer]
                 self.modelTab.resultSelectedList.addItem(scorer + ': ' + ("%0.5f" % regScore) + ' | ' + ("%0.5f" % cvScore))
             except:
                 pass
+
+        # Update Plots
+        regressionData = pd.DataFrame(data=([self.modelTab.selectedModel.years,
+                                             self.modelTab.selectedModel.regression.y,
+                                             self.modelTab.selectedModel.regression.y_p,
+                                             self.modelTab.selectedModel.regression.y_p_cv,
+                                             self.modelTab.selectedModel.regression.y_p-self.modelTab.selectedModel.regression.y,
+                                             self.modelTab.selectedModel.regression.y_p_cv-self.modelTab.selectedModel.regression.y]),
+                             index=['Years','Observed', 'Prediction', 'CV-Prediction','PredictionError','CV-PredictionError']).T
+
+        self.modelTab.resultsObservedForecstPlot.updateScatterPlot(regressionData)
+        self.modelTab.resultsInflowYearPlot.updateTimeSeriesPlot(regressionData)
+        self.modelTab.resultsResidualYearPlot.updateResidualPlot(regressionData)
+
 
 
 
