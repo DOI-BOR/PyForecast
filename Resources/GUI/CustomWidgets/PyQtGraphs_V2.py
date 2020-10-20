@@ -1151,16 +1151,16 @@ class ModelTabTargetPlot(pg.GraphicsLayoutWidget):
 
         # CREATE A COLOR CYCLER
         self.colors = [
-            (255, 61, 0),
-            (0, 145, 234),
-            (0, 200, 83),
-            (189, 157, 0),
-            (255, 103, 32),
-            (170, 0, 255),
-            (141, 110, 99),
-            (198, 255, 0),
-            (29, 233, 182),
-            (136, 14, 79)
+            (0, 115, 150),
+            (0, 115, 150),
+            (0, 115, 150),
+            (0, 115, 150),
+            (0, 115, 150),
+            (0, 115, 150),
+            (0, 115, 150),
+            (0, 115, 150),
+            (0, 115, 150),
+            (0, 115, 150)
         ]
 
         self.pen_cycler = [pg.mkPen(pg.mkColor(color), width=1.5) for color in self.colors]
@@ -1169,6 +1169,9 @@ class ModelTabTargetPlot(pg.GraphicsLayoutWidget):
         # ADD PLOT
         self.plot = BarAndLinePlot(self, xAxis='datetime')
         self.addItem(self.plot, 0, 0)
+
+        self.primaryColor = (0, 115, 150)
+        self.secondaryColor = (204, 229, 255)
 
         return
 
@@ -1181,7 +1184,7 @@ class ModelTabTargetPlot(pg.GraphicsLayoutWidget):
         self.plot.setData(x, np.array([[]]), y.reshape(1,-1), units, labels, barWidth, spacing=0)
         #self.plot.setData(x, y.reshape(1,-1), np.array([[]]), units, labels)
         x2 = x.astype('int64')/1000000000
-        medianBar = pg.PlotCurveItem(parent = self.plot, pen = pg.mkPen((28,217,151,140), width=9), antialias=False, connect='finite')
+        medianBar = pg.PlotCurveItem(parent = self.plot, pen = pg.mkPen(self.secondaryColor, width=4, style=QtCore.Qt.DotLine), antialias=False, connect='finite')
         medianBar.setData([x2[0], x2[-1]], 2*[np.nanmedian(y)], name='Median Value: <strong>{0} {1}</strong>'.format(round(np.nanmedian(y),3), units[0]))
         self.plot.addItem(medianBar)
         xAxis = self.plot.getAxis('bottom')
@@ -1445,14 +1448,55 @@ class ResultsTabPlots(pg.GraphicsLayoutWidget):
         self.resultPlot.getAxis('left').setLabel(yLabel, **{'font-size':'14pt'})
         self.resultPlot.getAxis('bottom').setLabel(xLabel, **{'font-size':'14pt'})
         self.resultPlot.addLegend(offset=[0, 0])
+        #viewBox = self.resultPlot.getViewBox()
+        #viewBox.setBackgroundColor((240, 240, 240))
         self.resultPlot.showGrid(True, True, 0.25)
+        self.resultPlot.setMouseEnabled(x=False, y=False)
+        self.updated = False
+        self.xExtents = [0,0]
+        self.yExtents = [0,0]
 
-        self.no_data_text_item = pg.TextItem(html = '<div style="color:#4e4e4e"><h1>Oops!</h1><br> Looks like there is no data to display.<br>Select a dataset to view data.</div>')
-        self.resultPlot.addItem(self.no_data_text_item)
-        self.no_data_text_item.setPos(0.5, 0.5)
+        self.textOverlay = pg.TextItem(html = '<div style="color:#4e4e4e"><h1>Oops!</h1><br> Looks like there is no data to display.<br>Select a dataset to view data.</div>', anchor=(1,1))
+        self.resultPlot.addItem(self.textOverlay)
+        self.textOverlay.setPos(0, 0)
+
+        # ADD INTERACTION
+        #self.scene().sigMouseMoved.connect(self.mouseMoved)
 
         # ADD TO LAYOUT
         self.addItem(self.resultPlot)
+
+        # Define default colors
+        self.primaryColor = (0, 115, 150)
+        self.secondaryColor = (204, 229, 255)
+        self.observedColor = (0, 0, 0)
+
+        return
+
+
+    def mouseMoved(self, event):
+        """
+        Update the legend with the specific
+        data that the mouse is hovering over.
+        """
+
+        # DON'T DO ANYTHING IF THERE ARE NO DATASETS
+        if self.updated == False:
+            return
+
+        # GET THE MOUSE POSITION
+        pos = QtCore.QPoint(event.x(), event.y())
+
+        mousePoint = self.resultPlot.vb.mapSceneToView(pos)
+        isValidX = self.xExtents[0] <= mousePoint.x() <= self.xExtents[1]
+        isValidY = self.yExtents[0] <= mousePoint.y() <= self.yExtents[1]
+
+        # CHECK THAT THE OVERALL WIDGET ACTUALLY CONTAINS THE MOUSE POINT
+        if self.resultPlot.sceneBoundingRect().contains(pos) and isValidX and isValidY:
+            self.textOverlay.setText("X=%0d, Y=%0d" % (mousePoint.x(), mousePoint.y()))
+            self.resultPlot.addItem(self.textOverlay)
+            self.textOverlay.setPos(mousePoint.x(), mousePoint.y())
+
         return
 
 
@@ -1468,15 +1512,19 @@ class ResultsTabPlots(pg.GraphicsLayoutWidget):
         mod = self.datasetTable['Prediction'].values
         modCv = self.datasetTable['CV-Prediction'].values
 
-        self.resultPlot.plot(x=obs, y=modCv, pen=None,  symbolBrush=(102,178,255), symbolPen='w', symbol='d', symbolSize=14, name="CV-Prediction")
+        self.resultPlot.plot(x=obs, y=modCv, pen=None,  symbolBrush=self.secondaryColor, symbolPen='w', symbol='o', symbolSize=7, name="CV-Prediction")
         z = np.polyfit(obs, modCv, 1)
         p = np.poly1d(z)
-        self.resultPlot.plot(x=obs, y=p(obs), pen=pg.mkPen(color=(102, 178, 255), width=1, style=QtCore.Qt.DotLine))
+        self.resultPlot.plot(x=obs, y=p(obs), pen=pg.mkPen(color=self.secondaryColor, width=0.5, style=QtCore.Qt.DotLine))
 
-        self.resultPlot.plot(x=obs, y=mod, pen=None, symbolBrush=(0, 128,255), symbolPen='w', symbol='o', symbolSize=14, name="Prediction")
+        self.resultPlot.plot(x=obs, y=mod, pen=None, symbolBrush=self.primaryColor, symbolPen='w', symbol='h', symbolSize=14, name="Prediction")
         z = np.polyfit(obs, mod, 1)
         p = np.poly1d(z)
-        self.resultPlot.plot(x=obs, y=p(obs), pen=pg.mkPen(color=(0, 128, 255), width=2, style=QtCore.Qt.DashLine))
+        self.resultPlot.plot(x=obs, y=p(obs), pen=pg.mkPen(color=self.primaryColor, width=2, style=QtCore.Qt.DotLine))
+
+        self.updated = True
+        self.xExtents = [min(obs), max(obs)]
+        self.yExtents = [min(min(mod),min(modCv)), max(max(mod),max(modCv))]
 
         return
 
@@ -1493,9 +1541,13 @@ class ResultsTabPlots(pg.GraphicsLayoutWidget):
         obs = self.datasetTable['Observed'].values
         mod = self.datasetTable['Prediction'].values
         modCv = self.datasetTable['CV-Prediction'].values
-        self.resultPlot.plot(x=idx, y=obs, pen=pg.mkPen(color=(0, 0, 0), width=3),  name="Observed")
-        self.resultPlot.plot(x=idx, y=mod, pen=pg.mkPen(color=(102, 178, 255), width=1, style=QtCore.Qt.DotLine),  name="CV-Prediction")
-        self.resultPlot.plot(x=idx, y=modCv, pen=pg.mkPen(color=(0, 128, 255), width=2),  name="Prediction")
+        self.resultPlot.plot(x=idx, y=obs, pen=pg.mkPen(color=self.observedColor, width=3),  name="Observed")
+        self.resultPlot.plot(x=idx, y=mod, pen=pg.mkPen(color=self.secondaryColor, width=1, style=QtCore.Qt.DotLine),  name="CV-Prediction")
+        self.resultPlot.plot(x=idx, y=modCv, pen=pg.mkPen(color=self.primaryColor, width=2),  name="Prediction")
+
+        self.updated = True
+        self.xExtents = [min(idx), max(idx)]
+        self.yExtents = [min(min(obs),min(mod),min(modCv)), max(max(obs),max(mod),max(modCv))]
 
         return
 
@@ -1511,10 +1563,12 @@ class ResultsTabPlots(pg.GraphicsLayoutWidget):
         idx = self.datasetTable['Years'].values
         err = self.datasetTable['PredictionError'].values
         errCv = self.datasetTable['CV-PredictionError'].values
-        #self.resultPlot.plot(x=idx, y=errCv, pen=pg.mkPen(color=(102,178,255), width=1),  name="CV-Error")
-        #self.resultPlot.plot(x=idx, y=err, pen=pg.mkPen(color=(0,128,255), width=2),  name="Error")
-        self.resultPlot.plot(x=idx, y=errCv, pen=None,  symbolBrush=(102,178,255), symbolPen='w', symbol='d', symbolSize=10, name="CV-Error")
-        self.resultPlot.plot(x=idx, y=err, pen=None, symbolBrush=(0,128,255), symbolPen='w', symbol='o', symbolSize=10, name="Error")
+        self.resultPlot.plot(x=idx, y=errCv, pen=None,  symbolBrush=self.secondaryColor, symbolPen='w', symbol='o', symbolSize=6, name="CV-Error")
+        self.resultPlot.plot(x=idx, y=err, pen=None, symbolBrush=self.primaryColor, symbolPen='w', symbol='h', symbolSize=10, name="Error")
+
+        self.updated = True
+        self.xExtents = [min(idx), max(idx)]
+        self.yExtents = [min(min(err),min(errCv)), max(max(err),max(errCv))]
 
         return
 

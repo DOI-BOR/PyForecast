@@ -317,7 +317,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
 
         # ====================================================================================================================
-        ### Create the summary scrollabe area ###
+        ### Create the run summary scrollabe area ###
         # Create the scrollable area
         summarySA = QtWidgets.QScrollArea()
         summarySA.setWidgetResizable(True)
@@ -339,7 +339,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Wrap the scrollable area in a widget
         summarySA.setWidget(summaryWidget)
 
-        self.workflowWidget.addTab(summarySA, "SUMMARY", "resources/GraphicalResources/icons/clipboard-24px.svg", "#FFFFFF", iconSize=(66,66))
+        self.workflowWidget.addTab(summarySA, "RUN", "resources/GraphicalResources/icons/run-24px.svg", "#FFFFFF", iconSize=(66,66))
 
         # ====================================================================================================================
         ### Create the results scrollabe area ###
@@ -351,7 +351,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         self._createResultsTabLayout(resultsSA)
 
         # Layout the results widget
-        self.workflowWidget.addTab(resultsSA, "RESULTS", "resources/GraphicalResources/icons/run-24px.svg", "#FFFFFF", iconSize=(66,66))
+        self.workflowWidget.addTab(resultsSA, "RESULTS", "resources/GraphicalResources/icons/clipboard-24px.svg", "#FFFFFF", iconSize=(66,66))
         
         overallLayout.addWidget(self.workflowWidget)
         #overallLayout.addWidget(self.overallStackWidget)
