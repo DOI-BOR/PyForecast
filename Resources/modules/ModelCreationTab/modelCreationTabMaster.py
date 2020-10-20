@@ -168,6 +168,9 @@ class modelCreationTab(object):
         ### Connect the results page ###
         self.selectionModel = self.modelTab.resultsMetricTable.view.selectionModel()
         self.selectionModel.selectionChanged.connect(self.generateSelectedModel)
+        #self.modelTab.resultsMetricTable.mousePressEvent.connect(self.modelTableClicked)
+        self.modelTab.resultsMetricTable.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.modelTab.resultsMetricTable.customContextMenuRequested.connect(self.modelTableRightClick)
 
 
         return
@@ -1280,7 +1283,26 @@ class modelCreationTab(object):
         self.modelTab.resultsResidualYearPlot.updateResidualPlot(regressionData)
 
 
+    def modelTableRightClick(self, pos):
+        if self.modelTab.resultsMetricTable.view.selectionModel().selection().indexes():
+            for i in self.modelTab.resultsMetricTable.view.selectionModel().selection().indexes():
+                row, column = i.row(), i.column()
+            menu = QtGui.QMenu()
+            saveAction = menu.addAction("Save Model")
+            action = menu.exec_(self.modelTab.resultsMetricTable.view.mapToGlobal(pos))
+            if action ==saveAction:
+                self.saveModelAction(row, column)
 
+
+    def saveModelAction(self, row, column):
+        # Get model info
+        tableIdx = self.modelTab.resultsMetricTable.view.selectionModel().currentIndex()
+        modelIdx = tableIdx.siblingAtColumn(0).data()
+        try:
+            forecastEquationTableEntry = self.modelTab.parent.forecastEquationsTable.iloc[int(modelIdx)]
+            #TODO: add new entry in the self.modelTab.parent.forecastsTable
+        except:
+            return
 
 
     def updateTabDependencies(self, tabIndex):
