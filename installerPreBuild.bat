@@ -23,7 +23,8 @@ echo.
 :: Copy required files 
 echo Copying Python modules...
 ::xcopy /d /s /y jrenv\Lib\site-packages dist\main
-robocopy jrenv\Lib\site-packages dist\main /E /XC /XN /XO /NFL
+::robocopy jrenv\Lib\site-packages dist\main /E /XC /XN /XO /NFL
+robocopy venv\Lib\site-packages dist\main /E /XC /XN /XO /NFL
 echo Copying PyForecast resources...
 xcopy /s /y resources dist\main\resources\
 echo.

@@ -1299,8 +1299,10 @@ class modelCreationTab(object):
         tableIdx = self.modelTab.resultsMetricTable.view.selectionModel().currentIndex()
         modelIdx = tableIdx.siblingAtColumn(0).data()
         try:
+            # Get model definition row and write to self.modelTab.parent.savedForecastEquationsTable
             forecastEquationTableEntry = self.modelTab.parent.forecastEquationsTable.iloc[int(modelIdx)]
-            #TODO: add new entry in the self.modelTab.parent.forecastsTable
+            if modelIdx not in self.modelTab.parent.savedForecastEquationsTable:
+                self.modelTab.parent.savedForecastEquationsTable.loc[modelIdx] = forecastEquationTableEntry.values
         except:
             return
 

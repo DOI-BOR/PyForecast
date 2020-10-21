@@ -789,8 +789,8 @@ class SpreadSheetForecastEquations(QtWidgets.QWidget):
         self.view.setModel(self.proxy)
 
         # Enable sorting
-        #self.view.setSortingEnabled(True)
-        #self.view.sortByColumn(0, QtCore.Qt.AscendingOrder)
+        self.view.setSortingEnabled(True)
+        self.view.sortByColumn(0, QtCore.Qt.AscendingOrder)
 
         # Enable the headers to stretch
         self.view.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
