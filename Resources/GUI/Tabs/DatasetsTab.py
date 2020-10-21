@@ -37,7 +37,7 @@ class DatasetTab(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0,0,0,0)
         splitter = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
-        tabPane = customTabs.EnhancedTabWidget(self, 'above', 'vertical', eastTab=True, tint=True)
+        tabPane = customTabs.EnhancedTabWidget(self, 'above', 'vertical', True, True, True)
         #tabPane = QtWidgets.QTabWidget(objectName = 'datasetTabPane')
         #tabPane.setIconSize(QtCore.QSize(25,25))
         #tabPane.setTabPosition(QtWidgets.QTabWidget.East)
@@ -245,7 +245,7 @@ class DatasetTab(QtWidgets.QWidget):
         self.addDataloaderButton = QtWidgets.QPushButton("Add")
         layout_.addRow("Add new custom dataloader script:", self.addDataloaderButton)
         widg.setLayout(layout_)
-        tabPane.addTabBottom(widg, "CONFIGURE", "resources/graphicalResources/icons/settings-24px.svg", "#FFFFFF", iconSize=(20,20))
+        tabPane.addTab(widg, "CONFIGURE", "resources/graphicalResources/icons/settings-24px.svg", "#FFFFFF", iconSize=(20,20))
 
         self.webMapView.sizePolicy().setHorizontalStretch(4)
         tabPane.sizePolicy().setHorizontalStretch(0)

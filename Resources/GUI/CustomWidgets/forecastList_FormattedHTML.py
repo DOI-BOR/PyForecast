@@ -2,7 +2,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from datetime import datetime
 import sys
 import os
-sys.path.append(r"C:\Users\KFoley\Documents\NextFlow")
+#sys.path.append(r"C:\Users\KFoley\Documents\NextFlow")
 from resources.modules.Miscellaneous.truncateHtml import truncate
 import isodate
 
@@ -79,9 +79,12 @@ class forecastList_HTML(QtWidgets.QTreeWidget):
     def expandTopLevel(self):
         return
 
+    def clearForecasts(self):
+        self.clear()
+
     def setForecastTable(self):
 
-        for i, (idx, forecastEquation) in enumerate(self.parent.forecastEquationsTable.iterrows()):
+        for i, (idx, forecastEquation) in enumerate(self.parent.savedForecastEquationsTable.iterrows()):
 
             # Get the target and predictor datasets
             predictand = self.parent.datasetTable.loc[forecastEquation['EquationPredictand']]
@@ -115,8 +118,8 @@ class forecastList_HTML(QtWidgets.QTreeWidget):
 
             # Parse the equation method into human readable format
             equationMethod = forecastEquation['EquationMethod'].split('/')
-            equationMethod[1] = self.parent.preprocessorsDict[equationMethod[1]]
-            equationMethod[2] = self.parent.regressorsDict[equationMethod[2]]
+            equationMethod[1] = self.parent.preProcessors[equationMethod[1]]
+            equationMethod[2] = self.parent.regressors[equationMethod[2]]
             pipeText1 = "<strong>{0}</strong>".format(equationMethod[2]) 
             pipeText2 = "({0}, {1})".format(equationMethod[1], self.parent.crossValidators[equationMethod[3]]['name'] )
 
@@ -139,7 +142,7 @@ class forecastList_HTML(QtWidgets.QTreeWidget):
             skillText = ', '.join(skillText)
 
             # Check if the period equals the last period
-            if (i != 0) and (forecastEquation['PredictandPeriod'] == self.parent.forecastEquationsTable.iloc[i-1]['PredictandPeriod']):
+            if (i != 0) and (forecastEquation['PredictandPeriod'] == self.parent.savedForecastEquationsTable.iloc[i-1]['PredictandPeriod']):
                 
                 # check if the issue date equals the last issue date
                 if forecastEquation['EquationIssueDate'] == issueDate:
@@ -194,7 +197,11 @@ class forecastList_HTML(QtWidgets.QTreeWidget):
                 issueDate = forecastEquation['EquationIssueDate']
                 periodItem = QtWidgets.QTreeWidgetItem(self, ["Forecast Period {0} - {1}".format(periodStart.strftime("%B %d"), periodEnd.strftime("%B %d"))])
                 periodItem.setFont(0,self.font_)
-                issueDateItem = QtWidgets.QTreeWidgetItem(periodItem, ["Issued on {0}".format(issueDate.strftime("%B %d"))])
+                try:
+                    issueString = "Issued on {0}".format(issueDate.strftime("%B %d"))
+                except:
+                    issueString = "No issued forecasts..."
+                issueDateItem = QtWidgets.QTreeWidgetItem(periodItem, [issueString])
                 forecastItem = QtWidgets.QTreeWidgetItem(issueDateItem, 0)
                 label = QtWidgets.QLabel(FF.format(
                         units= predictand['DatasetUnits'] if 'KAF' not in forecastEquation['PredictandMethod'] else 'KAF',

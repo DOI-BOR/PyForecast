@@ -77,7 +77,7 @@ class modelCreationTab(object):
 
     def connectEventsModelCreationTab(self):
         """
-        Connects all the signal/slot events for the dataset tab
+        Connects all the signal/slot events for the model creation tab
         """
 
         ### Setup page level actions ##
@@ -1311,8 +1311,7 @@ class modelCreationTab(object):
         # todo: doc string
 
         ### Get the current index the widget has been changed to ###
-        # currentIndex = self.workflowWidget.currentIndex()
-        ##print(tabIndex)
+        #print(tabIndex)
         
         if tabIndex == 1:
             if self.modelTab.defaultPredictorButton.isChecked():
@@ -1327,26 +1326,27 @@ class modelCreationTab(object):
             ##print('@@ debug statement')
             # Update predictand options
             self.modelTab.summaryLayoutErrorLabel.setVisible(False)
-            if self.modelRunsTable.shape[0] < 1:
-                self.modelTab.summaryLayoutLabel1.setText('     Period: None')
-                self.modelTab.summaryLayoutLabel1.setStyleSheet("color : red")
-                self.modelTab.summaryLayoutLabel2.setText('     Predictand: None')
-                self.modelTab.summaryLayoutLabel2.setStyleSheet("color : red")
-                self.modelTab.summaryLayoutLabel3.setText('     Predictand Period: None')
-                self.modelTab.summaryLayoutLabel3.setStyleSheet("color : red")
-                self.modelTab.summaryLayoutLabel4.setText('     Predictand Method: None')
-                self.modelTab.summaryLayoutLabel4.setStyleSheet("color : red")
-            else:
-                selDataset = self.datasetTable.loc[self.modelRunsTable.loc[0]['Predictand']]
-                selName = str(selDataset['DatasetName']) + ' (' + str(selDataset['DatasetAgency']) + ') ' + str(selDataset['DatasetParameter'])
-                self.modelTab.summaryLayoutLabel1.setText('     Period: ' + str(self.modelRunsTable.loc[0]['ModelTrainingPeriod']))
-                self.modelTab.summaryLayoutLabel1.setStyleSheet("color : green")
-                self.modelTab.summaryLayoutLabel2.setText('     Predictand: ' + selName)
-                self.modelTab.summaryLayoutLabel2.setStyleSheet("color : green")
-                self.modelTab.summaryLayoutLabel3.setText('     Predictand Period: ' + str(self.modelRunsTable.loc[0]['PredictandPeriod']))
-                self.modelTab.summaryLayoutLabel3.setStyleSheet("color : green")
-                self.modelTab.summaryLayoutLabel4.setText('     Predictand Method: ' + str(self.modelRunsTable.loc[0]['PredictandMethod']))
-                self.modelTab.summaryLayoutLabel4.setStyleSheet("color : green")
+            #TODO: [JR] DELETE THIS BLOCK AND THE REFERENCED OBJECTS IN THE *.PY FILE
+            # if self.modelRunsTable.shape[0] < 1:
+            #     self.modelTab.summaryLayoutLabel1.setText('     Period: None')
+            #     self.modelTab.summaryLayoutLabel1.setStyleSheet("color : red")
+            #     self.modelTab.summaryLayoutLabel2.setText('     Predictand: None')
+            #     self.modelTab.summaryLayoutLabel2.setStyleSheet("color : red")
+            #     self.modelTab.summaryLayoutLabel3.setText('     Predictand Period: None')
+            #     self.modelTab.summaryLayoutLabel3.setStyleSheet("color : red")
+            #     self.modelTab.summaryLayoutLabel4.setText('     Predictand Method: None')
+            #     self.modelTab.summaryLayoutLabel4.setStyleSheet("color : red")
+            # else:
+            #     selDataset = self.datasetTable.loc[self.modelRunsTable.loc[0]['Predictand']]
+            #     selName = str(selDataset['DatasetName']) + ' (' + str(selDataset['DatasetAgency']) + ') ' + str(selDataset['DatasetParameter'])
+            #     self.modelTab.summaryLayoutLabel1.setText('     Period: ' + str(self.modelRunsTable.loc[0]['ModelTrainingPeriod']))
+            #     self.modelTab.summaryLayoutLabel1.setStyleSheet("color : green")
+            #     self.modelTab.summaryLayoutLabel2.setText('     Predictand: ' + selName)
+            #     self.modelTab.summaryLayoutLabel2.setStyleSheet("color : green")
+            #     self.modelTab.summaryLayoutLabel3.setText('     Predictand Period: ' + str(self.modelRunsTable.loc[0]['PredictandPeriod']))
+            #     self.modelTab.summaryLayoutLabel3.setStyleSheet("color : green")
+            #     self.modelTab.summaryLayoutLabel4.setText('     Predictand Method: ' + str(self.modelRunsTable.loc[0]['PredictandMethod']))
+            #     self.modelTab.summaryLayoutLabel4.setStyleSheet("color : green")
 
             # Load predictors table
             self.modelTab.summaryListWidget.model().loadDataIntoModel(self.datasetTable, self.datasetOperationsTable)

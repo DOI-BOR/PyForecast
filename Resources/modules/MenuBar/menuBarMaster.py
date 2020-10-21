@@ -62,7 +62,8 @@ class menuBar(object):
             pickle.dump(self.datasetOperationsTable, writefile, pickle.HIGHEST_PROTOCOL)
             pickle.dump(self.modelRunsTable, writefile, pickle.HIGHEST_PROTOCOL)
             pickle.dump(self.forecastEquationsTable, writefile, pickle.HIGHEST_PROTOCOL)
-            #pickle.dump(self.forecastsTable, writefile, pickle.HIGHEST_PROTOCOL)
+            pickle.dump(self.savedForecastEquationsTable, writefile, pickle.HIGHEST_PROTOCOL)
+            pickle.dump(self.forecastsTable, writefile, pickle.HIGHEST_PROTOCOL)
 
             #with open('resources/temp/user_options.txt', 'r') as readfile:
             #    pickle.dump(readfile.read(), writefile, pickle.HIGHEST_PROTOCOL)
@@ -100,6 +101,10 @@ class menuBar(object):
             except:
                 print('WARNING: No forecastEquationsTable in saved forecast file...')
             try:
+                self.savedForecastEquationsTable = pickle.load(readfile)
+            except:
+                print('WARNING: No savedForecastEquationsTable in saved forecast file...')
+            try:
                 self.forecastsTable = pickle.load(readfile)
             except:
                 print('WARNING: No forecastsTable in saved forecast file...')
@@ -112,3 +117,4 @@ class menuBar(object):
         self.resetDatasetTab()
         self.resetDataTab()
         self.resetModelCreationTab()
+        self.resetForecastsTab()

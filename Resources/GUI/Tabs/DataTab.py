@@ -76,7 +76,7 @@ class DataTab(QtWidgets.QWidget):
         self.spreadsheet = SpreadSheetView(self)
 
         # Create a stackedWidget to store the plots and spreadsheet
-        self.stackWidget = customTabs.EnhancedTabWidget(self, "above", "vertical", eastTab=True, tint=True)
+        self.stackWidget = customTabs.EnhancedTabWidget(self, "above", "vertical", True, True, True)
 
         #self.stackWidget = QtWidgets.QTabWidget(objectName = 'datasetTabPane')
         #self.stackWidget.setTabPosition(QtWidgets.QTabWidget.East)
@@ -92,7 +92,7 @@ class DataTab(QtWidgets.QWidget):
 
         # Configuration Widget
         widg = QtWidgets.QWidget()
-        self.stackWidget.addTabBottom(widg, "CONFIGURE", "resources/graphicalResources/icons/settings-24px.svg", "#FFFFFF", iconSize=(20,20) )
+        self.stackWidget.addTab(widg, "CONFIGURE", "resources/graphicalResources/icons/settings-24px.svg", "#FFFFFF", iconSize=(20,20) )
 
 
         # Build the overall page
