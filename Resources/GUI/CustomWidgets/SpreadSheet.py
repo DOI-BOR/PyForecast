@@ -813,7 +813,7 @@ class SpreadSheetForecastEquations(QtWidgets.QWidget):
 
     def loadDataIntoModel(self, data):
         # todo: doc string
-
+            
         # Load the data
         data = self.processData(data)
         self.equations = data
@@ -861,6 +861,14 @@ class SpreadSheetForecastEquations(QtWidgets.QWidget):
         data.drop('PIPE', axis=1, inplace=True)
         data = data[data.columns[::-1]]
         return data
+    
+    
+    def clearTable(self):
+        nRows = self.view.model().rowCount()
+        while nRows > 0:
+            self.view.model().removeRow(nRows - 1)
+            nRows = nRows - 1
+
 
 
     def selectionChanged(self, QItemSelection, QItemSelection_1):
