@@ -1267,17 +1267,9 @@ class modelCreationTab(object):
                 pass
 
         # Update Plots
-        regressionData = pd.DataFrame(data=([self.modelTab.selectedModel.years,
-                                             self.modelTab.selectedModel.regression.y,
-                                             self.modelTab.selectedModel.regression.y_p,
-                                             self.modelTab.selectedModel.regression.y_p_cv,
-                                             self.modelTab.selectedModel.regression.y_p-self.modelTab.selectedModel.regression.y,
-                                             self.modelTab.selectedModel.regression.y_p_cv-self.modelTab.selectedModel.regression.y]),
-                             index=['Years','Observed', 'Prediction', 'CV-Prediction','PredictionError','CV-PredictionError']).T
-
-        self.modelTab.resultsObservedForecstPlot.updateScatterPlot(regressionData)
-        self.modelTab.resultsInflowYearPlot.updateTimeSeriesPlot(regressionData)
-        self.modelTab.resultsResidualYearPlot.updateResidualPlot(regressionData)
+        self.modelTab.resultsObservedForecstPlot.updateScatterPlot(self.modelTab.selectedModel.regressionData)
+        self.modelTab.resultsInflowYearPlot.updateTimeSeriesPlot(self.modelTab.selectedModel.regressionData)
+        self.modelTab.resultsResidualYearPlot.updateResidualPlot(self.modelTab.selectedModel.regressionData)
 
 
     def modelTableRightClick(self, pos):

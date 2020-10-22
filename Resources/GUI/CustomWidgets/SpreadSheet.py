@@ -956,6 +956,26 @@ class SpreadSheetForecastEquations(QtWidgets.QWidget):
         self.proxy.setFilterKeyColumn(index)
 
 
+class GenericTableModel(QtCore.QAbstractTableModel):
+    def __init__(self, data):
+        super(GenericTableModel, self).__init__()
+        self._data = data
+
+    def data(self, index, role):
+        if role == QtCore.Qt.DisplayRole:
+            # See below for the nested-list data structure.
+            # .row() indexes into the outer list,
+            # .column() indexes into the sub-list
+            return self._data.iloc[index.row(),index.column()]
+
+    def rowCount(self, index):
+        # The length of the outer list.
+        return self._data.shape[0]
+
+    def columnCount(self, index):
+        # The following takes the first sub-list, and returns
+        # the length (only works if all rows are an equal length)
+        return self._data.shape[1]
 
 # FOR TESTING
 #-----------------------------------------------

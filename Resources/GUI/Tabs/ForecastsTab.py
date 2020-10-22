@@ -153,14 +153,14 @@ class ForecastsTab(QtWidgets.QWidget):
         bottomLeftLayout = QtWidgets.QVBoxLayout()
         bottomLeftLayout.setContentsMargins(0, 0, 0, 0)
 
-        selectedModelLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Selected Model Data<strong>')
-        bottomLeftLayout.addWidget(selectedModelLabel)
 
         selectedModelYearLayout = QtWidgets.QHBoxLayout()
-        selectedModelYearLabel = QtWidgets.QLabel('<strong>Model Run Year:<strong>')
-        selectedModelYearLayout.addWidget(selectedModelYearLabel)
-        modelYearSpin = QtWidgets.QSpinBox()
-        selectedModelYearLayout.addWidget(modelYearSpin)
+        selectedModelLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Selected Model Data<strong>')
+        selectedModelYearLayout.addWidget(selectedModelLabel, alignment=QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        selectedModelYearLabel = QtWidgets.QLabel('Run Year: ')
+        selectedModelYearLayout.addWidget(selectedModelYearLabel, alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.modelYearSpin = QtWidgets.QSpinBox()
+        selectedModelYearLayout.addWidget(self.modelYearSpin, alignment=QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         selectedModelYearLayoutWidget = QtWidgets.QWidget()
         selectedModelYearLayoutWidget.setLayout(selectedModelYearLayout)
 

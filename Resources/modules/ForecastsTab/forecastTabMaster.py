@@ -3,6 +3,7 @@ from resources.modules.Miscellaneous import loggingAndErrors
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 import pandas as pd
+from scipy import stats
 import numpy as np
 import datetime
 from itertools import compress
@@ -10,6 +11,7 @@ from dateutil import parser
 from statsmodels.tsa.stattools import ccf
 
 from resources.modules.Miscellaneous.generateModel import Model
+from resources.GUI.CustomWidgets.SpreadSheet import GenericTableModel
 from resources.GUI.CustomWidgets.forecastList_FormattedHTML import forecastList_HTML
 
 class forecastsTab(object):
@@ -117,17 +119,35 @@ class forecastsTab(object):
                 pass
 
         # Update Plots
-        self.forecastsTab.regressionData = pd.DataFrame(data=([self.forecastsTab.selectedModel.years,
-                                             self.forecastsTab.selectedModel.regression.y,
-                                             self.forecastsTab.selectedModel.regression.y_p,
-                                             self.forecastsTab.selectedModel.regression.y_p_cv,
-                                             self.forecastsTab.selectedModel.regression.y_p-self.forecastsTab.selectedModel.regression.y,
-                                             self.forecastsTab.selectedModel.regression.y_p_cv-self.forecastsTab.selectedModel.regression.y]),
-                             index=['Years','Observed', 'Prediction', 'CV-Prediction','PredictionError','CV-PredictionError']).T
-        self.forecastsTab.predictorData = pd.DataFrame(data=self.forecastsTab.selectedModel.regression.x, index=self.forecastsTab.selectedModel.years,
-                     columns=forecastEquationTableEntry.EquationPredictors)
+        #self.forecastsTab.regressionData = self.forecastsTab.selectedModel.regressionData
+        #self.forecastsTab.predictorData = self.forecastsTab.selectedModel.predictorData
+        self.forecastsTab.resultsObservedForecstPlot.updateScatterPlot(self.forecastsTab.selectedModel.regressionData)
 
-        self.forecastsTab.resultsObservedForecstPlot.updateScatterPlot(self.forecastsTab.regressionData)
+        # Update model run year and table
+        self.forecastsTab.modelYearSpin.setMinimum(self.forecastsTab.selectedModel.years[0])
+        self.forecastsTab.modelYearSpin.setMaximum(self.forecastsTab.selectedModel.years[-1])
+        self.forecastsTab.modelYearSpin.setValue(self.forecastsTab.selectedModel.years[-1])
+        self.updateForecastYearData()
+
+
+    def updateForecastYearData(self):
+        lookupYear = self.forecastsTab.modelYearSpin.value()
+        lookupData = self.forecastsTab.selectedModel.predictorData.loc[int(lookupYear)]
+        remainingData = self.forecastsTab.selectedModel.predictorData.drop(index=lookupYear)
+        remainingAvg = remainingData.mean()
+        lookupAvg = 100.0 * lookupData / remainingAvg
+        remainingPctls = remainingData.quantile([0,.1,.25,.5,.75,.9,1])
+        predNames = []
+        predIdxs = []
+        for i in range(len(self.forecastsTab.selectedModel.xIDs)):
+            predNames.append('X' + str(i+1) + ': ' + str(self.forecastsTab.parent.datasetTable.loc[self.forecastsTab.selectedModel.xIDs[i]].DatasetName) + \
+                      ' - ' + str(self.forecastsTab.parent.datasetTable.loc[self.forecastsTab.selectedModel.xIDs[i]].DatasetParameter))
+            predIdxs.append(self.forecastsTab.selectedModel.xIDs[i])
+        preds = pd.Series(predNames, index=predIdxs)
+        lookupDataTable = pd.concat([pd.DataFrame(data=[preds, lookupData,lookupAvg,remainingAvg]),remainingPctls])
+        lookupDataTable.index = ['Predictor', lookupYear, str(lookupYear) + ' Pct-Average','Average','Min', 'P10', 'P25', 'Median', 'P75', 'P90', 'Max']
+        model = GenericTableModel(lookupDataTable)
+        self.forecastsTab.selectedModelDataTable.setModel(model)
 
 
     def savedModelTableRightClick(self, pos):

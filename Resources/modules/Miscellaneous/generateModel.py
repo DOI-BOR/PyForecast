@@ -96,6 +96,12 @@ class Model(object):
         # Run regression
         self.regression.fit(proc_xTraining, proc_yTraining, True)
 
+        # Build Model data arrays
+        self.regressionData = pd.DataFrame(data=([self.years, self.regression.y, self.regression.y_p,
+                                                  self.regression.y_p_cv, self.regression.y_p-self.regression.y,
+                                                  self.regression.y_p_cv-self.regression.y]),
+                                           index=['Years','Observed', 'Prediction', 'CV-Prediction','PredictionError','CV-PredictionError']).T
+        self.predictorData = pd.DataFrame(data=self.regression.x, index=self.years,columns=self.forecastEquation.EquationPredictors)
 
         return
 
