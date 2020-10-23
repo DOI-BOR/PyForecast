@@ -6,9 +6,9 @@ import sys
 sys.path.append(os.getcwd())
 
 
-def computePredictionInterval(parent, observations, preprocessor, regressor, crossValidator, scoringParameters = None):
+def computePredictionInterval(parent, observations, preprocessor, regressor, crossValidator, scoringParameters = None, nRuns=10000):
     """
-    This function bootstraps the original data 10,000 times to 
+    This function bootstraps the original data nRuns (10,000 by default) times to
     develop an estimate of the prediction interval of the 
     new prediction, unbiased by any model or parameter assumptions 
     (e.g. normality).
@@ -52,7 +52,8 @@ def computePredictionInterval(parent, observations, preprocessor, regressor, cro
     prediction = model.predict(xTest[:-1].reshape(1,-1))
 
     # Initialize a list of prediction errors
-    predictionErrors = np.full(2000, np.nan)
+    nCount = int(nRuns/5)
+    predictionErrors = np.full(nCount, np.nan)
 
     # Function to get a prediction
     def generateBootstrap(dummy):

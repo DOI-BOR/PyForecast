@@ -180,8 +180,11 @@ class forecastsTab(object):
         self.forecastsTab.runModelButton.setChecked(False)
         lookupYear = self.forecastsTab.modelYearSpin.value()
         predValues = self.forecastsTab.selectedModelDataTable.dataTable.loc[str(lookupYear) + ' Value']
-        print('-- Generating prediction with values: ---')
-        print(predValues)
+        #print('-- Generating prediction with values: ---')
+        #print(predValues)
+        prediction = self.forecastsTab.selectedModel.predict(year=str(lookupYear))
+        self.forecastsTab.resultsObservedForecstPlot.appendForecast(self.forecastsTab.selectedModel.prediction,
+                                                                    self.forecastsTab.selectedModel.predictionRange.loc[[10,25,75,90]])
 
 
     def selectedForecastTabChanged(self, tabIndex):

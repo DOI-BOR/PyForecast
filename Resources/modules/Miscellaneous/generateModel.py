@@ -1,7 +1,9 @@
 import numpy as np
-import bitarray as ba
 import pandas as pd
 from resources.modules.Miscellaneous.DataProcessor import resampleDataSet
+from resources.modules.ModelCreationTab import PredictionIntervalBootstrap
+from scipy.stats import iqr
+from sklearn.neighbors import KernelDensity
 
 
 class Model(object):
@@ -13,8 +15,8 @@ class Model(object):
         # Get Model identifiers
         method = forecastEquationTableEntry['EquationMethod'].split('/')
         self.preprocessorClass = self.parent.preProcessors[method[1]]['module']
-        regressionClass = self.parent.regressors[method[2]]['module']
-        crossValidator = method[3]
+        self.regressionClass = self.parent.regressors[method[2]]['module']
+        self.crossValidator = method[3]
         self.yID = forecastEquationTableEntry['EquationPredictand']
         self.yPeriod = forecastEquationTableEntry['PredictandPeriod']
         self.yMethod = forecastEquationTableEntry['PredictandMethod']
@@ -28,8 +30,8 @@ class Model(object):
             self.excludeYears = list(map(int, modelTrainingStrings[2].split(',')))
 
         # Build regression object
-        self.regression = regressionClass(parent = self,
-                                          crossValidation = crossValidator,
+        self.regression = self.regressionClass(parent = self,
+                                          crossValidation = self.crossValidator,
                                           scoringParameters = list(self.parent.scorers['info']))
 
         return
@@ -39,8 +41,8 @@ class Model(object):
         """
         Data processing code adapted from Resources/Modules/ModelCreationTab/RegressionWorker.py setData()
 
+        :return:
         """
-
         # Iterate over predictor datasets and append to arrays
         popindex = []
         self.xTraining = []
@@ -106,7 +108,34 @@ class Model(object):
         return
 
 
-    def predict(self, year):
+    def predict(self, xData=None, year=None, ):
+        """
+
+        :param xData:
+        :param year:
+        :return:
+        """
+
+        if xData is not None:
+            self.prediction = self.regression.predict(xData)
+
+        if year is not None:
+            try:
+                xData = self.predictorData.loc[int(year)]
+                self.prediction = self.regression.predict(xData)
+            except:
+                return
+
+        # Move the fore/hind-cast year to the end of the array
+        XY_ = np.hstack((self.xTraining,self.yTraining))
+        yearRowIdx = self.predictorData.index.get_loc(int(year))
+        yearRow = XY_[yearRowIdx]
+        XY_ = np.delete(XY_, yearRowIdx, axis=0)
+        XY_ = np.vstack((XY_,yearRow))
+        
+        print('INFO: Running prediction bootstrap...')
+        predBootstrap = PredictionIntervalBootstrap.computePredictionInterval(self, XY_, self.preprocessorClass, self.regressionClass, self.crossValidator, nRuns=5000)
+        self.predictionRange = pd.DataFrame(np.percentile(predBootstrap, range(0, 101)), index=range(0, 101))
 
         return
 

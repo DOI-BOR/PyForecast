@@ -1529,6 +1529,29 @@ class ResultsTabPlots(pg.GraphicsLayoutWidget):
         return
 
 
+    def appendForecast(self, fcastValue, fcastRange, fcastLabel=None):
+        """
+
+        :param dataframe:
+        :return:
+        """
+        self.resultPlot.clearPlots()
+        self.updateScatterPlot(self.datasetTable)
+        if fcastLabel is None:
+            fcastLabel = 'Forecast (' + ("%.2f" % fcastValue) + ')'
+        else:
+            fcastLabel = str(fcastLabel) + ' Forecast (' + ("%.2f" % fcastValue) + ')'
+        self.resultPlot.plot(x=[fcastValue], y=[fcastValue], pen=None, symbolBrush=(255, 0, 0), symbolPen='w', symbol='h', symbolSize=18, name=fcastLabel)
+
+        rectItem = RectItem(QtCore.QRectF(fcastRange.loc[10], fcastRange.loc[10], fcastRange.loc[90] - fcastRange.loc[10], fcastRange.loc[90] - fcastRange.loc[10]),85)
+        self.resultPlot.addItem(rectItem)
+
+        rectItem = RectItem(QtCore.QRectF(fcastRange.loc[25], fcastRange.loc[25], fcastRange.loc[75] - fcastRange.loc[25], fcastRange.loc[75] - fcastRange.loc[25]),75)
+        self.resultPlot.addItem(rectItem)
+
+        return
+
+
     def updateTimeSeriesPlot(self, dataframe):
         """
 
@@ -1571,6 +1594,32 @@ class ResultsTabPlots(pg.GraphicsLayoutWidget):
         self.yExtents = [min(min(err),min(errCv)), max(max(err),max(errCv))]
 
         return
+
+
+class RectItem(pg.GraphicsObject):
+    def __init__(self, rect, transparency, parent=None):
+        super().__init__(parent)
+        self.alpha = int((100 - transparency) * 255 / 100)
+        self._rect = rect
+        self.picture = QtGui.QPicture()
+        self._generate_picture()
+
+    @property
+    def rect(self):
+        return self._rect
+
+    def _generate_picture(self):
+        painter = QtGui.QPainter(self.picture)
+        painter.setPen(pg.mkPen(0,0,0,0))
+        painter.setBrush(pg.mkBrush(255,0,0,self.alpha))
+        painter.drawRect(self.rect)
+        painter.end()
+
+    def paint(self, painter, option, widget=None):
+        painter.drawPicture(0, 0, self.picture)
+
+    def boundingRect(self):
+        return QtCore.QRectF(self.picture.boundingRect())
 
 
 #=======================================================================================================================
