@@ -1173,6 +1173,8 @@ class modelCreationTab(object):
     def applyPredictandAggregationOption(self):
         # todo: doc string
 
+        self.modelTab.predictandApplyButton.setChecked(False)
+
         predictandData = self.modelTab.targetSelect.currentData()
         predID = predictandData.name
         # Get Min dataset date

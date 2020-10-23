@@ -779,11 +779,11 @@ class SpreadSheetForecastEquations(QtWidgets.QWidget):
         self.view.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
         self.view.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.view.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+        self.view.verticalHeader().setVisible(False)
 
         # Add the filtering into the plot
         self.model = QtGui.QStandardItemModel(10, len(data.columns))
         self.model.setHorizontalHeaderLabels(data.columns)
-
         self.proxy = QtCore.QSortFilterProxyModel(self)
         self.proxy.setSourceModel(self.model)
         self.view.setModel(self.proxy)
@@ -962,20 +962,138 @@ class GenericTableModel(QtCore.QAbstractTableModel):
         self._data = data
 
     def data(self, index, role):
-        if role == QtCore.Qt.DisplayRole:
-            # See below for the nested-list data structure.
-            # .row() indexes into the outer list,
-            # .column() indexes into the sub-list
-            return self._data.iloc[index.row(),index.column()]
+        if index.isValid():
+            if role == QtCore.Qt.DisplayRole:
+                return self._data.iloc[index.row(),index.column()]
+        return None
+
+    def headerData(self, col, orientation, role):
+        if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
+            return self._data.columns[col]
+        return None
 
     def rowCount(self, index):
         # The length of the outer list.
+        a=1
         return self._data.shape[0]
 
     def columnCount(self, index):
         # The following takes the first sub-list, and returns
         # the length (only works if all rows are an equal length)
         return self._data.shape[1]
+
+
+class GenericTableView(QtWidgets.QWidget):
+    """
+    """
+
+    def __init__(self, inputDataTable, parent=None):
+        """
+        """
+
+        # Instantiate the inheirence variables
+        QtWidgets.QWidget.__init__(self, parent)
+        self.parent = parent
+        self.view = QtWidgets.QTableView(self)
+
+        # Set the dataframes into the object
+        self.dataTable = inputDataTable
+
+        # Create the layout
+        self.layout = QtWidgets.QVBoxLayout()
+        self.layout.addWidget(self.view)
+        self.setLayout(self.layout)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+
+        # Set up a highlight color for the spreadsheet
+        self.highlightColor = QtGui.QColor(0, 115, 150)
+        colorCode = '#%02x%02x%02x' % (self.highlightColor.red(), self.highlightColor.green(), self.highlightColor.blue())
+
+        # Set the display properties for the spreadsheet
+        self.setStyleSheet(open(os.path.abspath('resources/GUI/stylesheets/spreadsheet.qss'), 'r').read().format(colorCode))
+        self.view.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
+        self.view.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
+        #self.view.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+        #self.view.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+        self.view.horizontalHeader().setVisible(False)
+
+        # Add the filtering into the plot
+        self.model = QtGui.QStandardItemModel(10, len(self.dataTable.columns))
+        self.model.setHorizontalHeaderLabels(self.dataTable.columns)
+        self.proxy = QtCore.QSortFilterProxyModel(self)
+        self.proxy.setSourceModel(self.model)
+        self.view.setModel(self.proxy)
+
+        # Set the size policies
+        self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding)
+        self.view.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding)
+        #self.view.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+
+        # Enable scrolling
+        self.view.setAutoScroll(True)
+
+
+    def loadDataIntoModel(self, inputDataTable, rowHeaders=None, columnHeaders=None):
+        # todo: doc string
+
+        # Load the data
+        self.dataTable = inputDataTable
+
+        self.datasetIndexedList = []
+        # Iterate through the datasets and chop up the dataset names for a prettier display in the table
+        for id in range(0, len(self.dataTable), 1):
+            # Get the current series
+            series = self.dataTable.iloc[id]
+
+            # Reduce the series to a string list
+            seriesList = [str(x) for x in series.values]
+
+            # Append into the data holder
+            self.datasetIndexedList.append(seriesList)
+
+        # Create an index array to layout the basic structure of the table. This is has the number of datasets as the
+        # columns and the number of parameters, plus one, as the rows
+        if len(self.datasetIndexedList) > 0:
+            self.indexArray = [[self.model.createIndex(i, j) for j in range(0, len(self.datasetIndexedList[0]), 1)]
+                               for i in range(0, len(self.datasetIndexedList), 1)]
+        else:
+            self.indexArray = [[self.model.createIndex(0, j) for j in range(0, len(self.dataTable.columns), 1)]]
+
+        # Add the values into the columns
+        [[self.model.setItem(i, j, QtGui.QStandardItem(self.datasetIndexedList[i][j])) for j in range(0, len(self.datasetIndexedList[0]), 1)]
+         for i in range(0, len(self.datasetIndexedList), 1)]
+        if columnHeaders is not None:
+            self.model.setVerticalHeaderLabels(columnHeaders)
+        if rowHeaders is not None:
+            self.model.setHorizontalHeaderLabels(rowHeaders)
+        self.view.resizeColumnsToContents()
+
+
+    def clearTable(self):
+        nRows = self.view.model().rowCount()
+        while nRows > 0:
+            self.view.model().removeRow(nRows - 1)
+            nRows = nRows - 1
+
+
+    def selectionChanged(self, QItemSelection, QItemSelection_1):
+        # todo: doc string
+        # overrides the existing function
+        a=1
+        pass
+
+
+    def resizeColumns(self):
+        """
+        This function resizes the table columns to be 150 pixels wide
+        """
+        [self.setColumnWidth(i, 150) for i in range(self.model().columnCount())]
+
+        return
+
+
+
+
 
 # FOR TESTING
 #-----------------------------------------------

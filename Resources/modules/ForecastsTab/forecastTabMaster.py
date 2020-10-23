@@ -47,11 +47,15 @@ class forecastsTab(object):
         # Create an update method for when the tab widget gets changed to refresh elements
         self.forecastsTab.workflowWidget.currentChanged.connect(self.selectedForecastTabChanged)
 
-
+        # Connect saved model table actions
         self.savedEquationSelectionModel = self.forecastsTab.savedModelsTable.view.selectionModel()
         self.savedEquationSelectionModel.selectionChanged.connect(self.generateSavedModel)
         self.forecastsTab.savedModelsTable.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.forecastsTab.savedModelsTable.customContextMenuRequested.connect(self.savedModelTableRightClick)
+
+        # Connect model data year and forecasting actions
+        self.forecastsTab.modelYearSpin.valueChanged.connect(self.updateForecastYearData)
+        self.forecastsTab.runModelButton.clicked.connect(self.generateModelPrediction)
 
 
         return
@@ -119,8 +123,6 @@ class forecastsTab(object):
                 pass
 
         # Update Plots
-        #self.forecastsTab.regressionData = self.forecastsTab.selectedModel.regressionData
-        #self.forecastsTab.predictorData = self.forecastsTab.selectedModel.predictorData
         self.forecastsTab.resultsObservedForecstPlot.updateScatterPlot(self.forecastsTab.selectedModel.regressionData)
 
         # Update model run year and table
@@ -132,7 +134,10 @@ class forecastsTab(object):
 
     def updateForecastYearData(self):
         lookupYear = self.forecastsTab.modelYearSpin.value()
-        lookupData = self.forecastsTab.selectedModel.predictorData.loc[int(lookupYear)]
+        try:
+            lookupData = self.forecastsTab.selectedModel.predictorData.loc[int(lookupYear)]
+        except:
+            return
         remainingData = self.forecastsTab.selectedModel.predictorData.drop(index=lookupYear)
         remainingAvg = remainingData.mean()
         lookupAvg = 100.0 * lookupData / remainingAvg
@@ -145,9 +150,8 @@ class forecastsTab(object):
             predIdxs.append(self.forecastsTab.selectedModel.xIDs[i])
         preds = pd.Series(predNames, index=predIdxs)
         lookupDataTable = pd.concat([pd.DataFrame(data=[preds, lookupData,lookupAvg,remainingAvg]),remainingPctls])
-        lookupDataTable.index = ['Predictor', lookupYear, str(lookupYear) + ' Pct-Average','Average','Min', 'P10', 'P25', 'Median', 'P75', 'P90', 'Max']
-        model = GenericTableModel(lookupDataTable)
-        self.forecastsTab.selectedModelDataTable.setModel(model)
+        lookupDataTable.index = ['Predictor', str(lookupYear) + ' Value', str(lookupYear) + ' Pct-Average','Average','Min', 'P10', 'P25', 'Median', 'P75', 'P90', 'Max']
+        self.forecastsTab.selectedModelDataTable.loadDataIntoModel(lookupDataTable, columnHeaders=list(lookupDataTable.index))
 
 
     def savedModelTableRightClick(self, pos):
@@ -171,6 +175,15 @@ class forecastsTab(object):
             self.resetForecastsTab()
         except:
             return
+
+
+    def generateModelPrediction(self):
+        self.forecastsTab.runModelButton.setChecked(False)
+        lookupYear = self.forecastsTab.modelYearSpin.value()
+        predValues = self.forecastsTab.selectedModelDataTable.dataTable.loc[str(lookupYear) + ' Value']
+        print('-- Generating prediction with values: ---')
+        print(predValues)
+
 
     def selectedForecastTabChanged(self, tabIndex):
         # todo: doc string

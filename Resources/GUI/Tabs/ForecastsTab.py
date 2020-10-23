@@ -10,7 +10,7 @@ import os
 from PyQt5 import  QtWidgets, QtCore, QtGui
 from resources.GUI.CustomWidgets.forecastList_FormattedHTML import forecastList_HTML
 from resources.GUI.CustomWidgets.customTabs import EnhancedTabWidget
-from resources.GUI.CustomWidgets.SpreadSheet import SpreadSheetForecastEquations
+from resources.GUI.CustomWidgets.SpreadSheet import SpreadSheetForecastEquations, GenericTableView
 from resources.GUI.CustomWidgets.PyQtGraphs_V2 import ResultsTabPlots
 from resources.modules.ForecastsTab.forecastTabMaster import *
 from resources.GUI.CustomWidgets.richTextButtons import richTextButton, richTextButtonCheckbox, richTextDescriptionButton
@@ -165,9 +165,10 @@ class ForecastsTab(QtWidgets.QWidget):
         selectedModelYearLayoutWidget.setLayout(selectedModelYearLayout)
 
         ## Create the main left observed/forecast plot ##
-        self.selectedModelDataTable = QtWidgets.QTableView()
+        self.selectedModelDataTable = GenericTableView(pd.DataFrame(), parent=self)
 
         self.runModelButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Run Model</strong>')
+        self.runModelButton.setMaximumSize(125, 50)
 
         # Add items to the bottom left layout
         bottomLeftLayout.addWidget(selectedModelYearLayoutWidget)
