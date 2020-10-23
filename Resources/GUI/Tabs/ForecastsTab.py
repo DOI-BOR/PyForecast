@@ -166,6 +166,8 @@ class ForecastsTab(QtWidgets.QWidget):
 
         ## Create the main left observed/forecast plot ##
         self.selectedModelDataTable = GenericTableView(pd.DataFrame(), parent=self)
+        self.selectedModelDataTable.view.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectColumns)
+        self.selectedModelDataTable.view.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
 
         self.runModelButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Run Model</strong>')
         self.runModelButton.setMaximumSize(125, 50)

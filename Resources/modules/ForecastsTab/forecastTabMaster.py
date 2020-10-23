@@ -126,8 +126,7 @@ class forecastsTab(object):
         self.forecastsTab.resultsObservedForecstPlot.updateScatterPlot(self.forecastsTab.selectedModel.regressionData)
 
         # Update model run year and table
-        self.forecastsTab.modelYearSpin.setMinimum(self.forecastsTab.selectedModel.years[0])
-        self.forecastsTab.modelYearSpin.setMaximum(self.forecastsTab.selectedModel.years[-1])
+        self.forecastsTab.modelYearSpin.setRange(self.forecastsTab.selectedModel.years[0], self.forecastsTab.selectedModel.years[-1])
         self.forecastsTab.modelYearSpin.setValue(self.forecastsTab.selectedModel.years[-1])
         self.updateForecastYearData()
 
@@ -151,7 +150,7 @@ class forecastsTab(object):
         preds = pd.Series(predNames, index=predIdxs)
         lookupDataTable = pd.concat([pd.DataFrame(data=[preds, lookupData,lookupAvg,remainingAvg]),remainingPctls])
         lookupDataTable.index = ['Predictor', str(lookupYear) + ' Value', str(lookupYear) + ' Pct-Average','Average','Min', 'P10', 'P25', 'Median', 'P75', 'P90', 'Max']
-        self.forecastsTab.selectedModelDataTable.loadDataIntoModel(lookupDataTable, columnHeaders=list(lookupDataTable.index))
+        self.forecastsTab.selectedModelDataTable.loadDataIntoModel(lookupDataTable, rowHeaders=list(lookupDataTable.columns), columnHeaders=list(lookupDataTable.index))
 
 
     def savedModelTableRightClick(self, pos):

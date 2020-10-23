@@ -974,7 +974,6 @@ class GenericTableModel(QtCore.QAbstractTableModel):
 
     def rowCount(self, index):
         # The length of the outer list.
-        a=1
         return self._data.shape[0]
 
     def columnCount(self, index):
@@ -1015,7 +1014,7 @@ class GenericTableView(QtWidgets.QWidget):
         self.view.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
         #self.view.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         #self.view.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
-        self.view.horizontalHeader().setVisible(False)
+        #self.view.horizontalHeader().setVisible(False)
 
         # Add the filtering into the plot
         self.model = QtGui.QStandardItemModel(10, len(self.dataTable.columns))
@@ -1059,21 +1058,49 @@ class GenericTableView(QtWidgets.QWidget):
         else:
             self.indexArray = [[self.model.createIndex(0, j) for j in range(0, len(self.dataTable.columns), 1)]]
 
-        # Add the values into the columns
-        [[self.model.setItem(i, j, QtGui.QStandardItem(self.datasetIndexedList[i][j])) for j in range(0, len(self.datasetIndexedList[0]), 1)]
-         for i in range(0, len(self.datasetIndexedList), 1)]
+        # Add the headers
         if columnHeaders is not None:
-            self.model.setVerticalHeaderLabels(columnHeaders)
+            self.model.setVerticalHeaderLabels([str(i) for i in columnHeaders])
         if rowHeaders is not None:
-            self.model.setHorizontalHeaderLabels(rowHeaders)
+            self.model.setHorizontalHeaderLabels([str(i) for i in rowHeaders])
+
+        # Add the values
+        for i in range(0, len(self.datasetIndexedList), 1):
+            for j in range(0, len(self.datasetIndexedList[0]), 1):
+                val = self.datasetIndexedList[i][j]
+                if self.isNumber(val):
+                    val = "%.2f" % round(float(val), 2)
+                self.model.setItem(i, j, QtGui.QStandardItem(val))
+
+        # Finalize table
+        self.syncTable()
         self.view.resizeColumnsToContents()
 
 
-    def clearTable(self):
-        nRows = self.view.model().rowCount()
-        while nRows > 0:
-            self.view.model().removeRow(nRows - 1)
-            nRows = nRows - 1
+    def isNumber(self, n):
+        is_number = True
+        try:
+            num = float(n)
+            # check for "nan" floats
+            is_number = num == num
+        except:
+            is_number = False
+        return is_number
+
+
+    def syncTable(self):
+        # Remove extra rows from view
+        viewRows = self.view.model().rowCount()
+        tabRows = self.dataTable.shape[0]
+        while viewRows > tabRows:
+            self.view.model().removeRow(self.view.model().rowCount() - 1)
+            viewRows = viewRows - 1
+        # Remove extra columns from view
+        viewCols = self.view.model().columnCount()
+        tabCols = self.dataTable.shape[1]
+        while viewCols > tabCols:
+            self.view.model().removeColumn(self.view.model().columnCount() - 1)
+            viewCols = viewCols - 1
 
 
     def selectionChanged(self, QItemSelection, QItemSelection_1):
