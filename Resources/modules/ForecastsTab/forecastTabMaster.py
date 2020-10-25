@@ -208,6 +208,7 @@ class forecastsTab(object):
         fcastIdx = [(eqID, fcastYear, fcastExc)]
         if self.forecastsTable.index.isin(fcastIdx).any():
             self.forecastsTable.drop(fcastIdx, inplace=True)
+        self.forecastsTab.selectedModel.predictionRange.loc[-1] = self.forecastsTab.selectedModel.prediction
         self.forecastsTable.loc[eqID,fcastYear,fcastExc]=[self.forecastsTab.selectedModel.predictionRange]
 
 
@@ -225,14 +226,15 @@ class forecastsTab(object):
             boxPlotData = []
             fcastCounter = 10
             for fcast in selectedSavedForecasts:
-                # boxPlotData = [  ## fields are (xVal, P50, P25, P75, P10, P90).
-                #     (10, 11, 10, 13, 5, 15),
-                #     (20, 15, 13, 17, 9, 20),
+                # boxPlotData = [  ## fields are (xVal, P50, P25, P75, P10, P90, fcast).
+                #     (10, 11, 10, 13, 5, 15, 12),
+                #     (20, 15, 13, 17, 9, 20, 14),
                 #     ...
                 # ]
                 boxPlotData.append((int(fcastCounter), fcast.forecastValues.loc[50].values[0],
                                     fcast.forecastValues.loc[25].values[0], fcast.forecastValues.loc[75].values[0],
-                                    fcast.forecastValues.loc[10].values[0], fcast.forecastValues.loc[90].values[0]))
+                                    fcast.forecastValues.loc[10].values[0], fcast.forecastValues.loc[90].values[0],
+                                    fcast.forecastValues.loc[-1].values[0]))
                 fcastCounter = fcastCounter + 10
 
             #self.forecastsTab.savedForecastsCharts.appendSavedForecast(fcast.forecastValues, fcast.modelID)

@@ -1557,7 +1557,7 @@ class ResultsTabPlots(pg.GraphicsLayoutWidget):
         #xVals = list(savedFcastRange.index)
         #yVals = savedFcastRange.values.flatten()
         #self.resultPlot.plot(x=xVals, y=yVals, pen=pg.mkPen(color=self.primaryColor, width=2),  name=('Model:' + str(fcastLabel)))
-        boxItems = BoxPlotItem(savedFcastRange,50)
+        boxItems = BoxPlotItem(savedFcastRange,70)
         self.resultPlot.hideAxis('bottom')
         self.resultPlot.addItem(boxItems)
         return
@@ -1653,21 +1653,25 @@ class BoxPlotItem(pg.GraphicsObject):
     def generatePicture(self):
         self.picture = QtGui.QPicture()
         p = QtGui.QPainter(self.picture)
-        p.setPen(pg.mkPen(color=(0, 115, 150), width=5))
         try:
             w = (self.data[1][0] - self.data[0][0]) / 3.
         except:
             w = 1
-        for (xVal, p50, p25, p75, p10, p90) in self.data:
+        for (xVal, p50, p25, p75, p10, p90, fcast) in self.data:
             # draw box
+            p.setPen(pg.mkPen(color=(0, 115, 150), width=4))
             p.setBrush(pg.mkBrush(0, 115, 150, self.alpha))
             p.drawRect(QtCore.QRectF(xVal - w, p25, w * 2, p50 - p25))
             p.drawRect(QtCore.QRectF(xVal - w, p50, w * 2, p75 - p50))
             # draw whiskers
+            p.setPen(pg.mkPen(color=(0, 115, 150), width=3, style=QtCore.Qt.DotLine))
             p.drawLine(QtCore.QPointF(xVal, p10), QtCore.QPointF(xVal, p25))
             p.drawLine(QtCore.QPointF(xVal, p75), QtCore.QPointF(xVal, p90))
             p.drawLine(QtCore.QPointF(xVal - w/2, p10), QtCore.QPointF(xVal + w/2, p10))
             p.drawLine(QtCore.QPointF(xVal - w/2, p90), QtCore.QPointF(xVal + w/2, p90))
+            # draw discrete forecast
+            p.setPen(pg.mkPen(color=(255, 0, 0), width=8))
+            p.drawLine(QtCore.QPointF(xVal - w/4, fcast), QtCore.QPointF(xVal + w/4, fcast))
 
         p.end()
 

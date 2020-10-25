@@ -133,6 +133,7 @@ class forecastList_HTML(QtWidgets.QTreeWidget):
                 #fcstHigh= int(round(self.parent.forecastsTable.loc[(idx, 2020, 0.1), "ForecastValues"]))
                 #mag = self.parent.forecastsTable.loc[(idx, 2020, 0.5), "ForecastMagnitude"] + ".png"
                 fcstMid = int(round(self.parent.forecastsTable.loc[(idx, 2020, 0.5), "ForecastValues"].loc[50]))
+                fcstMid = int(round(self.parent.forecastsTable.loc[(idx, 2020, 0.5), "ForecastValues"].loc[-1]))
                 fcstLow = int(round(self.parent.forecastsTable.loc[(idx, 2020, 0.5), "ForecastValues"].loc[10]))
                 fcstHigh= int(round(self.parent.forecastsTable.loc[(idx, 2020, 0.5), "ForecastValues"].loc[90]))
                 forecastValues = self.parent.forecastsTable.loc[(idx, 2020, 0.5), "ForecastValues"]
