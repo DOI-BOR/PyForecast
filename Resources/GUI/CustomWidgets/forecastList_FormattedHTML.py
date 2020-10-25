@@ -66,12 +66,14 @@ class forecastList_HTML(QtWidgets.QTreeWidget):
 
         QtWidgets.QTreeWidget.__init__(self)
         self.setColumnCount(1)
-        self.setIndentation(14)
+        self.setIndentation(10)
+        self.setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
         self.parent = parent
         self.font_ = QtGui.QFont()
         self.font_.setBold(True)
         self.setHeaderLabels(["Forecasts"])
         self.setForecastTable()
+        self.textTruncate = 100
         #self.setMaximumWidth(400)
         
         #self.expandAll()
@@ -91,8 +93,8 @@ class forecastList_HTML(QtWidgets.QTreeWidget):
             predictors = [
                 self.parent.datasetTable.loc[predictorID] for predictorID in forecastEquation['EquationPredictors']
             ]
-            targetText1 = truncate('<strong style="vertical-align:middle">{0}</strong><br/>'.format(predictand['DatasetName']), 50, ellipsis='...')
-            targetText2 = truncate('{0} {1}'.format(predictand['DatasetParameter'], forecastEquation['PredictandMethod'].title()), 50, ellipsis='...')
+            targetText1 = truncate('<strong style="vertical-align:middle">{0}</strong><br/>'.format(predictand['DatasetName']), self.textTruncate, ellipsis='...')
+            targetText2 = truncate('{0} {1}'.format(predictand['DatasetParameter'], forecastEquation['PredictandMethod'].title()), self.textTruncate, ellipsis='...')
             targetText =  targetText1 + targetText2
             predictorsText = ", ".join([predictor['DatasetParameter'] for predictor in predictors])
             
@@ -124,11 +126,17 @@ class forecastList_HTML(QtWidgets.QTreeWidget):
             pipeText2 = "({0}, {1})".format(equationMethod[1], self.parent.crossValidators[equationMethod[3]]['name'] )
 
             # Get the forecasts
+            forecastValues = []
             if idx in self.parent.forecastsTable.index.get_level_values(0):
-                fcstMid = int(round(self.parent.forecastsTable.loc[(idx, 2020, 0.5), "ForecastValues"]))
-                fcstLow = int(round(self.parent.forecastsTable.loc[(idx, 2020, 0.9), "ForecastValues"]))
-                fcstHigh= int(round(self.parent.forecastsTable.loc[(idx, 2020, 0.1), "ForecastValues"]))
-                mag = self.parent.forecastsTable.loc[(idx, 2020, 0.5), "ForecastMagnitude"] + ".png"
+                #fcstMid = int(round(self.parent.forecastsTable.loc[(idx, 2020, 0.5), "ForecastValues"]))
+                #fcstLow = int(round(self.parent.forecastsTable.loc[(idx, 2020, 0.9), "ForecastValues"]))
+                #fcstHigh= int(round(self.parent.forecastsTable.loc[(idx, 2020, 0.1), "ForecastValues"]))
+                #mag = self.parent.forecastsTable.loc[(idx, 2020, 0.5), "ForecastMagnitude"] + ".png"
+                fcstMid = int(round(self.parent.forecastsTable.loc[(idx, 2020, 0.5), "ForecastValues"].loc[50]))
+                fcstLow = int(round(self.parent.forecastsTable.loc[(idx, 2020, 0.5), "ForecastValues"].loc[10]))
+                fcstHigh= int(round(self.parent.forecastsTable.loc[(idx, 2020, 0.5), "ForecastValues"].loc[90]))
+                forecastValues = self.parent.forecastsTable.loc[(idx, 2020, 0.5), "ForecastValues"]
+                mag = 'warning-24px.svg'
             else:
                 fcstMid = "[MISSING PREDICTOR DATA] ?"
                 fcstLow = "?"
@@ -143,51 +151,13 @@ class forecastList_HTML(QtWidgets.QTreeWidget):
 
             # Check if the period equals the last period
             if (i != 0) and (forecastEquation['PredictandPeriod'] == self.parent.savedForecastEquationsTable.iloc[i-1]['PredictandPeriod']):
-                
                 # check if the issue date equals the last issue date
                 if forecastEquation['EquationIssueDate'] == issueDate:
                     forecastItem = QtWidgets.QTreeWidgetItem(issueDateItem, 0)
-                    label = QtWidgets.QLabel(FF.format(
-                            units= predictand['DatasetUnits'] if 'KAF' not in forecastEquation['PredictandMethod'] else 'KAF',
-                            magnitude=mag,
-                            fcstMid = fcstMid,
-                            fcstLow = fcstLow,
-                            fcstHigh= fcstHigh,
-                            target = targetText,
-                            pipe = truncate(pipeText1, 50, ellipsis = '...') + '<br>' + truncate(pipeText2, 50, ellipsis = '...'),
-                            skill = truncate(skillText,50, ellipsis = '...'),
-                            predictors = truncate(predictorsText, 50, ellipsis = '...'),
-                            modelIDNum = modelNumText,
-                            modelIDImg = modelImg
-                        ))
-                    forecastItem.setData(0, QtCore.Qt.UserRole, idx)       
-                    label.setTextFormat(QtCore.Qt.RichText)  
-                    self.setItemWidget(forecastItem,0, label)
-
-
                 else:
-
                     issueDate = forecastEquation['EquationIssueDate']
                     issueDateItem = QtWidgets.QTreeWidgetItem(periodItem, ["Issued on {0}".format(issueDate.strftime("%B %d"))])
                     forecastItem = QtWidgets.QTreeWidgetItem(issueDateItem, 0)
-                    label = QtWidgets.QLabel(FF.format(
-                            units= predictand['DatasetUnits'] if 'KAF' not in forecastEquation['PredictandMethod'] else 'KAF',
-                            magnitude=mag,
-                            fcstMid = fcstMid,
-                            fcstLow = fcstLow,
-                            fcstHigh= fcstHigh,
-                            target = targetText,
-                            pipe = truncate(pipeText1, 50, ellipsis = '...') + '<br>' + truncate(pipeText2, 50, ellipsis = '...'),
-                            skill = truncate(skillText,50, ellipsis = '...'),
-                            predictors = truncate(predictorsText, 50, ellipsis = '...'),
-                            modelIDNum = modelNumText,
-                            modelIDImg = modelImg
-                        ))
-                    forecastItem.setData(0, QtCore.Qt.UserRole, idx)       
-                    label.setTextFormat(QtCore.Qt.RichText)  
-                    self.setItemWidget(forecastItem,0, label)
-
-
             # Create a new parent
             else:
                 period = forecastEquation['PredictandPeriod'].split('/')
@@ -203,22 +173,27 @@ class forecastList_HTML(QtWidgets.QTreeWidget):
                     issueString = "No issued forecasts..."
                 issueDateItem = QtWidgets.QTreeWidgetItem(periodItem, [issueString])
                 forecastItem = QtWidgets.QTreeWidgetItem(issueDateItem, 0)
-                label = QtWidgets.QLabel(FF.format(
+
+            # Finalize object
+            label = QtWidgets.QLabel(FF.format(
                         units= predictand['DatasetUnits'] if 'KAF' not in forecastEquation['PredictandMethod'] else 'KAF',
                         magnitude=mag,
                         fcstMid = fcstMid,
                         fcstLow = fcstLow,
                         fcstHigh= fcstHigh,
                         target = targetText,
-                        pipe = truncate(pipeText1, 50, ellipsis = '...') + '<br>' + truncate(pipeText2, 50, ellipsis = '...'),
-                        skill = truncate(skillText,50),
-                        predictors = truncate(predictorsText, 50),
+                        pipe = truncate(pipeText1, self.textTruncate, ellipsis = '...') + '<br>' + truncate(pipeText2, self.textTruncate, ellipsis = '...'),
+                        skill = truncate(skillText,self.textTruncate),
+                        predictors = truncate(predictorsText, self.textTruncate),
                         modelIDNum = modelNumText,
                         modelIDImg = modelImg
                     ))
-                forecastItem.setData(0, QtCore.Qt.UserRole, idx)       
-                label.setTextFormat(QtCore.Qt.RichText)
-                self.setItemWidget(forecastItem,0, label)           
+
+            forecastItem.forecastValues = forecastValues
+            forecastItem.modelID = modelNumText
+            forecastItem.setData(0, QtCore.Qt.UserRole, idx)
+            label.setTextFormat(QtCore.Qt.RichText)
+            self.setItemWidget(forecastItem,0, label)
      
 
 if __name__ == '__main__':

@@ -116,26 +116,28 @@ class Model(object):
         :return:
         """
 
-        if xData is not None:
-            self.prediction = self.regression.predict(xData)
-
-        if year is not None:
-            try:
-                xData = self.predictorData.loc[int(year)]
-                self.prediction = self.regression.predict(xData)
-            except:
-                return
-
         # Move the fore/hind-cast year to the end of the array
         XY_ = np.hstack((self.xTraining,self.yTraining))
         yearRowIdx = self.predictorData.index.get_loc(int(year))
         yearRow = XY_[yearRowIdx]
         XY_ = np.delete(XY_, yearRowIdx, axis=0)
         XY_ = np.vstack((XY_,yearRow))
-        
+
+        # Run a bootstrap to get a prediction range
         print('INFO: Running prediction bootstrap...')
         predBootstrap = PredictionIntervalBootstrap.computePredictionInterval(self, XY_, self.preprocessorClass, self.regressionClass, self.crossValidator, nRuns=5000)
-        self.predictionRange = pd.DataFrame(np.percentile(predBootstrap, range(0, 101)), index=range(0, 101))
+        self.predictionRange = pd.DataFrame(np.percentile(predBootstrap, range(1, 100)), index=range(1, 100))
+
+        # Run a prediction with the input data
+        try:
+            if xData is not None:
+                self.prediction = self.regression.predict(xData)
+            if year is not None:
+                xData = self.predictorData.loc[int(year)]
+                self.prediction = self.regression.predict(xData)
+        except:
+            # Report the 50th percentile prediction bootstrap if prediction fails.
+            self.prediction = self.predictionRange.loc[50]
 
         return
 

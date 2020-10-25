@@ -1541,7 +1541,7 @@ class ResultsTabPlots(pg.GraphicsLayoutWidget):
             fcastLabel = 'Forecast (' + ("%.2f" % fcastValue) + ')'
         else:
             fcastLabel = str(fcastLabel) + ' Forecast (' + ("%.2f" % fcastValue) + ')'
-        self.resultPlot.plot(x=[fcastValue], y=[fcastValue], pen=None, symbolBrush=(255, 0, 0), symbolPen='w', symbol='h', symbolSize=18, name=fcastLabel)
+        self.resultPlot.plot(x=[fcastValue], y=[fcastValue], pen=None, symbolBrush=(255, 0, 0), symbolPen='w', symbol='s', symbolSize=12, name=fcastLabel)
 
         rectItem = RectItem(QtCore.QRectF(fcastRange.loc[10], fcastRange.loc[10], fcastRange.loc[90] - fcastRange.loc[10], fcastRange.loc[90] - fcastRange.loc[10]),85)
         self.resultPlot.addItem(rectItem)
@@ -1549,6 +1549,17 @@ class ResultsTabPlots(pg.GraphicsLayoutWidget):
         rectItem = RectItem(QtCore.QRectF(fcastRange.loc[25], fcastRange.loc[25], fcastRange.loc[75] - fcastRange.loc[25], fcastRange.loc[75] - fcastRange.loc[25]),75)
         self.resultPlot.addItem(rectItem)
 
+        return
+
+
+    def appendSavedForecast(self, savedFcastRange, fcastLabel=None):
+
+        #xVals = list(savedFcastRange.index)
+        #yVals = savedFcastRange.values.flatten()
+        #self.resultPlot.plot(x=xVals, y=yVals, pen=pg.mkPen(color=self.primaryColor, width=2),  name=('Model:' + str(fcastLabel)))
+        boxItems = BoxPlotItem(savedFcastRange,50)
+        self.resultPlot.hideAxis('bottom')
+        self.resultPlot.addItem(boxItems)
         return
 
 
@@ -1595,8 +1606,15 @@ class ResultsTabPlots(pg.GraphicsLayoutWidget):
 
         return
 
+    def clearPlot(self):
+        self.resultPlot.clear()
+        return
+
 
 class RectItem(pg.GraphicsObject):
+    """
+    Class for creating a rectangle item
+    """
     def __init__(self, rect, transparency, parent=None):
         super().__init__(parent)
         self.alpha = int((100 - transparency) * 255 / 100)
@@ -1617,6 +1635,44 @@ class RectItem(pg.GraphicsObject):
 
     def paint(self, painter, option, widget=None):
         painter.drawPicture(0, 0, self.picture)
+
+    def boundingRect(self):
+        return QtCore.QRectF(self.picture.boundingRect())
+
+
+class BoxPlotItem(pg.GraphicsObject):
+    """
+    Class for creating a boxplot item
+    """
+    def __init__(self, data, transparency):
+        pg.GraphicsObject.__init__(self)
+        self.data = data  ## data must have fields: xVal, p50, p25, p75, p10, p90
+        self.alpha = int((100 - transparency) * 255 / 100)
+        self.generatePicture()
+
+    def generatePicture(self):
+        self.picture = QtGui.QPicture()
+        p = QtGui.QPainter(self.picture)
+        p.setPen(pg.mkPen(color=(0, 115, 150), width=5))
+        try:
+            w = (self.data[1][0] - self.data[0][0]) / 3.
+        except:
+            w = 1
+        for (xVal, p50, p25, p75, p10, p90) in self.data:
+            # draw box
+            p.setBrush(pg.mkBrush(0, 115, 150, self.alpha))
+            p.drawRect(QtCore.QRectF(xVal - w, p25, w * 2, p50 - p25))
+            p.drawRect(QtCore.QRectF(xVal - w, p50, w * 2, p75 - p50))
+            # draw whiskers
+            p.drawLine(QtCore.QPointF(xVal, p10), QtCore.QPointF(xVal, p25))
+            p.drawLine(QtCore.QPointF(xVal, p75), QtCore.QPointF(xVal, p90))
+            p.drawLine(QtCore.QPointF(xVal - w/2, p10), QtCore.QPointF(xVal + w/2, p10))
+            p.drawLine(QtCore.QPointF(xVal - w/2, p90), QtCore.QPointF(xVal + w/2, p90))
+
+        p.end()
+
+    def paint(self, p, *args):
+        p.drawPicture(0, 0, self.picture)
 
     def boundingRect(self):
         return QtCore.QRectF(self.picture.boundingRect())

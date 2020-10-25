@@ -32,8 +32,8 @@ class forecastsTab(object):
     def resetForecastsTab(self):
         self.forecastsTab.savedModelsTable.clearTable()
         self.forecastsTab.savedModelsTable.loadDataIntoModel(self.savedForecastEquationsTable)
-        self.forecastsTab.forecastsPane.clearForecasts()
-        self.forecastsTab.forecastsPane.setForecastTable()
+        self.forecastsTab.savedForecastsPane.clearForecasts()
+        self.forecastsTab.savedForecastsPane.setForecastTable()
 
 
         return
@@ -56,9 +56,14 @@ class forecastsTab(object):
         # Connect model data year and forecasting actions
         self.forecastsTab.modelYearSpin.valueChanged.connect(self.updateForecastYearData)
         self.forecastsTab.runModelButton.clicked.connect(self.generateModelPrediction)
+        self.forecastsTab.saveModelButton.clicked.connect(self.saveModelPrediction)
 
+        # Connect forecast comparison actions
+        self.savedForecastSelectionModel = self.forecastsTab.savedForecastsPane.selectionModel()
+        self.savedForecastSelectionModel.selectionChanged.connect(self.generateSavedForecast)
 
         return
+
 
     def generateSavedModel(self, selected, deselected):
         # todo: doc string
@@ -74,6 +79,7 @@ class forecastsTab(object):
         # Rebuild model
         QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
         self.forecastsTab.selectedModel = Model(self.forecastsTab.parent, forecastEquationTableEntry)
+        self.forecastsTab.selectedModel.equationID = modelIdx
         self.forecastsTab.selectedModel.generate()
         QtWidgets.QApplication.restoreOverrideCursor()
 
@@ -129,6 +135,8 @@ class forecastsTab(object):
         self.forecastsTab.modelYearSpin.setRange(self.forecastsTab.selectedModel.years[0], self.forecastsTab.selectedModel.years[-1])
         self.forecastsTab.modelYearSpin.setValue(self.forecastsTab.selectedModel.years[-1])
         self.updateForecastYearData()
+        self.forecastsTab.runModelButton.setEnabled(True)
+        self.forecastsTab.saveModelButton.setEnabled(False)
 
 
     def updateForecastYearData(self):
@@ -179,12 +187,58 @@ class forecastsTab(object):
     def generateModelPrediction(self):
         self.forecastsTab.runModelButton.setChecked(False)
         lookupYear = self.forecastsTab.modelYearSpin.value()
+        self.forecastsTab.selectedModel.predictionYear = lookupYear
         predValues = self.forecastsTab.selectedModelDataTable.dataTable.loc[str(lookupYear) + ' Value']
-        #print('-- Generating prediction with values: ---')
-        #print(predValues)
         prediction = self.forecastsTab.selectedModel.predict(year=str(lookupYear))
         self.forecastsTab.resultsObservedForecstPlot.appendForecast(self.forecastsTab.selectedModel.prediction,
                                                                     self.forecastsTab.selectedModel.predictionRange.loc[[10,25,75,90]])
+        self.forecastsTab.saveModelButton.setEnabled(True)
+
+
+    def saveModelPrediction(self):
+        print('Saving prediction. Prediction=' + ('%0.0f' % self.forecastsTab.selectedModel.prediction) +
+              ' - Bootstrapped Prediction Range: [10%=' + ('%0.0f' % self.forecastsTab.selectedModel.predictionRange.loc[10]) +
+              ', 25%=' + ('%0.0f' % self.forecastsTab.selectedModel.predictionRange.loc[25]) +
+              ', 50%=' + ('%0.0f' % self.forecastsTab.selectedModel.predictionRange.loc[50]) +
+              ', 75%=' + ('%0.0f' % self.forecastsTab.selectedModel.predictionRange.loc[75]) +
+              ', 90%=' + ('%0.0f' % self.forecastsTab.selectedModel.predictionRange.loc[90]) + ']')
+        eqID = int(self.forecastsTab.selectedModel.equationID)
+        fcastYear = self.forecastsTab.selectedModel.predictionYear
+        fcastExc  = 0.5
+        fcastIdx = [(eqID, fcastYear, fcastExc)]
+        if self.forecastsTable.index.isin(fcastIdx).any():
+            self.forecastsTable.drop(fcastIdx, inplace=True)
+        self.forecastsTable.loc[eqID,fcastYear,fcastExc]=[self.forecastsTab.selectedModel.predictionRange]
+
+
+    def generateSavedForecast(self):
+
+        self.forecastsTab.savedForecastsCharts.clearPlot()
+        selectedSavedForecasts = self.forecastsTab.savedForecastsPane.selectedItems()
+        try:
+            # Remove non-forecast card items
+            nonFcastIdxs = []
+            for i in range(len(selectedSavedForecasts)):
+                if not hasattr(selectedSavedForecasts[i],'modelID'):
+                    nonFcastIdxs.append(i)
+            selectedSavedForecasts = [i for j, i in enumerate(selectedSavedForecasts) if j not in nonFcastIdxs]
+            boxPlotData = []
+            fcastCounter = 10
+            for fcast in selectedSavedForecasts:
+                # boxPlotData = [  ## fields are (xVal, P50, P25, P75, P10, P90).
+                #     (10, 11, 10, 13, 5, 15),
+                #     (20, 15, 13, 17, 9, 20),
+                #     ...
+                # ]
+                boxPlotData.append((int(fcastCounter), fcast.forecastValues.loc[50].values[0],
+                                    fcast.forecastValues.loc[25].values[0], fcast.forecastValues.loc[75].values[0],
+                                    fcast.forecastValues.loc[10].values[0], fcast.forecastValues.loc[90].values[0]))
+                fcastCounter = fcastCounter + 10
+
+            #self.forecastsTab.savedForecastsCharts.appendSavedForecast(fcast.forecastValues, fcast.modelID)
+            self.forecastsTab.savedForecastsCharts.appendSavedForecast(boxPlotData)
+        except:
+            return
 
 
     def selectedForecastTabChanged(self, tabIndex):
@@ -193,8 +247,7 @@ class forecastsTab(object):
         #currentIndex = self.workflowWidget.currentIndex()
         #print(tabIndex)
 
-        if tabIndex == 0:
-            a=1
-            #self.forecastsTab.forecastsPane.clearForecasts()
-            #self.forecastsTab.forecastsPane.setForecastTable()
+        if tabIndex == 1:
+            self.forecastsTab.savedForecastsPane.clearForecasts()
+            self.forecastsTab.savedForecastsPane.setForecastTable()
 

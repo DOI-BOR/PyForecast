@@ -69,10 +69,6 @@ class ForecastsTab(QtWidgets.QWidget):
 
         # ===================================================================================================================
 
-        #self.forecastsPane = forecastList_HTML(self.parent)
-        #self.forecastsPane.setFixedWidth(300)
-        #self.forecastsPane.setContentsMargins(0,0,0,0)
-        #overallLayout.addWidget(self.forecastsPane)
         overallLayout.addWidget(self.workflowWidget)
 
 
@@ -170,12 +166,21 @@ class ForecastsTab(QtWidgets.QWidget):
         self.selectedModelDataTable.view.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
 
         self.runModelButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Run Model</strong>')
-        self.runModelButton.setMaximumSize(125, 50)
+        self.runModelButton.setMaximumSize(150, 50)
+        self.runModelButton.setEnabled(False)
+        self.saveModelButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Save Model</strong>')
+        self.saveModelButton.setMaximumSize(150, 50)
+        self.saveModelButton.setEnabled(False)
+        modelRunButtonsLayout = QtWidgets.QHBoxLayout()
+        modelRunButtonsLayout.addWidget(self.runModelButton)
+        modelRunButtonsLayout.addWidget(self.saveModelButton)
+        modelRunButtonsLayoutWidget = QtWidgets.QWidget()
+        modelRunButtonsLayoutWidget.setLayout(modelRunButtonsLayout)
 
         # Add items to the bottom left layout
         bottomLeftLayout.addWidget(selectedModelYearLayoutWidget)
         bottomLeftLayout.addWidget(self.selectedModelDataTable)
-        bottomLeftLayout.addWidget(self.runModelButton)
+        bottomLeftLayout.addWidget(modelRunButtonsLayoutWidget)
 
         # Wrap the horizontal layout as a widget
         bottomLeftLayoutWidget = QtWidgets.QWidget()
@@ -231,11 +236,11 @@ class ForecastsTab(QtWidgets.QWidget):
         # Create a vertical layout
         leftLayout = QtWidgets.QVBoxLayout()
 
-        self.forecastsPane = forecastList_HTML(self.parent)
-        #self.forecastsPane.setFixedWidth(300)
-        self.forecastsPane.setContentsMargins(0,0,0,0)
+        self.savedForecastsPane = forecastList_HTML(self.parent)
+        #self.savedForecastsPane.setFixedWidth(300)
+        self.savedForecastsPane.setContentsMargins(0,0,0,0)
 
-        leftLayout.addWidget(self.forecastsPane)
+        leftLayout.addWidget(self.savedForecastsPane)
         leftLayoutWidget = QtWidgets.QWidget()
         leftLayoutWidget.setLayout(leftLayout)
 
@@ -244,11 +249,11 @@ class ForecastsTab(QtWidgets.QWidget):
         rightLayout = QtWidgets.QVBoxLayout()
 
         ## Create the main left observed/forecast plot ##
-        self.forecastsCharts = ResultsTabPlots(self, xLabel='Percentile', yLabel='Prediction')
-        self.forecastsCharts.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.savedForecastsCharts = ResultsTabPlots(self, xLabel='Percentile', yLabel='Prediction')
+        self.savedForecastsCharts.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         #self.forecastsCharts = QtWidgets.QWidget()
 
-        rightLayout.addWidget(self.forecastsCharts)
+        rightLayout.addWidget(self.savedForecastsCharts)
         rightLayoutWidget = QtWidgets.QWidget()
         rightLayoutWidget.setLayout(rightLayout)
 
