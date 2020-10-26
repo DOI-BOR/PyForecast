@@ -236,10 +236,12 @@ class ForecastsTab(QtWidgets.QWidget):
         # Create a vertical layout
         leftLayout = QtWidgets.QVBoxLayout()
 
+        savedForecastsHeader = QtWidgets.QLabel('<strong style="font-size: 18px">Saved Forecasts<strong>')
         self.savedForecastsPane = forecastList_HTML(self.parent)
-        #self.savedForecastsPane.setFixedWidth(300)
         self.savedForecastsPane.setContentsMargins(0,0,0,0)
+        self.savedForecastsPane.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
+        leftLayout.addWidget(savedForecastsHeader, alignment=QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         leftLayout.addWidget(self.savedForecastsPane)
         leftLayoutWidget = QtWidgets.QWidget()
         leftLayoutWidget.setLayout(leftLayout)
@@ -249,17 +251,22 @@ class ForecastsTab(QtWidgets.QWidget):
         rightLayout = QtWidgets.QVBoxLayout()
 
         ## Create the main left observed/forecast plot ##
-        self.savedForecastsCharts = ResultsTabPlots(self, xLabel='Percentile', yLabel='Prediction')
+        savedForecastsChartsHeader = QtWidgets.QLabel('<strong style="font-size: 18px">Forecast Comparison<strong>')
+        self.savedForecastsCharts = ResultsTabPlots(self, xLabel='Model', yLabel='Prediction')
         self.savedForecastsCharts.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        #self.forecastsCharts = QtWidgets.QWidget()
 
+        rightLayout.addWidget(savedForecastsChartsHeader, alignment=QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         rightLayout.addWidget(self.savedForecastsCharts)
         rightLayoutWidget = QtWidgets.QWidget()
         rightLayoutWidget.setLayout(rightLayout)
 
         ### Add the items into the layout ###
         layoutMain = QtWidgets.QHBoxLayout()
+        leftLayoutWidget.setFixedWidth(600)
         layoutMain.addWidget(leftLayoutWidget)
+        horizontalSpacer = QtWidgets.QSpacerItem(0, 0, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
+        layoutMain.addItem(horizontalSpacer)
+        rightLayoutWidget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         layoutMain.addWidget(rightLayoutWidget)
 
         ## Add into the scrollable area ##

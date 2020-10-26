@@ -8,6 +8,8 @@ import isodate
 
 FF = """<style>
 div {{
+table-layout: fixed;
+width: 100%;
 color: #003E51;
 margin: 0px;
 padding: 0px;
@@ -18,12 +20,13 @@ vertical-align: middle;
 
 </style>
 <div>
-<table border="0" width="100px">
+<table style="table-layout: fixed; width: 100%">
 	<tr >
 	<td style="padding-top:5px">
     <img src="resources/GraphicalResources/icons/{magnitude}" width="18" height="18" style="vertical-align:top; top:4px;"/>
     </td>
-	<td><p style="color: #007396; font-size: 15px; vertical-align: middle"><strong style="color: #007396; vertical-align: middle; font-size: 15px">{fcstMid} {units} </strong>({fcstLow} {units} to {fcstHigh} {units})</p></td>
+	<td><p style="color: #007396; font-size: 15px; vertical-align: middle"><strong style="color: #007396; vertical-align: middle; font-size: 15px">
+	{fcstMid} {units} </strong>({fcstLow} {units} to {fcstHigh} {units})</p></td>
 	</tr>
 	<tr>
 	<td>
@@ -32,30 +35,20 @@ vertical-align: middle;
 	<td><p style="vertical-align: bottom">{skill}</p></td>
 	</tr>
     <tr>
-	<td>
-    <img src="resources/GraphicalResources/icons/build-24px.svg" width="18" height="18"/>
-	</td>
+	<td><img src="resources/GraphicalResources/icons/build-24px.svg" width="18" height="18"/></td>
 	<td><p style="vertical-align: bottom">{pipe}</p></td>
 	</tr>
     <tr>
-	<td>
-    <img style="vertical-align: top" src="resources/GraphicalResources/icons/target-24px.svg" width="18" height="18"/>
-	</td>
+	<td><img style="vertical-align: top" src="resources/GraphicalResources/icons/target-24px.svg" width="18" height="18"/></td>
 	<td style="padding-top:4px"><p style="vertical-align: middle;">{target}</p></td>
 	</tr>
-    <tr >
-	<td >
-    <img src="resources/GraphicalResources/icons/bullseye-24px.svg" width="18" height="18"/>
-	</td>
-	<td ><p style="vertical-align: bottom">{predictors}</p></td>
+    <tr>
+	<td><img src="resources/GraphicalResources/icons/bullseye-24px.svg" width="18" height="18"/></td>
+	<td style="word-wrap: break-word"><p style="vertical-align: bottom">{predictors}</p></td>
 	</tr>
-    <tr>
+    <tr>    
+    <td style="text-align:left; color: #8c9f9d">{modelIDImg} Model ID: {modelIDNum}</td>
     </tr>
-    <tr>
-    <td>{modelIDImg}</td>
-    <td style="text-align:right; color: #8c9f9d">{modelIDNum}</td>
-    </tr>
-
 </table>
 </div>"""
 
@@ -65,17 +58,18 @@ class forecastList_HTML(QtWidgets.QTreeWidget):
     def __init__(self, parent = None):
 
         QtWidgets.QTreeWidget.__init__(self)
+        self.parent = parent
+
         self.setColumnCount(1)
         self.setIndentation(10)
         self.setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
-        self.parent = parent
+        self.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
         self.font_ = QtGui.QFont()
         self.font_.setBold(True)
-        self.setHeaderLabels(["Forecasts"])
+        #self.setHeaderLabels(["Forecasts"])
+        self.setHeaderHidden(True)
         self.setForecastTable()
-        self.textTruncate = 100
-        #self.setMaximumWidth(400)
-        
+        self.textTruncate = 70
         #self.expandAll()
 
     def expandTopLevel(self):
@@ -96,10 +90,14 @@ class forecastList_HTML(QtWidgets.QTreeWidget):
             targetText1 = truncate('<strong style="vertical-align:middle">{0}</strong><br/>'.format(predictand['DatasetName']), self.textTruncate, ellipsis='...')
             targetText2 = truncate('{0} {1}'.format(predictand['DatasetParameter'], forecastEquation['PredictandMethod'].title()), self.textTruncate, ellipsis='...')
             targetText =  targetText1 + targetText2
-            predictorsText = ", ".join([predictor['DatasetParameter'] for predictor in predictors])
-            
+            predictorsText = '<strong>{0} Predictors: </strong><br/>'.format(len(predictors))
+            allPreds = ", ".join([(predictor['DatasetName'] + '-' + predictor['DatasetParameter']) for predictor in predictors])
+            predBreaks = range(self.textTruncate, len(allPreds), self.textTruncate)
+            for ithBreak in reversed(predBreaks):
+                allPreds = allPreds[:ithBreak] + '<br/>' + allPreds[ithBreak:]
+            predictorsText += allPreds
 
-            # Parse the source
+            # Parse the source43.64182962	-117.2425834
             source = forecastEquation['EquationSource']
             if source == 'USACE':
                 modelImg = '<img style="vertical-align:bottom" src="resources/GraphicalResources/icons/USACE.png" width="20", height="20"/>'
@@ -111,19 +109,18 @@ class forecastList_HTML(QtWidgets.QTreeWidget):
                 modelImg = '<img style="vertical-align:bottom" src="resources/GraphicalResources/icons/NOAA.svg" width="20", height="20"/>'
                 modelNumText = '<strong>NOAA</strong>' + str(idx)
             elif source != 'PyForecast':
-                modelImg = ""
+                modelImg = '<img style="vertical-align:bottom" src="resources/GraphicalResources/icons/icon_old.ico" width="20", height="20"/>'
                 modelNumText = '<strong>{0}</strong>'.format(source) + str(idx)
-            
             else:
-                modelImg = ""
+                modelImg = '<img style="vertical-align:bottom" src="resources/GraphicalResources/icons/icon_old.ico" width="20", height="20"/>'
                 modelNumText = idx
 
             # Parse the equation method into human readable format
             equationMethod = forecastEquation['EquationMethod'].split('/')
             equationMethod[1] = self.parent.preProcessors[equationMethod[1]]
             equationMethod[2] = self.parent.regressors[equationMethod[2]]
-            pipeText1 = "<strong>{0}</strong>".format(equationMethod[2]) 
-            pipeText2 = "({0}, {1})".format(equationMethod[1], self.parent.crossValidators[equationMethod[3]]['name'] )
+            pipeText1 = "<strong>{0}</strong>".format(equationMethod[2]['name'])
+            pipeText2 = "({0}, {1})".format(equationMethod[1]['name'], self.parent.crossValidators[equationMethod[3]]['name'])
 
             # Get the forecasts
             forecastValues = []
@@ -147,7 +144,7 @@ class forecastList_HTML(QtWidgets.QTreeWidget):
             # Skill
             skillText = []
             for key, value in forecastEquation['EquationSkill'].items():
-                skillText.append("<strong>{0}</strong>&nbsp;:&nbsp;{1}".format(self.parent.scorers['info'][key]['HTML'], value)) 
+                skillText.append("<strong>Scorer: {0}</strong>&nbsp;:&nbsp;{1}".format(self.parent.scorers['info'][key]['HTML'], value))
             skillText = ', '.join(skillText)
 
             # Check if the period equals the last period
@@ -185,7 +182,7 @@ class forecastList_HTML(QtWidgets.QTreeWidget):
                         target = targetText,
                         pipe = truncate(pipeText1, self.textTruncate, ellipsis = '...') + '<br>' + truncate(pipeText2, self.textTruncate, ellipsis = '...'),
                         skill = truncate(skillText,self.textTruncate),
-                        predictors = truncate(predictorsText, self.textTruncate),
+                        predictors = predictorsText,
                         modelIDNum = modelNumText,
                         modelIDImg = modelImg
                     ))
