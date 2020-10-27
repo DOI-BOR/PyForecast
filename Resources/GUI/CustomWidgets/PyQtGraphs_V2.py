@@ -1287,8 +1287,8 @@ class BarandDoubleAxisLinePlot(pg.PlotItem):
 
         return
 
-    def setData(self, xLine, lineData1, lineData2, units, lineLabels, xBar, barData, barLabels, barUnits, barWidth,
-                spacing=0):
+    def setData(self, xLine, lineData1, lineData2, units, lineLabels, xBar, barData, barLabels, barUnits, barWidth, spacing=0):
+
         """
         Sets the data in the plot. The function can plot up to 100 series on the same plot
         (50 series in the 'y1' argument and 50 series in the 'y2' argument).
@@ -1345,6 +1345,7 @@ class BarandDoubleAxisLinePlot(pg.PlotItem):
         self.barLabels = barLabels
         self.barUnits = barUnits
         self.barWidth = (barWidth - spacing / 2) * 4
+
 
         # RE-INSTANTIATE LIMITS
         self.xMin = np.inf
@@ -1414,6 +1415,7 @@ class BarandDoubleAxisLinePlot(pg.PlotItem):
                                                        antialias=False, connect='finite')
         self.line_items_axis_2[len(lineData2)].units = self.line_items_axis_2[len(lineData2) - 1].units
         self.line_items_axis_2[len(lineData2)].isActive = True
+
 
         # Get the average values to plot the bar in the center
         yAverage = (self.yMax2 + self.yMin2) / 2
@@ -1499,7 +1501,7 @@ class BarandDoubleAxisLinePlot(pg.PlotItem):
 
         return
 
-
+      
 class ScatterPlot(TimeSeriesPlot):
 
     def __init__(self, parent=None, objectName = None, *args):
@@ -1870,6 +1872,85 @@ class FillExtendTabPlots(pg.GraphicsLayoutWidget):
         self.datasetTable = dataframe
         self.level = level
         self.units = units
+
+class WindowTabPlots(pg.GraphicsLayoutWidget):
+
+    def __init__(self, parent = None):
+
+        # INSTANTIATE THE WIDGET AND CREATE A REFERENCE TO THE PARENT
+        pg.GraphicsLayoutWidget.__init__(self, parent)
+        self.parent = parent
+
+        # CREATE A COLOR CYCLER
+        self.colors = [
+            (255, 61, 0),
+            (0, 145, 234),
+            (0, 200, 83),
+            (189, 157, 0),
+            (255, 103, 32),
+            (170, 0, 255),
+            (141, 110, 99),
+            (198, 255, 0),
+            (29, 233, 182),
+            (136, 14, 79)
+        ]
+
+        self.pen_cycler = [pg.mkPen(pg.mkColor(color), width=1.5) for color in self.colors]
+        self.brush_cycler = [pg.mkBrush(pg.mkColor(color)) for color in self.colors]
+
+        # Get a reference to the datasetTable and the dataTable
+        self.datasetTable = None
+        self.level = None
+        self.units = None
+
+        # INSTANTIATE THE PLOTS
+        self.timeSeriesBarPlot = BarandDoubleAxisLinePlot(self)
+
+        # ADD TO LAYOUT
+        self.addItem(self.timeSeriesBarPlot, row=0, col=0, rowspan=7)
+
+        return
+
+    def clearPlots(self):
+        # todo: doc string
+
+        self.timeSeriesBarPlot.clearPlots()
+
+        return
+
+
+    def displayDatasets(self, sourceData, targetData, numberOfDays):
+        """
+
+        @param datasets:
+        @return:
+        """
+
+        # Clear the existing data
+        self.timeSeriesBarPlot.clearPlots()
+
+        # Calculate the correlation based on the lag
+        if numberOfDays > 1:
+            # Start date is before the end date, so lag is positive. Calculate a nonzero correlation to display.
+            # Cross correlation between the source and target datasets
+            correlation = np.atleast_2d(ccf(targetData.values, sourceData.values))
+            xBar = np.atleast_2d(sourceData.index)
+
+            dateRange = sourceData.index
+            targetData = np.atleast_2d(targetData.values)
+            sourceData = np.atleast_2d(sourceData.values)
+
+            self.timeSeriesBarPlot.setData(dateRange, sourceData, targetData, ['cfs', 'cfs'], ['test1', 'test2'],
+                                           xBar, correlation, ['correlation'], ['test'], 10000)
+
+        else:
+            # Start date is after the end date, so the lag is negative. Return a zero correlation
+            # INITIAL TEXT FOR EMPTY PLOT
+            self.no_data_text_item = pg.TextItem(html='<div style="color:#4e4e4e"><h1>Oops!</h1><br> Looks like there is no data to display.<br>Select a dataset to view data.</div>')
+            self.timeSeriesBarPlot.addItem(self.no_data_text_item)
+            self.no_data_text_item.setPos(0.5, 0.5)
+
+        return
 
 
 class WindowTabPlots(pg.GraphicsLayoutWidget):

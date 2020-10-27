@@ -12,7 +12,7 @@ from resources.GUI.CustomWidgets.DatasetList_HTML_Formatted import ListHTMLForma
 from resources.GUI.CustomWidgets.DoubleList import DoubleListMultipleInstance
 from resources.GUI.CustomWidgets.AggregationOptions import AggregationOptions
 from resources.GUI.CustomWidgets.PyQtGraphs import ModelTabPlots, TimeSeriesLineBarPlot, DatasetTimeseriesPlots
-from resources.GUI.CustomWidgets.PyQtGraphs_V2 import ModelTabTargetPlot, FillExtendTabPlots, WindowTabPlots, ResultsTabPlots
+from resources.GUI.CustomWidgets.PyQtGraphs_V2 import ModelTabTargetPlot, FillExtendTabPlots, ResultsTabPlots, WindowTabPlots
 from resources.GUI.CustomWidgets.customTabs import EnhancedTabWidget
 from resources.GUI.CustomWidgets.richTextButtons import richTextButton, richTextButtonCheckbox, richTextDescriptionButton
 from resources.GUI.CustomWidgets.SpreadSheet import SpreadSheetViewOperations, SpreadSheetForecastEquations

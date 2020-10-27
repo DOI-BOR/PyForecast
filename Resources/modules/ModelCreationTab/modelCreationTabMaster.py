@@ -958,7 +958,8 @@ class modelCreationTab(object):
 
         # Calculate and plot the updated data
         self.modelTab.layoutWindowPlot.displayDatasets(sourceName, targetName, sourceData, targetData,
-                                                       sourceUnits, targetUnits, '', )
+                                                       sourceUnits, targetUnits, '')
+
 
 
     def applySummaryClear(self):
