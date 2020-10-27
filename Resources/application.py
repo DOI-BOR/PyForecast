@@ -207,7 +207,8 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
         )
         
         # Initialize the software with default values for the user configuration and any stored values for the application preferences
-        initUserOptions.initOptions()
+        if 'user_options.txt' in os.listdir('resources/temp'):
+            initUserOptions.initOptions()
         self.userOptionsConfig = configparser.ConfigParser()
         self.userOptionsConfig.read('resources/temp/user_options.txt')
 

@@ -1205,7 +1205,9 @@ class modelCreationTab(object):
         self.modelTab.resultSelectedList.addItem('Model Index: ' + str(modelIdx))
         self.modelTab.resultSelectedList.addItem('Model Processes: ' + str(self.modelTab.selectedModel.forecastEquation.EquationMethod))
         self.modelTab.resultSelectedList.addItem('Model Predictor IDs: ' + str(self.modelTab.selectedModel.forecastEquation.EquationPredictors))
-        self.modelTab.resultSelectedList.addItem('Range (years): ' + str(self.modelTab.selectedModel.trainingDates))
+        self.modelTab.resultSelectedList.addItem('Selected Range (years): ' + str(self.modelTab.selectedModel.trainingDates))
+        usedYears = ", ".join([str(years) for years in self.modelTab.selectedModel.years])
+        self.modelTab.resultSelectedList.addItem('Used Range (years): ' + usedYears)
         self.modelTab.resultSelectedList.addItem(' ')
         self.modelTab.resultSelectedList.addItem('----- MODEL VARIABLES -----')
         self.modelTab.resultSelectedList.addItem('Predictand Y: ' + str(self.modelTab.parent.datasetTable.loc[self.modelTab.selectedModel.yID].DatasetName) + ' - ' + str(self.modelTab.parent.datasetTable.loc[self.modelTab.selectedModel.yID].DatasetParameter))
@@ -1235,6 +1237,19 @@ class modelCreationTab(object):
                 equation = equation + ' - ' + ("%0.5f" % (self.modelTab.selectedModel.regression.intercept * -1.0))
             self.modelTab.resultSelectedList.addItem('' + equation)
             self.modelTab.resultSelectedList.addItem(' ')
+
+        isPrinComp = True if self.modelTab.selectedModel.regression.NAME == 'Principal Components Regression' else False
+        if isPrinComp:
+            self.modelTab.resultSelectedList.addItem('----- MODEL COMPONENTS -----')
+            self.modelTab.resultSelectedList.addItem('Principal Components Count: ' + str(self.modelTab.selectedModel.regression.num_pcs))
+            eigVecs = self.modelTab.selectedModel.regression.eigenvectors[self.modelTab.selectedModel.regression.num_pcs]
+            usedVecs = ", ".join([("%0.5f" % eigVec) for eigVec in eigVecs])
+            self.modelTab.resultSelectedList.addItem('Used Eigenvectors: ' + usedVecs)
+            eigVals = self.modelTab.selectedModel.regression.eigenvalues
+            eigVals = ", ".join([("%0.5f" % eigVal) for eigVal in eigVals])
+            self.modelTab.resultSelectedList.addItem('Eigenvalues: ' + eigVals)
+            self.modelTab.resultSelectedList.addItem(' ')
+
         self.modelTab.resultSelectedList.addItem('----- MODEL SCORES (Regular | Cross-Validated) -----')
         for scorer in self.modelTab.selectedModel.regression.scoringParameters:
             try:

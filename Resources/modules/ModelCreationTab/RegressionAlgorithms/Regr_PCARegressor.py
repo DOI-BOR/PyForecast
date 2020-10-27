@@ -218,8 +218,12 @@ class Regressor(object):
         # Convert the x-vector into PC's
         PCs = np.dot(standardX, self.eigenvectors)
 
-        X_ = PCs[:,:self.num_pcs]
-        X_ = np.hstack([X_, np.full((X_.shape[0], 1), 1)])
+        try:
+            X_ = PCs[:,:self.num_pcs]
+            X_ = np.hstack([X_, np.full((X_.shape[0], 1), 1)])
+        except: #catch case when issuing a single model prediction via 1-row of data
+            X_ = PCs[:self.num_pcs]
+            X_ = np.hstack([X_, 1])
 
         # Pare down to the number of PCs and make the predictions
         return (np.dot(X_, self.pc_coef)*self.yStd) + self.yMean

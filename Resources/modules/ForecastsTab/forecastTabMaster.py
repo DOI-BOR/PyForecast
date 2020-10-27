@@ -89,8 +89,11 @@ class forecastsTab(object):
         self.forecastsTab.resultSelectedList.addItem('Model Index: ' + str(modelIdx))
         self.forecastsTab.resultSelectedList.addItem('Model Processes: ' + str(self.forecastsTab.selectedModel.forecastEquation.EquationMethod))
         self.forecastsTab.resultSelectedList.addItem('Model Predictor IDs: ' + str(self.forecastsTab.selectedModel.forecastEquation.EquationPredictors))
-        self.forecastsTab.resultSelectedList.addItem('Range (years): ' + str(self.forecastsTab.selectedModel.trainingDates))
+        self.forecastsTab.resultSelectedList.addItem('Selected Range (years): ' + str(self.forecastsTab.selectedModel.trainingDates))
+        usedYears = ", ".join([str(years) for years in self.forecastsTab.selectedModel.years])
+        self.forecastsTab.resultSelectedList.addItem('Used Range (years): ' + usedYears)
         self.forecastsTab.resultSelectedList.addItem(' ')
+
         self.forecastsTab.resultSelectedList.addItem('----- MODEL VARIABLES -----')
         self.forecastsTab.resultSelectedList.addItem('Predictand Y: ' + str(self.forecastsTab.parent.datasetTable.loc[self.forecastsTab.selectedModel.yID].DatasetName) + ' - ' + str(self.forecastsTab.parent.datasetTable.loc[self.forecastsTab.selectedModel.yID].DatasetParameter))
         equation = 'Y ='
@@ -119,6 +122,19 @@ class forecastsTab(object):
                 equation = equation + ' - ' + ("%0.5f" % (self.forecastsTab.selectedModel.regression.intercept * -1.0))
             self.forecastsTab.resultSelectedList.addItem('' + equation)
             self.forecastsTab.resultSelectedList.addItem(' ')
+
+        isPrinComp = True if self.forecastsTab.selectedModel.regression.NAME == 'Principal Components Regression' else False
+        if isPrinComp:
+            self.forecastsTab.resultSelectedList.addItem('----- MODEL COMPONENTS -----')
+            self.forecastsTab.resultSelectedList.addItem('Principal Components Count: ' + str(self.forecastsTab.selectedModel.regression.num_pcs))
+            eigVecs = self.forecastsTab.selectedModel.regression.eigenvectors[self.forecastsTab.selectedModel.regression.num_pcs]
+            usedVecs = ", ".join([("%0.5f" % eigVec) for eigVec in eigVecs])
+            self.forecastsTab.resultSelectedList.addItem('Used Eigenvectors: ' + usedVecs)
+            eigVals = self.forecastsTab.selectedModel.regression.eigenvalues
+            eigVals = ", ".join([("%0.5f" % eigVal) for eigVal in eigVals])
+            self.forecastsTab.resultSelectedList.addItem('Eigenvalues: ' + eigVals)
+            self.forecastsTab.resultSelectedList.addItem(' ')
+
         self.forecastsTab.resultSelectedList.addItem('----- MODEL SCORES (Regular | Cross-Validated) -----')
         for scorer in self.forecastsTab.selectedModel.regression.scoringParameters:
             try:

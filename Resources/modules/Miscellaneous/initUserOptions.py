@@ -32,7 +32,7 @@ use_twin_axes=False
 [DATASETS TAB]
 current_map_location=
 current_map_layers=
-reset_map=False
+reset_map=True
 
 [FILE OPS]
 file_name={0}\\untitled.fcst
