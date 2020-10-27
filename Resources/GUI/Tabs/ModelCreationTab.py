@@ -12,7 +12,7 @@ from resources.GUI.CustomWidgets.DatasetList_HTML_Formatted import ListHTMLForma
 from resources.GUI.CustomWidgets.DoubleList import DoubleListMultipleInstance
 from resources.GUI.CustomWidgets.AggregationOptions import AggregationOptions
 from resources.GUI.CustomWidgets.PyQtGraphs import ModelTabPlots, TimeSeriesLineBarPlot, DatasetTimeseriesPlots
-from resources.GUI.CustomWidgets.PyQtGraphs_V2 import ModelTabTargetPlot, FillExtendTabPlots, ResultsTabPlots
+from resources.GUI.CustomWidgets.PyQtGraphs_V2 import ModelTabTargetPlot, FillExtendTabPlots, WindowTabPlots, ResultsTabPlots
 from resources.GUI.CustomWidgets.customTabs import EnhancedTabWidget
 from resources.GUI.CustomWidgets.richTextButtons import richTextButton, richTextButtonCheckbox, richTextDescriptionButton
 from resources.GUI.CustomWidgets.SpreadSheet import SpreadSheetViewOperations, SpreadSheetForecastEquations
@@ -895,11 +895,10 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ### Setup the upper plot ###
         # Create a line/bar plot object
-        self.layoutWindowPlot = TimeSeriesLineBarPlot()
-        self.layoutWindowPlot.plot()
+        self.layoutWindowPlot = WindowTabPlots()
 
         # Add into the main layout
-        layoutWindowRightLayout.addWidget(self.layoutWindowPlot.chartView)
+        layoutWindowRightLayout.addWidget(self.layoutWindowPlot)
 
         ### Create the date/lag widgets ###
         # todo: capture these values for each dataset on list change

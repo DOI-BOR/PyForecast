@@ -7,7 +7,6 @@ import numpy as np
 import datetime
 from itertools import compress
 from dateutil import parser
-from statsmodels.tsa.stattools import ccf
 
 from resources.modules.ModelCreationTab import RegressionWorker
 from resources.modules.ModelCreationTab.Operations.Fill import fill_missing
@@ -837,7 +836,7 @@ class modelCreationTab(object):
         """
 
         # Get the current datasest index
-        currentIndex = self.modelTab.windowList.datasetTable.index[self.windowList.currentIndex().row()]
+        currentIndex = self.modelTab.windowList.datasetTable.index[self.modelTab.windowList.currentIndex().row()]
 
         # Get the current dataset and operations settings
         datasetInfo = self.modelTab.windowList.datasetTable.loc[currentIndex]["DatasetName"] + " - " + \
@@ -942,49 +941,25 @@ class modelCreationTab(object):
         ### Update the plot with the dataset and interpolation ###
         # Get the source and fill dataset. This copies it to avoid changing the source data
         currentIndex = self.modelTab.windowList.datasetTable.index[self.modelTab.windowList.currentIndex().row()]
+        sourceName = self.datasetTable.loc[currentIndex[0]]['DatasetName']
         sourceData = self.dataTable.loc[(slice(None), currentIndex), 'Value']
         sourceData = sourceData.droplevel('DatasetInternalID')
         sourceUnits = self.datasetTable.loc[currentIndex[0]]['DatasetUnits']
 
         # Extract the target dataset
-        targetData = self.dataTable.loc[(slice(None), self.targetSelect.currentData().name), 'Value']
+        targetData = self.dataTable.loc[(slice(None), self.modelTab.targetSelect.currentData().name), 'Value']
+        targetName = self.datasetTable.loc[self.modelTab.targetSelect.currentData().name]['DatasetName']
         targetData = targetData.droplevel('DatasetInternalID')
-        targetUnits = self.datasetTable.loc[self.targetSelect.currentData().name]['DatasetUnits']
+        targetUnits = self.datasetTable.loc[self.modelTab.targetSelect.currentData().name]['DatasetUnits']
 
         # Window the data between the start and end dates
         sourceData = sourceData[startDate:endDate]
         targetData = targetData[startDate:endDate]
 
-        # Calculate the correlation based on the lag
-        if startDate <= endDate:
-            # Start date is before the end date, so lag is positive. Calculate a nonzero correlation to display.
-            # Cross correlation between the source and target datasets
-            correlation = ccf(targetData.values, sourceData.values)
+        # Calculate and plot the updated data
+        self.modelTab.layoutWindowPlot.displayDatasets(sourceName, targetName, sourceData, targetData,
+                                                       sourceUnits, targetUnits, '', )
 
-        else:
-            # Start date is after the end date, so the lag is negative. Return a zero correlation
-            correlation = np.zeros((numberOfDays, 2))
-            correlation[:, 0] = np.arange(np.abs(numberOfDays))
-            correlation[:, 1] = np.zeros(np.abs(numberOfDays))
-
-        # Add some random data to test
-        self.modelTab.layoutWindowPlot.clear()
-
-        # Create the x axis labels
-        categories = [str(x) for x in correlation[:, 0]]
-
-        # Set the correlation into the plot as a bar series
-        self.modelTab.layoutWindowPlot.createBarPlotItem('Correlation', correlation)
-
-        # Add some random timeseries data
-        self.modelTab.layoutWindowPlot.createLinePlotItem('Predictor', sourceData, categories)
-        self.modelTab.layoutWindowPlot.createLinePlotItem('Target', targetData, categories)
-
-        # Set the bar categories
-        self.modelTab.layoutWindowPlot.setBarCategories(categories)
-
-        # Plot the data
-        self.modelTab.layoutWindowPlot.plot()
 
     def applySummaryClear(self):
         """
