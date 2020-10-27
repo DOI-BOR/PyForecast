@@ -8,7 +8,6 @@ import datetime
 from itertools import compress
 from dateutil import parser
 
-
 from resources.modules.ModelCreationTab import RegressionWorker
 from resources.modules.ModelCreationTab.Operations.Fill import fill_missing
 from resources.modules.ModelCreationTab.Operations.Extend import extend
@@ -942,12 +941,14 @@ class modelCreationTab(object):
         ### Update the plot with the dataset and interpolation ###
         # Get the source and fill dataset. This copies it to avoid changing the source data
         currentIndex = self.modelTab.windowList.datasetTable.index[self.modelTab.windowList.currentIndex().row()]
+        sourceName = self.datasetTable.loc[currentIndex[0]]['DatasetName']
         sourceData = self.dataTable.loc[(slice(None), currentIndex), 'Value']
         sourceData = sourceData.droplevel('DatasetInternalID')
         sourceUnits = self.datasetTable.loc[currentIndex[0]]['DatasetUnits']
 
         # Extract the target dataset
         targetData = self.dataTable.loc[(slice(None), self.modelTab.targetSelect.currentData().name), 'Value']
+        targetName = self.datasetTable.loc[self.modelTab.targetSelect.currentData().name]['DatasetName']
         targetData = targetData.droplevel('DatasetInternalID')
         targetUnits = self.datasetTable.loc[self.modelTab.targetSelect.currentData().name]['DatasetUnits']
 
@@ -956,7 +957,9 @@ class modelCreationTab(object):
         targetData = targetData[startDate:endDate]
 
         # Calculate and plot the updated data
-        self.modelTab.layoutWindowPlot.displayDatasets(sourceData, targetData, numberOfDays)
+        self.modelTab.layoutWindowPlot.displayDatasets(sourceName, targetName, sourceData, targetData,
+                                                       sourceUnits, targetUnits, '')
+
 
 
     def applySummaryClear(self):
