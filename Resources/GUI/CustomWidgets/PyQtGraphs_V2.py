@@ -17,6 +17,7 @@ import importlib
 from resources.GUI.CustomWidgets import PyQtGraphOverrides
 from resources.modules.Miscellaneous.DataProcessor import resampleDataSet
 from bisect import bisect_left
+from statsmodels.tsa.stattools import ccf
 
 # UNIVERSAL OPTIONS
 pg.setConfigOption('background', 'w')
@@ -1058,7 +1059,450 @@ class BarAndLinePlot(pg.PlotItem):
 
         return
 
+class BarandDoubleAxisLinePlot(pg.PlotItem):
+    """
+    Simple time series line plot. Plots a datetime
+    on the x axis and times series on the y-axes.
 
+    arguments:
+        x:
+    """
+    # todo: update doc string
+
+    def __init__(self, parent = None, *args):
+
+        # INITIALIZE THE CLASS WITH THE PROVIDED ARGUMENTS
+        pg.PlotItem.__init__(self, axisItems={"bottom":DateTimeAxis(orientation = "bottom")}, *args)
+
+        # REFERENCE THE PARENT
+        self.parent = parent
+
+        # CREATE AXES
+        self.showAxis("right")
+        self.viewbox_axis_2 = pg.ViewBox()
+        self.parent.scene().addItem(self.viewbox_axis_2)
+        self.getAxis("right").linkToView(self.viewbox_axis_2)
+        self.viewbox_axis_2.setXLink(self)
+
+        # CREATE THE EMPTY LINE DATA
+        self.x_line = np.array([])
+        self.y1 = np.array([[]])
+        self.y2 = np.array([[]])
+        self.lineUnits = []
+        self.lineLabels = []
+
+        # CREATE THE EMPTY BAR DATA
+        self.barData = np.array([[]])
+        self.barUnits = []
+        self.barLabels = []
+        self.x_bar = np.array([])
+
+        # CREATE LEGEND
+        self.legend = TimeSeriesLegend(size=None, offset=(30,30))
+        self.legend.setParentItem(self.vb)
+
+        # INITIALIZE OPTIONS FOR THE PLOT
+        self.setMenuEnabled(False)
+
+        def updateViews():
+            self.viewbox_axis_2.setGeometry(self.vb.sceneBoundingRect())
+            self.viewbox_axis_2.linkedViewChanged(self.vb, self.viewbox_axis_2.XAxis)
+
+        # CONNECT SIGNALS
+        updateViews()
+        self.vb.sigResized.connect(updateViews)
+
+        # CREATE LINE AND CIRCLE ITEMS
+        self.line_items = [self.createLineItem(i) for i in range(50)]
+        self.line_items_axis_2 = [self.createLineItem(i) for i in range(5,55)]
+        self.circle_items = [self.createCircleItem(i) for i in range(50)]
+        self.circle_items_axis_2 = [self.createCircleItem(i) for i in range(5,55)]
+
+        # INSTANTIATE PLOT LIMITS
+        self.xMin = np.inf
+        self.xMax = -np.inf
+        self.yMin = np.inf
+        self.yMax = -np.inf
+
+        # CREATE THE BAR ITEMS
+        self.bar_items = [self.createBarItem(i) for i in range(5,55)]
+        self.bar_items_highlight = [self.createBarItemHighlight(i) for i in range(5,55)]
+
+        # SET DEFAULT BOUNDS
+        self.setLimits(xMin=0, xMax=1, yMin=0, yMax=1)
+        self.viewbox_axis_2.setLimits(xMin=0, xMax=1, yMin=0, yMax=1)
+        self.setRange(xRange=(0,1), yRange=(0,1))
+        self.viewbox_axis_2.setRange(xRange=(0, 1), yRange=(0, 1))
+
+        # INITIAL TEXT FOR EMPTY PLOT
+        self.no_data_text_item = pg.TextItem(html = '<div style="color:#4e4e4e"><h1>Oops!</h1><br> Looks like there is no data to display.<br>Select a dataset to view data.</div>')
+        self.addItem(self.no_data_text_item)
+        self.no_data_text_item.setPos(0.5, 0.5)
+
+        # ADD INTERACTION
+        self.parent.scene().sigMouseMoved.connect(self.mouseMoved)
+
+
+        return
+
+
+    def mouseMoved(self, event):
+        """
+        Update the legend with the specific
+        data that the mouse is hovering over.
+        """
+
+        # DON'T DO ANYTHING IF THERE ARE NO DATASETS
+        if self.lineLabels == []:
+            return
+
+        # GET THE MOUSE POSITION
+        pos = QtCore.QPoint(event.x(), event.y())
+
+        # CHECK THAT THE OVERALL WIDGET ACTUALLY CONTAINS THE MOUSE POINT
+        if self.sceneBoundingRect().contains(pos):
+
+            # GET THE MOUSE POSITION IN DATA COORDINATES]
+            mouse_point = self.vb.mapSceneToView(pos)
+            x_ = mouse_point.x()
+
+            # ROUND THE X VALUE TO THE NEAREST DATE
+            idx = int(x_ - x_ % 86400)
+
+            # ITERATE OVER THE ACTIVE ITEMS AND DISPLAY THE POINTS IN THE LEGEND
+            legend_count = 0
+            for i, item in enumerate(self.line_items):
+                if item.isActive:
+                    date = takeClosest(item.xData, idx)
+                    idx2 = np.where(item.xData == date)
+                    yval = round(item.yData[idx2[0]][0],2)
+                    self.legend.items[legend_count][1].setText(item.opts['name']+' <strong>'+str(yval) +' '+ item.units+'</strong>')
+                    self.circle_items[i].setData([date], [yval])
+                    legend_count += 1
+
+            for j, item in enumerate(self.line_items_axis_2):
+                if item.isActive:
+                    date = takeClosest(item.xData, idx)
+                    idx2 = np.where(item.xData == date)
+                    yval = round(item.yData[idx2[0]][0],2)
+                    self.legend.items[legend_count][1].setText(item.opts['name']+' <strong>'+str(yval) +' '+ item.units+'</strong>')
+                    self.circle_items_axis_2[j].setData([date], [yval])
+                    legend_count += 1
+
+            for j, item in enumerate(self.bar_items):
+                if item.isActive:
+                    date = takeClosest(item.opts['x'], idx)
+                    idx2 = np.where(item.opts['x'] == date)
+
+                    # todo: Need to update this for the norm
+                    yval = round(self.barData[0][idx2[0]][0],2)
+                    self.legend.items[legend_count][1].setText(item.opts['name']+' <strong>'+str(yval) +' '+ item.units+'</strong>')
+                    self.bar_items_highlight[j].setOpts(width=self.barWidth, x=[date], height=[yval])
+                    legend_count += 1
+
+        return
+
+
+    def createLineItem(self, idx):
+        """
+        Creates and returns a line plot item
+        """
+        pi = pg.PlotCurveItem(
+            parent = self,
+            pen = self.parent.pen_cycler[idx%10],
+            antialias = False,
+            connect = 'finite'
+        )
+        pi.isActive = False
+        return pi
+
+
+    def createCircleItem(self, idx):
+        """
+        Creates and returns a circle plot item
+        """
+        pi = pg.ScatterPlotItem(
+            size = 10,
+            alpha = 1,
+            brush = self.parent.brush_cycler[idx%10]
+        )
+        pi.isActive = False
+        return pi
+
+    def createBarItem(self, idx):
+        """
+        Creates and returns a barplot item
+        """
+        pi = pg.BarGraphItem(
+            width = 0,
+            x = [],
+            height = [],
+            pen = pg.mkPen(pg.mkColor((0,0,0)), width=1),
+            brush = self.parent.brush_cycler[idx%10]
+        )
+        pi.isActive = False
+        return pi
+
+    def createBarItemHighlight(self, idx):
+        """
+        Creates and returns a barplot item
+        """
+        pi = pg.BarGraphItem(
+            width = 0,
+            x = [],
+            height = [],
+            pen = pg.mkPen(pg.mkColor((0,0,0)), width=2),
+            brush = self.parent.brush_cycler[idx%10]
+        )
+        pi.isActive = False
+        return pi
+
+
+    def clearPlots(self):
+        # CLEAR ANY EXISTING DATA
+        for j, item in enumerate(self.bar_items):
+            if item.isActive:
+                item.isActive = False
+                self.viewbox_axis_2.removeItem(item)
+                self.viewbox_axis_2.removeItem(self.bar_items_highlight[j])
+
+        self.clear()
+
+        self.setLimits(xMin=0, xMax=1, yMin=0, yMax=1)
+        self.viewbox_axis_2.setLimits(xMin=0, xMax=1, yMin=0, yMax=1)
+        self.setRange(xRange=(0, 1), yRange=(0, 1))
+        self.viewbox_axis_2.setRange(xRange=(0, 1), yRange=(0, 1))
+
+        self.setTitle("")
+
+        # REMOVE THE OLD LEGEND
+        try:
+            self.legend.scene().removeItem(self.legend)
+        except:
+            pass
+
+        self.no_data_text_item = pg.TextItem(
+            html='<div style="color:#4e4e4e"><h1>Oops!</h1><br> Looks like there is no data to display.<br>Select a dataset from the list to view data.</div>')
+        self.addItem(self.no_data_text_item)
+        self.no_data_text_item.setPos(0.5, 0.5)
+
+        return
+
+    def setData(self, xLine, lineData1, lineData2, units, lineLabels, xBar, barData, barLabels, barUnits, barWidth, spacing=0):
+        """
+        Sets the data in the plot. The function can plot up to 100 series on the same plot
+        (50 series in the 'y1' argument and 50 series in the 'y2' argument).
+
+        Pass an array of datetimes to the 'x' argument, and pass an array of
+        y-value arrays to one or both of the 'y' arguments.
+
+        example:
+            -> Plots 3 series total (2 on y1 axis and 1 on y2 axis).
+            self.setData(
+                x = np.array([datetime(2020,1,1), datetime(2020,3,1)]),
+                y1 = np.array([[4.2, 32.1], [7.3, 4.3]]),
+                y2 = np.array([[5.3, 4.2]]),
+                units = ['cfs','cfs','degF'],
+                labels = ['Hudson River','Cuyahoga River','Sea Surface Temp']
+
+
+        arguments:
+            x:      1-D np.array([...list of datetimes...)
+            y1:     2-D np.array([...[dataset1...], [dataset2...],...)
+            y2:     2-D np.array([...[dataset1...], [dataset2...],...)
+            units:  list e.g. ['cfs','inches','inches']
+            labels: list e.g. ['Hudson River', 'Summit Peak', 'Clover Meadows']
+        """
+        # todo: update doc string
+
+        # CLEAR ANY EXISTING DATA
+        for j, item in enumerate(self.line_items_axis_2):
+            if item.isActive:
+
+                item.isActive = False
+                self.viewbox_axis_2.removeItem(item)
+                self.viewbox_axis_2.removeItem(self.circle_items_axis_2[j])
+
+        self.clear()
+
+        # CHECK IF THERE IS ANY DATA TO PLOT
+        if xLine.size == 0:
+            return
+
+        # CONVERT X TO INTEGER TIMES
+        x = np.array(xLine.astype('int64')/1000000000)
+        x_bar = np.array(xBar.astype('int64')/1000000000)
+
+        # REFERENCES
+        self.x_line = xLine
+        self.y1 = lineData1
+        self.y2 = lineData2
+        self.lineUnits = units
+        self.lineLabels = lineLabels
+
+        self.x_bar = xBar
+        self.barData = barData
+        self.barLabels = barLabels
+        self.barUnits = barUnits
+        self.barWidth = barWidth - spacing / 2
+
+        # RE-INSTANTIATE LIMITS
+        self.xMin = np.inf
+        self.xMax = -np.inf
+        self.yMin = np.inf
+        self.yMin2 = np.inf
+        self.yMax = -np.inf
+        self.yMax2 = -np.inf
+
+        # REMOVE THE OLD LEGEND
+        if self.legend.scene() is not None:
+            self.legend.scene().removeItem(self.legend)
+
+        # CREATE A NEW LEGEND
+        self.legend = TimeSeriesLegend(size=None, offset=(30, 30))
+        self.legend.setParentItem(self.vb)
+
+        # SET UP EACH AXIS
+        self.y1_Num_Series = len(lineData1)
+        self.y2_Num_Series = len(lineData2)
+        self.y1_Axis_Units = condenseUnits(units[:self.y1_Num_Series])
+        self.y2_Axis_Units = condenseUnits(units[self.y1_Num_Series:])
+
+        # COMPUTE BAR WIDTH
+        if self.y2_Num_Series > 1:
+            self.barWidth = self.barWidth/self.y2_Num_Series
+            self.xArray = [self.x_line for i in range(self.y2_Num_Series)]
+            for i in range(self.y2_Num_Series):
+                self.xArray[i] = self.x_line - (i - int(self.y2_Num_Series / 2)) * self.barWidth
+        else:
+            self.xArray = [self.x_line]
+
+        # ITERATE OVER 'Y1' MEMBERS AND ACTIVATE THE ITEMS
+        for i, dataset in enumerate(lineData1):
+
+            # CHECK IF THERE IS DATA TO PLOT
+            if dataset.size == 0:
+                continue
+
+            # SET NEW LIMITS BASED ON DATASET EXTENT
+            self.xMax = np.nanmax([self.xMax, np.nanmax(x)])
+            self.xMin = np.nanmin([self.xMin, np.nanmin(x)])
+            self.yMax = np.nanmax([self.yMax, np.nanmax(dataset)])
+            self.yMin = np.nanmin([self.yMin, np.nanmin(dataset)])
+
+            # ADD TO PLOT
+            self.line_items[i].setData(x, dataset, name = lineLabels[i], connect = 'finite')
+            self.line_items[i].opts['name'] = lineLabels[i]
+            self.line_items[i].units = sameUnits(units[i], units[i])[1].lower()
+            self.line_items[i].isActive = True
+
+        # ITERATE OVER 'Y2' MEMBERS AND ACTIVATE THE ITEMS
+        for j, dataset in enumerate(lineData2):
+
+            k = i + j + 1
+
+            # CHECK IF THERE IS DATA TO PLOT
+            if dataset.size == 0:
+                continue
+
+            # SET NEW LIMITS BASED ON DATASET EXTENT
+            self.xMax = np.nanmax([self.xMax, np.nanmax(x)])
+            self.xMin = np.nanmin([self.xMin, np.nanmin(x)])
+            self.yMax2 = np.nanmax([self.yMax2, np.nanmax(dataset)])
+            self.yMin2 = np.nanmin([self.yMin2, np.nanmin(dataset)])
+
+            # ADD TO PLOT
+            self.line_items_axis_2[j].setData(x, dataset, name=lineLabels[k], connect='finite')
+            self.line_items_axis_2[j].opts['name'] = lineLabels[k]
+            self.line_items_axis_2[j].units = sameUnits(units[k], units[k])[1].lower()
+            self.line_items_axis_2[j].isActive = True
+
+        # Get the average values to plot the bar in the center
+        yAverage = (self.yMax2 + self.yMin2) / 2
+        yHalfRange = self.yMax2 - yAverage
+
+
+        for j, dataset in enumerate(barData):
+            # CHECK IF THERE IS DATA TO PLOT
+            if dataset.size == 0:
+                continue
+
+            # SET NEW LIMITS BASED ON DATASET EXTENT
+            # self.xMax = np.nanmax([self.xMax, np.nanmax(x)])
+            # self.xMin = np.nanmin([self.xMin, np.nanmin(x)])
+            # self.yMax2 = np.nanmax([self.yMax2, np.nanmax(dataset)])
+            # self.yMin2 = np.nanmin([self.yMin2, np.nanmin(dataset)])
+
+            heights = dataset * yHalfRange
+
+            # ADD TO PLOT
+            self.bar_items[j].setOpts(x=x_bar[j], y=yAverage, height=heights, name=self.barLabels[j], width=self.barWidth)
+            self.bar_items[j].opts['name'] = self.barLabels[j]
+            self.bar_items[j].units = self.barUnits[j]
+            self.bar_items[j].isActive = True
+
+        # ADD THE ACTIVATED ITEMS TO THE PLOT
+        for i, item in enumerate(self.line_items):
+            if item.isActive:
+                self.addItem(item)
+                self.addItem(self.circle_items[i])
+
+        for j, item in enumerate(self.line_items_axis_2):
+            if item.isActive:
+                self.viewbox_axis_2.addItem(item)
+                self.viewbox_axis_2.addItem(self.circle_items_axis_2[j])
+                self.legend.addItem(item, item.name())
+
+        # todo: may need to norm bars
+        for j, item in enumerate(self.bar_items):
+            if item.isActive:
+                self.viewbox_axis_2.addItem(item)
+                self.viewbox_axis_2.addItem(self.bar_items_highlight[j])
+                self.legend.addItem(item, item.name())
+
+        # SET THE AXIS LABELS
+        self.getAxis('left').setLabel(' '.join(self.y1_Axis_Units))
+        self.getAxis('right').setLabel(' '.join(self.y2_Axis_Units))
+
+        # DO SOME FINAL WORK WITH THE RANGES AND EXTENTS
+        if not any([np.isinf(self.xMax), np.isinf(self.xMin), np.isinf(self.yMax), np.isinf(self.yMin)]):
+            self.setLimits(xMin=self.xMin, xMax=self.xMax, yMin=self.yMin, yMax=self.yMax)
+            self.setRange(xRange=(self.xMin, self.xMax), yRange=(self.yMin, self.yMax))
+
+        else:
+            print(self.xMax, self.xMin, self.yMax, self.yMin)
+
+        if not any([np.isinf(self.xMax), np.isinf(self.xMin), np.isinf(self.yMax2), np.isinf(self.yMin2)]):
+            self.viewbox_axis_2.setLimits(xMin=self.xMin, xMax=self.xMax, yMin=self.yMin2, yMax=self.yMax2)
+            self.viewbox_axis_2.setRange(
+
+                xRange=(self.xMin, self.xMax),
+                yRange=(self.yMin2, self.yMax2)
+            )
+        else:
+            self.viewbox_axis_2.setLimits(
+
+                xMin=self.xMin,
+                xMax=self.xMax,
+                yMin=0,
+                yMax=1,
+
+            )
+            self.viewbox_axis_2.setRange(
+
+                xRange=(self.xMin, self.xMax),
+                yRange=(0, 1)
+            )
+
+        # SHOW GRID AND HIDE EMPTY RIGHT AXIS
+        if len(self.y2_Axis_Units) == 0:
+            self.hideAxis('right')
+        else:
+            self.showAxis('right')
+
+        self.showGrid(True, True, 0.85)
+
+        return
 
 class ScatterPlot(TimeSeriesPlot):
 
@@ -1430,6 +1874,85 @@ class FillExtendTabPlots(pg.GraphicsLayoutWidget):
         self.datasetTable = dataframe
         self.level = level
         self.units = units
+
+class WindowTabPlots(pg.GraphicsLayoutWidget):
+
+    def __init__(self, parent = None):
+
+        # INSTANTIATE THE WIDGET AND CREATE A REFERENCE TO THE PARENT
+        pg.GraphicsLayoutWidget.__init__(self, parent)
+        self.parent = parent
+
+        # CREATE A COLOR CYCLER
+        self.colors = [
+            (255, 61, 0),
+            (0, 145, 234),
+            (0, 200, 83),
+            (189, 157, 0),
+            (255, 103, 32),
+            (170, 0, 255),
+            (141, 110, 99),
+            (198, 255, 0),
+            (29, 233, 182),
+            (136, 14, 79)
+        ]
+
+        self.pen_cycler = [pg.mkPen(pg.mkColor(color), width=1.5) for color in self.colors]
+        self.brush_cycler = [pg.mkBrush(pg.mkColor(color)) for color in self.colors]
+
+        # Get a reference to the datasetTable and the dataTable
+        self.datasetTable = None
+        self.level = None
+        self.units = None
+
+        # INSTANTIATE THE PLOTS
+        self.timeSeriesBarPlot = BarandDoubleAxisLinePlot(self)
+
+        # ADD TO LAYOUT
+        self.addItem(self.timeSeriesBarPlot, row=0, col=0, rowspan=7)
+
+        return
+
+    def clearPlots(self):
+        # todo: doc string
+
+        self.timeSeriesBarPlot.clearPlots()
+
+        return
+
+
+    def displayDatasets(self, sourceData, targetData, numberOfDays):
+        """
+
+        @param datasets:
+        @return:
+        """
+
+        # Clear the existing data
+        self.timeSeriesBarPlot.clearPlots()
+
+        # Calculate the correlation based on the lag
+        if numberOfDays > 1:
+            # Start date is before the end date, so lag is positive. Calculate a nonzero correlation to display.
+            # Cross correlation between the source and target datasets
+            correlation = np.atleast_2d(ccf(targetData.values, sourceData.values))
+            xBar = np.atleast_2d(sourceData.index)
+
+            dateRange = sourceData.index
+            targetData = np.atleast_2d(targetData.values)
+            sourceData = np.atleast_2d(sourceData.values)
+
+            self.timeSeriesBarPlot.setData(dateRange, sourceData, targetData, ['cfs', 'cfs'], ['test1', 'test2'],
+                                           xBar, correlation, ['correlation'], ['test'], 10000)
+
+        else:
+            # Start date is after the end date, so the lag is negative. Return a zero correlation
+            # INITIAL TEXT FOR EMPTY PLOT
+            self.no_data_text_item = pg.TextItem(html='<div style="color:#4e4e4e"><h1>Oops!</h1><br> Looks like there is no data to display.<br>Select a dataset to view data.</div>')
+            self.timeSeriesBarPlot.addItem(self.no_data_text_item)
+            self.no_data_text_item.setPos(0.5, 0.5)
+
+        return
 
 
 class ResultsTabPlots(pg.GraphicsLayoutWidget):
