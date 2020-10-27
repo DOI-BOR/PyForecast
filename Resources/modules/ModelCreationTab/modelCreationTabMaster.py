@@ -56,11 +56,14 @@ class modelCreationTab(object):
         #TODO: Fix crash-bug when adding new predictors after loading from *.fcst file
         a = 1
 
-        self.clickOption([self.modelRunsTable.loc[0]['CrossValidationType']], self.modelTab.optionsCrossValidators)
-        self.clickOption(self.modelRunsTable.loc[0]['RegressionTypes'], self.modelTab.optionsRegression)
-        self.clickOption(self.modelRunsTable.loc[0]['FeatureSelectionTypes'], self.modelTab.optionsSelection)
-        self.clickOption(self.modelRunsTable.loc[0]['ScoringParameters'], self.modelTab.optionsScoring)
-        self.clickOption(self.modelRunsTable.loc[0]['Preprocessors'], self.modelTab.optionsPreprocessor)
+        try:
+            self.clickOption([self.modelRunsTable.loc[0]['CrossValidationType']], self.modelTab.optionsCrossValidators)
+            self.clickOption(self.modelRunsTable.loc[0]['RegressionTypes'], self.modelTab.optionsRegression)
+            self.clickOption(self.modelRunsTable.loc[0]['FeatureSelectionTypes'], self.modelTab.optionsSelection)
+            self.clickOption(self.modelRunsTable.loc[0]['ScoringParameters'], self.modelTab.optionsScoring)
+            self.clickOption(self.modelRunsTable.loc[0]['Preprocessors'], self.modelTab.optionsPreprocessor)
+        except:
+            print('INFO: No model run options defined in forecast file')
 
         self.modelTab.resultsMetricTable.loadDataIntoModel(self.forecastEquationsTable)
 
@@ -99,6 +102,7 @@ class modelCreationTab(object):
         # Link the doublelist to the output
         # self.modelTab.layoutSimpleDoubleList.listOutput.currentRowChanged.connect(self.updateSimpleLayoutAggregationOptions)
         self.modelTab.layoutSimpleDoubleList.listOutput.itemSelectionChanged.connect(self.updateSimpleLayoutAggregationOptions)
+        self.modelTab.layoutSimpleDoubleList.updatedOutputList.connect(self.addPredictorToDatasetOperationTable)
 
         # Set the button actions
         self.modelTab.layoutSimpleClearButton.clicked.connect(self.applySimpleClear)
@@ -338,6 +342,10 @@ class modelCreationTab(object):
         if len(self.modelTab.layoutSimpleDoubleList.listOutput.selectedIndexes()) > 0:
             # Get the current datasest index
             currentIndex = self.modelTab.layoutSimpleDoubleList.listOutput.datasetTable.index[self.modelTab.layoutSimpleDoubleList.listOutput.currentIndex().row()]
+            try:
+                indexExists = self.datasetOperationsTable.loc[currentIndex]
+            except:
+                return
 
             # Get the current dataset and operations settings
             datasetInfo = self.modelTab.fillList.datasetTable.loc[currentIndex]["DatasetName"] + " - " + \
@@ -1288,6 +1296,13 @@ class modelCreationTab(object):
             self.resetForecastsTab()
         except:
             return
+        
+
+    def addPredictorToDatasetOperationTable(self):
+        for idx in self.modelTab.layoutSimpleDoubleList.listOutput.datasetTable.index:
+            if idx not in self.datasetOperationsTable.index:
+                self.datasetOperationsTable.loc[idx, list(self.datasetOperationsTable.columns)] = [None] * len(
+                    self.datasetOperationsTable.columns)
 
 
     def updateTabDependencies(self, tabIndex):
