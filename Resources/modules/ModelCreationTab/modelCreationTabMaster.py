@@ -960,8 +960,6 @@ class modelCreationTab(object):
         self.modelTab.layoutWindowPlot.displayDatasets(sourceName, targetName, sourceData, targetData,
                                                        sourceUnits, targetUnits, '')
 
-
-
     def applySummaryClear(self):
         """
         Clear/reset all dataset and analysis options within the application
