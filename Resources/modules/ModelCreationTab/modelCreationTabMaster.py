@@ -1152,14 +1152,17 @@ class modelCreationTab(object):
 
 
     def updateTargetInfo(self):
-        predictandData = self.modelTab.targetSelect.currentData()
-        predID = predictandData.name
-        # Get Min dataset date
-        minT = parser.parse(str(np.sort(list(set(self.dataTable.loc[(slice(None),predID),'Value'].index.get_level_values(0).values)))[0]))
-        maxT = parser.parse(str(np.sort(list(set(self.dataTable.loc[(slice(None),predID),'Value'].index.get_level_values(0).values)))[-1]))
-        selT = parser.parse(self.modelTab.periodStart.dateTime().toString("yyyy-MM-ddThh:mm:ss.zzz"))
-        self.modelTab.targetPeriodStartYear.setText(str(minT.year))
-        self.modelTab.targetPeriodEndYear.setText(str(maxT.year))
+        try:
+            predictandData = self.modelTab.targetSelect.currentData()
+            predID = predictandData.name
+            # Get Min dataset date
+            minT = parser.parse(str(np.sort(list(set(self.dataTable.loc[(slice(None),predID),'Value'].index.get_level_values(0).values)))[0]))
+            maxT = parser.parse(str(np.sort(list(set(self.dataTable.loc[(slice(None),predID),'Value'].index.get_level_values(0).values)))[-1]))
+            selT = parser.parse(self.modelTab.periodStart.dateTime().toString("yyyy-MM-ddThh:mm:ss.zzz"))
+            self.modelTab.targetPeriodStartYear.setText(str(minT.year))
+            self.modelTab.targetPeriodEndYear.setText(str(maxT.year))
+        except:
+            pass
 
 
 
@@ -1188,7 +1191,15 @@ class modelCreationTab(object):
         excludedYears = self.modelTab.targetPeriodExcludedYears.text()
         if excludedYears == '':
             excludedYears = '1900'
-        self.modelRunsTable.loc[0]['ModelTrainingPeriod'] = self.modelTab.targetPeriodStartYear.text() + "/" + self.modelTab.targetPeriodEndYear.text() + "/" + excludedYears
+        startYear = self.modelTab.targetPeriodStartYear.text()
+        if startYear == '':
+            startYear = minT.strftime("%Y")
+            self.modelTab.targetPeriodStartYear.setText(minT.strftime("%Y"))
+        endYear = self.modelTab.targetPeriodEndYear.text()
+        if endYear == '':
+            endYear = maxT.strftime("%Y")
+            self.modelTab.targetPeriodEndYear.setText(maxT.strftime("%Y"))
+        self.modelRunsTable.loc[0]['ModelTrainingPeriod'] = startYear + "/" + endYear + "/" + excludedYears
         self.modelRunsTable.loc[0]['Predictand'] = predID
         self.modelRunsTable.loc[0]['PredictandPeriod'] = periodString
         self.modelRunsTable.loc[0]['PredictandMethod'] = self.modelTab.methodCombo.currentData()
