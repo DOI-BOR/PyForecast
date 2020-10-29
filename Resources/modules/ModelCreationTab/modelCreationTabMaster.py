@@ -100,7 +100,6 @@ class modelCreationTab(object):
 
         ### Connect the simple setup page ###
         # Link the doublelist to the output
-        # self.modelTab.layoutSimpleDoubleList.listOutput.currentRowChanged.connect(self.updateSimpleLayoutAggregationOptions)
         self.modelTab.layoutSimpleDoubleList.listOutput.itemSelectionChanged.connect(self.updateSimpleLayoutAggregationOptions)
         self.modelTab.layoutSimpleDoubleList.updatedOutputList.connect(self.addPredictorToDatasetOperationTable)
 
@@ -109,6 +108,7 @@ class modelCreationTab(object):
         self.modelTab.layoutSimpleApplyButton.clicked.connect(self.applySimpleOptions)
 
         # Setup the prediction button
+        self.modelTab.targetSelect.currentIndexChanged.connect(self.updateTargetInfo)
         self.modelTab.predictandApplyButton.clicked.connect(self.applyPredictandAggregationOption)
 
 
@@ -361,8 +361,8 @@ class modelCreationTab(object):
             # Set date selector range
             minT = parser.parse(str(np.sort(list(set(self.dataTable.loc[(slice(None),currentIndex[0]),'Value'].index.get_level_values(0).values)))[0]))
             maxT = parser.parse(str(np.sort(list(set(self.dataTable.loc[(slice(None),currentIndex[0]),'Value'].index.get_level_values(0).values)))[-1]))
-            self.modelTab.layoutAggregationOptions.periodStart.minimumDate = minT
-            self.modelTab.layoutAggregationOptions.periodStart.maximumDate = maxT
+            self.modelTab.layoutAggregationOptions.periodStart.setMinimumDateTime(minT)
+            self.modelTab.layoutAggregationOptions.periodStart.setMaximumDateTime(maxT)
             self.modelTab.layoutAggregationOptions.periodStart.setDate(minT)
 
             # Set the list coloration
@@ -1151,6 +1151,17 @@ class modelCreationTab(object):
             print('INFO: Model run complete!')
 
 
+    def updateTargetInfo(self):
+        predictandData = self.modelTab.targetSelect.currentData()
+        predID = predictandData.name
+        # Get Min dataset date
+        minT = parser.parse(str(np.sort(list(set(self.dataTable.loc[(slice(None),predID),'Value'].index.get_level_values(0).values)))[0]))
+        maxT = parser.parse(str(np.sort(list(set(self.dataTable.loc[(slice(None),predID),'Value'].index.get_level_values(0).values)))[-1]))
+        selT = parser.parse(self.modelTab.periodStart.dateTime().toString("yyyy-MM-ddThh:mm:ss.zzz"))
+        self.modelTab.targetPeriodStartYear.setText(str(minT.year))
+        self.modelTab.targetPeriodEndYear.setText(str(maxT.year))
+
+
 
     def applyPredictandAggregationOption(self):
         # todo: doc string
@@ -1170,16 +1181,14 @@ class modelCreationTab(object):
 
         nDays = self.modelTab.periodEnd.date().toJulianDay() - self.modelTab.periodStart.date().toJulianDay() + 1 #dates inclusive
         periodString = "R/" + startT.strftime("%Y-%m-%d") + "/P" + str(nDays) + "D/F12M" #(e.g. R/1978-02-01/P1M/F1Y)
-        #print("Predictand Entries for the self.modelRunsTable: ")
-        #print("--Model Training Period: " + minT.strftime("%Y-%m-%d") + "/" + maxT.strftime("%Y-%m-%d"))
-        #print("--Predictand ID: " + str(predID))
-        #print("--Predictand Period: " + periodString)
-        #print("--Predictand Method: " + self.methodCombo.currentData())
         if self.modelRunsTable.shape[0] < 1:
             self.modelRunsTable.loc[0] = [None] * self.modelRunsTable.columns.shape[0]
 
-        #self.parent.modelRunsTable.loc[0]['ModelTrainingPeriod'] = minT.strftime("%Y-%m-%d") + "/" + maxT.strftime("%Y-%m-%d")
-        self.modelRunsTable.loc[0]['ModelTrainingPeriod'] = minT.strftime("%Y") + "/" + maxT.strftime("%Y") + "/1900"
+        #self.modelRunsTable.loc[0]['ModelTrainingPeriod'] = minT.strftime("%Y") + "/" + maxT.strftime("%Y") + "/1900"
+        excludedYears = self.modelTab.targetPeriodExcludedYears.text()
+        if excludedYears == '':
+            excludedYears = '1900'
+        self.modelRunsTable.loc[0]['ModelTrainingPeriod'] = self.modelTab.targetPeriodStartYear.text() + "/" + self.modelTab.targetPeriodEndYear.text() + "/" + excludedYears
         self.modelRunsTable.loc[0]['Predictand'] = predID
         self.modelRunsTable.loc[0]['PredictandPeriod'] = periodString
         self.modelRunsTable.loc[0]['PredictandMethod'] = self.modelTab.methodCombo.currentData()
@@ -1294,7 +1303,7 @@ class modelCreationTab(object):
             self.resetForecastsTab()
         except:
             return
-        
+
 
     def addPredictorToDatasetOperationTable(self):
         for idx in self.modelTab.layoutSimpleDoubleList.listOutput.datasetTable.index:

@@ -59,17 +59,26 @@ class AggregationOptions(QtWidgets.QWidget):
         self.resampleDescription.setWordWrap(True)
         self.resamplingLayout.addWidget(self.resampleDescription, 0, 0, 1, 3)
         # Start and end dates
-        self.periodStart = QtWidgets.QDateTimeEdit()
-        self.periodStart.setDisplayFormat("MMMM d yyyy")
+        self.periodStart = QtWidgets.QDateEdit()
+        self.periodStart.setDisplayFormat("MMMM d")
         self.periodStart.setCalendarPopup(True)
+        #self.periodStart.calendarWidget().setNavigationBarVisible(False)
         self.periodStart.editingFinished.connect(self.resamplingUpdate)
         self.resamplingLayout.addWidget(QtWidgets.QLabel("Start Date"), 1, 0)
         self.resamplingLayout.addWidget(self.periodStart, 1, 1, 1, 2)
-        # self.periodEnd = QtWidgets.QDateTimeEdit()
-        # self.periodEnd.setDisplayFormat("MMMM d yyyy")
-        # self.periodEnd.setCalendarPopup(True)
-        # self.resamplingLayout.addWidget(QtWidgets.QLabel("End Date"), 1, 0)
-        # self.resamplingLayout.addWidget(self.periodEnd, 1, 1)
+        # Start month and day
+        # self.periodStartMonth = QtWidgets.QDateEdit()
+        # self.periodStartMonth.setDisplayFormat("MMMM")
+        # self.periodStartMonth.setMinimumDate(QtCore.QDate(1999,10,1))
+        # self.periodStartMonth.setMaximumDate(QtCore.QDate(2000,9,30))
+        # self.periodStartMonth.setDate(QtCore.QDate(1999,10,1))
+        # self.periodStartDay = QtWidgets.QDateEdit()
+        # self.periodStartDay.setDisplayFormat("d")
+        # self.periodStartMonth.editingFinished.connect(self.resamplingUpdate)
+        # self.periodStartDay.editingFinished.connect(self.resamplingUpdate)
+        # self.resamplingLayout.addWidget(QtWidgets.QLabel("Start Date"), 1, 0)
+        # self.resamplingLayout.addWidget(self.periodStartMonth, 1, 1)
+        # self.resamplingLayout.addWidget(self.periodStartDay, 1, 2)
         # Resampling time-step
         self.resamplingLayout.addWidget(QtWidgets.QLabel("Time-step"), 2, 0)
         self.tStepInteger = QtWidgets.QSpinBox()
@@ -140,7 +149,7 @@ class AggregationOptions(QtWidgets.QWidget):
 
         #########################################################################
         # Create predictor forcing checkbox
-        self.predForceCheckBox = QtWidgets.QCheckBox("Force Predictor")
+        self.predForceCheckBox = QtWidgets.QCheckBox("Force Predictor: Ensures that this predictor is used in every model.")
         self.predForceCheckBox.setChecked(False)
         layout1.addWidget(self.predForceCheckBox)
 

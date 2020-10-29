@@ -4,3 +4,12 @@ __pycache__/
 .vscode/
 build
 dist
+/env
+/jrenv
+/venv
+/_attic
+/.idea
+/Output
+/.vs/NextFlow/v15/*.suo
+/*.fcst
+/*.sln

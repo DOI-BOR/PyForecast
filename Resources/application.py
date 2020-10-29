@@ -23,8 +23,8 @@ from resources.GUI import NextFlowGUI
 from resources.modules.DatasetTab import datasetTabMaster 
 from resources.modules.DataTab import dataTabMaster
 from resources.modules.MenuBar import menuBarMaster
-from resources.modules.ForecastsTab import forecastTabMaster
 from resources.modules.ModelCreationTab import modelCreationTabMaster
+from resources.modules.ForecastsTab import forecastTabMaster
 from resources.modules.Miscellaneous import initUserOptions
 from datetime import datetime
 import configparser
@@ -278,7 +278,7 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
         self.threadPool = QtCore.QThreadPool()
 
         # Show the application
-        self.showMaximized()
+        self.show()#.showMaximized()
         
 
         return

@@ -59,14 +59,14 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.targetSelect.setView(self.datasetList)
 
         #layout.addRow("Forecast Target", self.targetSelect)
-        layout.addWidget(QtWidgets.QLabel("Forecast Target"), 0, 0)
-        layout.addWidget(self.targetSelect, 0, 1)
+        layout.addWidget(QtWidgets.QLabel("Forecast Target"), 0, 0, 1, 1)
+        layout.addWidget(self.targetSelect, 0, 1, 1, 3)
         
         self.selectedItemDisplay = DatasetListHTMLFormatted(self, addButtons=False, objectName='ModelTargetList')
         self.selectedItemDisplay.setFixedHeight(99)
         self.selectedItemDisplay.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
         
-        layout.addWidget(self.selectedItemDisplay, 1, 0, 1, 2)
+        layout.addWidget(self.selectedItemDisplay, 1, 1, 1, 3)
         
         self.periodStart = QtWidgets.QDateTimeEdit()
         self.periodStart.setDisplayFormat("MMMM d")
@@ -79,13 +79,10 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.periodEnd.setMinimumDate(QtCore.QDate(QtCore.QDate().currentDate().year(), 1, 1))
         self.periodEnd.setMaximumDate(QtCore.QDate(QtCore.QDate().currentDate().year(), 12, 31))
 
-        #layout.addRow("Target Period (Start)", self.periodStart)
-        layout.addWidget(QtWidgets.QLabel("Target Period (Start)"), 2, 0)
-        layout.addWidget(self.periodStart, 2,1)
-        
-        #layout.addRow("Target Period (End)", self.periodEnd)
-        layout.addWidget(QtWidgets.QLabel("Target Period (End)"), 3, 0)
-        layout.addWidget(self.periodEnd, 3,1)
+        layout.addWidget(QtWidgets.QLabel("Forecast Period (START)"), 2, 0, 1, 1)
+        layout.addWidget(self.periodStart, 2, 1, 1, 1)
+        layout.addWidget(QtWidgets.QLabel(" to (END)"), 2, 2, 1, 1, QtCore.Qt.AlignHCenter)
+        layout.addWidget(self.periodEnd, 2, 3, 1, 1)
 
         # Initialize dates
         self.periodStart.setDate(QtCore.QDate(QtCore.QDate().currentDate().year(), 4, 1))
@@ -104,21 +101,35 @@ class ModelCreationTab(QtWidgets.QWidget):
         for item in itemList:
             self.methodCombo.addItem(item[0], item[1])
         #layout.addRow("Period Calculation", self.methodCombo)
-        layout.addWidget(QtWidgets.QLabel("Period Calculation"), 4, 0)
-        layout.addWidget(self.methodCombo, 4,1)
+        layout.addWidget(QtWidgets.QLabel("Period Calculation"), 4, 0, 1, 1)
+        layout.addWidget(self.methodCombo, 4, 1, 1, 3)
 
         self.customMethodSpecEdit = QtWidgets.QLineEdit()
         self.customMethodSpecEdit.setPlaceholderText("Define a custom python function here. The variable 'x' represents the periodic dataset [pandas series]. Specify a unit (optional) with '|'. E.g. np.nansum(x)/12 | Feet ")
-        layout.addWidget(self.customMethodSpecEdit, 5, 0, 1, 2)
+        layout.addWidget(self.customMethodSpecEdit, 5, 1, 1, 3)
         self.customMethodSpecEdit.hide()
+
+        # Create the training and excluded years
+        onlyInt = QtGui.QIntValidator()
+        layout.addWidget(QtWidgets.QLabel("Model Training Period (START)"), 6, 0, 1, 1)
+        self.targetPeriodStartYear = QtWidgets.QLineEdit()
+        self.targetPeriodStartYear.setValidator(onlyInt)
+        layout.addWidget(self.targetPeriodStartYear, 6, 1, 1, 1)
+        layout.addWidget(QtWidgets.QLabel(" to (END)"), 6, 2, 1, 1, QtCore.Qt.AlignHCenter)
+        self.targetPeriodEndYear = QtWidgets.QLineEdit()
+        self.targetPeriodEndYear.setValidator(onlyInt)
+        layout.addWidget(self.targetPeriodEndYear, 6, 3, 1, 1)
+        layout.addWidget(QtWidgets.QLabel("Excluded Year(s)"), 7, 0, 1, 1)
+        self.targetPeriodExcludedYears = QtWidgets.QLineEdit()
+        self.targetPeriodExcludedYears.setPlaceholderText("Comma separated years to exclude. Ex: 1980,2010,...")
+        layout.addWidget(self.targetPeriodExcludedYears, 7, 1, 1, 3)
 
         # Create the apply button
         self.predictandApplyButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Apply</strong>')
         self.predictandApplyButton.setMaximumSize(125, 50)
-        layout.addWidget(self.predictandApplyButton, 6, 0, 1, 1)
+        layout.addWidget(self.predictandApplyButton, 8, 0, 1, 1)
 
-        layout.setColumnStretch(0, 1)
-        layout.setColumnStretch(1, 10)
+
         layout.setVerticalSpacing(0)
         layout.setHorizontalSpacing(0)
         layout.setContentsMargins(0,0,0,0)
@@ -399,18 +410,24 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.layoutAggregationOptions = AggregationOptions(False, orientation='vertical')
 
         # Simple fill
-        self.layoutSimpleFill = richTextDescriptionButton(self,
-                                                          '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(
-                                                              'Fill data',
-                                                              'Automatically fill the selected time series using default properties'))
-        self.layoutSimpleFill.setDisabled(True)
+        self.layoutSimpleFillCheckBox = QtWidgets.QCheckBox("Fill Data: Automatically fill the selected time series using default properties.")
+        self.layoutSimpleFillCheckBox.setChecked(False)
+        # self.layoutSimpleFill = richTextDescriptionButton(self,
+        #                                                   '<strong style="font-size: 13px; color: darkcyan">{0}</strong>: {1}'.format(
+        #                                                       'Fill data',
+        #                                                       'Automatically fill the selected time series using default properties'))
+        # self.layoutSimpleFill.setFixedHeight(30)
+        # self.layoutSimpleFill.setDisabled(True)
 
         # Simple extend
-        self.layoutSimpleExtend = richTextDescriptionButton(self,
-                                                            '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(
-                                                                'Extend data',
-                                                                'Automatically extend the selected time series using default properties'))
-        self.layoutSimpleExtend.setDisabled(True)
+        self.layoutSimpleExtendCheckBox = QtWidgets.QCheckBox("Extend Data: Automatically extend the selected time series using default properties.")
+        self.layoutSimpleExtendCheckBox.setChecked(False)
+        # self.layoutSimpleExtend = richTextDescriptionButton(self,
+        #                                                     '<strong style="font-size: 13px; color: darkcyan">{0}</strong>: {1}'.format(
+        #                                                         'Extend data',
+        #                                                         'Automatically extend the selected time series using default properties'))
+        # self.layoutSimpleExtend.setFixedHeight(30)
+        # self.layoutSimpleExtend.setDisabled(True)
 
         ### Create clear and apply buttons to apply operations ###
         # Create the clear button
@@ -426,7 +443,6 @@ class ModelCreationTab(QtWidgets.QWidget):
         buttonLayout.addWidget(self.layoutSimpleClearButton)
         buttonLayout.addWidget(self.layoutSimpleApplyButton)
         buttonLayout.setAlignment(QtCore.Qt.AlignRight)
-
         buttonLayoutWidget = QtWidgets.QWidget()
         buttonLayoutWidget.setLayout(buttonLayout)
 
@@ -442,9 +458,12 @@ class ModelCreationTab(QtWidgets.QWidget):
         layoutSimpleOptions.setAlignment(QtCore.Qt.AlignTop)
         layoutSimpleOptions.addWidget(configurationLabel)
         layoutSimpleOptions.addWidget(self.layoutAggregationOptions)
-        layoutSimpleOptions.addSpacerItem(QtWidgets.QSpacerItem(10, 10, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Expanding))
-        layoutSimpleOptions.addWidget(self.layoutSimpleFill)
-        layoutSimpleOptions.addWidget(self.layoutSimpleExtend)
+        optionalLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Data Filling Configuration (optional)<strong>')
+        optionalLabel.setContentsMargins(0, 10, 0, 0)
+        layoutSimpleOptions.addWidget(optionalLabel)
+        layoutSimpleOptions.addWidget(self.layoutSimpleFillCheckBox, alignment=QtCore.Qt.AlignTop)
+        layoutSimpleOptions.addWidget(self.layoutSimpleExtendCheckBox, alignment=QtCore.Qt.AlignTop)
+        layoutSimpleOptions.addSpacerItem(QtWidgets.QSpacerItem(10, 10, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding))
         layoutSimpleOptions.addWidget(buttonLayoutWidget)
 
         # Wrap the right side layout in another widget
@@ -1141,8 +1160,9 @@ class ModelCreationTab(QtWidgets.QWidget):
             for j in range(3):
                 if (i * 3) + j < numRegressionModels:
                     regrKey = list((self.parent.regressors.keys()))[(3 * i) + j]
-                    regrText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(
-                        self.parent.regressors[regrKey]['name'], self.parent.regressors[regrKey]['description'])
+                    regrText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}<br>More Info: {2}'.format(
+                        self.parent.regressors[regrKey]['name'], self.parent.regressors[regrKey]['description'],
+                        self.parent.regressors[regrKey]['website'])
                     button = richTextDescriptionButton(self, regrText)
                     button.setObjectName(str(regrKey))
 
