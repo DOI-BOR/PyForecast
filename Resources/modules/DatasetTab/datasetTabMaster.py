@@ -220,7 +220,7 @@ class datasetTab(object):
             datasetInternalID -> The DatasetInternalID associated with the dataset to add. The ID's are 
                                  found in the dataset catalogs.
         """
-        print("FF: ", refresh_gui)
+        #print("FF: ", refresh_gui)
 
         # Check to make sure that this dataset in not already in the datasetTable
         if datasetInternalID in list(self.datasetTable.index):

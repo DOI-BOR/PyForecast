@@ -13,3 +13,4 @@ dist
 /.vs/NextFlow/v15/*.suo
 /*.fcst
 /*.sln
+/*.spec
