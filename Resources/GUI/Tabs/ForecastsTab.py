@@ -149,7 +149,6 @@ class ForecastsTab(QtWidgets.QWidget):
         bottomLeftLayout = QtWidgets.QVBoxLayout()
         bottomLeftLayout.setContentsMargins(0, 0, 0, 0)
 
-
         selectedModelYearLayout = QtWidgets.QHBoxLayout()
         selectedModelLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Selected Model Data<strong>')
         selectedModelYearLayout.addWidget(selectedModelLabel, alignment=QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)

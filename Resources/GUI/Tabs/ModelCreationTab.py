@@ -401,6 +401,35 @@ class ModelCreationTab(QtWidgets.QWidget):
         # populate the DoubleList entries
         self.datasetList.updateSignalToExternal.connect(self.layoutSimpleDoubleList.update)
 
+        ## Define the data plots
+        plotLayout = QtWidgets.QVBoxLayout()
+        plotLayout.setContentsMargins(0, 0, 0, 0)
+        # resampling plot
+        self.predictorPlot = ModelTabTargetPlot(self, objectName='PredictorPlot')#ResultsTabPlots(self, xLabel='Date', yLabel='Value')
+        self.predictorPlot.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        # correlation plot of resampled predictor to target
+        self.predictorCorrelationPlot = ResultsTabPlots(self, xLabel='Resampled Predictor', yLabel='Resampled Target')
+        self.predictorCorrelationPlot.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.predictorCorrelationPlot.hide()
+        # toggle button to switch plots
+        self.predictorPlotButton = richTextButton('<strong style="font-size: 12px; color:darkcyan">Show resampled data correlation to target</strong>')
+        self.predictorPlotButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred)
+        # add everything to layout
+        plotLayout.addWidget(self.predictorPlotButton)
+        plotLayout.addWidget(self.predictorPlot)
+        plotLayout.addWidget(self.predictorCorrelationPlot)
+        self.predictorPlotWidget = QtWidgets.QWidget()
+        self.predictorPlotWidget.setLayout(plotLayout)
+
+        # Create the left side widget
+        leftLayout = QtWidgets.QVBoxLayout()
+        leftLayout.setContentsMargins(0, 0, 0, 0)
+        leftLayout.addWidget(self.layoutSimpleDoubleList)
+        leftLayout.addWidget(self.predictorPlotWidget)
+        leftLayoutWidget = QtWidgets.QWidget()
+        leftLayoutWidget.setLayout(leftLayout)
+        self.predictorPlotWidget.hide()
+
         ## Create the objects on the right side ##
         configurationLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Dataset Configuration<strong>')
         configurationLabel.setContentsMargins(0, 10, 0, 0)
@@ -429,7 +458,11 @@ class ModelCreationTab(QtWidgets.QWidget):
         # self.layoutSimpleExtend.setFixedHeight(30)
         # self.layoutSimpleExtend.setDisabled(True)
 
-        ### Create clear and apply buttons to apply operations ###
+        ### Create buttons to apply predictor operations ###
+        # Create the show plots button
+        self.layoutSimplePlotButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Show Plot</strong>')
+        self.layoutSimplePlotButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred)
+
         # Create the clear button
         self.layoutSimpleClearButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Clear</strong>')
         self.layoutSimpleClearButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred)
@@ -440,18 +473,12 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Create the layout, wrap it, and add to the right layout
         buttonLayout = QtWidgets.QHBoxLayout()
+        buttonLayout.addWidget(self.layoutSimplePlotButton)
         buttonLayout.addWidget(self.layoutSimpleClearButton)
         buttonLayout.addWidget(self.layoutSimpleApplyButton)
         buttonLayout.setAlignment(QtCore.Qt.AlignRight)
         buttonLayoutWidget = QtWidgets.QWidget()
         buttonLayoutWidget.setLayout(buttonLayout)
-
-        ## Add the widgets into the layout ##
-        # Add the items into the horizontal spacer
-        layoutSimple = QtWidgets.QHBoxLayout()
-        layoutSimple.setContentsMargins(0, 0, 0, 0)
-        layoutSimple.addWidget(self.layoutSimpleDoubleList, 2)
-        layoutSimple.addSpacerItem(QtWidgets.QSpacerItem(10, 10, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
 
         # Create the right side options layout
         layoutSimpleOptions = QtWidgets.QVBoxLayout()
@@ -470,11 +497,28 @@ class ModelCreationTab(QtWidgets.QWidget):
         layoutSimpleOptionsWidget = QtWidgets.QWidget()
         layoutSimpleOptionsWidget.setLayout(layoutSimpleOptions)
 
+        ## Add the widgets into the layout ##
+        # Add the items into the horizontal spacer
+        layoutSimple = QtWidgets.QHBoxLayout()
+        layoutSimple.setContentsMargins(0, 0, 0, 0)
+        layoutSimple.addWidget(leftLayoutWidget, 2)
+        layoutSimple.addSpacerItem(QtWidgets.QSpacerItem(10, 10, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
+
         # Add the right side to the simple layout
         layoutSimple.addWidget(layoutSimpleOptionsWidget, 1)
 
-        # Set the items into the simple layout
+
+        # # Set the items into the layout
+        # layoutSimpleTopWidget = QtWidgets.QWidget()
+        # layoutSimpleTopWidget.setLayout(layoutSimple)
+        # layoutSimpleBottomWidget = QtWidgets.QWidget()
+        # layoutSimpleBottomWidget.setLayout(bottomLayout)
+        # layoutSimpleMain = QtWidgets.QVBoxLayout()
+        # layoutSimpleMain.addWidget(layoutSimpleTopWidget)
+        # layoutSimpleMain.addWidget(layoutSimpleBottomWidget)
+
         predictorLayoutSimple.setLayout(layoutSimple)
+
 
     def _createDataFillLayout(self, layoutFillSA):
         """

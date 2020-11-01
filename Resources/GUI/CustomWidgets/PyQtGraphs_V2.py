@@ -879,6 +879,13 @@ class BarAndLinePlot(pg.PlotItem):
 
         return
 
+    def updateText(self, text):
+        self.clearPlots()
+        self.no_data_text_item = pg.TextItem(html=text)
+        self.addItem(self.no_data_text_item)
+        self.no_data_text_item.setPos(0, 0)
+
+
 
     def setData(self, x, lineData, barData, units, labels, barWidth, spacing = 0):
         """
@@ -1633,10 +1640,14 @@ class ModelTabTargetPlot(pg.GraphicsLayoutWidget):
         ticks = [i.year for i in x]
         xAxis.setTicks([[(x2[j], str(v)) for j, v in enumerate(ticks)]])
         buff = (np.nanmax(y) - np.nanmin(y))/10
-        self.plot.setLimits(xMin=self.plot.xMin, xMax=self.plot.xMax, yMin=self.plot.yMin-buff, yMax=self.plot.yMax+buff)
-        self.plot.setRange(xRange=(self.plot.xMin, self.plot.xMax), yRange=(self.plot.yMin-buff, self.plot.yMax+buff))
-        self.plot.viewbox_axis_2.setLimits(xMin=self.plot.xMin, xMax=self.plot.xMax, yMin=self.plot.yMin-buff, yMax=self.plot.yMax+buff)
-        self.plot.viewbox_axis_2.setRange(xRange=(self.plot.xMin, self.plot.xMax), yRange=(self.plot.yMin-buff, self.plot.yMax+buff))
+        self.plot.setLimits(xMin=self.plot.xMin - barWidth, xMax=self.plot.xMax + barWidth, yMin=self.plot.yMin-buff, yMax=self.plot.yMax+buff)
+        self.plot.setRange(xRange=(self.plot.xMin - barWidth, self.plot.xMax + barWidth), yRange=(self.plot.yMin-buff, self.plot.yMax+buff))
+        self.plot.viewbox_axis_2.setLimits(xMin=self.plot.xMin - barWidth, xMax=self.plot.xMax + barWidth, yMin=self.plot.yMin-buff, yMax=self.plot.yMax+buff)
+        self.plot.viewbox_axis_2.setRange(xRange=(self.plot.xMin - barWidth, self.plot.xMax + barWidth), yRange=(self.plot.yMin-buff, self.plot.yMax+buff))
+        ax = self.plot.getAxis('bottom')
+        ax.setGrid(False)
+        ay = self.plot.getAxis('left')
+        ay.setGrid(0.25 * 255)
         return
 
 
@@ -2030,7 +2041,7 @@ class ResultsTabPlots(pg.GraphicsLayoutWidget):
         return
 
 
-    def updateScatterPlot(self, dataframe):
+    def updateScatterPlot(self, dataframe, showCV=True, showLegend=True):
         """
 
         @param datasets:
@@ -2038,23 +2049,36 @@ class ResultsTabPlots(pg.GraphicsLayoutWidget):
         """
         self.datasetTable = dataframe
         self.resultPlot.clear()
-        obs = self.datasetTable['Observed'].values
-        mod = self.datasetTable['Prediction'].values
-        modCv = self.datasetTable['CV-Prediction'].values
+        obs = self.datasetTable['Observed'].values.astype(float)
+        mod = self.datasetTable['Prediction'].values.astype(float)
 
-        self.resultPlot.plot(x=obs, y=modCv, pen=None,  symbolBrush=self.secondaryColor, symbolPen='w', symbol='o', symbolSize=7, name="CV-Prediction")
-        z = np.polyfit(obs, modCv, 1)
-        p = np.poly1d(z)
-        self.resultPlot.plot(x=obs, y=p(obs), pen=pg.mkPen(color=self.secondaryColor, width=0.5, style=QtCore.Qt.DotLine))
 
-        self.resultPlot.plot(x=obs, y=mod, pen=None, symbolBrush=self.primaryColor, symbolPen='w', symbol='h', symbolSize=14, name="Prediction")
+        if showCV:
+            modCv = self.datasetTable['CV-Prediction'].values.astype(float)
+
+            if showLegend:
+                self.resultPlot.plot(x=obs, y=modCv, pen=None,  symbolBrush=self.secondaryColor, symbolPen='w', symbol='o', symbolSize=7, name="CV-Prediction")
+            else:
+                self.resultPlot.plot(x=obs, y=modCv, pen=None, symbolBrush=self.secondaryColor, symbolPen='w',symbol='o', symbolSize=7)
+
+            z = np.polyfit(obs, modCv, 1)
+            p = np.poly1d(z)
+            self.resultPlot.plot(x=obs, y=p(obs), pen=pg.mkPen(color=self.secondaryColor, width=0.5, style=QtCore.Qt.DotLine))
+
+        if showLegend:
+            self.resultPlot.plot(x=obs, y=mod, pen=None, symbolBrush=self.primaryColor, symbolPen='w', symbol='h', symbolSize=14, name="Prediction")
+        else:
+            self.resultPlot.plot(x=obs, y=mod, pen=None, symbolBrush=self.primaryColor, symbolPen='w', symbol='h', symbolSize=14)
         z = np.polyfit(obs, mod, 1)
         p = np.poly1d(z)
         self.resultPlot.plot(x=obs, y=p(obs), pen=pg.mkPen(color=self.primaryColor, width=2, style=QtCore.Qt.DotLine))
 
         self.updated = True
         self.xExtents = [min(obs), max(obs)]
-        self.yExtents = [min(min(mod),min(modCv)), max(max(mod),max(modCv))]
+        if showCV:
+            self.yExtents = [min(min(mod),min(modCv)), max(max(mod),max(modCv))]
+        else:
+            self.yExtents = [min(mod), max(mod)]
 
         return
 
@@ -2138,6 +2162,14 @@ class ResultsTabPlots(pg.GraphicsLayoutWidget):
 
     def clearPlot(self):
         self.resultPlot.clear()
+        return
+
+    def updateText(self, text):
+        #self.textOverlay = pg.TextItem(html = '<div style="color:#4e4e4e"><h1>Oops!</h1><br> Looks like there is no data to display.<br>Select a dataset to view data.</div>', anchor=(1,1))
+        self.resultPlot.clear()
+        self.textOverlay = pg.TextItem(html=text, anchor=(1, 1))
+        self.resultPlot.addItem(self.textOverlay)
+        self.textOverlay.setPos(0, 0)
         return
 
 

@@ -98,12 +98,14 @@ class modelCreationTab(object):
         self.modelTab.workflowWidget.currentChanged.connect(self.updateTabDependencies)
 
 
-        ### Connect the simple setup page ###
+        ### Connect the simple predictor setup page ###
         # Link the doublelist to the output
         self.modelTab.layoutSimpleDoubleList.listOutput.itemSelectionChanged.connect(self.updateSimpleLayoutAggregationOptions)
         self.modelTab.layoutSimpleDoubleList.updatedOutputList.connect(self.addPredictorToDatasetOperationTable)
 
         # Set the button actions
+        self.modelTab.layoutSimplePlotButton.clicked.connect(self.showSimplePlots)
+        self.modelTab.predictorPlotButton.clicked.connect(self.switchSimplePlots)
         self.modelTab.layoutSimpleClearButton.clicked.connect(self.applySimpleClear)
         self.modelTab.layoutSimpleApplyButton.clicked.connect(self.applySimpleOptions)
 
@@ -400,6 +402,34 @@ class modelCreationTab(object):
             # Set forcing flag on UI
             if predForcing != 'None':
                 self.modelTab.layoutAggregationOptions.predForceCheckBox.setChecked(predForcing == 'True')
+
+            # Plot datasets
+            # Resample predictor
+            try:
+                dataset = self.modelTab.fillList.datasetTable.loc[currentIndex]
+                units = 'KAF' if 'KAF' in accumMethod.upper() else dataset['DatasetUnits']
+                rawData = self.dataTable.loc[(slice(None), currentIndex[0]), 'Value']
+                resampledData = resampleDataSet(rawData, accumPeriod, accumMethod).dropna()
+                x = resampledData.index.get_level_values(0)
+                y = resampledData.values
+                self.modelTab.predictorPlot.clearPlots()
+                self.modelTab.predictorPlot.displayData(x, y, [units], [dataset['DatasetParameter'] + ': ' + dataset['DatasetName']])
+                self.modelTab.predictorPlot.plot.setTitle('<strong style="font-family: Open Sans, Arial;">Resampled {0} - {1}</strong>'.format(
+                    dataset['DatasetName'], dataset['DatasetParameter']))
+            except:
+                self.modelTab.predictorPlot.plot.updateText('<div style="color:#4e4e4e"><h1>Oops!</h1><br>Predictor not defined<br>Fully define the selected predictor to view resampled data plot...</div>')
+            # Resample target
+            try:
+                targetID = self.modelRunsTable.loc[0].Predictand
+                targetPeriod = self.modelRunsTable.loc[0].PredictandPeriod
+                targetAccum = self.modelRunsTable.loc[0].PredictandMethod
+                targetData = self.dataTable.loc[(slice(None), targetID), 'Value']
+                resampledTarget = resampleDataSet(targetData, targetPeriod, targetAccum).dropna()
+                scatterDataFrame = pd.DataFrame(data=[x, y, resampledTarget.values, resampledTarget.values],index=['Years','Observed','Prediction','CV-Prediction']).T
+                self.modelTab.predictorCorrelationPlot.clearPlot()
+                self.modelTab.predictorCorrelationPlot.updateScatterPlot(scatterDataFrame, showCV=False, showLegend=False)
+            except:
+                self.modelTab.predictorCorrelationPlot.updateText('<div style="color:#4e4e4e"><h1>Oops!</h1><br>Looks like there is no target defined<br>Define a forecast target to view correlation...</div>')
         else:
             self.modelTab.layoutAggregationOptions.activeSelection.refreshDatasetListFromExtenal(None)
 
@@ -447,14 +477,35 @@ class modelCreationTab(object):
         self.modelTab.layoutSimpleDoubleList.resetOutputItems()
 
         # Clear the checkboxes
-        self.modelTab.layoutSimpleExtend.updateToUnchecked()
-        self.modelTab.layoutSimpleFill.updateToUnchecked()
+        self.modelTab.layoutSimpleExtendCheckBox.updateToUnchecked()
+        self.modelTab.layoutSimpleFillCheckBox.updateToUnchecked()
 
         # Clear the aggregation options
         # todo: Add this functionality
 
         ### Reset the button state ###
         self.modelTab.layoutSimpleClearButton.setChecked(False)
+
+
+    def showSimplePlots(self):
+        if self.modelTab.layoutSimplePlotButton.isChecked():
+            self.modelTab.predictorPlotWidget.show()
+            self.modelTab.layoutSimplePlotButton.setText('<strong style="font-size: 16px; color:darkcyan">Hide Plot</strong>')
+        else:
+            self.modelTab.predictorPlotWidget.hide()
+            self.modelTab.layoutSimplePlotButton.setText('<strong style="font-size: 16px; color:darkcyan">Show Plot</strong>')
+
+
+    def switchSimplePlots(self):
+        if self.modelTab.predictorPlotButton.isChecked():
+            self.modelTab.predictorPlot.hide()
+            self.modelTab.predictorCorrelationPlot.show()
+            self.modelTab.predictorPlotButton.setText('<strong style="font-size: 12px; color:darkcyan">Show resampled data time-series</strong>')
+        else:
+            self.modelTab.predictorPlot.show()
+            self.modelTab.predictorCorrelationPlot.hide()
+            self.modelTab.predictorPlotButton.setText('<strong style="font-size: 12px; color:darkcyan">Show resampled data correlation to target</strong>')
+
 
     def updateFillSubtab(self):
         """
