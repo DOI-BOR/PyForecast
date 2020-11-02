@@ -4,7 +4,7 @@ from resources.GUI.Dialogs import PreferencesGUI
 from datetime import datetime
 import pickle
 import time
-from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtWidgets import QFileDialog, QDialog, QMessageBox
 
 class menuBar(object):
     """
@@ -49,7 +49,7 @@ class menuBar(object):
             if fname == '':
                 return
             
-            if '.' not in fname:
+            if '.fcst' not in fname:
                 fname = fname + '.fcst'
 
         #with open('resources/temp/user_options.txt', 'w') as configfile:
@@ -67,17 +67,24 @@ class menuBar(object):
 
             #with open('resources/temp/user_options.txt', 'r') as readfile:
             #    pickle.dump(readfile.read(), writefile, pickle.HIGHEST_PROTOCOL)
+
+        self.setWindowTitle("PyForecast - " + str(fname))
         
 
     def openForecastFile(self):
         """
         """
+        if self.fileOpened:
+            self.showMessageBox("Warning", "Forecast file already open",
+                                "Start another PyForecast window or close and " +
+                                "reopen PyForecast to open another forecast file")
+            return
+
         fname = QFileDialog.getOpenFileName(self, 'Open File','*.fcst')[0]
         #self.applicationPrefsConfig['FILE OPS']['file_name'] = fname
-
         if fname == '':
-            return 
-        
+            return
+
         # Load all the tables, files
         with open(fname, 'rb') as readfile:
             try:
@@ -112,9 +119,23 @@ class menuBar(object):
             #    writefile.write(pickle.load(readfile))
         
         #self.userOptionsConfig.read('resources/temp/user_options.txt')
-
         # Apply the files and tables to the tabs
+        self.setWindowTitle("PyForecast - " + str(fname))
         self.resetDatasetTab()
         self.resetDataTab()
         self.resetModelCreationTab()
         self.resetForecastsTab()
+        self.fileOpened = True
+
+
+    def showMessageBox(self, boxTitle, mainText, subText = None, detailText = None):
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Warning)
+        msg.setWindowTitle(boxTitle)
+        msg.setText(mainText)
+        if subText is not None:
+            msg.setInformativeText(subText)
+        if detailText is not None:
+            msg.setDetailedText(detailText)
+        msg.setStandardButtons(QMessageBox.Ok)
+        msg.exec_()

@@ -261,8 +261,6 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
         self.scorers["module"] = mod
         for scorer, scorerFunc in inspect.getmembers(self.scorers['class'], inspect.isfunction):
             self.scorers[scorer] = scorerFunc
-        
-
 
         # Load up the GUI
         self.setUI()
@@ -278,6 +276,7 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
         self.threadPool = QtCore.QThreadPool()
 
         # Show the application
+        self.fileOpened = False
         self.show()#.showMaximized()
         
 

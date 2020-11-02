@@ -30,6 +30,7 @@ class modelCreationTab(object):
         return
 
     def resetModelCreationTab(self):
+        self.modelTab.summaryListWidget.clearTable()
         self.modelTab.summaryListWidget.model().loadDataIntoModel(self.datasetTable, self.datasetOperationsTable)
         for idx, rows in self.datasetOperationsTable.iterrows():
             dsetRow = self.datasetTable.loc[idx[0]]
@@ -488,7 +489,8 @@ class modelCreationTab(object):
 
 
     def showSimplePlots(self):
-        if self.modelTab.layoutSimplePlotButton.isChecked():
+        self.modelTab.layoutSimplePlotButton.setChecked(False)
+        if self.modelTab.predictorPlotWidget.isHidden():
             self.modelTab.predictorPlotWidget.show()
             self.modelTab.layoutSimplePlotButton.setText('<strong style="font-size: 16px; color:darkcyan">Hide Plot</strong>')
         else:
@@ -497,14 +499,15 @@ class modelCreationTab(object):
 
 
     def switchSimplePlots(self):
-        if self.modelTab.predictorPlotButton.isChecked():
-            self.modelTab.predictorPlot.hide()
-            self.modelTab.predictorCorrelationPlot.show()
-            self.modelTab.predictorPlotButton.setText('<strong style="font-size: 12px; color:darkcyan">Show resampled data time-series</strong>')
-        else:
+        self.modelTab.predictorPlotButton.setChecked(False)
+        if self.modelTab.predictorPlot.isHidden():
             self.modelTab.predictorPlot.show()
             self.modelTab.predictorCorrelationPlot.hide()
             self.modelTab.predictorPlotButton.setText('<strong style="font-size: 12px; color:darkcyan">Show resampled data correlation to target</strong>')
+        else:
+            self.modelTab.predictorPlot.hide()
+            self.modelTab.predictorCorrelationPlot.show()
+            self.modelTab.predictorPlotButton.setText('<strong style="font-size: 12px; color:darkcyan">Show resampled data time-series</strong>')
 
 
     def updateFillSubtab(self):

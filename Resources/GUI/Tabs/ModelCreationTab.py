@@ -415,9 +415,9 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.predictorPlotButton = richTextButton('<strong style="font-size: 12px; color:darkcyan">Show resampled data correlation to target</strong>')
         self.predictorPlotButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred)
         # add everything to layout
-        plotLayout.addWidget(self.predictorPlotButton)
         plotLayout.addWidget(self.predictorPlot)
         plotLayout.addWidget(self.predictorCorrelationPlot)
+        plotLayout.addWidget(self.predictorPlotButton)
         self.predictorPlotWidget = QtWidgets.QWidget()
         self.predictorPlotWidget.setLayout(plotLayout)
 

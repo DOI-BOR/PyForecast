@@ -879,12 +879,12 @@ class BarAndLinePlot(pg.PlotItem):
 
         return
 
+
     def updateText(self, text):
         self.clearPlots()
         self.no_data_text_item = pg.TextItem(html=text)
         self.addItem(self.no_data_text_item)
-        self.no_data_text_item.setPos(0, 0)
-
+        self.no_data_text_item.setPos(1, 1)
 
 
     def setData(self, x, lineData, barData, units, labels, barWidth, spacing = 0):

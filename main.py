@@ -38,7 +38,9 @@ warnings.filterwarnings('ignore')
 import time
 import argparse
 from datetime import datetime
+import traceback
 from PyQt5 import QtGui, QtWidgets, QtCore, QtWebEngineWidgets
+from PyQt5.QtWidgets import QMessageBox
 
 
 # Custom application style to make the tooltip behavior a bit more tolerable.
@@ -63,6 +65,36 @@ class Logger(object):
         self.log.write(message)
     def flush(self):
         self.log.flush()
+
+
+class ErrorApp:
+    def raise_error(self):
+        assert False
+
+
+def showMessageBox(boxTitle, mainText, subText = None, detailText = None):
+    msg = QMessageBox()
+    msg.setIcon(QMessageBox.Critical)
+    msg.setWindowTitle(boxTitle)
+    msg.setText(mainText)
+    if subText is not None:
+        msg.setInformativeText(subText)
+    if detailText is not None:
+        msg.setDetailedText(detailText)
+    msg.setStandardButtons(QMessageBox.Ok)
+    msg.exec_()
+
+
+def excepthook(exc_type, exc_value, exc_tb):
+    tb = "".join(traceback.format_exception(exc_type, exc_value, exc_tb))
+    showMessageBox("FATAL ERROR",
+                   "PyForecast has encountered a fatal error and needs to close. ",
+                   "You may report this error to the developers with the information shown below.",
+                   tb)
+    print("-- ERROR --")
+    print("error message:\n", tb)
+    QtWidgets.QApplication.quit()
+    # or QtWidgets.QApplication.exit(0)
 
 
 if __name__ == '__main__':
@@ -131,5 +163,10 @@ if __name__ == '__main__':
     mw = application.mainWindow()
     if no_splash == 'True':
         splash.finish(mw)
-    
-    sys.exit(app.exec_())
+
+    sys.excepthook = excepthook
+    e = ErrorApp()
+    e.app = app
+    ret = e.app.exec_()
+    sys.exit(ret)
+    #sys.exit(app.exec_())

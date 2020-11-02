@@ -681,7 +681,10 @@ class DatasetListHTMLFormattedMultiple(QtWidgets.QListWidget):
 
                 # Set the item colors
                 if self.itemColors is not None:
-                    item.setBackground(self.itemColors[row])
+                    try:
+                        item.setBackground(self.itemColors[row])
+                    except:
+                        pass
 
                 # set the item's text to the HTML formatted version of the dataset
                 htmlString = self.substituteFormatString(item.data(QtCore.Qt.UserRole), i[1])

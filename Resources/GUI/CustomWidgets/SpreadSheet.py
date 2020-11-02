@@ -741,6 +741,10 @@ class SpreadSheetViewOperations(QtWidgets.QTableView):
         self.setCurrentIndex(test)
         # self.setSelection(selectedBox, QtCore.QItemSelectionModel.Select)
 
+    def clearTable(self):
+        self.model().removeRows(0, self.model().rowCount())
+        self.model().removeColumns(0, self.model().columnCount())
+
 
 class SpreadSheetForecastEquations(QtWidgets.QWidget):
     """
