@@ -14,7 +14,6 @@ import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
 import importlib
-from resources.GUI.CustomWidgets import PyQtGraphOverrides
 from resources.modules.Miscellaneous.DataProcessor import resampleDataSet
 from bisect import bisect_left
 from statsmodels.tsa.stattools import ccf
