@@ -1068,15 +1068,11 @@ class BarAndLinePlot(pg.PlotItem):
 
 class BarandDoubleAxisLinePlot(pg.PlotItem):
     """
-    Simple time series line plot. Plots a datetime
-    on the x axis and times series on the y-axes.
-
-    arguments:
-        x:
+    Plots multiple line series, divided between the two y axis, with a bar plot superimposed. The bar plot does not show
+    any units of its own. It is normalized to the range of the secondary y axis and uses the legend to display a value.
     """
-    # todo: update doc string
 
-    def __init__(self, parent = None, *args):
+    def __init__(self, parent=None, *args):
 
         # INITIALIZE THE CLASS WITH THE PROVIDED ARGUMENTS
         pg.PlotItem.__init__(self, axisItems={"bottom":DateTimeAxis(orientation = "bottom")}, *args)
@@ -1102,6 +1098,7 @@ class BarandDoubleAxisLinePlot(pg.PlotItem):
         self.barData = np.array([[]])
         self.barUnits = []
         self.barLabels = []
+        self.barSeriesLabels = []
         self.x_bar = np.array([])
 
         # CREATE LEGEND
@@ -1148,7 +1145,6 @@ class BarandDoubleAxisLinePlot(pg.PlotItem):
 
         # ADD INTERACTION
         self.parent.scene().sigMouseMoved.connect(self.mouseMoved)
-
 
         return
 
@@ -1202,7 +1198,7 @@ class BarandDoubleAxisLinePlot(pg.PlotItem):
                     idx2 = np.where(item.opts['x'] == date)
 
                     yval = round(self.barData[0][idx2[0]][0],2)
-                    self.legend.items[legend_count][1].setText(item.opts['name']+' <strong>'+str(yval) +' '+ item.units+'</strong>')
+                    self.legend.items[legend_count][1].setText(item.opts['name'][int(idx2[0])]+' <strong>'+str(yval) +' '+ item.units+'</strong>')
                     self.bar_items_highlight[j].setOpts(width=self.barWidth, x=[date], height=[yval])
                     legend_count += 1
 
@@ -1265,7 +1261,11 @@ class BarandDoubleAxisLinePlot(pg.PlotItem):
 
 
     def clearPlots(self):
-        # CLEAR ANY EXISTING DATA
+        """
+        Clears all existing data on the plot
+
+        """
+
         for j, item in enumerate(self.bar_items):
             if item.isActive:
                 item.isActive = False
@@ -1294,33 +1294,44 @@ class BarandDoubleAxisLinePlot(pg.PlotItem):
 
         return
 
-    def setData(self, xLine, lineData1, lineData2, units, lineLabels, xBar, barData, barLabels, barUnits, barWidth, spacing=0):
+    def setData(self, xLine, lineData1, lineData2, units, lineLabels, xBar, barData, barLabels, barSeriesLabels,
+                barUnits, barWidth, spacing=0):
 
         """
-        Sets the data in the plot. The function can plot up to 100 series on the same plot
-        (50 series in the 'y1' argument and 50 series in the 'y2' argument).
+        Sets the data in the plot. The function can plot up to 150 series on the same plot
+        (50 series in the 'lineData1' argument, 50 series in the 'lineData2' argument, 50 series in the 'barData' argument).
 
         Pass an array of datetimes to the 'x' argument, and pass an array of
         y-value arrays to one or both of the 'y' arguments.
 
-        example:
-            -> Plots 3 series total (2 on y1 axis and 1 on y2 axis).
-            self.setData(
-                x = np.array([datetime(2020,1,1), datetime(2020,3,1)]),
-                y1 = np.array([[4.2, 32.1], [7.3, 4.3]]),
-                y2 = np.array([[5.3, 4.2]]),
-                units = ['cfs','cfs','degF'],
-                labels = ['Hudson River','Cuyahoga River','Sea Surface Temp']
+        Parameters
+        ----------
+        xLine: ndarray
+            x locations for the line time series. 1-D np.array([...list of datetimes...)
+        lineData1: ndarray
+            Data for the left axis line series. 2-D np.array([...[dataset1...], [dataset2...],...)
+        lineData2:
+            Data for the right axis line series. 2-D np.array([...[dataset1...], [dataset2...],...)
+        units: list
+            Units for each line series e.g. ['cfs','inches','inches']
+        lineLabels: list
+            Labels for each line series e.g. ['Hudson River', 'Summit Peak', 'Clover Meadows']
+        xBar: ndarray
+            x locations for the bar series. 1-D np.array([...list of datetimes...)
+        barData: ndarray
+            Data for each bar series. 2-D np.array([...[dataset1...], [dataset2...],...)
+        barLabels: list
+            Labels for each bar in each bar series. 2-D list [['lable1Series1', 'label2Series1'], ['lable1Series2', 'label2Series2']]
+        barSeriesLabels: list
+            Labels to be applied to each bar siers. 1_D list ['Series1', 'Series2']
+        barUnits: list
+            Units for each bar series ['Units1', 'Units2']
+        barWidth: int
+            Size of bars to be displayed
+        spacing: int
+            Spacing between adjacent bars in different series
 
-
-        arguments:
-            x:      1-D np.array([...list of datetimes...)
-            y1:     2-D np.array([...[dataset1...], [dataset2...],...)
-            y2:     2-D np.array([...[dataset1...], [dataset2...],...)
-            units:  list e.g. ['cfs','inches','inches']
-            labels: list e.g. ['Hudson River', 'Summit Peak', 'Clover Meadows']
         """
-        # todo: update doc string
 
         # CLEAR ANY EXISTING DATA
         for j, item in enumerate(self.line_items_axis_2):
@@ -1350,6 +1361,7 @@ class BarandDoubleAxisLinePlot(pg.PlotItem):
         self.x_bar = xBar
         self.barData = barData
         self.barLabels = barLabels
+        self.barSeriesLabels = barSeriesLabels
         self.barUnits = barUnits
         self.barWidth = (barWidth - spacing / 2) * 4
 
@@ -1436,7 +1448,8 @@ class BarandDoubleAxisLinePlot(pg.PlotItem):
             heights = dataset * yHalfRange
 
             # ADD TO PLOT
-            self.bar_items[j].setOpts(x=x_bar[j], y0=np.ones(len(dataset)) * yAverage, height=heights, name=self.barLabels[j], width=self.barWidth)
+            self.bar_items[j].setOpts(x=x_bar[j], y0=np.ones(len(dataset)) * yAverage, height=heights,
+                                      name=self.barSeriesLabels[j], width=self.barWidth)
             self.bar_items[j].opts['name'] = self.barLabels[j]
             self.bar_items[j].units = self.barUnits[j]
             self.bar_items[j].isActive = True
@@ -1461,7 +1474,7 @@ class BarandDoubleAxisLinePlot(pg.PlotItem):
                 self.viewbox_axis_2.addItem(self.bar_items_highlight[j])
 
                 if item.name() is not None:
-                    self.legend.addItem(item, item.name())
+                    self.legend.addItem(item, self.barSeriesLabels[j])
 
         # SET THE AXIS LABELS
         self.getAxis('left').setLabel(' '.join(self.y1_Axis_Units))
@@ -1888,6 +1901,10 @@ class FillExtendTabPlots(pg.GraphicsLayoutWidget):
 class WindowTabPlots(pg.GraphicsLayoutWidget):
 
     def __init__(self, parent = None):
+        """
+        Initalizes the window subtab plot that shows variable cross correlation
+
+        """
 
         # INSTANTIATE THE WIDGET AND CREATE A REFERENCE TO THE PARENT
         pg.GraphicsLayoutWidget.__init__(self, parent)
@@ -1927,7 +1944,10 @@ class WindowTabPlots(pg.GraphicsLayoutWidget):
         return
 
     def clearPlots(self):
-        # todo: doc string
+        """
+        Clears the data from the plot
+
+        """
 
         self.plot.clearPlots()
 
@@ -1936,9 +1956,8 @@ class WindowTabPlots(pg.GraphicsLayoutWidget):
 
     def displayDatasets(self, sourceName, targetName, sourceData, targetData, sourceUnits, targetUnits, barUnits):
         """
+        Updates the plotted data with new information
 
-        @param datasets:
-        @return:
         """
 
         # Clear the existing data
@@ -1948,20 +1967,33 @@ class WindowTabPlots(pg.GraphicsLayoutWidget):
         if len(sourceData) > 1 and not np.any(np.isnan(sourceData)) and not np.any(np.isnan(targetData)):
             # Start date is before the end date, so lag is positive. Calculate a nonzero correlation to display.
             # Cross correlation between the source and target datasets
+            xBar = np.atleast_2d(sourceData.index)
             correlation = np.convolve(targetData.values - np.mean(targetData.values), targetData.values[::-1] - np.mean(targetData.values), 'same') / \
                           (len(targetData.values) * np.std(targetData.values) ** 2)
-
-            xBar = np.atleast_2d(sourceData.index)
 
             # Promote correlation to a 2d array
             correlation = np.atleast_2d(correlation)
 
+            # Setup the line data
             dateRange = sourceData.index
             targetData = np.atleast_2d(targetData.values)
             sourceData = np.atleast_2d(sourceData.values)
 
+            # Setup the bar metadata
+            if len(correlation[0]) % 2 == 0:
+                # Series length is even
+                halfLength = int(np.floor(len(correlation[0]) / 2))
+                barLabels = [['Lag ' + str(x) + ':' for x in np.arange(-halfLength, halfLength, 1)]]
+            else:
+                # Series length is odd
+                halfLength = int(np.floor(len(correlation[0]) / 2))
+                barLabels = [['Lag ' + str(x) + ': ' for x in np.arange(-halfLength, halfLength + 1, 1)]]
+
+            barSeriesLabels = ['Correlation']
+
+            # Call the plot function
             self.plot.setData(dateRange, sourceData, targetData, [sourceUnits, targetUnits], [sourceName, targetName],
-                              xBar, correlation, [barUnits], ['Correlation'], 10000)
+                              xBar, correlation, barLabels, barSeriesLabels, [barUnits], 10000)
 
         else:
             # Start date is after the end date, so the lag is negative. Return a zero correlation
