@@ -926,11 +926,11 @@ class modelCreationTab(object):
             self.modelTab.layoutWindowAggregationGroup.periodStart.setDate(parser.parse(predPeriodItems[1]))
             predPeriodPStep = str(predPeriodItems[2])[-1]
             a = self.modelTab.layoutWindowAggregationGroup.predictorResamplingOptions.index(predPeriodPStep)
-            self.modelTab.layoutWindowAggregationGroup.tStepChar.setCurrentIndex(self.layoutWindowAggregationGroup.predictorResamplingOptions.index(predPeriodPStep))
+            self.modelTab.layoutWindowAggregationGroup.tStepChar.setCurrentIndex(self.modelTab.layoutWindowAggregationGroup.predictorResamplingOptions.index(predPeriodPStep))
             predPeriodPNum = ''.join(map(str,[int(s) for s in predPeriodItems[2] if s.isdigit()]))
             self.modelTab.layoutWindowAggregationGroup.tStepInteger.setValue(int(predPeriodPNum))
             predPeriodFStep = str(predPeriodItems[3])[-1]
-            self.modelTab.layoutWindowAggregationGroup.freqChar.setCurrentIndex(self.layoutWindowAggregationGroup.predictorResamplingOptions.index(predPeriodFStep))
+            self.modelTab.layoutWindowAggregationGroup.freqChar.setCurrentIndex(self.modelTab.layoutWindowAggregationGroup.predictorResamplingOptions.index(predPeriodFStep))
             predPeriodFNum = ''.join(map(str,[int(s) for s in predPeriodItems[3] if s.isdigit()]))
             self.modelTab.layoutWindowAggregationGroup.freqInteger.setValue(int(predPeriodFNum))
 
