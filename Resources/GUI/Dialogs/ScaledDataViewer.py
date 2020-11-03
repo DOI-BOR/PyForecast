@@ -8,7 +8,7 @@ import os
 sys.path.append(os.getcwd())
 import numpy as np
 import re
-from resources.GUI.CustomWidgets import PyQtGraphs, DatasetBoxView
+from resources.GUI.CustomWidgets import DatasetBoxView
 from    PyQt5   import  QtWidgets, \
                         QtCore, \
                         QtGui

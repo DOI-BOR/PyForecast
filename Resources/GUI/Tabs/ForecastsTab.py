@@ -11,7 +11,7 @@ from PyQt5 import  QtWidgets, QtCore, QtGui
 from resources.GUI.CustomWidgets.forecastList_FormattedHTML import forecastList_HTML
 from resources.GUI.CustomWidgets.customTabs import EnhancedTabWidget
 from resources.GUI.CustomWidgets.SpreadSheet import SpreadSheetForecastEquations, GenericTableView
-from resources.GUI.CustomWidgets.PyQtGraphs_V2 import ResultsTabPlots
+from resources.GUI.CustomWidgets.PyQtGraphs import ResultsTabPlots
 from resources.modules.ForecastsTab.forecastTabMaster import *
 from resources.GUI.CustomWidgets.richTextButtons import richTextButton, richTextButtonCheckbox, richTextDescriptionButton
 
