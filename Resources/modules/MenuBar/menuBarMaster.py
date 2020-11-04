@@ -85,6 +85,7 @@ class menuBar(object):
         if fname == '':
             return
 
+        self.updateStatusMessage('Loading forecast file...')
         # Load all the tables, files
         with open(fname, 'rb') as readfile:
             try:
@@ -126,6 +127,7 @@ class menuBar(object):
         self.resetModelCreationTab()
         self.resetForecastsTab()
         self.fileOpened = True
+        self.updateStatusMessage('Forecast file loaded!')
 
 
     def showMessageBox(self, boxTitle, mainText, subText = None, detailText = None):
@@ -139,3 +141,8 @@ class menuBar(object):
             msg.setDetailedText(detailText)
         msg.setStandardButtons(QMessageBox.Ok)
         msg.exec_()
+
+
+    def updateStatusMessage(self, message, messageFormat=None):
+        self.statusBar().showMessage(message)
+        self.statusBar().repaint()

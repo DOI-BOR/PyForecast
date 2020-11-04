@@ -535,6 +535,7 @@ class modelCreationTab(object):
             self.modelTab.layoutFillOrderLabel.setVisible(False)
             self.modelTab.layoutFillOrder.setVisible(False)
 
+
     def updateFillOptionsOnDataset(self):
         """
         Displays the correct information for the selected dataset in the fill pane
@@ -579,6 +580,7 @@ class modelCreationTab(object):
         ### Update the plot with the dataset and interpolation ###
         self.updateFillPlot(currentIndex, fillMethod, fillGap, fillOrder)
 
+
     def applyFillOptionsToDataset(self):
         """
         Applies the fill attributes to a dataset
@@ -611,6 +613,7 @@ class modelCreationTab(object):
         # Update the plot on the tab
         self.updateFillPlot(currentIndex, fillMethod, fillLimit, fillOrder)
 
+
     def applyFillClearToDataset(self):
         """
         Clears the fill attributes of a dataset
@@ -631,6 +634,7 @@ class modelCreationTab(object):
         # Switch the stacked widgets
         self.modelTab.layoutFillMethodSelector.setCurrentIndex(0)
         self.updateFillSubtab()
+
 
     def updateFillPlot(self, currentIndex, fillMethod, fillLimit, fillOrder):
         """
@@ -684,6 +688,7 @@ class modelCreationTab(object):
         self.modelTab.layoutFillPlot.updateData(sourceData, 'Status', sourceUnits)
         self.modelTab.layoutFillPlot.displayDatasets()
 
+
     def updateExtendSubtab(self):
         """
         Updates the state of the extend subtab methods pane based on the method selector
@@ -716,6 +721,7 @@ class modelCreationTab(object):
             self.modelTab.layoutExtendFourierDurationLimit.setVisible(True)
             self.modelTab.layoutExtendFourierFilterLabel.setVisible(True)
             self.modelTab.layoutExtendFourierFilter.setVisible(True)
+
 
     def updateExtendOptionsOnDataset(self):
         """
@@ -765,6 +771,7 @@ class modelCreationTab(object):
         # Update the plot on the tab
         self.updateExtendPlot(currentIndex, extendMethod, extendDuration, extendFilter)
 
+
     def applyExtendOptionsToDataset(self):
         """
         Applies the fill attributes to a dataset
@@ -805,6 +812,7 @@ class modelCreationTab(object):
         # Update the plot on the tab
         self.updateExtendPlot(currentIndex, extendMethod, extendLimit, extendFilter)
 
+
     def applyExtendClearToDataset(self):
         """
         Clears the fill attributes of a dataset
@@ -825,6 +833,7 @@ class modelCreationTab(object):
         # # Switch the stacked widgets
         self.modelTab.layoutExtendMethodSelector.setCurrentIndex(0)
         self.updateExtendSubtab()
+
 
     def updateExtendPlot(self, currentIndex, extendMethod, extendLimit, extendFilter):
         """
@@ -891,6 +900,7 @@ class modelCreationTab(object):
         self.modelTab.layoutExtendPlot.updateData(sourceData, 'Status', sourceUnits)
         self.modelTab.layoutExtendPlot.displayDatasets()
 
+
     def updateWindowOptionsOnDataset(self):
         """
         Displays the correct information for the selected dataset in the window pane
@@ -943,6 +953,7 @@ class modelCreationTab(object):
         # Update the plot
         self.updateWindowPlot()
 
+
     def applyWindowOptionsToDataset(self):
         """
         Applies the fill attributes to a dataset
@@ -967,6 +978,7 @@ class modelCreationTab(object):
         # Set the button to clear
         self.modelTab.layoutWindowApplyButton.setChecked(False)
 
+
     def applyWindowClearToDataset(self):
         """
         Clears the window attributes of a dataset
@@ -985,6 +997,7 @@ class modelCreationTab(object):
 
         # Clear the button click
         self.modelTab.layouWindowClearButton.setChecked(False)
+
 
     def updateWindowPlot(self):
         """
@@ -1021,6 +1034,7 @@ class modelCreationTab(object):
         # Calculate and plot the updated data
         self.modelTab.layoutWindowPlot.displayDatasets(sourceName, targetName, sourceData, targetData,
                                                        sourceUnits, targetUnits, '')
+
 
     def applySummaryClear(self):
         """
@@ -1155,6 +1169,7 @@ class modelCreationTab(object):
             self.modelRunsTable.loc[0]['FeatureSelectionTypes'] = selAlgs
             self.modelRunsTable.loc[0]['ScoringParameters'] = scoreParams
             ### Kick off the analysis ###
+            self.updateStatusMessage('Running regression calculations. Please wait...')
             print('INFO: ---- MODEL RUN TABLE ----')
             print(self.modelRunsTable.iloc[0])
             print('-------------------------')
@@ -1166,6 +1181,7 @@ class modelCreationTab(object):
 
             ### Populate self.forecastEquationsTable ###
             print('INFO: Populating forecast equations table...')
+            self.updateStatusMessage('Populating forecast equations table...')
             self.forecastEquationsTable.drop(self.forecastEquationsTable.index, inplace=True)
             resultCounter = 0
             for result in self.rg.resultsList:
@@ -1203,6 +1219,7 @@ class modelCreationTab(object):
                 self.modelTab.summaryLayoutErrorLabel.setVisible(True)
 
             print('INFO: Model run complete!')
+            self.updateStatusMessage('Model run complete! ' + str(len(self.rg.resultsList)) + ' models were evaluated.')
 
 
     def updateTargetInfo(self):
@@ -1274,6 +1291,7 @@ class modelCreationTab(object):
             return
 
         # Rebuild model
+        self.updateStatusMessage('Regenerating model...')
         QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
         self.modelTab.selectedModel = Model(self.modelTab.parent, forecastEquationTableEntry)
         self.modelTab.selectedModel.generate()
@@ -1343,6 +1361,7 @@ class modelCreationTab(object):
         self.modelTab.resultsObservedForecstPlot.updateScatterPlot(self.modelTab.selectedModel.regressionData)
         self.modelTab.resultsInflowYearPlot.updateTimeSeriesPlot(self.modelTab.selectedModel.regressionData)
         self.modelTab.resultsResidualYearPlot.updateResidualPlot(self.modelTab.selectedModel.regressionData)
+        self.updateStatusMessage('')
 
 
     def modelTableRightClick(self, pos):
@@ -1420,6 +1439,7 @@ class modelCreationTab(object):
             self.modelTab.summaryListWidget.model().loadDataIntoModel(self.datasetTable, self.datasetOperationsTable)
 
         elif tabIndex == 4:
+            self.updateStatusMessage('Updating generated forecasts table...')
             self.modelTab.resultsMetricTable.loadDataIntoModel(self.forecastEquationsTable)
-
+            self.updateStatusMessage('')
 

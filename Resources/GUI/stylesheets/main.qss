@@ -17,6 +17,10 @@ QMenuBar::item:selected {
 QStackedWidget {
     background: #e8e8e8;
 }
+QStatusBar {
+    background: #003E51;
+    color: #ffffff;
+}
 QWidget#EnhancedTabWidget {
     background: #003E51;
     font-family: "Segoe UI";
