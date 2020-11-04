@@ -271,6 +271,7 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
         self.initializeModelCreationTab()
         self.initializeForecastsTab()
         self.setupMenuBar()
+        self.statusBar().setVisible(True)
 
         # Intiate a threadpool
         self.threadPool = QtCore.QThreadPool()

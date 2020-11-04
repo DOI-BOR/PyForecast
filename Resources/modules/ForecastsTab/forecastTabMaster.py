@@ -77,6 +77,7 @@ class forecastsTab(object):
             return
 
         # Rebuild model
+        self.updateStatusMessage('Regenerating model...')
         QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
         self.forecastsTab.selectedModel = Model(self.forecastsTab.parent, forecastEquationTableEntry)
         self.forecastsTab.selectedModel.equationID = modelIdx
@@ -153,6 +154,7 @@ class forecastsTab(object):
         self.updateForecastYearData()
         self.forecastsTab.runModelButton.setEnabled(True)
         self.forecastsTab.saveModelButton.setEnabled(False)
+        self.updateStatusMessage('')
 
 
     def updateForecastYearData(self):
@@ -201,6 +203,7 @@ class forecastsTab(object):
 
 
     def generateModelPrediction(self):
+        self.updateStatusMessage('Generating prediction...')
         self.forecastsTab.runModelButton.setChecked(False)
         lookupYear = self.forecastsTab.modelYearSpin.value()
         self.forecastsTab.selectedModel.predictionYear = lookupYear
@@ -209,6 +212,7 @@ class forecastsTab(object):
         self.forecastsTab.resultsObservedForecstPlot.appendForecast(self.forecastsTab.selectedModel.prediction,
                                                                     self.forecastsTab.selectedModel.predictionRange.loc[[10,25,75,90]])
         self.forecastsTab.saveModelButton.setEnabled(True)
+        self.updateStatusMessage('')
 
 
     def saveModelPrediction(self):
