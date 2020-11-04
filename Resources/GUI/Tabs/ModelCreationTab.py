@@ -956,14 +956,26 @@ class ModelCreationTab(QtWidgets.QWidget):
         layoutWindowRightOptionsLayout.setContentsMargins(0, 0, 0, 0)
 
         ### Setup the upper plot ###
-        # Create a line/bar plot object
+        # Create the tab widget
+        self.stackedWindowLayout = QtWidgets.QStackedLayout()
+
+        stackedWindowLayoutWidget = QtWidgets.QWidget()
+        stackedWindowLayoutWidget.setLayout(self.stackedWindowLayout)
+        stackedWindowLayoutWidget.setVisible(False)
+
+        # Create a line/bar plot object and add it into the stacked layout
+        self.layoutWindowPlotStandard = ModelTabTargetPlot()
+        self.layoutWindowPlotStandard.hide()
+        self.stackedWindowLayout.addWidget(self.layoutWindowPlotStandard)
+
+        # Create the layout for the windowed plot
+        layoutWindowedPlotLayout = QtWidgets.QVBoxLayout()
+
+        # Create windowed plot
         self.layoutWindowPlot = WindowTabPlots()
 
         # Add into the main layout
-        layoutWindowRightLayout.addWidget(self.layoutWindowPlot)
-
-        ### Create the date/lag widgets ###
-        # todo: capture these values for each dataset on list change
+        layoutWindowedPlotLayout.addWidget(self.layoutWindowPlot)
 
         ## Create the start time widget ##
         # Create the label
@@ -984,6 +996,9 @@ class ModelCreationTab(QtWidgets.QWidget):
         periodLayout.addWidget(periodStartLabel)
         periodLayout.addWidget(self.periodStartWindow)
 
+        ## Add a spacer widget ##
+        spacer = QtWidgets.QSpacerItem(15, 0)
+        periodLayout.addItem(spacer)
 
         ## Create the stop time widget ##
         # Create the label
@@ -1002,29 +1017,81 @@ class ModelCreationTab(QtWidgets.QWidget):
         periodLayout.addWidget(periodEndLabel)
         periodLayout.addWidget(self.periodEndWindow)
 
-        ## Create the lag box widget ##
-        # Create the label
-        extendGapLabel = QtWidgets.QLabel('Lag Length')
-        extendGapLabel.setSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Maximum)
-
-        # Create the widget
-        self.layoutWindowLagLimit = QtWidgets.QLineEdit()
-        self.layoutWindowLagLimit.setPlaceholderText('30')
-        self.layoutWindowLagLimit.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.Maximum)
-        self.layoutWindowLagLimit.setReadOnly(True)
-
-        # Add the widgets to the layout
-        periodLayout.addWidget(extendGapLabel)
-        periodLayout.addWidget(self.layoutWindowLagLimit)
-
+        # Convert the layout to a widget and add to the parent layout
         periodLayoutWidget = QtWidgets.QWidget()
         periodLayoutWidget.setLayout(periodLayout)
-        layoutWindowRightLayout.addWidget(periodLayoutWidget)
+        layoutWindowedPlotLayout.addWidget(periodLayoutWidget)
+
+        # Promote the layout to a widget and add to the stack
+        layoutWindowedPlotLayoutWidget = QtWidgets.QWidget()
+        layoutWindowedPlotLayoutWidget.setLayout(layoutWindowedPlotLayout)
+        self.stackedWindowLayout.addWidget(layoutWindowedPlotLayoutWidget)
+
+        layoutWindowRightLayout.addWidget(stackedWindowLayoutWidget)
 
         ### Create a line to delineate the selector from the selector options ###
         lineA = QtWidgets.QFrame()
         lineA.setFrameShape(QtWidgets.QFrame.HLine)
         layoutWindowRightLayout.addWidget(lineA)
+
+        ### Create a horizontal layout to accept the plotting rows ###
+        layoutWindowRightBottom = QtWidgets.QHBoxLayout()
+
+        ### Add the plotting layout options ###
+        # Create the group
+        layoutWindowPlottingGroup = QtWidgets.QGroupBox("Define the plotting variable:")
+
+        # Create a plotting group layout
+        plottingGroupLayout = QtWidgets.QVBoxLayout()
+        plottingGroupLayout.setAlignment(QtCore.Qt.AlignTop)
+
+        # Create the plotting selector
+        self.layoutWindowPlottingOptionAggregated = QtWidgets.QRadioButton('Aggregated')
+        self.layoutWindowPlottingOptionAggregated.setChecked(True)
+        self.layoutWindowPlottingOptionRawCrossCorrelation = QtWidgets.QRadioButton('Raw Cross-correlation')
+        self.layoutWindowPlottingOptionAggregatedCrossCorrelation = QtWidgets.QRadioButton('Aggregated Cross-correlation')
+
+        # Add the widget/group to the layout
+        plottingGroupLayout.addWidget(self.layoutWindowPlottingOptionAggregated)
+        plottingGroupLayout.addWidget(QtWidgets.QLabel('       Summary of the selected variable with aggregation applied.'))
+        plottingGroupLayout.addWidget(self.layoutWindowPlottingOptionRawCrossCorrelation)
+        plottingGroupLayout.addWidget(QtWidgets.QLabel('       Cross-correlation of the selected timeseries before aggregation.'))
+        plottingGroupLayout.addWidget(self.layoutWindowPlottingOptionAggregatedCrossCorrelation)
+        plottingGroupLayout.addWidget(QtWidgets.QLabel('       Cross-correlation of the selected timeseries after aggregation'))
+
+        # Set the layout into the group object
+        layoutWindowPlottingGroup.setLayout(plottingGroupLayout)
+
+        # Add the widget into the bottom layout
+        layoutWindowRightBottom.addWidget(layoutWindowPlottingGroup)
+
+        ### Add in summary statistics plot ###
+        # Create the group
+        layoutWindowCorrelationGroup = QtWidgets.QGroupBox("Correlation Statistics")
+
+        # Create the group layout
+        correlationGroupLayout = QtWidgets.QVBoxLayout()
+        correlationGroupLayout.setAlignment(QtCore.Qt.AlignTop)
+
+        # Create the raw label and box, adding to the layout
+        rawCorrelationLabel = QtWidgets.QLabel('Raw Correlation')
+        self.rawCorrelation = QtWidgets.QLineEdit('N/A')
+        self.rawCorrelation.setReadOnly(True)
+
+        correlationGroupLayout.addWidget(rawCorrelationLabel)
+        correlationGroupLayout.addWidget(self.rawCorrelation)
+
+        # Create the aggregated label and box, adding to tha layout
+        aggregatedCorrelationLabel = QtWidgets.QLabel('Aggregated Correlation')
+        self.aggregatedCorrelation = QtWidgets.QLineEdit('N/A')
+        self.aggregatedCorrelation.setReadOnly(True)
+
+        correlationGroupLayout.addWidget(aggregatedCorrelationLabel)
+        correlationGroupLayout.addWidget(self.aggregatedCorrelation)
+
+        # Promote the correlation group to a widget and add to the horizontal layout
+        layoutWindowCorrelationGroup.setLayout(correlationGroupLayout)
+        layoutWindowRightBottom.addWidget(layoutWindowCorrelationGroup)
 
         ### Add the aggregation options ###
         # Create the widget
@@ -1032,8 +1099,16 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.layoutWindowAggregationGroup.setSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Maximum)
 
         # Add it into the page
-        layoutWindowRightLayout.addWidget(self.layoutWindowAggregationGroup)
-        layoutWindowRightLayout.setAlignment(QtCore.Qt.AlignHCenter)
+        layoutWindowRightBottom.addWidget(self.layoutWindowAggregationGroup)
+        # layoutWindowRightLayout.setAlignment(QtCore.Qt.AlignHCenter)
+
+        ### Add the bottom layout into the right panel ###
+        # Promote the layout to a widget
+        layoutWindowRightBottomWidget = QtWidgets.QWidget()
+        layoutWindowRightBottomWidget.setLayout(layoutWindowRightBottom)
+
+        # Add the widget into the panel
+        layoutWindowRightLayout.addWidget(layoutWindowRightBottomWidget)
 
         ### Create clear and apply buttons to apply operations ###
         # Create the clear button
@@ -1073,6 +1148,9 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Add the layout to the extend scrollable area
         layoutWindowSA.setLayout(layoutWindow)
+
+        # Reenable the page to prevent window flashes
+        stackedWindowLayoutWidget.setVisible(True)
 
     def _createOptionsTabLayout(self):
         """
