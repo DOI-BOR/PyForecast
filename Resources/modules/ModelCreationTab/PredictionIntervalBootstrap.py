@@ -12,6 +12,9 @@ def computePredictionInterval(parent, observations, preprocessor, regressor, cro
     develop an estimate of the prediction interval of the 
     new prediction, unbiased by any model or parameter assumptions 
     (e.g. normality).
+    
+     TAKEN FROM THIS REFERENCE:
+     https://stats.stackexchange.com/questions/226565/bootstrap-prediction-interval
 
     inputs:
         -observations = a matrix of the observations used to create the prediction

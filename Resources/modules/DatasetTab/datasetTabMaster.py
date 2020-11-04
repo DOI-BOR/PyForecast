@@ -48,11 +48,11 @@ class datasetTab(object):
         """
 
         # Refresh the dataset list view
-        self.datasetTab.selectedDatasetsWidget.setDatasetTable(self.datasetTable)
+        self.datasetTab.selectedDatasetsWidget.refreshList()#setDatasetTable(self.datasetTable)
         self.datasetTab.selectedDatasetsLabel.setText("{0} DATASETS HAVE BEEN SELECTED:".format(len(self.datasetTable)))
 
         # Also refresh the dataset lists elsewhere in the software
-        self.dataTab.datasetList.setDatasetTable(self.datasetTable)
+        self.dataTab.datasetList.refreshList()#.setDatasetTable(self.datasetTable)
         self.modelTab.datasetList.setDatasetTable(self.datasetTable)
 
         return
@@ -247,11 +247,11 @@ class datasetTab(object):
         if refresh_gui:
 
             # Refresh the dataset list view
-            self.datasetTab.selectedDatasetsWidget.setDatasetTable(self.datasetTable)
+            self.datasetTab.selectedDatasetsWidget.refreshList()#.selectedDatasetsWidget.setDatasetTable(self.datasetTable)
             self.datasetTab.selectedDatasetsLabel.setText("{0} DATASETS HAVE BEEN SELECTED:".format(len(self.datasetTable)))
 
             # Also refresh the dataset lists elsewhere in the software
-            self.dataTab.datasetList.setDatasetTable(self.datasetTable)
+            self.dataTab.datasetList.refreshList()#.datasetList.setDatasetTable(self.datasetTable)
             self.modelTab.datasetList.setDatasetTable(self.datasetTable)
 
         return
@@ -297,11 +297,11 @@ class datasetTab(object):
             remove_(datasetInternalID)
 
         # Refresh the dataset list view
-        self.datasetTab.selectedDatasetsWidget.setDatasetTable(self.datasetTable)
+        self.datasetTab.selectedDatasetsWidget.refreshList()#.selectedDatasetsWidget.setDatasetTable(self.datasetTable)
         self.datasetTab.selectedDatasetsLabel.setText("{0} DATASETS HAVE BEEN SELECTED:".format(len(self.datasetTable)))
 
         # Also refresh the dataset lists elsewhere in the software
-        self.dataTab.datasetList.setDatasetTable(self.datasetTable)
+        self.dataTab.datasetList.refreshList()#.datasetList.setDatasetTable(self.datasetTable)
         self.dataTab.spreadsheet.model().loadDataIntoModel(self.dataTable, self.datasetTable)
         self.modelTab.datasetList.setDatasetTable(self.datasetTable)
         self.dataTab.plot.clearPlots()
@@ -345,11 +345,11 @@ class datasetTab(object):
         # NEED TO FIGURE OUT IF WE NEED TO UPDATE THE DATA OR DELETE ANY DATASETS ? FORECASTS ? ETC
 
         # Update the display
-        self.datasetTab.selectedDatasetsWidget.setDatasetTable(self.datasetTable)
+        self.datasetTab.selectedDatasetsWidget.refreshList()#.selectedDatasetsWidget.setDatasetTable(self.datasetTable)
         self.datasetTab.selectedDatasetsLabel.setText("{0} DATASETS HAVE BEEN SELECTED:".format(len(self.datasetTable)))
 
         # Also refresh the dataset lists elsewhere in the software
-        self.dataTab.datasetList.setDatasetTable(self.datasetTable)
+        self.dataTab.datasetList.refreshList()#.datasetList.setDatasetTable(self.datasetTable)
         self.modelTab.datasetList.setDatasetTable(self.datasetTable)
 
 

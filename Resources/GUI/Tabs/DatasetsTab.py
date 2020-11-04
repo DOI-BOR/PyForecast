@@ -8,7 +8,7 @@ Description:        'DatasetsTab.py' is a PyQt5 GUI for the PyForecast applicati
 """
 
 from PyQt5 import  QtWidgets, QtCore, QtGui
-from resources.GUI.CustomWidgets import DatasetList_HTML_Formatted, SVGIcon, customTabs
+from resources.GUI.CustomWidgets import DatasetList_HTML_Formatted, SVGIcon, customTabs, htmlDataLists
 from resources.GUI.WebMap import webMapView
 
 import sys
@@ -57,8 +57,8 @@ class DatasetTab(QtWidgets.QWidget):
         
         label2.setWordWrap(True)
         self.selectedDatasetsLabel = QtWidgets.QLabel("0 DATASETS HAVE BEEN SELECTED:")
-        self.selectedDatasetsWidget = DatasetList_HTML_Formatted.DatasetListHTMLFormatted(datasetTable=self.parent.datasetTable, addButtons=False)
-        self.selectedDatasetsWidget.defineContextMenu(menuItems=['Remove Dataset', 'Edit Dataset'])
+        self.selectedDatasetsWidget = htmlDataLists.HTML_LIST(self.parent, "DatasetTab_SelectedDatasetList")# DatasetList_HTML_Formatted.DatasetListHTMLFormatted(datasetTable=self.parent.datasetTable, addButtons=False)
+        #self.selectedDatasetsWidget.defineContextMenu(menuItems=['Remove Dataset', 'Edit Dataset'])
         layout_.addWidget(label)
         layout_.addWidget(label2)
         layout_.addWidget(self.selectedDatasetsLabel)

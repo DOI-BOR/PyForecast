@@ -11,7 +11,7 @@ from    PyQt5   import  QtWidgets, \
                         QtCore, \
                         QtGui
 from resources.GUI.CustomWidgets.DatasetList_HTML_Formatted import DatasetListHTMLFormatted
-from resources.GUI.CustomWidgets import SVGIcon, customTabs
+from resources.GUI.CustomWidgets import SVGIcon, customTabs, htmlDataLists
 from resources.GUI.CustomWidgets.PyQtGraphs import DataTabPlots
 from resources.GUI.CustomWidgets.SpreadSheet import SpreadSheetView
 import  sys
@@ -71,7 +71,7 @@ class DataTab(QtWidgets.QWidget):
 
         # Initialize other widgets
         # self.datasetList = DatasetList_HTML_Formatted(self, datasetTable = self.parent.datasetTable, HTML_formatting = "", addButtons = False )
-        self.datasetList = DatasetListHTMLFormatted(self, datasetTable=self.parent.datasetTable, addButtons=False)
+        self.datasetList = htmlDataLists.HTML_LIST(self.parent, "DataTab_datasetList")#(self, datasetTable=self.parent.datasetTable, addButtons=False)
         self.plot = DataTabPlots(self)
         self.spreadsheet = SpreadSheetView(self)
 
