@@ -2006,7 +2006,7 @@ class WindowTabPlots(pg.GraphicsLayoutWidget):
 
 class ResultsTabPlots(pg.GraphicsLayoutWidget):
 
-    def __init__(self, parent = None, xLabel='', yLabel=''):
+    def __init__(self, parent = None, xLabel='', yLabel='', title=None):
 
         # INSTANTIATE THE WIDGET AND CREATE A REFERENCE TO THE PARENT
         pg.GraphicsLayoutWidget.__init__(self, parent)
@@ -2017,8 +2017,10 @@ class ResultsTabPlots(pg.GraphicsLayoutWidget):
 
         # INSTANTIATE THE PLOTS
         self.resultPlot = pg.PlotItem()
-        self.resultPlot.getAxis('left').setLabel(yLabel, **{'font-size':'14pt'})
-        self.resultPlot.getAxis('bottom').setLabel(xLabel, **{'font-size':'14pt'})
+        if title is not None:
+            self.resultPlot.setTitle(title, **{'font-size':'14pt'})
+        self.resultPlot.getAxis('left').setLabel(yLabel, **{'font-size':'10pt'})
+        self.resultPlot.getAxis('bottom').setLabel(xLabel, **{'font-size':'10pt'})
         self.resultPlot.addLegend(offset=[0, 0])
         #viewBox = self.resultPlot.getViewBox()
         #viewBox.setBackgroundColor((240, 240, 240))
@@ -2043,6 +2045,11 @@ class ResultsTabPlots(pg.GraphicsLayoutWidget):
         self.secondaryColor = (204, 229, 255)
         self.observedColor = (0, 0, 0)
 
+        return
+
+    def setAxesLabels(self, xLabelText, yLabelText):
+        self.resultPlot.getAxis('bottom').setLabel(xLabelText, **{'font-size': '10pt'})
+        self.resultPlot.getAxis('left').setLabel(yLabelText, **{'font-size': '10pt'})
         return
 
 

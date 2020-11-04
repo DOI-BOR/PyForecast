@@ -217,6 +217,66 @@ def dataLoader(stationDict, startDate, endDate):
         df = df[df.index<=endDate]
         return df
 
+    elif stationNum == 'soi':
+        """
+        Southern Oscillation Index (SOI) 
+        """
+        url = "https://psl.noaa.gov/data/correlation/soi.data"
+        df = pd.read_csv(url, skiprows=1, names=['year','1','2','3','4','5','6','7','8','9','10','11','12'], sep='\s+')
+        lastRow = df.index[df['year']=='SOI'].tolist()[0] -1
+        df = df[df.index<lastRow]
+        df = df.melt(id_vars=['year'],var_name='month')
+        dates = [str(df['year'][i])+'-'+str(df['month'][i]) for i in df.index]
+        df.set_index(pd.DatetimeIndex(pd.to_datetime(dates, format='%Y/%m')), inplace=True)
+        df.sort_index(inplace=True)
+        df['value'] = pd.to_numeric(df['value'])
+        df.replace(to_replace=-99.99, value=np.nan, inplace=True)
+        df = pd.DataFrame(df['value'])
+        df = df.asfreq('D')
+        lastDate = list(df.index)[-1]
+        if lastDate.month in [1,3,5,7,8,10,12]:
+            endDay = 31
+        elif lastDate.month == 2:
+            endDay = 28
+        else:
+            endDay = 30
+        for day in range(lastDate.day,endDay + 1):
+            df.loc[datetime(lastDate.year, lastDate.month, day)] = df.loc[lastDate]
+        df.fillna(method='ffill',inplace=True)
+        df = df[df.index>=startDate]
+        df = df[df.index<=endDate]
+        return df
+
+    elif stationNum == 'oni':
+        """
+        Oceanic Nino Index (ONI) 
+        """
+        url = "https://psl.noaa.gov/data/correlation/oni.data"
+        df = pd.read_csv(url, skiprows=1, names=['year','1','2','3','4','5','6','7','8','9','10','11','12'], sep='\s+')
+        lastRow = df.index[df['year']=='ONI'].tolist()[0] -1
+        df = df[df.index<lastRow]
+        df = df.melt(id_vars=['year'],var_name='month')
+        dates = [str(df['year'][i])+'-'+str(df['month'][i]) for i in df.index]
+        df.set_index(pd.DatetimeIndex(pd.to_datetime(dates, format='%Y/%m')), inplace=True)
+        df.sort_index(inplace=True)
+        df['value'] = pd.to_numeric(df['value'])
+        df.replace(to_replace=-99.9, value=np.nan, inplace=True)
+        df = pd.DataFrame(df['value'])
+        df = df.asfreq('D')
+        lastDate = list(df.index)[-1]
+        if lastDate.month in [1,3,5,7,8,10,12]:
+            endDay = 31
+        elif lastDate.month == 2:
+            endDay = 28
+        else:
+            endDay = 30
+        for day in range(lastDate.day,endDay + 1):
+            df.loc[datetime(lastDate.year, lastDate.month, day)] = df.loc[lastDate]
+        df.fillna(method='ffill',inplace=True)
+        df = df[df.index>=startDate]
+        df = df[df.index<=endDate]
+        return df
+
     else:
         return pd.DataFrame()
         

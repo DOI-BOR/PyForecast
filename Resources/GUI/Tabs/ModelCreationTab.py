@@ -407,7 +407,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.predictorPlot = ModelTabTargetPlot(self, objectName='PredictorPlot')#ResultsTabPlots(self, xLabel='Date', yLabel='Value')
         self.predictorPlot.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         # correlation plot of resampled predictor to target
-        self.predictorCorrelationPlot = ResultsTabPlots(self, xLabel='Resampled Predictor', yLabel='Resampled Target')
+        self.predictorCorrelationPlot = ResultsTabPlots(self, xLabel='Resampled Predictor', yLabel='Resampled Target', title='Resampled Data Correlation')
         self.predictorCorrelationPlot.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.predictorCorrelationPlot.hide()
         # toggle button to switch plots

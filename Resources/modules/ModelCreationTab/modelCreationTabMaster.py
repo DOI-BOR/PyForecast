@@ -417,6 +417,7 @@ class modelCreationTab(object):
                 self.modelTab.predictorPlot.displayData(x, y, [units], [dataset['DatasetParameter'] + ': ' + dataset['DatasetName']])
                 self.modelTab.predictorPlot.plot.setTitle('<strong style="font-family: Open Sans, Arial;">Resampled {0} - {1}</strong>'.format(
                     dataset['DatasetName'], dataset['DatasetParameter']))
+                xLabel = ('{0} - {1} ({2})').format(dataset['DatasetName'], dataset['DatasetParameter'], units)
             except:
                 self.modelTab.predictorPlot.plot.updateText('<div style="color:#4e4e4e"><h1>Oops!</h1><br>Predictor not defined<br>Fully define the selected predictor to view resampled data plot...</div>')
             # Resample target
@@ -425,10 +426,14 @@ class modelCreationTab(object):
                 targetPeriod = self.modelRunsTable.loc[0].PredictandPeriod
                 targetAccum = self.modelRunsTable.loc[0].PredictandMethod
                 targetData = self.dataTable.loc[(slice(None), targetID), 'Value']
+                dataset = self.datasetTable.loc[targetID]
+                units = 'KAF' if 'KAF' in targetAccum.upper() else dataset['DatasetUnits']
                 resampledTarget = resampleDataSet(targetData, targetPeriod, targetAccum).dropna()
                 scatterDataFrame = pd.DataFrame(data=[x, y, resampledTarget.values, resampledTarget.values],index=['Years','Observed','Prediction','CV-Prediction']).T
                 self.modelTab.predictorCorrelationPlot.clearPlot()
                 self.modelTab.predictorCorrelationPlot.updateScatterPlot(scatterDataFrame, showCV=False, showLegend=False)
+                yLabel = ('{0} - {1} ({2})').format(dataset['DatasetName'], dataset['DatasetParameter'],units)
+                self.modelTab.predictorCorrelationPlot.setAxesLabels(xLabel,yLabel)
             except:
                 self.modelTab.predictorCorrelationPlot.updateText('<div style="color:#4e4e4e"><h1>Oops!</h1><br>Looks like there is no target defined<br>Define a forecast target to view correlation...</div>')
         else:
