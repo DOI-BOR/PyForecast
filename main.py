@@ -164,9 +164,14 @@ if __name__ == '__main__':
     if no_splash == 'True':
         splash.finish(mw)
 
-    sys.excepthook = excepthook
-    e = ErrorApp()
-    e.app = app
-    ret = e.app.exec_()
-    sys.exit(ret)
+    RUNFROMSOURCE = True
+    if (RUNFROMSOURCE):
+        sys.exit(app.exec_())
+    else:
+        sys.excepthook = excepthook
+        e = ErrorApp()
+        e.app = app
+        ret = e.app.exec_()
+        sys.exit(ret)
+
     #sys.exit(app.exec_())
