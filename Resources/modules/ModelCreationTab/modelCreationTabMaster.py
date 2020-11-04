@@ -14,6 +14,8 @@ from resources.modules.ModelCreationTab.Operations.Extend import extend
 from resources.modules.Miscellaneous.DataProcessor import resampleDataSet
 from resources.modules.Miscellaneous.generateModel import Model
 
+from resources.GUI.CustomWidgets.PyQtGraphs import WindowTabPlots, ModelTabTargetPlot
+
 class modelCreationTab(object):
     """
     STATISTICAL MODELS TAB
@@ -161,6 +163,11 @@ class modelCreationTab(object):
 
         # Link the button to the apply function
         self.modelTab.layoutWindowApplyButton.clicked.connect(self.applyWindowOptionsToDataset)
+
+        # Link the plot group the the switch operation
+        self.modelTab.layoutWindowPlottingOptionAggregated.clicked.connect(self.switchWindowStack)
+        self.modelTab.layoutWindowPlottingOptionRawCrossCorrelation.clicked.connect(self.switchWindowStack)
+        self.modelTab.layoutWindowPlottingOptionAggregatedCrossCorrelation.clicked.connect(self.switchWindowStack)
 
         ### Connect the summary page ###
         # Connect the clear button to its action function
@@ -967,6 +974,9 @@ class modelCreationTab(object):
         # Set the button to clear
         self.modelTab.layoutWindowApplyButton.setChecked(False)
 
+        # Update the plot
+        self.updateWindowPlot()
+
     def applyWindowClearToDataset(self):
         """
         Clears the window attributes of a dataset
@@ -992,35 +1002,205 @@ class modelCreationTab(object):
 
         """
 
-        ### Get the data from the widgets ###
-        startDate = self.modelTab.periodStartWindow.dateTime().toPyDateTime()
-        endDate = self.modelTab.periodEndWindow.dateTime().toPyDateTime()
-        numberOfDays = (endDate - startDate).days + 1
-
-        ### Push the number of days back into the widget ###
-        self.modelTab.layoutWindowLagLimit.setText(str(numberOfDays))
-
-        ### Update the plot with the dataset and interpolation ###
-        # Get the source and fill dataset. This copies it to avoid changing the source data
+        # Get the index of the current selected dataset
         currentIndex = self.modelTab.windowList.datasetTable.index[self.modelTab.windowList.currentIndex().row()]
-        sourceName = self.datasetTable.loc[currentIndex[0]]['DatasetName']
-        sourceData = self.dataTable.loc[(slice(None), currentIndex), 'Value']
-        sourceData = sourceData.droplevel('DatasetInternalID')
-        sourceUnits = self.datasetTable.loc[currentIndex[0]]['DatasetUnits']
 
-        # Extract the target dataset
-        targetData = self.dataTable.loc[(slice(None), self.modelTab.targetSelect.currentData().name), 'Value']
-        targetName = self.datasetTable.loc[self.modelTab.targetSelect.currentData().name]['DatasetName']
-        targetData = targetData.droplevel('DatasetInternalID')
-        targetUnits = self.datasetTable.loc[self.modelTab.targetSelect.currentData().name]['DatasetUnits']
+        # Update the plot based on the user specified settings
+        if self.modelTab.layoutWindowPlottingOptionAggregated.isChecked():
 
-        # Window the data between the start and end dates
-        sourceData = sourceData[startDate:endDate]
-        targetData = targetData[startDate:endDate]
+            # Toggle the widget stack to the current function
+            self.modelTab.stackedWindowLayout.setCurrentIndex(0)
 
-        # Calculate and plot the updated data
-        self.modelTab.layoutWindowPlot.displayDatasets(sourceName, targetName, sourceData, targetData,
-                                                       sourceUnits, targetUnits, '')
+            # Resample predictor
+            try:
+                dataset = self.modelTab.windowList.datasetTable.loc[currentIndex]
+                units = 'KAF' if 'KAF' in str(self.datasetOperationsTable.loc[currentIndex]['AccumulationMethod']).upper() else dataset['DatasetUnits']
+                rawData = self.dataTable.loc[(slice(None), currentIndex[0]), 'Value']
+                resampledData = resampleDataSet(rawData, str(self.datasetOperationsTable.loc[currentIndex]['AccumulationPeriod']),
+                                                str(self.datasetOperationsTable.loc[currentIndex]['AccumulationMethod'])).dropna()
+                x = resampledData.index.get_level_values(0)
+                y = resampledData.values
+                self.modelTab.layoutWindowPlotStandard.clearPlots()
+                self.modelTab.layoutWindowPlotStandard.displayData(x, y, [units],
+                                                        [dataset['DatasetParameter'] + ': ' + dataset['DatasetName']])
+                self.modelTab.layoutWindowPlotStandard.plot.setTitle(
+                    '<strong style="font-family: Open Sans, Arial;">Resampled {0} - {1}</strong>'.format(
+                        dataset['DatasetName'], dataset['DatasetParameter']))
+            except:
+                self.modelTab.layoutWindowPlotStandard.plot.updateText(
+                    '<div style="color:#4e4e4e"><h1>Oops!</h1><br>Predictor not defined<br>Fully define the selected predictor to view resampled data plot...</div>')
+
+            # Update the window page correlation boxes
+            self.updateWindowCorrelation()
+
+        elif self.modelTab.layoutWindowPlottingOptionRawCrossCorrelation.isChecked():
+
+            # Toggle the widget stack to the current function
+            self.modelTab.stackedWindowLayout.setCurrentIndex(1)
+
+            ### Get the data from the widgets ###
+            startDate = self.modelTab.periodStartWindow.dateTime().toPyDateTime()
+            endDate = self.modelTab.periodEndWindow.dateTime().toPyDateTime()
+
+            ### Update the plot with the dataset and interpolation ###
+            # Get the source and fill dataset. This copies it to avoid changing the source data
+            sourceName = self.datasetTable.loc[currentIndex[0]]['DatasetName']
+            sourceData = self.dataTable.loc[(slice(None), currentIndex), 'Value']
+            sourceData = sourceData.droplevel('DatasetInternalID')
+            sourceUnits = self.datasetTable.loc[currentIndex[0]]['DatasetUnits']
+
+            # Extract the target dataset
+            targetData = self.dataTable.loc[(slice(None), self.modelTab.targetSelect.currentData().name), 'Value']
+            targetName = self.datasetTable.loc[self.modelTab.targetSelect.currentData().name]['DatasetName']
+            targetData = targetData.droplevel('DatasetInternalID')
+            targetUnits = self.datasetTable.loc[self.modelTab.targetSelect.currentData().name]['DatasetUnits']
+
+            # Window the data between the start and end dates
+            sourceData = sourceData[startDate:endDate]
+            targetData = targetData[startDate:endDate]
+
+            # Calculate and plot the updated data
+            self.modelTab.layoutWindowPlot.displayDatasets(sourceName, targetName, sourceData, targetData,
+                                                           sourceUnits, targetUnits, '')
+
+            # Update the window page correlation boxes
+            self.updateWindowCorrelation()
+
+        elif self.modelTab.layoutWindowPlottingOptionAggregatedCrossCorrelation.isChecked():
+
+            # Toggle the widget stack to the current function
+            self.modelTab.stackedWindowLayout.setCurrentIndex(1)
+
+            # Resample predictor
+            try:
+                dataset = self.modelTab.windowList.datasetTable.loc[currentIndex]
+                units = 'KAF' if 'KAF' in str(self.datasetOperationsTable.loc[currentIndex]['AccumulationMethod']).upper() else dataset['DatasetUnits']
+                rawData = self.dataTable.loc[(slice(None), currentIndex[0]), 'Value']
+                resampledData = resampleDataSet(rawData, str(self.datasetOperationsTable.loc[currentIndex]['AccumulationPeriod']),
+                                                str(self.datasetOperationsTable.loc[currentIndex]['AccumulationMethod'])).dropna()
+            except:
+                resampledData = None
+
+            # Resample the predictor
+            try:
+                targetID = self.modelRunsTable.loc[0].Predictand
+                targetPeriod = self.modelRunsTable.loc[0].PredictandPeriod
+                targetAccum = self.modelRunsTable.loc[0].PredictandMethod
+                targetData = self.dataTable.loc[(slice(None), targetID), 'Value']
+                resampledTarget = resampleDataSet(targetData, targetPeriod, targetAccum).dropna()
+            except:
+                resampledTarget = None
+
+            # Setup the remaining items for the plot
+            ### Get the data from the widgets ###
+            startDate = self.modelTab.periodStartWindow.dateTime().toPyDateTime()
+            endDate = self.modelTab.periodEndWindow.dateTime().toPyDateTime()
+
+            ### Update the plot with the dataset and interpolation ###
+            # Get the source and fill dataset. This copies it to avoid changing the source data
+            sourceName = self.datasetTable.loc[currentIndex[0]]['DatasetName']
+            sourceUnits = self.datasetTable.loc[currentIndex[0]]['DatasetUnits']
+            sourceData = resampledData
+
+            # Extract the target dataset
+            targetName = self.datasetTable.loc[self.modelTab.targetSelect.currentData().name]['DatasetName']
+            targetUnits = self.datasetTable.loc[self.modelTab.targetSelect.currentData().name]['DatasetUnits']
+            targetData = resampledTarget
+
+            if sourceData is not None and targetData is not None:
+                # Window the data between the start and end dates
+                sourceData = sourceData[startDate:endDate]
+                targetData = targetData[startDate:endDate]
+
+                # Calculate and plot the updated data
+                self.modelTab.layoutWindowPlot.displayDatasets(sourceName, targetName, sourceData, targetData,
+                                                               sourceUnits, targetUnits, '')
+
+            else:
+                # Clear the existing plot
+                self.modelTab.layoutWindowPlot.clearPlots()
+
+            # Update the window page correlation boxes
+            self.updateWindowCorrelation()
+
+        else:
+            raise NotImplementedError('Type of window plot is not understood')
+
+    def updateWindowCorrelation(self):
+        """
+
+        """
+
+        # Get the index of the current selected dataset
+        currentIndex = self.modelTab.windowList.datasetTable.index[self.modelTab.windowList.currentIndex().row()]
+
+        # Resample predictor
+        try:
+            dataset = self.modelTab.windowList.datasetTable.loc[currentIndex]
+            units = 'KAF' if 'KAF' in str(
+                self.datasetOperationsTable.loc[currentIndex]['AccumulationMethod']).upper() else dataset[
+                'DatasetUnits']
+            rawData = self.dataTable.loc[(slice(None), currentIndex[0]), 'Value']
+            resampledData = resampleDataSet(rawData,
+                                            str(self.datasetOperationsTable.loc[currentIndex]['AccumulationPeriod']),
+                                            str(self.datasetOperationsTable.loc[currentIndex][
+                                                    'AccumulationMethod'])).dropna()
+        except:
+            resampledData = None
+
+        # Resample the predictor
+        targetData = None
+        try:
+            targetID = self.modelRunsTable.loc[0].Predictand
+            targetPeriod = self.modelRunsTable.loc[0].PredictandPeriod
+            targetAccum = self.modelRunsTable.loc[0].PredictandMethod
+            targetData = self.dataTable.loc[(slice(None), targetID), 'Value']
+            resampledTarget = resampleDataSet(targetData, targetPeriod, targetAccum).dropna()
+        except:
+            resampledTarget = None
+
+        # Stack the input data and calculate the correlation
+        if targetData is not None:
+            rawFrame = pd.concat([rawData, targetData], axis=1)
+            rawCorrelate = rawFrame.corr('pearson').values[0, 1]
+        else:
+            rawCorrelate = np.NaN
+
+        if resampledData is not None and targetData is not None:
+            # Window the data between the start and end dates
+            aggregatedFrame = pd.concat([resampledData, resampledTarget], axis=1)
+            aggregatedCorrelate = aggregatedFrame.corr('pearson').values[0, 1]
+        else:
+            aggregatedCorrelate = np.NaN
+
+        # Update the text boxes
+        if np.any(np.isnan(rawCorrelate)):
+            self.modelTab.rawCorrelation.setText('N/A')
+        else:
+            self.modelTab.rawCorrelation.setText(str(np.round(rawCorrelate, 3)))
+
+        if np.any(np.isnan(aggregatedCorrelate)):
+            self.modelTab.aggregatedCorrelation.setText('N/A')
+        else:
+            self.modelTab.aggregatedCorrelation.setText(str(np.round(aggregatedCorrelate, 3)))
+
+
+    def switchWindowStack(self):
+        """
+        Controls the plotting stack within the window subtab
+
+        """
+
+        # Toggle to the correct plot display
+        if self.modelTab.layoutWindowPlottingOptionAggregated.isChecked():
+            # Toggle the widget stack to the current function
+            self.modelTab.stackedWindowLayout.setCurrentIndex(0)
+
+        else:
+            self.modelTab.stackedWindowLayout.setCurrentIndex(1)
+
+        # Update the plot
+        self.updateWindowPlot()
 
     def applySummaryClear(self):
         """
