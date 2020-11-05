@@ -64,6 +64,11 @@ class dataTab(object):
 
         return
 
+
+    # ====================================================================================================================
+    # LEFT SIDEBAR FUNCTIONS
+
+
     def downloadData(self):
         """
         Responsible for downloading datasets from web endpoints, import files (if available),
@@ -184,9 +189,6 @@ class dataTab(object):
             self.dataTab.datasetList.setCurrentRow(0)
             #self.dataTab.plot.displayDatasets([self.datasetTable.iloc[0].name])
 
-            
-
-
         # Otherwise, we just replace the old datatable with the new datatable
         else:
 
@@ -270,3 +272,11 @@ class dataTab(object):
         self.dataTab.plot.displayDatasets(datasetsList)
 
         return
+
+
+    # ====================================================================================================================
+    # GRAPH TAB FUNCTIONS
+
+
+    # ====================================================================================================================
+    # TABLE TAB FUNCTIONS

@@ -65,6 +65,10 @@ class forecastsTab(object):
         return
 
 
+    # ====================================================================================================================
+    # FORECAST DETAIL TAB FUNCTIONS
+
+
     def generateSavedModel(self, selected, deselected):
         # todo: doc string
 
@@ -232,6 +236,10 @@ class forecastsTab(object):
         self.forecastsTable.loc[eqID,fcastYear,fcastExc]=[self.forecastsTab.selectedModel.predictionRange]
 
 
+    # ====================================================================================================================
+    # COMPARE FORECASTS TAB FUNCTIONS
+
+
     def generateSavedForecast(self):
 
         self.forecastsTab.savedForecastsCharts.clearPlot()
@@ -261,6 +269,10 @@ class forecastsTab(object):
             self.forecastsTab.savedForecastsCharts.appendSavedForecast(boxPlotData)
         except:
             return
+
+
+    # ====================================================================================================================
+    # TAB CHANGE FUNCTIONS
 
 
     def selectedForecastTabChanged(self, tabIndex):
