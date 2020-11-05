@@ -56,9 +56,6 @@ class modelCreationTab(object):
         self.modelTab.layoutSimpleDoubleList.updatedLinkedList.emit(self.modelTab.layoutSimpleDoubleList.listInput, self.modelTab.layoutSimpleDoubleList.listOutput)
         self.modelTab.layoutSimpleDoubleList.updatedOutputList.emit()
 
-        #TODO: Fix crash-bug when adding new predictors after loading from *.fcst file
-        a = 1
-
         try:
             self.clickOption([self.modelRunsTable.loc[0]['CrossValidationType']], self.modelTab.optionsCrossValidators)
             self.clickOption(self.modelRunsTable.loc[0]['RegressionTypes'], self.modelTab.optionsRegression)
@@ -68,6 +65,7 @@ class modelCreationTab(object):
         except:
             print('INFO: No model run options defined in forecast file')
 
+        self.modelTab.resultsMetricTable.clearTable()
         self.modelTab.resultsMetricTable.loadDataIntoModel(self.forecastEquationsTable)
 
         return
@@ -267,6 +265,14 @@ class modelCreationTab(object):
         # todo: doc string
 
         self.modelTab.predictandApplyButton.setChecked(False)
+
+        # Ask user if sure
+        msgBox = self.clearAppTablesPrompt(modelRunsTable=True)
+        result = msgBox.exec_()
+        if result == QtGui.QMessageBox.Ok:
+            self.clearAppTables(modelRunsTable=True)
+        else:
+            return
 
         predictandData = self.modelTab.targetSelect.currentData()
         predID = predictandData.name
@@ -1668,6 +1674,6 @@ class modelCreationTab(object):
 
         elif tabIndex == 4:
             self.updateStatusMessage('Updating generated forecasts table...')
-            self.modelTab.resultsMetricTable.loadDataIntoModel(self.forecastEquationsTable)
+            # self.modelTab.resultsMetricTable.loadDataIntoModel(self.forecastEquationsTable)
             self.updateStatusMessage('')
 

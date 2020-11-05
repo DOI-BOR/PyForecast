@@ -154,26 +154,26 @@ class menuBar(object):
         msg.setIcon(QMessageBox.Critical)
         msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
         msg.setWindowTitle('Are you sure?')
-        msg.setText('This will clear the tables the processes shown below use. Press OK to continue... ')
+        msg.setText('This will clear tables that processes shown below use. Press OK to continue... ')
         tableText = ''
         if datasetTables:
             modelRunsTable=True
             forecastEquationsTable=True
             savedForecastEquationsTable=True
             forecastsTable=True
-            tableText += 'Dataset Tables<br>'
+            tableText += '- Selected datasets in the Datasets tab and downloaded data in the Data tab<br>'
         if modelRunsTable:
             forecastEquationsTable=True
             savedForecastEquationsTable=True
             forecastsTable=True
-            tableText += 'Model Run Tables (Predictand, Predictors, and Run Options)<br>'
+            tableText += '- Result tables in the Create Models tab<br>'
         if forecastEquationsTable:
             savedForecastEquationsTable=True
             forecastsTable=True
-            tableText += 'Saved Models<br>'
+            tableText += '- Saved models in the Forecasts tab<br>'
         if savedForecastEquationsTable:
             forecastsTable=True
-            tableText += 'Saved Forecasts<br>'
+            tableText += '- Forecasts saved and generated in the Forecasts tab<br>'
         msg.setInformativeText(tableText)
         return msg
 

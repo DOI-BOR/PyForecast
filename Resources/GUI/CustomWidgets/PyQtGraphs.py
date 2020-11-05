@@ -2018,7 +2018,7 @@ class ResultsTabPlots(pg.GraphicsLayoutWidget):
         # INSTANTIATE THE PLOTS
         self.resultPlot = pg.PlotItem()
         if title is not None:
-            self.resultPlot.setTitle(title, **{'font-size':'14pt'})
+            self.resultPlot.setTitle('<strong style="font-family: Open Sans, Arial;">{0}</strong>'.format(title))
         self.resultPlot.getAxis('left').setLabel(yLabel, **{'font-size':'10pt'})
         self.resultPlot.getAxis('bottom').setLabel(xLabel, **{'font-size':'10pt'})
         self.resultPlot.addLegend(offset=[0, 0])
