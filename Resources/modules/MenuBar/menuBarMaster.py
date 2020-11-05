@@ -146,3 +146,60 @@ class menuBar(object):
     def updateStatusMessage(self, message, messageFormat=None):
         self.statusBar().showMessage(message)
         self.statusBar().repaint()
+
+
+    def clearAppTablesPrompt(self, datasetTables=False, modelRunsTable=False, forecastEquationsTable=False,
+                             savedForecastEquationsTable=False, forecastsTable=False):
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Critical)
+        msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+        msg.setWindowTitle('Are you sure?')
+        msg.setText('This will clear the tables the processes shown below use. Press OK to continue... ')
+        tableText = ''
+        if datasetTables:
+            modelRunsTable=True
+            forecastEquationsTable=True
+            savedForecastEquationsTable=True
+            forecastsTable=True
+            tableText += 'Dataset Tables<br>'
+        if modelRunsTable:
+            forecastEquationsTable=True
+            savedForecastEquationsTable=True
+            forecastsTable=True
+            tableText += 'Model Run Tables (Predictand, Predictors, and Run Options)<br>'
+        if forecastEquationsTable:
+            savedForecastEquationsTable=True
+            forecastsTable=True
+            tableText += 'Saved Models<br>'
+        if savedForecastEquationsTable:
+            forecastsTable=True
+            tableText += 'Saved Forecasts<br>'
+        msg.setInformativeText(tableText)
+        return msg
+
+
+    def clearAppTables(self, datasetTables=False, modelRunsTable=False, forecastEquationsTable=False,
+                       savedForecastEquationsTable=False, forecastsTable=False):
+        if datasetTables:
+            modelRunsTable=True
+            forecastEquationsTable=True
+            savedForecastEquationsTable=True
+            forecastsTable=True
+            self.initializeDatasetTables()
+            self.resetDataTab()
+            self.resetDatasetTab()
+        if modelRunsTable:
+            forecastEquationsTable=True
+            savedForecastEquationsTable=True
+            forecastsTable=True
+            self.initializeModelRunResultsTable()
+            self.resetModelCreationTab()
+        if forecastEquationsTable:
+            savedForecastEquationsTable=True
+            forecastsTable=True
+            self.initializeSavedModelsTable()
+            self.resetModelCreationTab()
+        if savedForecastEquationsTable:
+            forecastsTable=True
+            self.initializeForecastsTable()
+            self.resetForecastsTab()

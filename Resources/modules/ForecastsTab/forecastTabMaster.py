@@ -281,6 +281,10 @@ class forecastsTab(object):
         #currentIndex = self.workflowWidget.currentIndex()
         #print(tabIndex)
 
+        if tabIndex == 0:
+            self.forecastsTab.savedModelsTable.clearTable()
+            self.forecastsTab.savedModelsTable.loadDataIntoModel(self.savedForecastEquationsTable)
+
         if tabIndex == 1:
             self.forecastsTab.savedForecastsPane.clearForecasts()
             self.forecastsTab.savedForecastsPane.setForecastTable()

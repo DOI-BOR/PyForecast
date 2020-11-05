@@ -1432,7 +1432,16 @@ class modelCreationTab(object):
             self.modelTab.summaryLayoutErrorLabel.setText(errorString)
             self.modelTab.summaryLayoutErrorLabel.setStyleSheet("color : red")
             self.modelTab.summaryLayoutErrorLabel.setVisible(True)
+            return
         else:
+            # Ask user if sure
+            msgBox = self.clearAppTablesPrompt(forecastEquationsTable=True)
+            result = msgBox.exec_()
+            if result == QtGui.QMessageBox.Ok:
+                self.clearAppTables(forecastEquationsTable=True)
+            else:
+                return
+
             # Populate self.modelRunsTable with validated entries
             self.modelRunsTable.loc[0]['PredictorPool'] = predPool
             self.modelRunsTable.loc[0]['PredictorForceFlag'] = predForced
@@ -1460,7 +1469,7 @@ class modelCreationTab(object):
             self.forecastEquationsTable.drop(self.forecastEquationsTable.index, inplace=True)
             resultCounter = 0
             for result in self.rg.resultsList:
-                if resultCounter >= 1000:
+                if resultCounter >= 500:
                     break
 
                 self.forecastEquationsTable.loc[resultCounter] = [None] * self.forecastEquationsTable.columns.shape[0]
