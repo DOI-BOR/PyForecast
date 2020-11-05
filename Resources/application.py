@@ -32,9 +32,6 @@ import pandas as pd
 import os, inspect
 import importlib
 
-# DEBUGGING
-import pickle
-
 
 class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMaster.datasetTab, dataTabMaster.dataTab, menuBarMaster.menuBar, modelCreationTabMaster.modelCreationTab, forecastTabMaster.forecastsTab):
     """
@@ -141,9 +138,9 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
         # Show the application
         self.fileOpened = False
         self.show()#.showMaximized()
-        
 
         return
+
 
     def initializeDatasetTables(self):
         # Create the data structures.

@@ -42,13 +42,14 @@ import traceback
 from PyQt5 import QtGui, QtWidgets, QtCore, QtWebEngineWidgets
 from PyQt5.QtWidgets import QMessageBox
 
-
+# =============================================================================
+# <editor-fold desc="Overhead code to build the desktop app">
 # Custom application style to make the tooltip behavior a bit more tolerable.
 class PyForecastProxyStyle(QtWidgets.QProxyStyle):
 
     def __init__(self):
         QtWidgets.QProxyStyle.__init__(self)
-    
+
     def styleHint(self, hint, option, widget, returnData):
         if hint == QtWidgets.QStyle.SH_ToolTip_WakeUpDelay:
             return 1400
@@ -66,11 +67,9 @@ class Logger(object):
     def flush(self):
         self.log.flush()
 
-
 class ErrorApp:
     def raise_error(self):
         assert False
-
 
 def showMessageBox(boxTitle, mainText, subText = None, detailText = None):
     msg = QMessageBox()
@@ -84,7 +83,6 @@ def showMessageBox(boxTitle, mainText, subText = None, detailText = None):
     msg.setStandardButtons(QMessageBox.Ok)
     msg.exec_()
 
-
 def excepthook(exc_type, exc_value, exc_tb):
     tb = "".join(traceback.format_exception(exc_type, exc_value, exc_tb))
     showMessageBox("FATAL ERROR",
@@ -95,13 +93,12 @@ def excepthook(exc_type, exc_value, exc_tb):
     print("error message:\n", tb)
     QtWidgets.QApplication.quit()
     # or QtWidgets.QApplication.exit(0)
+# </editor-fold>
 
 
 if __name__ == '__main__':
-
-    # Redirect all console and error messages to log file
-    #sys.stdout = Logger()
-    #sys.stderr = sys.stdout
+    # INSTALLER COMPILATION FLAGS
+    RUNFROMSOURCE = True
 
     # Print out a welcome message
     print("""
@@ -130,7 +127,6 @@ if __name__ == '__main__':
     # Set DPI Awareness  (Windows 7 and Vista)
     success = ctypes.windll.user32.SetProcessDPIAware()
     # behaviour on later OSes is undefined, although when I run it on my Windows 10 machine, it seems to work with effects identical to SetProcessDpiAwareness(1)
-
 
     # Begin loading the application
     app = QtWidgets.QApplication(sys.argv)
@@ -164,7 +160,6 @@ if __name__ == '__main__':
     if no_splash == 'True':
         splash.finish(mw)
 
-    RUNFROMSOURCE = True
     if (RUNFROMSOURCE):
         sys.exit(app.exec_())
     else:

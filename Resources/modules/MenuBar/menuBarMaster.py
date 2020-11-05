@@ -4,6 +4,7 @@ from resources.GUI.Dialogs import PreferencesGUI
 from datetime import datetime
 import pickle
 import time
+import webbrowser
 from PyQt5.QtWidgets import QFileDialog, QDialog, QMessageBox
 
 class menuBar(object):
@@ -12,14 +13,25 @@ class menuBar(object):
     def setupMenuBar(self):
         """
         """
-        self.appMenu.preferencesAction.triggered.connect(self.openPreferencesGUI)
+        # File menu
         self.appMenu.saveAction.triggered.connect(self.saveForecastFile)
         self.appMenu.saveAction.setShortcut("Ctrl+S")
         self.appMenu.saveAsAction.triggered.connect(lambda: self.saveForecastFile(True))
         self.appMenu.openAction.triggered.connect(self.openForecastFile)
         self.appMenu.openAction.setShortcut("Ctrl+O")
+        # Edit menu
+        self.appMenu.preferencesAction.triggered.connect(self.openPreferencesGUI)
         self.appMenu.viewTablesAction.triggered.connect(self.viewDatabase)
+        # About Menu
+        self.appMenu.documentationAction.triggered.connect(self.viewDocumentation)
+        self.appMenu.updateAction.triggered.connect(self.viewReleases)
         return
+
+    def viewDocumentation(self):
+        webbrowser.open('https://github.com/usbr/PyForecast/wiki')
+
+    def viewReleases(self):
+        webbrowser.open('https://github.com/usbr/PyForecast/releases')
 
     def viewDatabase(self):
         """

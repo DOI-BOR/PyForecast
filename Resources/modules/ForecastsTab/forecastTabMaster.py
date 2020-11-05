@@ -67,8 +67,7 @@ class forecastsTab(object):
 
     # ====================================================================================================================
     # FORECAST DETAIL TAB FUNCTIONS
-
-
+    # <editor-fold desc="Expand Forecast Detail tab functions...">
     def generateSavedModel(self, selected, deselected):
         # todo: doc string
 
@@ -234,12 +233,12 @@ class forecastsTab(object):
             self.forecastsTable.drop(fcastIdx, inplace=True)
         self.forecastsTab.selectedModel.predictionRange.loc[-1] = self.forecastsTab.selectedModel.prediction
         self.forecastsTable.loc[eqID,fcastYear,fcastExc]=[self.forecastsTab.selectedModel.predictionRange]
+    # </editor-fold>
 
 
     # ====================================================================================================================
     # COMPARE FORECASTS TAB FUNCTIONS
-
-
+    # <editor-fold desc="Expand Compare Forecasts tab functions...">
     def generateSavedForecast(self):
 
         self.forecastsTab.savedForecastsCharts.clearPlot()
@@ -269,6 +268,7 @@ class forecastsTab(object):
             self.forecastsTab.savedForecastsCharts.appendSavedForecast(boxPlotData)
         except:
             return
+    # </editor-fold>
 
 
     # ====================================================================================================================

@@ -245,8 +245,7 @@ class modelCreationTab(object):
 
     # ====================================================================================================================
     # FORECAST TARGET TAB FUNCTIONS
-
-
+    # <editor-fold desc="Expand Forecast Target tab functions...">
     def updateTargetInfo(self):
         try:
             predictandData = self.modelTab.targetSelect.currentData()
@@ -402,12 +401,13 @@ class modelCreationTab(object):
         self.modelTab.dataPlot.plot.setTitle('<strong style="font-family: Open Sans, Arial;">{4} {0} - {1} {2} {3}</strong>'.format(start_dt.strftime("%b %d"), end_dt.strftime("%b %d"), methodText.title(), dataset['DatasetParameter'], dataset['DatasetName'] ))
 
         return
+    # </editor-fold>
 
 
     # ====================================================================================================================
     # PREDICTORS TAB FUNCTIONS
-
-
+    # <editor-fold desc="Expand Predictors tab functions...">
+    # <editor-fold desc="Expand Default subtab functions...">
     def addPredictorToDatasetOperationTable(self):
         for idx in self.modelTab.layoutSimpleDoubleList.listOutput.datasetTable.index:
             if idx not in self.datasetOperationsTable.index:
@@ -598,8 +598,10 @@ class modelCreationTab(object):
             self.modelTab.predictorPlot.hide()
             self.modelTab.predictorCorrelationPlot.show()
             self.modelTab.predictorPlotButton.setText('<strong style="font-size: 12px; color:darkcyan">Show resampled data time-series</strong>')
+    # </editor-fold>
 
 
+    # <editor-fold desc="Expand Expert subtab functions...">
     def updateFillSubtab(self):
         """
         Updates the state of the fill subtab methods pane based on the method selector
@@ -1298,12 +1300,13 @@ class modelCreationTab(object):
 
         # Update the plot
         self.updateWindowPlot()
+    # </editor-fold>
+    # </editor-fold>
 
 
     # ====================================================================================================================
-    # PREDICTORS TAB FUNCTIONS
-
-
+    # SUMMARY TAB FUNCTIONS
+    # <editor-fold desc="Expand Summary tab functions...">
     def updateModelSettings(self, defaultSettings):
         """
         This function is run when the user toggles the default model settings
@@ -1311,12 +1314,12 @@ class modelCreationTab(object):
         """
         print("DEF SETTINGS")
         return
+    # </editor-fold>
 
 
     # ====================================================================================================================
     # RUN TAB FUNCTIONS
-
-
+    # <editor-fold desc="Expand Run tab functions...">
     def applySummaryClear(self):
         """
         Clear/reset all dataset and analysis options within the application
@@ -1510,12 +1513,12 @@ class modelCreationTab(object):
 
             print('INFO: Model run complete!')
             self.updateStatusMessage('Model run complete! ' + str(len(self.rg.resultsList)) + ' models were evaluated.')
+    # </editor-fold>
 
 
     # ====================================================================================================================
     # RESULTS TAB FUNCTIONS
-
-
+    # <editor-fold desc="Expand Results tab functions...">
     def generateSelectedModel(self, selected, deselected):
         # todo: doc string
 
@@ -1624,12 +1627,11 @@ class modelCreationTab(object):
             self.resetForecastsTab()
         except:
             return
+    # </editor-fold>
 
 
     # ====================================================================================================================
-    # TAB CHANGE FUNCTIONS
-
-
+    # TAB CHANGE FUNCTION
     def updateTabDependencies(self, tabIndex):
         # todo: doc string
 
