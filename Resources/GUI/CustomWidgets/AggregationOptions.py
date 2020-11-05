@@ -98,11 +98,24 @@ class AggregationOptions(QtWidgets.QWidget):
         self.resamplingLayout.addWidget(self.freqInteger, 3, 1)
         self.freqChar = QtWidgets.QComboBox()
         self.freqChar.addItems(self.predictorResamplingLabels)
-        self.freqChar.currentTextChanged.connect(self.resamplingUpdate)
         self.freqChar.setCurrentIndex(2)
-        self.resamplingUpdate()
+        self.freqChar.currentTextChanged.connect(self.resamplingUpdate)
         self.resamplingLayout.addWidget(self.freqChar, 3, 2)
+        # Resampling shift
+        self.resamplingLayout.addWidget(QtWidgets.QLabel("WY Shift"), 4, 0)
+        self.shiftInteger = QtWidgets.QSpinBox()
+        self.shiftInteger.setValue(0)
+        self.shiftInteger.setMaximum(4)
+        self.shiftInteger.valueChanged.connect(self.resamplingUpdate)
+        self.resamplingLayout.addWidget(self.shiftInteger, 4, 1)
+        self.shiftChar = QtWidgets.QComboBox()
+        self.shiftChar.addItems(self.predictorResamplingLabels)
+        self.shiftChar.setCurrentIndex(2)
+        self.shiftChar.currentTextChanged.connect(self.resamplingUpdate)
+        self.shiftChar.setEnabled(False)
+        self.resamplingLayout.addWidget(self.shiftChar, 4, 2)
         # Add to UI
+        self.resamplingUpdate()
         self.resamplingGroup.setLayout(self.resamplingLayout)
 
 
@@ -260,10 +273,18 @@ class AggregationOptions(QtWidgets.QWidget):
     def resamplingUpdate(self):
         tStepString = self.predictorResamplingLabels[self.tStepChar.currentIndex()]
         freqString = self.predictorResamplingLabels[self.freqChar.currentIndex()]
+        shiftString = self.predictorResamplingLabels[self.shiftChar.currentIndex()]
         tStepOption = self.predictorResamplingOptions[self.tStepChar.currentIndex()]
         freqOption = self.predictorResamplingOptions[self.freqChar.currentIndex()]
+        shiftOption = self.predictorResamplingOptions[self.shiftChar.currentIndex()]
         self.selectedAggPeriod = "R/" + self.periodStart.date().toString('yyyy-MM-dd') + "/P" + self.tStepInteger.text() + tStepOption + \
                                  "/" + "F" + self.freqInteger.text() + freqOption  # (e.g. R/1978-02-01/P1M/F1Y)
-        self.resampleDescription.setText("Defined Resampling: Starting " + self.periodStart.text() + ", take " + self.tStepInteger.text() +
-                                         " " + tStepString + "(s) of data, and make 1 value every " + self.freqInteger.text() + " " +
-                                         freqString + "(s) (ISO 8601 Pattern: " + self.selectedAggPeriod + ")")
+        resampleExplanation = "Defined Resampling: Starting " + self.periodStart.text() + ", take " + self.tStepInteger.text() + \
+                                         " " + tStepString + "(s) of data, and make 1 value every " + self.freqInteger.text() + " " + \
+                                         freqString + "(s) "
+        if int(self.shiftInteger.text()) >= 1:
+            self.selectedAggPeriod = self.selectedAggPeriod + "/" + "S" + self.shiftInteger.text() + shiftOption # (e.g. R/1978-02-01/P1M/F1Y/S1Y)
+            resampleExplanation = resampleExplanation + " and shift data forward by " + self.shiftInteger.text() + " " + shiftString + "(s) "
+
+        resampleExplanation = resampleExplanation + "(ISO 8601 Pattern: " + self.selectedAggPeriod + ")"
+        self.resampleDescription.setText(resampleExplanation)

@@ -6,6 +6,7 @@ Description:    The DataProcessor.py script processes daily data into new datase
 
 import pandas as pd
 from datetime import datetime, timedelta
+from dateutil import relativedelta
 import isodate
 import numpy as np
 import re
@@ -98,6 +99,7 @@ def resampleDataSet(dailyData, resampleString, resampleMethod, customFunction = 
     YYYY-MM-DD/ -> specifies start date of repeating interval
     PnM/ -> specifies duration of repeating interval in months (This is the timeseries that is resampled )
     FnM -> specifies frequency of repetition (e.g. once a year)
+    SnY -> shifts the data datetimes by n-years (SnY) or n-months (SnM)
 
     For example, to represent a parameter that would be resampled from daily data 
     into a March Average timeseries with one value per year, you could use:
@@ -110,7 +112,7 @@ def resampleDataSet(dailyData, resampleString, resampleMethod, customFunction = 
 
     Input: 
         dailyData -> pandas Series of daily-intervaled data
-        resampleString -> ISO8601 formatted resampling string (e.g. R/1978-02-01/P1M/F1Y)
+        resampleString -> ISO8601 formatted resampling string (e.g. R/1978-02-01/P1M/F1Y/S1Y)
         resampleMethod -> One of 'accumulation', 'accumulation_cfs_kaf', 'average', 'first', 'last', 'max', 'min', 'custom', 'median'
 
         customFunction (optional) ->  if 'resampleMethod' is 'custom', you can enter a custom written 
@@ -136,11 +138,11 @@ def resampleDataSet(dailyData, resampleString, resampleMethod, customFunction = 
     firstDate = dailyData.index[0][0]
 
     # Parse the resample string
-    resampleList = resampleString.split('/') # Converts 'R/1978-10-01/P1M/F1Y' into ['R', '1978-10-01', 'P1M', 'F1Y']
+    resampleList = resampleString.split('/') # Converts 'R/1978-10-01/P1M/F1Y' into ['R', '1978-10-01', 'P1M', 'F1Y', 'S1Y']
 
     # Validate the list
-    if len(resampleList) != 4 or resampleList[0] != 'R' or len(resampleList[1]) != 10 or resampleList[2][0] != 'P' or resampleList[3][0] != 'F':
-        return resampleData, 1, 'Invalid Resample String. Format should be similar to R/1978-10-01/P1M/F1Y'
+    if resampleList[0] != 'R' or len(resampleList[1]) != 10 or resampleList[2][0] != 'P' or resampleList[3][0] != 'F': #or len(resampleList) != 4
+        return resampleData, 1, 'Invalid Resample String. Format should be similar to R/1978-10-01/P1M/F1Y or R/1978-10-01/P1M/F1Y/S1Y'
     
     # Validate the resample method
     if resampleMethod not in ['accumulation', 'accumulation_cfs_kaf', 'average', 'first', 'last', 'max', 'min', 'custom', 'median']:
@@ -179,7 +181,15 @@ def resampleDataSet(dailyData, resampleString, resampleMethod, customFunction = 
         else:
             data.isMostlyThere = True
         resampleData.loc[idx.left] = ( func(data) if (idx.right >= firstDate and today >= idx.right and (data.isMostlyThere)) else np.nan )
-        
+
+    if len(resampleList) == 5:
+        shiftStrings = list(resampleList[4])
+        if shiftStrings[1].isdigit():
+            resampleData.index = resampleData.index + pd.offsets.DateOffset(years=int(shiftStrings[1]))
+        else:
+            return resampleData, 1, "Invalid Resample String. Format should be similar to R/1978-10-01/P1M/F1Y or R/1978-10-01/P1M/F1Y/S1Y"
+
+
     # Name the dataframe
     resampleData.name = dailyData.name + '_' + resampleList[1] + '_' + resampleList[2] + '_' + resampleList[3] + '_' + resampleMethod + '_' + str(customFunction)
 

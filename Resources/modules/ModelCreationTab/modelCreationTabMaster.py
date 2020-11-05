@@ -395,7 +395,7 @@ class modelCreationTab(object):
 
             # Set aggregation period on UI
             if accumPeriod != 'None':
-                predPeriodItems = accumPeriod.split("/") #R/1978-03-01/P1M/F12M
+                predPeriodItems = accumPeriod.split("/") #R/1978-03-01/P1M/F12M/S1Y
                 self.modelTab.layoutAggregationOptions.periodStart.setDate(parser.parse(predPeriodItems[1]))
                 predPeriodPStep = str(predPeriodItems[2])[-1]
                 a = self.modelTab.layoutAggregationOptions.predictorResamplingOptions.index(predPeriodPStep)
@@ -406,6 +406,15 @@ class modelCreationTab(object):
                 self.modelTab.layoutAggregationOptions.freqChar.setCurrentIndex(self.modelTab.layoutAggregationOptions.predictorResamplingOptions.index(predPeriodFStep))
                 predPeriodFNum = ''.join(map(str,[int(s) for s in predPeriodItems[3] if s.isdigit()]))
                 self.modelTab.layoutAggregationOptions.freqInteger.setValue(int(predPeriodFNum))
+                if len(predPeriodItems) >= 5:
+                    predPeriodSStep = str(predPeriodItems[4])[-1]
+                    self.modelTab.layoutAggregationOptions.shiftChar.setCurrentIndex(self.modelTab.layoutAggregationOptions.predictorResamplingOptions.index(predPeriodSStep))
+                    predPeriodSNum = ''.join(map(str, [int(s) for s in predPeriodItems[4] if s.isdigit()]))
+                    self.modelTab.layoutAggregationOptions.shiftInteger.setValue(int(predPeriodSNum))
+                else:
+                    self.modelTab.layoutAggregationOptions.shiftChar.setCurrentIndex(2)
+                    self.modelTab.layoutAggregationOptions.shiftInteger.setValue(0)
+
 
             # Set forcing flag on UI
             if predForcing != 'None':
