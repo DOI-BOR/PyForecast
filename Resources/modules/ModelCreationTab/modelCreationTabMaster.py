@@ -70,11 +70,13 @@ class modelCreationTab(object):
 
         return
 
+
     def clickOption(self, selectedOptions, optionList):
         for i in selectedOptions:
             for j in optionList:
                 if i == j.objectName():
-                    j.click()
+                    if not j.isChecked():#click only if button isn't already clicked
+                        j.click()
         return
 
 
@@ -1513,6 +1515,8 @@ class modelCreationTab(object):
 
             print('INFO: Model run complete!')
             self.updateStatusMessage('Model run complete! ' + str(len(self.rg.resultsList)) + ' models were evaluated.')
+            self.modelTab.resultsMetricTable.clearTable()
+            self.modelTab.resultsMetricTable.loadDataIntoModel(self.forecastEquationsTable)
     # </editor-fold>
 
 

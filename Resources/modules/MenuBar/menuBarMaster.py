@@ -198,6 +198,7 @@ class menuBar(object):
             savedForecastEquationsTable=True
             forecastsTable=True
             self.initializeDatasetTables()
+            self.initializeModelRunTable()
             self.resetDataTab()
             self.resetDatasetTab()
         if modelRunsTable:
