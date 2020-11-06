@@ -861,7 +861,7 @@ class SpreadSheetForecastEquations(QtWidgets.QWidget):
         data = dataTable.drop(dataTable.columns[cols], axis=1)
         if len(data) == 0:
             data['PIPE'] = ''
-            data['PreProcessingMethod'] = ''
+            data['Pre-ProcessingMethod'] = ''
             data['RegressionMethod'] = ''
             data['CrossValidation'] = ''
             data['ModelIndex'] = ''
@@ -870,6 +870,16 @@ class SpreadSheetForecastEquations(QtWidgets.QWidget):
                 'EquationMethod'].str.split('/', expand=True)
             data['ModelIndex'] = data.index
             data = data.astype({"ModelIndex": int})
+            # Search-replace model run option values
+            for preProc in list(self.parent.parent.preProcessors):
+                data.replace({'Pre-ProcessingMethod': {preProc:self.parent.parent.preProcessors[preProc]['name']}}, inplace=True)
+            for regr in list(self.parent.parent.regressors):
+                data.replace({'RegressionMethod': {regr:self.parent.parent.regressors[regr]['name']}}, inplace=True)
+            for cVal in list(self.parent.parent.crossValidators):
+                data.replace({'CrossValidation': {cVal:self.parent.parent.crossValidators[cVal]['name']}}, inplace=True)
+            predCounts = list(map(str, list(data['EquationPredictors'].apply(len))))
+            predLists = list(map(str, list(data['EquationPredictors'])))
+            data['EquationPredictors'] = [i.zfill(2) + ' Predictors: ' + j for i, j in zip(predCounts, predLists)]
         data.drop('PIPE', axis=1, inplace=True)
         data = data[data.columns[::-1]]
         return data

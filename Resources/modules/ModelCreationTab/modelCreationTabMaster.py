@@ -1445,14 +1445,6 @@ class modelCreationTab(object):
             self.modelTab.summaryLayoutErrorLabel.setVisible(True)
             return
         else:
-            # Ask user if sure
-            msgBox = self.clearAppTablesPrompt(forecastEquationsTable=True)
-            result = msgBox.exec_()
-            if result == QtGui.QMessageBox.Ok:
-                self.clearAppTables(forecastEquationsTable=True)
-            else:
-                return
-
             # Populate self.modelRunsTable with validated entries
             self.modelRunsTable.loc[0]['PredictorPool'] = predPool
             self.modelRunsTable.loc[0]['PredictorForceFlag'] = predForced
@@ -1463,6 +1455,15 @@ class modelCreationTab(object):
             self.modelRunsTable.loc[0]['RegressionTypes'] = regAlgs
             self.modelRunsTable.loc[0]['FeatureSelectionTypes'] = selAlgs
             self.modelRunsTable.loc[0]['ScoringParameters'] = scoreParams
+
+            # Ask user if sure
+            msgBox = self.clearAppTablesPrompt(forecastEquationsTable=True)
+            result = msgBox.exec_()
+            if result == QtGui.QMessageBox.Ok:
+                self.clearAppTables(forecastEquationsTable=True)
+            else:
+                return
+
             ### Kick off the analysis ###
             self.updateStatusMessage('Running regression calculations. Please wait...')
             print('INFO: ---- MODEL RUN TABLE ----')
