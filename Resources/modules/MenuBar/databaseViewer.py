@@ -34,6 +34,7 @@ class datasetTableDisplay(QtWidgets.QWidget):
         QtWidgets.QWidget.__init__(self)
         layout = QtWidgets.QVBoxLayout()
         dataTable = QtWidgets.QTableView()
+        datasetTable.insert(0, "ID", list(datasetTable.index))
         model = PandasModel(datasetTable)
         dataTable.setModel(model)
         layout.addWidget(dataTable)
