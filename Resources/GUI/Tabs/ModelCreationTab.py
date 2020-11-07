@@ -433,7 +433,6 @@ class ModelCreationTab(QtWidgets.QWidget):
         configurationLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Dataset Configuration<strong>')
         configurationLabel.setContentsMargins(0, 10, 0, 0)
 
-
         # Aggregation options widget
         self.layoutAggregationOptions = AggregationOptions(False, orientation='vertical')
 

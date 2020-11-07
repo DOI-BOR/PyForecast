@@ -833,6 +833,47 @@ class DatasetListHTMLFormattedMultiple(QtWidgets.QListWidget):
         # Trigger a table refresh
         self.refreshDatasetList()
 
+    def showMultipleItemsSelected(self):
+        # Clear the listwidget's items
+        self.clear()
+        self.buttonList = []
+
+        if self.datasetTable is not None:
+            item = QtWidgets.QListWidgetItem()
+
+            #set the item's text to the HTML formatted version of the dataset
+            htmlString = """
+            <b style="color:#007396; font-size:14px">MULTIPLE PREDICTORS SELECTED</b><br>
+                Settings shown below are from the first selected predictor<br>
+                - Pressing <b style="color:#007396">Clear</b> will erase the settings for selected predictors<br>
+                - Pressing <b style="color:#007396">Apply</b> will assign the settings for selected predictors<br>
+                Plots shown are also from the first selected predictor
+            """
+            svg = os.path.abspath("resources/graphicalResources/icons/language-24px.svg")
+            htmlString = htmlString.format(svg)
+            item.setText(htmlString)
+            item.setForeground(QtGui.QBrush(QtGui.QColor(0, 0, 0, 0)))
+
+            # Create a widget to display the formatted text (and a button if enabled)
+            layout = QtWidgets.QVBoxLayout()
+            textBox = QtWidgets.QLabel(item.text())
+            textBox.setTextFormat(QtCore.Qt.RichText)
+            layout.addWidget(textBox)
+
+            widget = QtWidgets.QWidget(objectName='listItemWidget')
+            widget.setLayout(layout)
+
+            # Set a displayrole for combo boxes
+            item.setData(QtCore.Qt.DisplayRole, htmlString)
+
+            # Add the item to the listwidget
+            item.setSizeHint(QtCore.QSize(0, widget.sizeHint().height() + 15))
+            self.addItem(item)
+            self.setItemWidget(item, widget)
+
+        return
+
+
 # DEBUGGING
 if __name__ == '__main__':
 

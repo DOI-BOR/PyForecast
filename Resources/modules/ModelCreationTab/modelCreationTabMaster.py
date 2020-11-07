@@ -422,7 +422,7 @@ class modelCreationTab(object):
 
         if len(self.modelTab.layoutSimpleDoubleList.listOutput.selectedIndexes()) > 0:
             # Get the current datasest index
-            currentIndex = self.modelTab.layoutSimpleDoubleList.listOutput.datasetTable.index[self.modelTab.layoutSimpleDoubleList.listOutput.currentIndex().row()]
+            currentIndex = self.modelTab.layoutSimpleDoubleList.listOutput.datasetTable.index[self.modelTab.layoutSimpleDoubleList.listOutput.selectedIndexes()[0].row()]
             try:
                 indexExists = self.datasetOperationsTable.loc[currentIndex]
             except:
@@ -437,7 +437,20 @@ class modelCreationTab(object):
             predForcing = str(self.datasetOperationsTable.loc[currentIndex]['ForcingFlag'])
 
             # Update the dataset list with the single display option
-            self.modelTab.layoutAggregationOptions.activeSelection.refreshDatasetListFromExtenal(self.modelTab.layoutSimpleDoubleList.listOutput.datasetTable.loc[currentIndex])
+            if len(self.modelTab.layoutSimpleDoubleList.listOutput.selectedIndexes()) > 1:
+                self.modelTab.layoutAggregationOptions.activeSelection.showMultipleItemsSelected()
+            else:
+                self.modelTab.layoutAggregationOptions.activeSelection.refreshDatasetListFromExtenal(self.modelTab.layoutSimpleDoubleList.listOutput.datasetTable.loc[currentIndex])
+
+            # Set the list coloration
+            selIdxs = self.modelTab.layoutSimpleDoubleList.listOutput.selectedIndexes()
+            for selIdx in selIdxs:
+                # selIdxRow = self.modelTab.layoutSimpleDoubleList.listOutput.datasetTable.index[selIdx.row()]
+                if accumMethod == 'None' or accumPeriod == 'None' or predForcing == 'None':
+                    self.modelTab.layoutSimpleDoubleList.listOutput.itemColors[selIdx.row()] = QtCore.Qt.darkGray
+                else:
+                    self.modelTab.layoutSimpleDoubleList.listOutput.itemColors[selIdx.row()] = QtCore.Qt.white
+            self.modelTab.layoutSimpleDoubleList.listOutput.updateColors()
 
             # Set date selector range
             minT = parser.parse(str(np.sort(list(set(self.dataTable.loc[(slice(None),currentIndex[0]),'Value'].index.get_level_values(0).values)))[0]))
@@ -445,14 +458,6 @@ class modelCreationTab(object):
             self.modelTab.layoutAggregationOptions.periodStart.setMinimumDateTime(minT)
             self.modelTab.layoutAggregationOptions.periodStart.setMaximumDateTime(maxT)
             self.modelTab.layoutAggregationOptions.periodStart.setDate(minT)
-
-            # Set the list coloration
-            if accumMethod == 'None' or accumPeriod == 'None' or predForcing == 'None':
-                self.modelTab.layoutSimpleDoubleList.listOutput.itemColors[self.modelTab.layoutSimpleDoubleList.listOutput.currentIndex().row()] = QtCore.Qt.darkGray
-                self.modelTab.layoutSimpleDoubleList.listOutput.updateColors()
-            else:
-                self.modelTab.layoutSimpleDoubleList.listOutput.itemColors[self.modelTab.layoutSimpleDoubleList.listOutput.currentIndex().row()] = QtCore.Qt.white
-                self.modelTab.layoutSimpleDoubleList.listOutput.updateColors()
 
             # Set aggregation option on UI
             if accumMethod == 'None':
@@ -534,25 +539,23 @@ class modelCreationTab(object):
         Applies the attributes from the simple predictor page into the dataset operations table
 
         """
-        # todo: write this function when the aggregation group is stable
 
         # Clear the button click
         self.modelTab.layoutSimpleApplyButton.setChecked(False)
 
-        # Get the current datasest index
-        rowIdx = self.modelTab.layoutSimpleDoubleList.listOutput.currentIndex().row()
-
-        if rowIdx >= 0:
-
-            currentIndex = self.modelTab.layoutSimpleDoubleList.listOutput.datasetTable.index[rowIdx]
-
-            # Apply selected options
-            self.datasetOperationsTable.loc[currentIndex]['AccumulationMethod'] = self.modelTab.layoutAggregationOptions.selectedAggOption
-            self.datasetOperationsTable.loc[currentIndex]['AccumulationDateStart'] = self.modelTab.layoutAggregationOptions.periodStart.dateTime().toString("yyyy-MM-dd")
-            self.datasetOperationsTable.loc[currentIndex]['AccumulationDateStop'] = \
-                (parser.parse(str(np.sort(list(set(self.dataTable.loc[(slice(None),currentIndex[0]),'Value'].index.get_level_values(0).values)))[-1]))).strftime("%Y-%m-%d")
-            self.datasetOperationsTable.loc[currentIndex]['AccumulationPeriod'] = self.modelTab.layoutAggregationOptions.selectedAggPeriod
-            self.datasetOperationsTable.loc[currentIndex]['ForcingFlag'] = str(self.modelTab.layoutAggregationOptions.predForceCheckBox.checkState() == 2)
+        # Get the current datasest indexes
+        rowIdxs = self.modelTab.layoutSimpleDoubleList.listOutput.selectedIndexes()
+        #rowIdx = self.modelTab.layoutSimpleDoubleList.listOutput.currentIndex().row()
+        for rowIdx in rowIdxs:
+            if rowIdx.row() >= 0:
+                currentIndex = self.modelTab.layoutSimpleDoubleList.listOutput.datasetTable.index[rowIdx.row()]
+                # Apply selected options
+                self.datasetOperationsTable.loc[currentIndex]['AccumulationMethod'] = self.modelTab.layoutAggregationOptions.selectedAggOption
+                self.datasetOperationsTable.loc[currentIndex]['AccumulationDateStart'] = self.modelTab.layoutAggregationOptions.periodStart.dateTime().toString("yyyy-MM-dd")
+                self.datasetOperationsTable.loc[currentIndex]['AccumulationDateStop'] = (parser.parse(str(np.sort(list(
+                    set(self.dataTable.loc[(slice(None), currentIndex[0]), 'Value'].index.get_level_values(0).values)))[-1]))).strftime("%Y-%m-%d")
+                self.datasetOperationsTable.loc[currentIndex]['AccumulationPeriod'] = self.modelTab.layoutAggregationOptions.selectedAggPeriod
+                self.datasetOperationsTable.loc[currentIndex]['ForcingFlag'] = str(self.modelTab.layoutAggregationOptions.predForceCheckBox.checkState() == 2)
 
         self.updateSimpleLayoutAggregationOptions()
 
@@ -570,11 +573,8 @@ class modelCreationTab(object):
         self.modelTab.layoutSimpleDoubleList.resetOutputItems()
 
         # Clear the checkboxes
-        self.modelTab.layoutSimpleExtendCheckBox.updateToUnchecked()
-        self.modelTab.layoutSimpleFillCheckBox.updateToUnchecked()
-
-        # Clear the aggregation options
-        # todo: Add this functionality
+        self.modelTab.layoutSimpleExtendCheckBox.setChecked(False)
+        self.modelTab.layoutSimpleFillCheckBox.setChecked(False)
 
         ### Reset the button state ###
         self.modelTab.layoutSimpleClearButton.setChecked(False)
