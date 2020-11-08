@@ -90,6 +90,7 @@ class DatasetWizard(QtWidgets.QWizard):
             self.dataset["DatasetExternalID"] = self.datasetIDField.text()
             self.dataset["DatasetUnits"] = self.parameterUnitField.text()
             self.dataset["DatasetAgency"] = self.datasetAgencyField.text()
+            self.dataset['DatasetCompositeEquation'] = ''
 
         if newID == -100:
 
@@ -99,9 +100,20 @@ class DatasetWizard(QtWidgets.QWizard):
                 self.dataset["DatasetDataloader"] = "IMPORTED_FILE"
                 self.dataset["DatasetImportFileName"] = self.importFileName + "?" + self.dateColSelect.currentText() + "?" + self.fileDatasetSelect.currentText()
 
+            compositeDataIDs = ''
+            compositeCoefs = ''
+            compositeLags = ''
+            for row in range(0,self.combineDatasetTable.rowCount()):
+                #C/100121,102331,504423/1.0,0.5,4.3/0,0,5
+                compositeDataIDs += str(self.combineDatasetTable.cellWidget(row, 2).internalDatasetId) + ","
+                compositeCoefs += self.combineDatasetTable.cellWidget(0,3).text() + ","
+                compositeLags += self.combineDatasetTable.cellWidget(0,4).text() + ","
+            if len(compositeDataIDs) > 0:
+                self.dataset['DatasetCompositeEquation'] = 'C/' + compositeDataIDs[:-1] + '/' + compositeCoefs[:-1] + '/' + compositeLags[:-1]
+
             self.dataset.name = self.datasetID
             self.returnDatasetSignal.emit(self.dataset)
-            print("returning")
+            print(self.datasetID)
 
         return
 

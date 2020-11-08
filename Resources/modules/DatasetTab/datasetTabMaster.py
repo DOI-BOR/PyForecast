@@ -333,12 +333,9 @@ class datasetTab(object):
 
         # Check if dataset is new
         if dataset.name in list(self.datasetTable.index):
-            
             # Update the dataset table
             self.datasetTable.loc[dataset.name] = dataset
-
         else:
-
             # Create a new row in the dataset table
             self.datasetTable = self.datasetTable.append(dataset, ignore_index = False)
 

@@ -404,7 +404,6 @@ class DatasetListHTMLFormatted(QtWidgets.QListWidget):
                                                                      dataset['DatasetParameter'], dataset['DatasetType'])
                 item.setData(QtCore.Qt.DisplayRole, itemComboBoxText)
 
-
                 # Add the item to the listwidget
                 item.setSizeHint(QtCore.QSize(0,widget.sizeHint().height() + 15))
                 self.addItem(item)
