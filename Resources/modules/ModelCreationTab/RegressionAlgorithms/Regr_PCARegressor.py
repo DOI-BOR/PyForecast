@@ -131,6 +131,13 @@ class Regressor(object):
         # Perform the regression to find the best equation
         self.pc_coef, self.num_pcs = self.regress(self.PCs, self.standardY)
 
+        # Convert PC coefficients to regular coefficients
+        self.coef = [0] * len(self.eigenvectors)
+        for ithVector in range(0, len(self.eigenvectors)):
+            for ithPC in range(0, self.num_pcs):
+                self.coef[ithVector] = self.coef[ithVector] + (self.eigenvectors[ithVector][ithPC] * self.pc_coef[ithPC] * self.yStd) / self.xStd[ithVector]
+        self.intercept = self.yMean - np.dot(self.xMean, self.coef)
+
         # Compute the predictions
         self.y_p = self.predict(self.x)
 
