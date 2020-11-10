@@ -1584,13 +1584,36 @@ class modelCreationTab(object):
         isPrinComp = True if self.modelTab.selectedModel.regression.NAME == 'Principal Components Regression' else False
         if isPrinComp:
             self.modelTab.resultSelectedList.addItem('----- MODEL COMPONENTS -----')
-            self.modelTab.resultSelectedList.addItem('Principal Components Count: ' + str(self.modelTab.selectedModel.regression.num_pcs))
-            eigVecs = self.modelTab.selectedModel.regression.eigenvectors[self.modelTab.selectedModel.regression.num_pcs]
-            usedVecs = ", ".join([("%0.5f" % eigVec) for eigVec in eigVecs])
-            self.modelTab.resultSelectedList.addItem('Used Eigenvectors: ' + usedVecs)
-            eigVals = self.modelTab.selectedModel.regression.eigenvalues
-            eigVals = ", ".join([("%0.5f" % eigVal) for eigVal in eigVals])
-            self.modelTab.resultSelectedList.addItem('Eigenvalues: ' + eigVals)
+            self.modelTab.resultSelectedList.addItem(
+                'Principal Components Count: ' + str(self.modelTab.selectedModel.regression.num_pcs))
+            usedCoefs = self.modelTab.selectedModel.regression.pc_coef[
+                        :self.modelTab.selectedModel.regression.num_pcs]
+            coefVals = ", ".join([("%0.5f" % coef) for coef in usedCoefs])
+            self.modelTab.resultSelectedList.addItem('Principal Components Coefficients: ' + coefVals)
+            eigVecs = self.modelTab.selectedModel.regression.eigenvectors[:,
+                      :self.modelTab.selectedModel.regression.num_pcs]
+            for i in range(len(self.modelTab.selectedModel.xIDs)):
+                self.modelTab.resultSelectedList.addItem(
+                    'X' + str(i + 1) + ' Eigenvector: ' + ("%0.5f" % eigVecs[i]))
+            self.modelTab.resultSelectedList.addItem(' ')
+
+        isZScore = True if self.modelTab.selectedModel.regression.NAME == 'Z-Score Regression' else False
+        if isZScore:
+            self.modelTab.resultSelectedList.addItem('----- MODEL COMPONENTS -----')
+            for i in range(len(self.modelTab.selectedModel.xIDs)):
+                self.modelTab.resultSelectedList.addItem('X' + str(i + 1) + ' Y Correlation: ' + (
+                            "%0.5f" % self.modelTab.selectedModel.regression.zRsq[i]))
+            equation = 'Z-Score Equation: Y = ('
+            if self.modelTab.selectedModel.regression.zcoef[0] > 0:
+                equation = equation + ("%0.5f" % self.modelTab.selectedModel.regression.zcoef[0]) + ')MC'
+            else:
+                equation = equation + '-' + ("%0.5f" % self.modelTab.selectedModel.regression.zcoef[0]) + ')MC'
+            if self.modelTab.selectedModel.regression.zintercept > 0:
+                equation = equation + ' + ' + ("%0.5f" % self.modelTab.selectedModel.regression.zintercept)
+            else:
+                equation = equation + ' - ' + ("%0.5f" % self.modelTab.selectedModel.regression.zintercept)
+            self.modelTab.resultSelectedList.addItem(equation)
+            self.forecastsTab.resultSelectedList.addItem('               MC: Weighted Z-Score Multiple Component Indexed Value')
             self.modelTab.resultSelectedList.addItem(' ')
 
         self.modelTab.resultSelectedList.addItem('----- MODEL SCORES (Regular | Cross-Validated) -----')

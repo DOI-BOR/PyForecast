@@ -131,13 +131,32 @@ class forecastsTab(object):
         if isPrinComp:
             self.forecastsTab.resultSelectedList.addItem('----- MODEL COMPONENTS -----')
             self.forecastsTab.resultSelectedList.addItem('Principal Components Count: ' + str(self.forecastsTab.selectedModel.regression.num_pcs))
-            eigVecs = self.forecastsTab.selectedModel.regression.eigenvectors[self.forecastsTab.selectedModel.regression.num_pcs]
-            usedVecs = ", ".join([("%0.5f" % eigVec) for eigVec in eigVecs])
-            self.forecastsTab.resultSelectedList.addItem('Used Eigenvectors: ' + usedVecs)
-            eigVals = self.forecastsTab.selectedModel.regression.eigenvalues
-            eigVals = ", ".join([("%0.5f" % eigVal) for eigVal in eigVals])
-            self.forecastsTab.resultSelectedList.addItem('Eigenvalues: ' + eigVals)
+            usedCoefs = self.forecastsTab.selectedModel.regression.pc_coef[:self.forecastsTab.selectedModel.regression.num_pcs]
+            coefVals = ", ".join([("%0.5f" % coef) for coef in usedCoefs])
+            self.forecastsTab.resultSelectedList.addItem('Principal Components Coefficients: ' + coefVals)
+            eigVecs = self.forecastsTab.selectedModel.regression.eigenvectors[:,:self.forecastsTab.selectedModel.regression.num_pcs]
+            for i in range(len(self.forecastsTab.selectedModel.xIDs)):
+                self.forecastsTab.resultSelectedList.addItem('X' + str(i + 1) + ' Eigenvector: ' + ("%0.5f" % eigVecs[i]))
             self.forecastsTab.resultSelectedList.addItem(' ')
+
+        isZScore = True if self.forecastsTab.selectedModel.regression.NAME == 'Z-Score Regression' else False
+        if isZScore:
+            self.forecastsTab.resultSelectedList.addItem('----- MODEL COMPONENTS -----')
+            for i in range(len(self.forecastsTab.selectedModel.xIDs)):
+                self.forecastsTab.resultSelectedList.addItem('X' + str(i + 1) + ' Y Correlation: ' + ("%0.5f" % self.forecastsTab.selectedModel.regression.zRsq[i]))
+            equation = 'Z-Score Equation: Y = ('
+            if self.forecastsTab.selectedModel.regression.zcoef[0] > 0:
+                equation = equation +  ("%0.5f" % self.forecastsTab.selectedModel.regression.zcoef[0]) + ')MC'
+            else:
+                equation = equation + '-' +  ("%0.5f" % self.forecastsTab.selectedModel.regression.zcoef[0]) + ')MC'
+            if self.forecastsTab.selectedModel.regression.zintercept > 0:
+                equation = equation +  ' + ' + ("%0.5f" % self.forecastsTab.selectedModel.regression.zintercept)
+            else:
+                equation = equation + ' - ' + ("%0.5f" % self.forecastsTab.selectedModel.regression.zintercept)
+            self.forecastsTab.resultSelectedList.addItem(equation)
+            self.forecastsTab.resultSelectedList.addItem('               MC: Weighted Z-Score Multiple Component Indexed Value')
+            self.forecastsTab.resultSelectedList.addItem(' ')
+
 
         self.forecastsTab.resultSelectedList.addItem('----- MODEL SCORES (Regular | Cross-Validated) -----')
         for scorer in self.forecastsTab.selectedModel.regression.scoringParameters:

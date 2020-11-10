@@ -124,7 +124,7 @@ class Regressor(object):
         # TODO:Convert model coefficients to regular coefficients
 
         # Compute the predicted values
-        self.y_p = self.predict(mc)
+        self.y_p = self.predict(self.x)
 
         # Compute a score array
         self.scores = self.score()
@@ -160,6 +160,8 @@ class Regressor(object):
                 if not np.isnan(zVal):
                     numerator = numerator + zVal * self.zRsq[col]
                     denominator = denominator + self.zRsq[col]
+            if denominator == 0:
+                denominator = 1
             mc.append(numerator/denominator)
         mc = np.array(mc)
         mc = np.reshape(mc, (len(mc), 1))
@@ -177,7 +179,7 @@ class Regressor(object):
         using the fitted model.
         """
         # Convert X to MC index
-        mc = self.ConvertToMultiComponentIndex(self.x)
+        mc = self.ConvertToMultiComponentIndex(x)
 
         return np.dot(mc, self.zcoef) + self.zintercept
 

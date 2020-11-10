@@ -125,7 +125,9 @@ class Model(object):
 
         # Run a bootstrap to get a prediction range
         print('INFO: Running prediction bootstrap...')
-        predBootstrap = PredictionIntervalBootstrap.computePredictionInterval(self, XY_, self.preprocessorClass, self.regressionClass, self.crossValidator, nRuns=5000)
+        predBootstrap = PredictionIntervalBootstrap.computePredictionInterval(self, XY_, self.preprocessorClass,
+                                                                              self.regressionClass, self.crossValidator,
+                                                                              nRuns=500)
         self.predictionRange = pd.DataFrame(np.percentile(predBootstrap, range(1, 100)), index=range(1, 100))
 
         # Run a prediction with the input data
