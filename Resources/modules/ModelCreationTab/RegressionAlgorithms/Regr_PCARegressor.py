@@ -44,8 +44,6 @@ class Regressor(object):
         self.coef = []
         self.intercept = 0
 
-        # PCA parameters
-
         # Set up cross validator, and scorers
         self.scorerClass = self.parent.parent.scorers['class']()
         self.scorers = [getattr(self.scorerClass, scorer) for scorer in self.scoringParameters]

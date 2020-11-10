@@ -11,6 +11,7 @@ Description:    Computes a composite predictor by
 """
 
 import numpy as np
+import pandas as pd
 from resources.modules.ModelCreationTab import CrossValidationAlgorithms, ModelScoring
 
 class Regressor(object):
@@ -61,44 +62,145 @@ class Regressor(object):
 
         return
 
+
     def regress(self, x, y):
         """
+        Performs the MLR/OLS regression between x and y.
+        Standard Ordinary Least Squares. Solves the
+        matrix formulation of OLS, as seen at
+        https://en.wikipedia.org/wiki/Ordinary_least_squares
         """
 
-        # Convert all the x data to z-scores
-        self.z = (self.x - np.nanmean(self.x)) / np.nanstd(self.x)
+        # Concatenate a row of 1's to the data so that we can compute an intercept
+        X_ = np.concatenate((np.ones(shape=x.shape[0]).reshape(-1,1), x), 1)
 
-        # Create an R2 Scorer
-        scorer = getattr(ModelScoring, 'R2')
+        try:
+            # Compute the coefficients and the intercept
+            coef_all = np.linalg.inv(X_.transpose().dot(X_)).dot(X_.transpose()).dot(y)
+            coef = coef_all[1:]
+            intercept = coef_all[0]
 
-        # Regress the z scores against the y data and store the cross validated r2 scores
-        self.r_scores = []
-        for i in range(self.z.shape[1]):
+        except:
+            # Handle the case where the matrix formulation cannot be solved.
+            coef_all = np.array([0]*X_.shape[1])
+            coef = coef_all[1:]
+            intercept = coef_all[0]
 
-            # Create a list to store cross validated predictions
-            y_p_cv = np.array([], dtype=np.float32)
+        return coef, intercept
 
-            # Iterate over the cross validation samples and compute regression scores
-            for xsample, ysample, xtest, _ in self.crossValidator.yield_samples(X = self.z[:,i], Y = self.y):
-
-                 # Concatenate a row of 1's to the data so that we can compute an intercept
-                X_ = np.concatenate((np.ones(shape=xsample.shape[0]).reshape(-1,1), xsample), 1)
-
-                # Compute the least squares solution
-                coef_all = np.linalg.inv(X_.transpose().dot(X_)).dot(X_.transpose()).dot(ysample)
-                coef = coef_all[1:]
-                intercept = coef_all[0]
-                
-                # Append Cross Validated data to the array
-                y_p_cv = np.append(y_p_cv, np.dot(xtest, coef) + intercept)
-                
-            # Compute CV Score
-            self.r_scores.append(scorer(self.y, y_p_cv, 1))
-
-        # Note at this point that some r2 scores may be negative
-        # To combat that, we
 
     def fit(self, x, y, crossValidate = False):
         """
         """
 
+        # Don't score empty or single-variable combinations
+        if x.shape[1] <= 1:
+            self.cv_scores = {self.scoringParameters[i]: np.nan for i, scorer in enumerate(self.scorers)}
+            self.scores, self.y_p_cv, self.y_p = np.nan, np.nan, np.nan
+
+            return (self.scores, self.y_p, self.cv_scores, self.y_p_cv) if crossValidate else (self.scores, self.y_p)
+
+        # Set the data references
+        self.x = x
+        self.y = y
+        self.xMean = np.nanmean(x, axis = 0)
+        self.xStd = np.nanstd(x, axis = 0, ddof = 1)
+
+        # Convert all the x data to z-scores
+        self.z = (self.x - self.xMean) / self.xStd
+        # Get RSQ values of each Z with Y
+        yz = pd.DataFrame(np.column_stack((self.y, self.z)))
+        zRsq = yz.corr()[0] * yz.corr()[0]
+        self.zRsq = zRsq[1:]
+        self.zRsq.reset_index(drop=True, inplace=True)
+
+        # Calculate multi-component values MC
+        mc = self.ConvertToMultiComponentIndex(self.x)
+
+        # Fit a linear y=mx+b model
+        self.zcoef, self.zintercept = self.regress(mc, self.y)
+
+        # Convert model coefficients to regular coefficients
+        # TODO:Convert model coefficients to regular coefficients
+
+        # Compute the predicted values
+        self.y_p = self.predict(mc)
+
+        # Compute a score array
+        self.scores = self.score()
+
+        # Cross Validate if necessary
+        if crossValidate:
+
+            # Create a list to store cross validated predictions
+            self.y_p_cv = np.array([], dtype=np.float32)
+
+            # Iterate over the cross validation samples and compute regression scores
+            for xsample, ysample, xtest, _ in self.crossValidator.yield_samples(X=mc, Y=self.y):
+                coef, intercept = self.regress(xsample, ysample)
+                self.y_p_cv = np.append(self.y_p_cv, np.dot(xtest, coef) + intercept)
+
+            # Compute CV Score
+            self.cv_scores = self.score(self.y, self.y_p_cv, mc.shape[1])
+
+        return (self.scores, self.y_p, self.cv_scores, self.y_p_cv) if crossValidate else (self.scores, self.y_p)
+
+
+    def ConvertToMultiComponentIndex(self, x):
+        z = pd.DataFrame(((x - self.xMean) / self.xStd))
+        zWeighted = z.multiply(self.zRsq)
+
+        # Calculate multi-component values MC
+        mc = []
+        for row in range(zWeighted.shape[0]):
+            numerator = 0
+            denominator = 0
+            for col in range(zWeighted.shape[1]):
+                zVal = zWeighted.loc[row][col]
+                if not np.isnan(zVal):
+                    numerator = numerator + zVal * self.zRsq[col]
+                    denominator = denominator + self.zRsq[col]
+            mc.append(numerator/denominator)
+        mc = np.array(mc)
+        mc = np.reshape(mc, (len(mc), 1))
+
+        return mc
+
+
+    def residuals(self):
+        return self.y - self.y_p
+
+
+    def predict(self, x):
+        """
+        Makes a prediction on 'x'
+        using the fitted model.
+        """
+        # Convert X to MC index
+        mc = self.ConvertToMultiComponentIndex(self.x)
+
+        return np.dot(mc, self.zcoef) + self.zintercept
+
+
+    def score(self, y_obs = [], y_p = [], n_features = None):
+        """
+        Scores the model using the supplied scorers.
+        Scores y_obs against y_p. Uses the supplied
+        y_p and y_obs (if given), otherwise uses
+        the fitted model.
+        """
+
+        y_obs = self.y if (y_obs == []) else y_obs
+        y_p = self.y_p if (y_p == []) else y_p
+        n_features = self.x.shape[1] if (n_features == None) else n_features
+
+        # Check that the model is actually valid
+        # that is, there are less than n-1 predictors
+        #       - There cannot be more than n-2 predictors
+        #         or else the scoring does not work. Adjusted
+        #         r2 and AICc rely on the fact that there are
+        #         less predictors than observations
+        if n_features > len(y_p) - 2:
+            return {self.scoringParameters[i]: np.nan for i, scorer in enumerate(self.scorers)}
+
+        return {self.scoringParameters[i]: scorer(y_obs, y_p, n_features) for i, scorer in enumerate(self.scorers)}
