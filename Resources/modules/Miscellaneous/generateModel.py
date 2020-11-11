@@ -143,3 +143,97 @@ class Model(object):
 
         return
 
+
+    def report(self, modelIdx, listWidget):
+        # Update UI with selected model metadata
+        listWidget.clear()
+        listWidget.addItem('----- MODEL REGRESSION -----')
+        listWidget.addItem('Model Index: ' + str(modelIdx))
+        listWidget.addItem(
+            'Model Processes: ' + str(self.forecastEquation.EquationMethod))
+        listWidget.addItem(
+            'Model Predictor IDs: ' + str(self.forecastEquation.EquationPredictors))
+        listWidget.addItem(
+            'Selected Range (years): ' + str(self.trainingDates))
+        usedYears = ", ".join([str(years) for years in self.years])
+        listWidget.addItem('Used Range (years): ' + usedYears)
+        listWidget.addItem(' ')
+
+        listWidget.addItem('----- MODEL VARIABLES -----')
+        listWidget.addItem('Predictand Y: ' + str(
+            self.parent.datasetTable.loc[self.yID].DatasetName) + ' - ' + str(
+            self.parent.datasetTable.loc[self.yID].DatasetParameter))
+        equation = 'Y ='
+        hasCoefs = True
+        for i in range(len(self.xIDs)):
+            listWidget.addItem('Predictor X' + str(i + 1) + ': ' + str(
+                self.parent.datasetTable.loc[
+                    self.xIDs[i]].DatasetName) + ' - ' + str(
+                self.parent.datasetTable.loc[self.xIDs[i]].DatasetParameter))
+            try:
+                if hasCoefs:
+                    coef = self.regression.coef[i]
+                    const = 'X' + str(i + 1)
+                    if coef >= 0:
+                        equation = equation + ' + (' + ("%0.5f" % coef) + ')' + const
+                    else:
+                        equation = equation + ' - (' + ("%0.5f" % (coef * -1.0)) + ')' + const
+            except:
+                hasCoefs = False
+
+        listWidget.addItem(' ')
+        if hasCoefs:
+            listWidget.addItem('----- MODEL EQUATION -----')
+            if self.regression.intercept >= 0:
+                equation = equation + ' + ' + ("%0.5f" % self.regression.intercept)
+            else:
+                equation = equation + ' - ' + ("%0.5f" % (self.regression.intercept * -1.0))
+            listWidget.addItem('' + equation)
+            listWidget.addItem(' ')
+
+        isPrinComp = True if self.regression.NAME == 'Principal Components Regression' else False
+        if isPrinComp:
+            listWidget.addItem('----- MODEL COMPONENTS -----')
+            listWidget.addItem(
+                'Principal Components Count: ' + str(self.regression.num_pcs))
+            usedCoefs = self.regression.pc_coef[
+                        :self.regression.num_pcs]
+            coefVals = ", ".join([("%0.5f" % coef) for coef in usedCoefs])
+            listWidget.addItem('Principal Components Coefficients: ' + coefVals)
+            eigVecs = self.regression.eigenvectors[:,
+                      :self.regression.num_pcs]
+            for i in range(len(self.xIDs)):
+                listWidget.addItem(
+                    'X' + str(i + 1) + ' Eigenvector: ' + ("%0.5f" % eigVecs[i]))
+            listWidget.addItem(' ')
+
+        isZScore = True if self.regression.NAME == 'Z-Score Regression' else False
+        if isZScore:
+            listWidget.addItem('----- MODEL COMPONENTS -----')
+            for i in range(len(self.xIDs)):
+                listWidget.addItem('X' + str(i + 1) + ' Y Correlation: ' + (
+                            "%0.5f" % self.regression.zRsq[i]))
+            equation = 'Z-Score Equation: Y = ('
+            if self.regression.zcoef[0] > 0:
+                equation = equation + ("%0.5f" % self.regression.zcoef[0]) + ')MC'
+            else:
+                equation = equation + '-' + ("%0.5f" % self.regression.zcoef[0]) + ')MC'
+            if self.regression.zintercept > 0:
+                equation = equation + ' + ' + ("%0.5f" % self.regression.zintercept)
+            else:
+                equation = equation + ' - ' + ("%0.5f" % self.regression.zintercept)
+            listWidget.addItem(equation)
+            listWidget.addItem(
+                '               MC: Weighted Z-Score Multiple Component Indexed Value')
+            listWidget.addItem(' ')
+
+        listWidget.addItem('----- MODEL SCORES (Regular | Cross-Validated) -----')
+        for scorer in self.regression.scoringParameters:
+            try:
+                regScore = self.regression.scores[scorer]
+                cvScore = self.regression.cv_scores[scorer]
+                listWidget.addItem(
+                    scorer + ': ' + ("%0.5f" % regScore) + ' | ' + ("%0.5f" % cvScore))
+            except:
+                pass
+        return

@@ -121,7 +121,12 @@ class Regressor(object):
         self.zcoef, self.zintercept = self.regress(mc, self.y)
 
         # Convert model coefficients to regular coefficients
-        # TODO:Convert model coefficients to regular coefficients
+        self.coef = [0] * len(self.zRsq)
+        self.intercept = self.zintercept
+        for ithTerm in range(0, len(self.zRsq)):
+            coeffTerm = self.zcoef[0] * self.zRsq[ithTerm] / (self.xStd[ithTerm] * sum(self.zRsq))
+            self.coef[ithTerm] = coeffTerm
+            self.intercept = self.intercept + coeffTerm * self.xMean[ithTerm] * -1
 
         # Compute the predicted values
         self.y_p = self.predict(self.x)
@@ -148,6 +153,11 @@ class Regressor(object):
 
     def ConvertToMultiComponentIndex(self, x):
         z = pd.DataFrame(((x - self.xMean) / self.xStd))
+        # catch case when issuing a single model prediction via 1-row of data
+        if z.shape[1] == 1:
+            z.reset_index(drop=True,inplace=True)
+            z = z.T
+            z.reset_index(drop=True,inplace=True)
         zWeighted = z.multiply(self.zRsq)
 
         # Calculate multi-component values MC
@@ -158,7 +168,7 @@ class Regressor(object):
             for col in range(zWeighted.shape[1]):
                 zVal = zWeighted.loc[row][col]
                 if not np.isnan(zVal):
-                    numerator = numerator + zVal * self.zRsq[col]
+                    numerator = numerator + zVal
                     denominator = denominator + self.zRsq[col]
             if denominator == 0:
                 denominator = 1
