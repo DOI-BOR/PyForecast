@@ -152,8 +152,14 @@ class forecastsTab(object):
         self.forecastsTab.runModelButton.setChecked(False)
         lookupYear = self.forecastsTab.modelYearSpin.value()
         self.forecastsTab.selectedModel.predictionYear = lookupYear
-        predValues = self.forecastsTab.selectedModelDataTable.dataTable.loc[str(lookupYear) + ' Value']
-        prediction = self.forecastsTab.selectedModel.predict(year=str(lookupYear))
+        # Get data from the displayed table
+        xData = pd.Series()
+        for i in range(len(self.forecastsTab.selectedModelDataTable.dataTable.columns)):
+            xData.loc[i] = float(self.forecastsTab.selectedModelDataTable.model.item(1, i).text())
+        xData.index = self.forecastsTab.selectedModelDataTable.dataTable.columns
+        self.forecastsTab.selectedModel.predict(xData=xData)
+        # Get data based on the toggled year
+        #self.forecastsTab.selectedModel.predict(year=str(lookupYear))
         self.forecastsTab.resultsObservedForecstPlot.appendForecast(self.forecastsTab.selectedModel.prediction,
                                                                     self.forecastsTab.selectedModel.predictionRange.loc[[10,25,75,90]])
         self.forecastsTab.saveModelButton.setEnabled(True)

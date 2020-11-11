@@ -49,6 +49,9 @@ class Regressor(object):
         # Fitting Parameters
         self.coef = []
         self.intercept = 0
+        self.zcoef = []
+        self.zintercept = []
+        self.zRsq = []
 
         # Set up cross validator, and scorers
         self.scorerClass = self.parent.parent.scorers['class']()
