@@ -96,6 +96,13 @@ class Regressor(object):
         scores in the self.cv_scores variable.
         """
 
+        # Don't score empty combinations
+        if x.shape[1] < 1:
+            self.cv_scores = {self.scoringParameters[i]: np.nan for i, scorer in enumerate(self.scorers)}
+            self.scores, self.y_p_cv, self.y_p = np.nan, np.nan, np.nan
+
+            return (self.scores, self.y_p, self.cv_scores, self.y_p_cv) if crossValidate else (self.scores, self.y_p)
+
         # Set the data references
         self.x = x
         self.y = y

@@ -161,18 +161,20 @@ class Regressor(object):
         zWeighted = z.multiply(self.zRsq)
 
         # Calculate multi-component values MC
-        mc = []
-        for row in range(zWeighted.shape[0]):
-            numerator = 0
-            denominator = 0
-            for col in range(zWeighted.shape[1]):
-                zVal = zWeighted.loc[row][col]
-                if not np.isnan(zVal):
-                    numerator = numerator + zVal
-                    denominator = denominator + self.zRsq[col]
-            if denominator == 0:
-                denominator = 1
-            mc.append(numerator/denominator)
+        # Create dframe of RSQ values
+        zRsqds = pd.DataFrame(index=range(0, len(zWeighted)), columns=zWeighted.columns, dtype='float')
+        zRsqds.loc[0] = self.zRsq.T
+        zRsqds.ffill(inplace=True)
+        # Create mask to locate NaNs
+        zWeightedNan = zWeighted.isna()
+        zeros = pd.DataFrame(np.zeros((zRsqds.shape[0], zRsqds.shape[1])))
+        # Replace NaNs with zeros
+        zRsqds.mask(zWeightedNan, zeros)
+        zWeighted.mask(zWeightedNan, zeros)
+        # Calculate numerators and denominators for the weighted multi-component index
+        numerators = zWeighted.sum(axis=1)
+        denominators = zRsqds.sum(axis=1)
+        mc = numerators / denominators
         mc = np.array(mc)
         mc = np.reshape(mc, (len(mc), 1))
 

@@ -4,6 +4,7 @@ from resources.modules.Miscellaneous.DataProcessor import resampleDataSet
 from resources.modules.ModelCreationTab import PredictionIntervalBootstrap
 from scipy.stats import iqr
 from sklearn.neighbors import KernelDensity
+from PyQt5 import QtGui, QtWidgets
 
 
 class Model(object):
@@ -145,6 +146,7 @@ class Model(object):
 
 
     def report(self, modelIdx, listWidget):
+        listWidget.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
         # Update UI with selected model metadata
         listWidget.clear()
         listWidget.addItem('----- MODEL REGRESSION -----')
@@ -165,6 +167,7 @@ class Model(object):
             self.parent.datasetTable.loc[self.yID].DatasetParameter))
         equation = 'Y ='
         hasCoefs = True
+        hasNegativeCoef = False
         for i in range(len(self.xIDs)):
             listWidget.addItem('Predictor X' + str(i + 1) + ': ' + str(
                 self.parent.datasetTable.loc[
@@ -178,6 +181,7 @@ class Model(object):
                         equation = equation + ' + (' + ("%0.5f" % coef) + ')' + const
                     else:
                         equation = equation + ' - (' + ("%0.5f" % (coef * -1.0)) + ')' + const
+                        hasNegativeCoef = True
             except:
                 hasCoefs = False
 
@@ -189,6 +193,10 @@ class Model(object):
             else:
                 equation = equation + ' - ' + ("%0.5f" % (self.regression.intercept * -1.0))
             listWidget.addItem('' + equation)
+            if hasNegativeCoef:
+                widg = QtWidgets.QListWidgetItem('WARNING: Generated equation has at least 1 negative coefficient')
+                widg.setForeground(QtGui.QColor("#FF0000"))
+                listWidget.addItem(widg)
             listWidget.addItem(' ')
 
         isPrinComp = True if self.regression.NAME == 'Principal Components Regression' else False
