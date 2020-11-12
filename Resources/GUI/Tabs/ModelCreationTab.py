@@ -437,29 +437,16 @@ class ModelCreationTab(QtWidgets.QWidget):
         configurationLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Dataset Configuration<strong>')
         configurationLabel.setContentsMargins(0, 10, 0, 0)
 
-
         # Aggregation options widget
         self.layoutAggregationOptions = AggregationOptions(False, orientation='vertical')
 
         # Simple fill
         self.layoutSimpleFillCheckBox = QtWidgets.QCheckBox("Fill Data: Automatically fill the selected time series using default properties.")
         self.layoutSimpleFillCheckBox.setChecked(False)
-        # self.layoutSimpleFill = richTextDescriptionButton(self,
-        #                                                   '<strong style="font-size: 13px; color: darkcyan">{0}</strong>: {1}'.format(
-        #                                                       'Fill data',
-        #                                                       'Automatically fill the selected time series using default properties'))
-        # self.layoutSimpleFill.setFixedHeight(30)
-        # self.layoutSimpleFill.setDisabled(True)
 
         # Simple extend
         self.layoutSimpleExtendCheckBox = QtWidgets.QCheckBox("Extend Data: Automatically extend the selected time series using default properties.")
         self.layoutSimpleExtendCheckBox.setChecked(False)
-        # self.layoutSimpleExtend = richTextDescriptionButton(self,
-        #                                                     '<strong style="font-size: 13px; color: darkcyan">{0}</strong>: {1}'.format(
-        #                                                         'Extend data',
-        #                                                         'Automatically extend the selected time series using default properties'))
-        # self.layoutSimpleExtend.setFixedHeight(30)
-        # self.layoutSimpleExtend.setDisabled(True)
 
         ### Create buttons to apply predictor operations ###
         # Create the show plots button

@@ -169,7 +169,7 @@ class DatasetTab(QtWidgets.QWidget):
         self.climButton = QtWidgets.QPushButton(icon, "")
         self.climButton.setFixedWidth(100)
 
-        addiLabel = QtWidgets.QLabel("User Defined Dataset")
+        addiLabel = QtWidgets.QLabel("User Defined / Composite Dataset")
         addiInfo = QtWidgets.QLabel()
         addiInfo.setPixmap(self.infoIcon)
         addiInfo.setToolTip("")
@@ -188,6 +188,7 @@ class DatasetTab(QtWidgets.QWidget):
         layout2.addWidget(self.prismInput)
         layout2.addWidget(self.prismButton)
         layout_.addLayout(layout2)
+        layout_.addWidget(QtWidgets.QLabel(""))
 
         layout2 = QtWidgets.QHBoxLayout()
         layout2.addWidget(nrccInfo)
@@ -198,6 +199,7 @@ class DatasetTab(QtWidgets.QWidget):
         layout2.addWidget(self.nrccInput)
         layout2.addWidget(self.nrccButton)
         layout_.addLayout(layout2)
+        layout_.addWidget(QtWidgets.QLabel(""))
 
         layout2 = QtWidgets.QHBoxLayout()
         layout2.addWidget(pdsiInfo)
@@ -209,6 +211,7 @@ class DatasetTab(QtWidgets.QWidget):
         layout2.addWidget(self.pdsiButton)
         layout2.addWidget(self.spiButton)
         layout_.addLayout(layout2)
+        layout_.addWidget(QtWidgets.QLabel(""))
 
         layout2 = QtWidgets.QHBoxLayout()
         layout2.addWidget(climInfo)
@@ -219,8 +222,7 @@ class DatasetTab(QtWidgets.QWidget):
         layout2.addWidget(self.climInput)
         layout2.addWidget(self.climButton)
         layout_.addLayout(layout2)
-
-        layout_.addSpacerItem(QtWidgets.QSpacerItem(40, 1000, QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding))
+        layout_.addWidget(QtWidgets.QLabel(""))
 
         layout2 = QtWidgets.QHBoxLayout()
         layout2.addWidget(addiInfo)
@@ -228,6 +230,8 @@ class DatasetTab(QtWidgets.QWidget):
         layout2.addSpacerItem(QtWidgets.QSpacerItem(40, 10, QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding))
         layout2.addWidget(self.addiButton)
         layout_.addLayout(layout2)
+
+        layout_.addSpacerItem(QtWidgets.QSpacerItem(40, 1000, QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding))
 
         #layout_.addWidget(blank)
         AdditionalDatasetTab.setLayout(layout_)

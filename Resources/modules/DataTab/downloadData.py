@@ -109,7 +109,6 @@ class downloadDataThreadWorker(QtCore.QRunnable):
                 # Check whether all the datasets in the composite are available for composing
                 requiredDatasets = [int(i) for i in dataset['DatasetCompositeEquation'].split('/')[1].split(',')]
                 if set(requiredDatasets).issubset(set(datasets[:currentIndex])):
-                    
                     # Set status bar
                     self.statusBar.setText("Attempting to compose data for {0}".format(dataset['DatasetName']))
 
@@ -127,7 +126,6 @@ class downloadDataThreadWorker(QtCore.QRunnable):
                 # If we don't have all the data yet, move this dataset to the back of the list
                 # and come back to it later when we do have all the data.
                 else:
-
                     datasets.append(datasets.pop(currentIndex)) # <= This is a pretty sweet operation!
 
             # Download or import the data normally

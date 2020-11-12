@@ -65,6 +65,9 @@ class forecastsTab(object):
         return
 
 
+    # ====================================================================================================================
+    # FORECAST DETAIL TAB FUNCTIONS
+    # <editor-fold desc="Expand Forecast Detail tab functions...">
     def generateSavedModel(self, selected, deselected):
         # todo: doc string
 
@@ -85,65 +88,7 @@ class forecastsTab(object):
         QtWidgets.QApplication.restoreOverrideCursor()
 
         # Update UI with selected model metadata
-        self.forecastsTab.resultSelectedList.clear()
-        self.forecastsTab.resultSelectedList.addItem('----- MODEL REGRESSION -----')
-        self.forecastsTab.resultSelectedList.addItem('Model Index: ' + str(modelIdx))
-        self.forecastsTab.resultSelectedList.addItem('Model Processes: ' + str(self.forecastsTab.selectedModel.forecastEquation.EquationMethod))
-        self.forecastsTab.resultSelectedList.addItem('Model Predictor IDs: ' + str(self.forecastsTab.selectedModel.forecastEquation.EquationPredictors))
-        self.forecastsTab.resultSelectedList.addItem('Selected Range (years): ' + str(self.forecastsTab.selectedModel.trainingDates))
-        usedYears = ", ".join([str(years) for years in self.forecastsTab.selectedModel.years])
-        self.forecastsTab.resultSelectedList.addItem('Used Range (years): ' + usedYears)
-        self.forecastsTab.resultSelectedList.addItem(' ')
-
-        self.forecastsTab.resultSelectedList.addItem('----- MODEL VARIABLES -----')
-        self.forecastsTab.resultSelectedList.addItem('Predictand Y: ' + str(self.forecastsTab.parent.datasetTable.loc[self.forecastsTab.selectedModel.yID].DatasetName) + ' - ' + str(self.forecastsTab.parent.datasetTable.loc[self.forecastsTab.selectedModel.yID].DatasetParameter))
-        equation = 'Y ='
-        hasCoefs = True
-        for i in range(len(self.forecastsTab.selectedModel.xIDs)):
-            self.forecastsTab.resultSelectedList.addItem('Predictor X' + str(i+1) + ': ' + str(
-                self.forecastsTab.parent.datasetTable.loc[self.forecastsTab.selectedModel.xIDs[i]].DatasetName) + ' - ' + str(
-                self.forecastsTab.parent.datasetTable.loc[self.forecastsTab.selectedModel.xIDs[i]].DatasetParameter))
-            try:
-                if hasCoefs:
-                    coef = self.forecastsTab.selectedModel.regression.coef[i]
-                    const = 'X' + str(i+1)
-                    if coef >= 0:
-                        equation = equation + ' + (' + ("%0.5f" % coef) + ')' + const
-                    else:
-                        equation = equation + ' - (' + ("%0.5f" % (coef * -1.0)) + ')' + const
-            except:
-                hasCoefs = False
-
-        self.forecastsTab.resultSelectedList.addItem(' ')
-        if hasCoefs:
-            self.forecastsTab.resultSelectedList.addItem('----- MODEL EQUATION -----')
-            if self.forecastsTab.selectedModel.regression.intercept >= 0:
-                equation = equation + ' + ' + ("%0.5f" % self.forecastsTab.selectedModel.regression.intercept)
-            else:
-                equation = equation + ' - ' + ("%0.5f" % (self.forecastsTab.selectedModel.regression.intercept * -1.0))
-            self.forecastsTab.resultSelectedList.addItem('' + equation)
-            self.forecastsTab.resultSelectedList.addItem(' ')
-
-        isPrinComp = True if self.forecastsTab.selectedModel.regression.NAME == 'Principal Components Regression' else False
-        if isPrinComp:
-            self.forecastsTab.resultSelectedList.addItem('----- MODEL COMPONENTS -----')
-            self.forecastsTab.resultSelectedList.addItem('Principal Components Count: ' + str(self.forecastsTab.selectedModel.regression.num_pcs))
-            eigVecs = self.forecastsTab.selectedModel.regression.eigenvectors[self.forecastsTab.selectedModel.regression.num_pcs]
-            usedVecs = ", ".join([("%0.5f" % eigVec) for eigVec in eigVecs])
-            self.forecastsTab.resultSelectedList.addItem('Used Eigenvectors: ' + usedVecs)
-            eigVals = self.forecastsTab.selectedModel.regression.eigenvalues
-            eigVals = ", ".join([("%0.5f" % eigVal) for eigVal in eigVals])
-            self.forecastsTab.resultSelectedList.addItem('Eigenvalues: ' + eigVals)
-            self.forecastsTab.resultSelectedList.addItem(' ')
-
-        self.forecastsTab.resultSelectedList.addItem('----- MODEL SCORES (Regular | Cross-Validated) -----')
-        for scorer in self.forecastsTab.selectedModel.regression.scoringParameters:
-            try:
-                regScore = self.forecastsTab.selectedModel.regression.scores[scorer]
-                cvScore = self.forecastsTab.selectedModel.regression.cv_scores[scorer]
-                self.forecastsTab.resultSelectedList.addItem(scorer + ': ' + ("%0.5f" % regScore) + ' | ' + ("%0.5f" % cvScore))
-            except:
-                pass
+        self.forecastsTab.selectedModel.report(modelIdx, self.forecastsTab.resultSelectedList)
 
         # Update Plots
         self.forecastsTab.resultsObservedForecstPlot.updateScatterPlot(self.forecastsTab.selectedModel.regressionData)
@@ -207,8 +152,14 @@ class forecastsTab(object):
         self.forecastsTab.runModelButton.setChecked(False)
         lookupYear = self.forecastsTab.modelYearSpin.value()
         self.forecastsTab.selectedModel.predictionYear = lookupYear
-        predValues = self.forecastsTab.selectedModelDataTable.dataTable.loc[str(lookupYear) + ' Value']
-        prediction = self.forecastsTab.selectedModel.predict(year=str(lookupYear))
+        # Get data from the displayed table
+        xData = pd.Series()
+        for i in range(len(self.forecastsTab.selectedModelDataTable.dataTable.columns)):
+            xData.loc[i] = float(self.forecastsTab.selectedModelDataTable.model.item(1, i).text())
+        xData.index = self.forecastsTab.selectedModelDataTable.dataTable.columns
+        self.forecastsTab.selectedModel.predict(xData=xData)
+        # Get data based on the toggled year
+        #self.forecastsTab.selectedModel.predict(year=str(lookupYear))
         self.forecastsTab.resultsObservedForecstPlot.appendForecast(self.forecastsTab.selectedModel.prediction,
                                                                     self.forecastsTab.selectedModel.predictionRange.loc[[10,25,75,90]])
         self.forecastsTab.saveModelButton.setEnabled(True)
@@ -230,8 +181,12 @@ class forecastsTab(object):
             self.forecastsTable.drop(fcastIdx, inplace=True)
         self.forecastsTab.selectedModel.predictionRange.loc[-1] = self.forecastsTab.selectedModel.prediction
         self.forecastsTable.loc[eqID,fcastYear,fcastExc]=[self.forecastsTab.selectedModel.predictionRange]
+    # </editor-fold>
 
 
+    # ====================================================================================================================
+    # COMPARE FORECASTS TAB FUNCTIONS
+    # <editor-fold desc="Expand Compare Forecasts tab functions...">
     def generateSavedForecast(self):
 
         self.forecastsTab.savedForecastsCharts.clearPlot()
@@ -261,6 +216,11 @@ class forecastsTab(object):
             self.forecastsTab.savedForecastsCharts.appendSavedForecast(boxPlotData)
         except:
             return
+    # </editor-fold>
+
+
+    # ====================================================================================================================
+    # TAB CHANGE FUNCTIONS
 
 
     def selectedForecastTabChanged(self, tabIndex):
@@ -268,6 +228,10 @@ class forecastsTab(object):
         ### Get the current index the widget has been changed to ###
         #currentIndex = self.workflowWidget.currentIndex()
         #print(tabIndex)
+
+        if tabIndex == 0:
+            self.forecastsTab.savedModelsTable.clearTable()
+            self.forecastsTab.savedModelsTable.loadDataIntoModel(self.savedForecastEquationsTable)
 
         if tabIndex == 1:
             self.forecastsTab.savedForecastsPane.clearForecasts()

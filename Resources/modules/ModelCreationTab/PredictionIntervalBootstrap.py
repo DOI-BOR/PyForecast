@@ -55,7 +55,7 @@ def computePredictionInterval(parent, observations, preprocessor, regressor, cro
     prediction = model.predict(xTest[:-1].reshape(1,-1))
 
     # Initialize a list of prediction errors
-    nCount = int(nRuns/5)
+    nCount = nRuns# int(nRuns/5)
     predictionErrors = np.full(nCount, np.nan)
 
     # Function to get a prediction

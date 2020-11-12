@@ -32,9 +32,6 @@ import pandas as pd
 import os, inspect
 import importlib
 
-# DEBUGGING
-import pickle
-
 
 class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMaster.datasetTab, dataTabMaster.dataTab, menuBarMaster.menuBar, modelCreationTabMaster.modelCreationTab, forecastTabMaster.forecastsTab):
     """
@@ -54,157 +51,19 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
         super(self.__class__, self).__init__()
         
         # Create the data structures.
-        # The dataset table stores information about all the datasets being used in the forecast file.
-        self.datasetTable = pd.DataFrame(
-            index = pd.Index([], dtype=int, name='DatasetInternalID'),
-            columns = [
-                'DatasetType',              # e.g. STREAMGAGE, or RESERVOIR
-                'DatasetExternalID',        # e.g. "GIBR" or "06025500"
-                'DatasetName',              # e.g. Gibson Reservoir
-                'DatasetAgency',            # e.g. USGS
-                'DatasetParameter',         # e.g. Temperature
-                "DatasetParameterCode",     # e.g. avgt
-                'DatasetUnits',             # e.g. CFS
-                'DatasetDefaultResampling', # e.g. average 
-                'DatasetDataloader',        # e.g. RCC_ACIS
-                'DatasetHUC8',              # e.g. 10030104
-                'DatasetLatitude',          # e.g. 44.352
-                'DatasetLongitude',         # e.g. -112.324
-                'DatasetElevation',         # e.g. 3133 (in ft)
-                'DatasetPORStart',          # e.g. 1/24/1993
-                'DatasetPOREnd',            # e.g. 1/22/2019\
-                'DatasetCompositeEquation', # e.g. C/100121,102331,504423/1.0,0.5,4.3/0,0,5
-                'DatasetImportFileName',    # e.g. 'C://Users//JoeDow//Dataset.CSV'
-                'DatasetAdditionalOptions'
-            ],
-        ) 
-        self.datasetTable['DatasetHUC8'] = self.datasetTable['DatasetHUC8'].astype(str)
-
-        # Create the operations to be applied to the data structures
-        self.datasetOperationsTable = pd.DataFrame(
-            index=pd.Index([], dtype=int, name='DatasetID'),
-            columns=[
-                'DatasetInternalID',        # Reference to the source dataset
-                'DatasetInstanceID',        # Unique version of the dataset to allow multiple accumulators
-                'FillMethod',               # Fill method to apply to the data
-                'FillMaximumGap',           # Maximum gap to fill in the data
-                'FillOrder',                # Order of the interpolation method
-                'ExtendMethod',             # Extend method to apply to the data
-                'ExtendDuration',           # How long the data should be extended in the dataset units
-                'ExtendFilter',             # How the extend operation should be filtered
-                'AccumulationMethod',       # Specify the accumulation method that will be applied
-                'AccumulationDateStart',    # Date from which to begin the accumulation of the variable
-                'AccumulationDateStop',     # Date from which to stop the accumulation of the variable
-                'AccumulationPeriod',       # ISO-8601 string pattern for the accumulation period
-                'ForcingFlag',              # Boolean to force the use of this predictor
-                'DatasetOperationsOptions'
-            ],
-        )
-
-        # Convert the table to a multiindex dataframe for more simple indexing
-        self.datasetOperationsTable.set_index(['DatasetInternalID', 'DatasetInstanceID'], inplace=True)
-
-        # The data table stores all of the raw data associated with the selected datasets.
-        # Edited data is versioned as 1 and unedited data is versioned as 0
-        self.dataTable = pd.DataFrame(
-            index = pd.MultiIndex(
-                levels=[[],[],],
-                codes = [[],[],],
-                names = [
-                    'Datetime',             # E.g. 1998-10-23
-                    'DatasetInternalID'     # E.g. 100302
-                    ]
-            ),
-            columns = [
-                "Value",                    # E.g. 12.3, Nan, 0.33
-                "EditFlag"                  # E.g. True, False -> NOTE: NOT IMPLEMENTED
-                ],
-            dtype=float
-        )
-        self.dataTable['EditFlag'] = self.dataTable['EditFlag'].astype(bool)
+        self.initializeDatasetTables()
         
         # This table will keep track of all the model runs initial conditions
-        self.modelRunsTable = pd.DataFrame(
-            index = pd.Index([], dtype=int, name='ModelRunID'),
-            columns = [
-                "ModelTrainingPeriod",  # E.g. 1978-10-01/2019-09-30 (model trained on  WY1979-WY2019 data)
-                "ForecastIssueDate",    # E.g. January 13th
-                "Predictand",           # E.g. 100302 (datasetInternalID)
-                "PredictandPeriod",     # E.g. R/1978-03-01/P1M/F12M (starting in march of 1978, over a 1 month period, recurring once a year.)
-                "PredictandMethod",     # E.g. Accumulation, Average, Max, etc
-                #"PredictorGroups",      # E.g. ["SNOTEL SITES", "CLIMATE INDICES", ...]
-                #"PredictorGroupMapping",# E.g. [0, 0, 0, 1, 4, 2, 1, 3, ...] maps each predictor in the pool to a predictor group
-                "PredictorPool",        # E.g. [100204, 100101, ...]
-                "PredictorForceFlag",   # E.g. [False, False, True, ...]
-                "PredictorPeriods",     # E.g. [R/1978-03-01/P1M/F12M, R/1978-03-01/P1M/F12M, ...]
-                "PredictorMethods",     # E.g. ['Accumulation', 'First', 'Last', ...]
-                "RegressionTypes",      # E.g. ['Regr_MultipleLinearRegression', 'Regr_ZScoreRegression']
-                "CrossValidationType",  # E.g. K-Fold (10 folds)
-                "FeatureSelectionTypes",# E.g. ['FeatSel_SequentialFloatingSelection', 'FeatSel_GeneticAlgorithm']
-                "ScoringParameters",    # E.g. ['ADJ_R2', 'MSE']
-                "Preprocessors"         # E.g. ['PreProc_Logarithmic', 'PreProc_YAware']
-            ]
-        )
+        self.initializeModelRunTable()
 
         # The forecastEquationsTable stores all of the forecast equations generated by the Model Creation process.
-        self.forecastEquationsTable = pd.DataFrame(
-            index = pd.Index([], dtype=int, name='ForecastEquationID'),
-            columns = [
-                "EquationSource",       # e.g. 'PyForecast','NRCS', 'CustomImport'
-                "EquationComment",      # E.g. 'Equation Used for 2000-2010 Forecasts'
-                "ModelTrainingPeriod",  # E.g. 1978-10-01/2019-09-30 
-                "EquationPredictand",   # E.g. 103011
-                "PredictandPeriod",     # R/1978-03-01/P1M/F12M (starting in march of 1978, over a 1 month period, recurring once a year.)
-                "PredictandMethod",     # E.g. Accumulation, Average, Max, etc
-                "EquationCreatedOn",    # E.g. 2019-10-04
-                "EquationIssueDate",    # E.g. 2019-02-01
-                "EquationMethod",       # E.g. Pipeline string (e.g. PIPE/PreProc_Logistic/Regr_Gamma/KFOLD_5)
-                "EquationSkill",        # E.g. Score metric dictionary (e.g. {"AIC_C": 433, "ADJ_R2":0.32, ...})
-                "EquationPredictors",   # E.g. [100204, 100101, 500232]
-                "PredictorPeriods",     # E.g. [R/1978-03-01/P1M/F12M, R/1978-03-01/P1M/F12M, R/1978-03-01/P1M/F12M]
-                "PredictorMethods",     # E.g. ['Average', 'First', 'Max']
-                "DirectEquation"        # E.g. Mainly for import equations where we don't want to compute models on the fly
-                                        #      e.g. "DIRECT/Regr_MultipleLinearRegressor/3.4,2.2,-1.33/133.2" 
-            ]
-        )
+        self.initializeModelRunResultsTable()
 
         # The savedForecastEquationsTable stores all of the forecast equations saved or imported by the user.
-        self.savedForecastEquationsTable = pd.DataFrame(
-            index = pd.Index([], dtype=int, name='ForecastEquationID'),
-            columns = [
-                "EquationSource",       # e.g. 'PyForecast','NRCS', 'CustomImport'
-                "EquationComment",      # E.g. 'Equation Used for 2000-2010 Forecasts'
-                "ModelTrainingPeriod",  # E.g. 1978-10-01/2019-09-30
-                "EquationPredictand",   # E.g. 103011
-                "PredictandPeriod",     # R/1978-03-01/P1M/F12M (starting in march of 1978, over a 1 month period, recurring once a year.)
-                "PredictandMethod",     # E.g. Accumulation, Average, Max, etc
-                "EquationCreatedOn",    # E.g. 2019-10-04
-                "EquationIssueDate",    # E.g. 2019-02-01
-                "EquationMethod",       # E.g. Pipeline string (e.g. PIPE/PreProc_Logistic/Regr_Gamma/KFOLD_5)
-                "EquationSkill",        # E.g. Score metric dictionary (e.g. {"AIC_C": 433, "ADJ_R2":0.32, ...})
-                "EquationPredictors",   # E.g. [100204, 100101, 500232]
-                "PredictorPeriods",     # E.g. [R/1978-03-01/P1M/F12M, R/1978-03-01/P1M/F12M, R/1978-03-01/P1M/F12M]
-                "PredictorMethods",     # E.g. ['Average', 'First', 'Max']
-                "DirectEquation"        # E.g. Mainly for import equations where we don't want to compute models on the fly
-                                        #      e.g. "DIRECT/Regr_MultipleLinearRegressor/3.4,2.2,-1.33/133.2"
-            ]
-        )
+        self.initializeSavedModelsTable()
 
         # The forecastsTable stores all of the forecasts created from forecast equations in the forecastEquationsTable
-        self.forecastsTable = pd.DataFrame(
-            index = pd.MultiIndex(
-                levels=[[],[],[]],
-                codes= [[],[],[]],
-                names=[
-                    'ForecastEquationID',   # E.g. 1010010 (999999 for user imported forecast)
-                    'Year',                 # E.g. 2019
-                    'ForecastExceedance'    # e.g. 0.30 (for 30% exceedence)
-                    ]
-            ),
-            columns = [
-                "ForecastValues",           # in order of 0-100% exceedance
-                ],
-        )
+        self.initializeForecastsTable()
         
         # Initialize the software with default values for the user configuration and any stored values for the application preferences
         if 'user_options.txt' in os.listdir('resources/temp'):
@@ -279,6 +138,170 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
         # Show the application
         self.fileOpened = False
         self.show()#.showMaximized()
-        
 
         return
+
+
+    def initializeDatasetTables(self):
+        # Create the data structures.
+        # The dataset table stores information about all the datasets being used in the forecast file.
+        self.datasetTable = pd.DataFrame(
+            index=pd.Index([], dtype=int, name='DatasetInternalID'),
+            columns=[
+                'DatasetType',  # e.g. STREAMGAGE, or RESERVOIR
+                'DatasetExternalID',  # e.g. "GIBR" or "06025500"
+                'DatasetName',  # e.g. Gibson Reservoir
+                'DatasetAgency',  # e.g. USGS
+                'DatasetParameter',  # e.g. Temperature
+                "DatasetParameterCode",  # e.g. avgt
+                'DatasetUnits',  # e.g. CFS
+                'DatasetDefaultResampling',  # e.g. average
+                'DatasetDataloader',  # e.g. RCC_ACIS
+                'DatasetHUC8',  # e.g. 10030104
+                'DatasetLatitude',  # e.g. 44.352
+                'DatasetLongitude',  # e.g. -112.324
+                'DatasetElevation',  # e.g. 3133 (in ft)
+                'DatasetPORStart',  # e.g. 1/24/1993
+                'DatasetPOREnd',  # e.g. 1/22/2019\
+                'DatasetCompositeEquation',  # e.g. C/100121,102331,504423/1.0,0.5,4.3/0,0,5
+                'DatasetImportFileName',  # e.g. 'C://Users//JoeDow//Dataset.CSV'
+                'DatasetAdditionalOptions'
+            ],
+        )
+        self.datasetTable['DatasetHUC8'] = self.datasetTable['DatasetHUC8'].astype(str)
+
+        # Create the operations to be applied to the data structures
+        self.datasetOperationsTable = pd.DataFrame(
+            index=pd.Index([], dtype=int, name='DatasetID'),
+            columns=[
+                'DatasetInternalID',        # Reference to the source dataset
+                'DatasetInstanceID',        # Unique version of the dataset to allow multiple accumulators
+                'FillMethod',               # Fill method to apply to the data
+                'FillMaximumGap',           # Maximum gap to fill in the data
+                'FillOrder',                # Order of the interpolation method
+                'ExtendMethod',             # Extend method to apply to the data
+                'ExtendDuration',           # How long the data should be extended in the dataset units
+                'ExtendFilter',             # How the extend operation should be filtered
+                'AccumulationMethod',       # Specify the accumulation method that will be applied
+                'AccumulationDateStart',    # Date from which to begin the accumulation of the variable
+                'AccumulationDateStop',     # Date from which to stop the accumulation of the variable
+                'AccumulationPeriod',       # ISO-8601 string pattern for the accumulation period
+                'ForcingFlag',              # Boolean to force the use of this predictor
+                'DatasetOperationsOptions'
+            ],
+        )
+
+        # Convert the table to a multiindex dataframe for more simple indexing
+        self.datasetOperationsTable.set_index(['DatasetInternalID', 'DatasetInstanceID'], inplace=True)
+
+        # The data table stores all of the raw data associated with the selected datasets.
+        # Edited data is versioned as 1 and unedited data is versioned as 0
+        self.dataTable = pd.DataFrame(
+            index = pd.MultiIndex(
+                levels=[[],[],],
+                codes = [[],[],],
+                names = [
+                    'Datetime',             # E.g. 1998-10-23
+                    'DatasetInternalID'     # E.g. 100302
+                    ]
+            ),
+            columns = [
+                "Value",                    # E.g. 12.3, Nan, 0.33
+                "EditFlag"                  # E.g. True, False -> NOTE: NOT IMPLEMENTED
+                ],
+            dtype=float
+        )
+        self.dataTable['EditFlag'] = self.dataTable['EditFlag'].astype(bool)
+
+
+    def initializeModelRunTable(self):
+        # This table will keep track of all the model runs initial conditions
+        self.modelRunsTable = pd.DataFrame(
+            index=pd.Index([], dtype=int, name='ModelRunID'),
+            columns=[
+                "ModelTrainingPeriod",  # E.g. 1978-10-01/2019-09-30 (model trained on  WY1979-WY2019 data)
+                "ForecastIssueDate",  # E.g. January 13th
+                "Predictand",  # E.g. 100302 (datasetInternalID)
+                "PredictandPeriod",
+                # E.g. R/1978-03-01/P1M/F12M (starting in march of 1978, over a 1 month period, recurring once a year.)
+                "PredictandMethod",  # E.g. Accumulation, Average, Max, etc
+                # "PredictorGroups",      # E.g. ["SNOTEL SITES", "CLIMATE INDICES", ...]
+                # "PredictorGroupMapping",# E.g. [0, 0, 0, 1, 4, 2, 1, 3, ...] maps each predictor in the pool to a predictor group
+                "PredictorPool",  # E.g. [100204, 100101, ...]
+                "PredictorForceFlag",  # E.g. [False, False, True, ...]
+                "PredictorPeriods",  # E.g. [R/1978-03-01/P1M/F12M, R/1978-03-01/P1M/F12M, ...]
+                "PredictorMethods",  # E.g. ['Accumulation', 'First', 'Last', ...]
+                "RegressionTypes",  # E.g. ['Regr_MultipleLinearRegression', 'Regr_ZScoreRegression']
+                "CrossValidationType",  # E.g. K-Fold (10 folds)
+                "FeatureSelectionTypes",  # E.g. ['FeatSel_SequentialFloatingSelection', 'FeatSel_GeneticAlgorithm']
+                "ScoringParameters",  # E.g. ['ADJ_R2', 'MSE']
+                "Preprocessors"  # E.g. ['PreProc_Logarithmic', 'PreProc_YAware']
+            ]
+        )
+
+
+    def initializeModelRunResultsTable(self):
+        self.forecastEquationsTable = pd.DataFrame(
+            index=pd.Index([], dtype=int, name='ForecastEquationID'),
+            columns=[
+                "EquationSource",  # e.g. 'PyForecast','NRCS', 'CustomImport'
+                "EquationComment",  # E.g. 'Equation Used for 2000-2010 Forecasts'
+                "ModelTrainingPeriod",  # E.g. 1978-10-01/2019-09-30
+                "EquationPredictand",  # E.g. 103011
+                "PredictandPeriod",
+                # R/1978-03-01/P1M/F12M (starting in march of 1978, over a 1 month period, recurring once a year.)
+                "PredictandMethod",  # E.g. Accumulation, Average, Max, etc
+                "EquationCreatedOn",  # E.g. 2019-10-04
+                "EquationIssueDate",  # E.g. 2019-02-01
+                "EquationMethod",  # E.g. Pipeline string (e.g. PIPE/PreProc_Logistic/Regr_Gamma/KFOLD_5)
+                "EquationSkill",  # E.g. Score metric dictionary (e.g. {"AIC_C": 433, "ADJ_R2":0.32, ...})
+                "EquationPredictors",  # E.g. [100204, 100101, 500232]
+                "PredictorPeriods",  # E.g. [R/1978-03-01/P1M/F12M, R/1978-03-01/P1M/F12M, R/1978-03-01/P1M/F12M]
+                "PredictorMethods",  # E.g. ['Average', 'First', 'Max']
+                "DirectEquation"  # E.g. Mainly for import equations where we don't want to compute models on the fly
+                #      e.g. "DIRECT/Regr_MultipleLinearRegressor/3.4,2.2,-1.33/133.2"
+            ]
+        )
+
+
+    def initializeSavedModelsTable(self):
+        # The savedForecastEquationsTable stores all of the forecast equations saved or imported by the user.
+        self.savedForecastEquationsTable = pd.DataFrame(
+            index=pd.Index([], dtype=int, name='ForecastEquationID'),
+            columns=[
+                "EquationSource",  # e.g. 'PyForecast','NRCS', 'CustomImport'
+                "EquationComment",  # E.g. 'Equation Used for 2000-2010 Forecasts'
+                "ModelTrainingPeriod",  # E.g. 1978-10-01/2019-09-30
+                "EquationPredictand",  # E.g. 103011
+                "PredictandPeriod",
+                # R/1978-03-01/P1M/F12M (starting in march of 1978, over a 1 month period, recurring once a year.)
+                "PredictandMethod",  # E.g. Accumulation, Average, Max, etc
+                "EquationCreatedOn",  # E.g. 2019-10-04
+                "EquationIssueDate",  # E.g. 2019-02-01
+                "EquationMethod",  # E.g. Pipeline string (e.g. PIPE/PreProc_Logistic/Regr_Gamma/KFOLD_5)
+                "EquationSkill",  # E.g. Score metric dictionary (e.g. {"AIC_C": 433, "ADJ_R2":0.32, ...})
+                "EquationPredictors",  # E.g. [100204, 100101, 500232]
+                "PredictorPeriods",  # E.g. [R/1978-03-01/P1M/F12M, R/1978-03-01/P1M/F12M, R/1978-03-01/P1M/F12M]
+                "PredictorMethods",  # E.g. ['Average', 'First', 'Max']
+                "DirectEquation"  # E.g. Mainly for import equations where we don't want to compute models on the fly
+                #      e.g. "DIRECT/Regr_MultipleLinearRegressor/3.4,2.2,-1.33/133.2"
+            ]
+        )
+
+
+    def initializeForecastsTable(self):
+        # The forecastsTable stores all of the forecasts created from forecast equations in the forecastEquationsTable
+        self.forecastsTable = pd.DataFrame(
+            index=pd.MultiIndex(
+                levels=[[], [], []],
+                codes=[[], [], []],
+                names=[
+                    'ForecastEquationID',  # E.g. 1010010 (999999 for user imported forecast)
+                    'Year',  # E.g. 2019
+                    'ForecastExceedance'  # e.g. 0.30 (for 30% exceedence)
+                ]
+            ),
+            columns=[
+                "ForecastValues",  # in order of 0-100% exceedance
+            ],
+        )

@@ -5,10 +5,21 @@ class viewerWindow(QtWidgets.QDialog):
     def __init__(self, parent=None):
         QtWidgets.QDialog.__init__(self)
         self.datasetTable = parent.datasetTable
+        self.datasetOperationsTable = parent.datasetOperationsTable
         self.dataTable = parent.dataTable
+        self.modelRunsTable = parent.modelRunsTable
+        self.forecastEquationsTable = parent.forecastEquationsTable
+        self.savedForecastEquationsTable = parent.savedForecastEquationsTable
+        self.forecastsTable = parent.forecastsTable
 
         tabWidget = QtWidgets.QTabWidget()
         tabWidget.addTab(datasetTableDisplay(self.datasetTable), "Dataset Table")
+        tabWidget.addTab(datasetTableDisplay(self.datasetOperationsTable), "Dataset Operations Table")
+        #tabWidget.addTab(datasetTableDisplay(self.dataTable), "Raw Data Table")
+        tabWidget.addTab(datasetTableDisplay(self.modelRunsTable), "Defined Model Regression Table")
+        #tabWidget.addTab(datasetTableDisplay(self.forecastEquationsTable), "Generated Forecast Models Table")
+        tabWidget.addTab(datasetTableDisplay(self.savedForecastEquationsTable), "Saved Forecast Models Table")
+        #tabWidget.addTab(datasetTableDisplay(self.forecastsTable), "Forecasts Table")
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(tabWidget)
         self.setLayout(layout)
@@ -17,20 +28,18 @@ class viewerWindow(QtWidgets.QDialog):
         return
 
 
-
 class datasetTableDisplay(QtWidgets.QWidget):
 
     def __init__(self, datasetTable):
         QtWidgets.QWidget.__init__(self)
         layout = QtWidgets.QVBoxLayout()
         dataTable = QtWidgets.QTableView()
+        datasetTable.insert(0, "ID", list(datasetTable.index))
         model = PandasModel(datasetTable)
         dataTable.setModel(model)
         layout.addWidget(dataTable)
         self.setLayout(layout)
         return
-
-
 
 
 """

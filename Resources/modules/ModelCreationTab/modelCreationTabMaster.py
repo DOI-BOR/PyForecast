@@ -56,9 +56,6 @@ class modelCreationTab(object):
         self.modelTab.layoutSimpleDoubleList.updatedLinkedList.emit(self.modelTab.layoutSimpleDoubleList.listInput, self.modelTab.layoutSimpleDoubleList.listOutput)
         self.modelTab.layoutSimpleDoubleList.updatedOutputList.emit()
 
-        #TODO: Fix crash-bug when adding new predictors after loading from *.fcst file
-        a = 1
-
         try:
             self.clickOption([self.modelRunsTable.loc[0]['CrossValidationType']], self.modelTab.optionsCrossValidators)
             self.clickOption(self.modelRunsTable.loc[0]['RegressionTypes'], self.modelTab.optionsRegression)
@@ -68,15 +65,18 @@ class modelCreationTab(object):
         except:
             print('INFO: No model run options defined in forecast file')
 
+        self.modelTab.resultsMetricTable.clearTable()
         self.modelTab.resultsMetricTable.loadDataIntoModel(self.forecastEquationsTable)
 
         return
+
 
     def clickOption(self, selectedOptions, optionList):
         for i in selectedOptions:
             for j in optionList:
                 if i == j.objectName():
-                    j.click()
+                    if not j.isChecked():#click only if button isn't already clicked
+                        j.click()
         return
 
 
@@ -183,30 +183,134 @@ class modelCreationTab(object):
         self.modelTab.resultsMetricTable.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.modelTab.resultsMetricTable.customContextMenuRequested.connect(self.modelTableRightClick)
 
-
         return
 
-    def updateModelSettings(self, defaultSettings):
-        """
-        This function is run when the user toggles the default model settings
-        on the model settings sub-tab. 
-        """
 
-        print("DEF SETTINGS")
+    # def changedTabsModelCreationPage(self, index):
+    #     """
+    #     Handles changing the stacked widget when a user clicks one of the hover
+    #     labels on the left side.
+    #     """
+    #
+    #     for i in range(4):
+    #         if i != index:
+    #             self.modelTab.buttons[i].onDeselect()
+    #
+    #     return
+    #
+    #
+    # def autoGeneratePredictors(self):
+    #     """
+    #     Generates default predictors based on the input to the
+    #     previous sections.
+    #     """
+    #
+    #     # First verify that all the previous sections have been filled in correctly
+    #     # PLACEHOLDERS
+    #     target = None  # DatasetID
+    #     targetPeriodStart = None  # Month-Day combo, e.g.April 1st
+    #     targetPeriodEnd = None  # Month-Day combo e.g. July 31st
+    #     forecastIssueDay = None  # Month-day combo e.g. Feb 01
+    #
+    #     # Set up a list to store the suggestions
+    #     suggestedPredictors = []
+    #
+    #     # Iterate over the datasetlist and add each predictors default resampling
+    #     # method for the prior period
+    #     for i, dataset in self.datasetTable.iterrows():
+    #
+    #         # Pull the default resampling method
+    #         method = dataset['DatasetDefaultResampling']
+    #
+    #         # Check dataset parameter, we'll use this to generate the resample period
+    #         if any(map(lambda x: x in dataset['DatasetParameter'].upper(), ['SWE', 'SNOW'])):
+    #             period = 'R/{0}/P1D/F1Y'.format(datetime.strftime(forecastIssueDay - timedelta(days=1), '%Y-%m-%d'))
+    #
+    #         elif any(map(lambda x: x in dataset['DatasetParameter'].upper(), ['TEMP', 'INDEX'])):
+    #             period = 'R/{0}/P28D/F1Y'.format(datetime.strftime(forecastIssueDay - timedelta(weeks=4), '%Y-%m-%d'))
+    #
+    #         elif any(map(lambda x: x in dataset['DatasetParameter'].upper(), ['PRECIP'])):
+    #             wyStart = datetime(forecastIssueDay.year if forecastIssueDay.month > 10 else forecastIssueDay.year - 1,
+    #                                10, 1)
+    #             period = 'R/{0}/P{1}D/F1Y'.format(datetime.strftime(wyStart, '%Y-%m-%d'),
+    #                                               (forecastIssueDay - wyStart).days - 1)
+    #
+    #         elif any(map(lambda x: x in dataset['DatasetParameter'].upper(), ['FLOW'])):
+    #             wyStart = datetime(forecastIssueDay.year if forecastIssueDay.month > 10 else forecastIssueDay.year - 1,
+    #                                10, 1)
+    #             period = 'R/{0}/P1M/F1Y'.format(datetime.strftime(wyStart, '%Y-%m-%d'))
+    #
+    #         suggestedPredictors.append((dataset.name, method, period))
+    #
+    #         # Add the predictors to the GUI
+    #     return
 
-        return
 
-    def changedTabsModelCreationPage(self, index):
-        """
-        Handles changing the stacked widget when a user clicks one of the hover 
-        labels on the left side.
-        """
+    # ====================================================================================================================
+    # FORECAST TARGET TAB FUNCTIONS
+    # <editor-fold desc="Expand Forecast Target tab functions...">
+    def updateTargetInfo(self):
+        try:
+            predictandData = self.modelTab.targetSelect.currentData()
+            predID = predictandData.name
+            # Get Min dataset date
+            minT = parser.parse(str(np.sort(list(set(self.dataTable.loc[(slice(None),predID),'Value'].index.get_level_values(0).values)))[0]))
+            maxT = parser.parse(str(np.sort(list(set(self.dataTable.loc[(slice(None),predID),'Value'].index.get_level_values(0).values)))[-1]))
+            selT = parser.parse(self.modelTab.periodStart.dateTime().toString("yyyy-MM-ddThh:mm:ss.zzz"))
+            self.modelTab.targetPeriodStartYear.setText(str(minT.year))
+            self.modelTab.targetPeriodEndYear.setText(str(maxT.year))
+        except:
+            pass
 
-        for i in range(4):
-            if i != index:
-                self.modelTab.buttons[i].onDeselect()
 
-        return
+    def applyPredictandAggregationOption(self):
+        # todo: doc string
+
+        self.modelTab.predictandApplyButton.setChecked(False)
+
+        # Ask user if sure
+        msgBox = self.clearAppTablesPrompt(modelRunsTable=True)
+        result = msgBox.exec_()
+        if result == QtGui.QMessageBox.Ok:
+            self.clearAppTables(modelRunsTable=True)
+        else:
+            return
+
+        predictandData = self.modelTab.targetSelect.currentData()
+        predID = predictandData.name
+        # Get Min dataset date
+        minT = parser.parse(str(np.sort(list(set(self.dataTable.loc[(slice(None),predID),'Value'].index.get_level_values(0).values)))[0]))
+        maxT = parser.parse(str(np.sort(list(set(self.dataTable.loc[(slice(None),predID),'Value'].index.get_level_values(0).values)))[-1]))
+        selT = parser.parse(self.modelTab.periodStart.dateTime().toString("yyyy-MM-ddThh:mm:ss.zzz"))
+        if (parser.parse(str(minT.year) + '-'+str(selT.month)+ '-'+str(selT.day))<minT):
+            startT = parser.parse(str(minT.year + 1) + '-' + str(selT.month) + '-' + str(selT.day))
+        else:
+            startT = parser.parse(str(minT.year) + '-' + str(selT.month) + '-' + str(selT.day))
+
+        nDays = self.modelTab.periodEnd.date().toJulianDay() - self.modelTab.periodStart.date().toJulianDay() + 1 #dates inclusive
+        periodString = "R/" + startT.strftime("%Y-%m-%d") + "/P" + str(nDays) + "D/F12M" #(e.g. R/1978-02-01/P1M/F1Y)
+        if self.modelRunsTable.shape[0] < 1:
+            self.modelRunsTable.loc[0] = [None] * self.modelRunsTable.columns.shape[0]
+
+        #self.modelRunsTable.loc[0]['ModelTrainingPeriod'] = minT.strftime("%Y") + "/" + maxT.strftime("%Y") + "/1900"
+        excludedYears = self.modelTab.targetPeriodExcludedYears.text()
+        if excludedYears == '':
+            excludedYears = '1900'
+        startYear = self.modelTab.targetPeriodStartYear.text()
+        if startYear == '':
+            startYear = minT.strftime("%Y")
+            self.modelTab.targetPeriodStartYear.setText(minT.strftime("%Y"))
+        endYear = self.modelTab.targetPeriodEndYear.text()
+        if endYear == '':
+            endYear = maxT.strftime("%Y")
+            self.modelTab.targetPeriodEndYear.setText(maxT.strftime("%Y"))
+        self.modelRunsTable.loc[0]['ModelTrainingPeriod'] = startYear + "/" + endYear + "/" + excludedYears
+        self.modelRunsTable.loc[0]['Predictand'] = predID
+        self.modelRunsTable.loc[0]['PredictandPeriod'] = periodString
+        self.modelRunsTable.loc[0]['PredictandMethod'] = self.modelTab.methodCombo.currentData()
+
+        # Set the coloration to white
+        # self.modelTab.layoutSimpleDoubleList.listOutput.itemColors[self.modelTab.layoutSimpleDoubleList.listOutput.currentIndex().row()] = QtCore.Qt.white
 
 
     def plotTarget(self):
@@ -300,59 +404,26 @@ class modelCreationTab(object):
         self.modelTab.dataPlot.plot.setTitle('<strong style="font-family: Open Sans, Arial;">{4} {0} - {1} {2} {3}</strong>'.format(start_dt.strftime("%b %d"), end_dt.strftime("%b %d"), methodText.title(), dataset['DatasetParameter'], dataset['DatasetName'] ))
 
         return
+    # </editor-fold>
 
 
-    def autoGeneratePredictors(self):
-        """
-        Generates default predictors based on the input to the
-        previous sections.
-        """
+    # ====================================================================================================================
+    # PREDICTORS TAB FUNCTIONS
+    # <editor-fold desc="Expand Predictors tab functions...">
+    # <editor-fold desc="Expand Default subtab functions...">
+    def addPredictorToDatasetOperationTable(self):
+        for idx in self.modelTab.layoutSimpleDoubleList.listOutput.datasetTable.index:
+            if idx not in self.datasetOperationsTable.index:
+                self.datasetOperationsTable.loc[idx, list(self.datasetOperationsTable.columns)] = [None] * len(
+                    self.datasetOperationsTable.columns)
 
-        # First verify that all the previous sections have been filled in correctly
-        # PLACEHOLDERS
-        target = None # DatasetID 
-        targetPeriodStart = None # Month-Day combo, e.g.April 1st
-        targetPeriodEnd = None # Month-Day combo e.g. July 31st
-        forecastIssueDay = None # Month-day combo e.g. Feb 01
-        
-        # Set up a list to store the suggestions
-        suggestedPredictors = []
-
-        # Iterate over the datasetlist and add each predictors default resampling
-        # method for the prior period
-        for i, dataset in self.datasetTable.iterrows():
-
-            # Pull the default resampling method
-            method = dataset['DatasetDefaultResampling']
-
-            # Check dataset parameter, we'll use this to generate the resample period
-            if any(map(lambda x: x in dataset['DatasetParameter'].upper(), ['SWE', 'SNOW'])): 
-                period = 'R/{0}/P1D/F1Y'.format(datetime.strftime(forecastIssueDay - timedelta(days=1), '%Y-%m-%d'))
-
-            elif any(map(lambda x: x in dataset['DatasetParameter'].upper(), ['TEMP', 'INDEX'])):
-                period = 'R/{0}/P28D/F1Y'.format(datetime.strftime(forecastIssueDay - timedelta(weeks=4), '%Y-%m-%d'))
-            
-            elif any(map(lambda x: x in dataset['DatasetParameter'].upper(), ['PRECIP'])):
-                wyStart = datetime(forecastIssueDay.year if forecastIssueDay.month > 10 else forecastIssueDay.year - 1, 10, 1)
-                period = 'R/{0}/P{1}D/F1Y'.format(datetime.strftime(wyStart, '%Y-%m-%d'), (forecastIssueDay - wyStart).days - 1)
-            
-            elif  any(map(lambda x: x in dataset['DatasetParameter'].upper(), ['FLOW'])): 
-                wyStart = datetime(forecastIssueDay.year if forecastIssueDay.month > 10 else forecastIssueDay.year - 1, 10, 1)
-                period = 'R/{0}/P1M/F1Y'.format(datetime.strftime(wyStart, '%Y-%m-%d'))
-
-            suggestedPredictors.append((dataset.name, method, period)) 
-
-        # Add the predictors to the GUI
-        
-
-        return
 
     def updateSimpleLayoutAggregationOptions(self):
         #todo: doc string
 
         if len(self.modelTab.layoutSimpleDoubleList.listOutput.selectedIndexes()) > 0:
             # Get the current datasest index
-            currentIndex = self.modelTab.layoutSimpleDoubleList.listOutput.datasetTable.index[self.modelTab.layoutSimpleDoubleList.listOutput.currentIndex().row()]
+            currentIndex = self.modelTab.layoutSimpleDoubleList.listOutput.datasetTable.index[self.modelTab.layoutSimpleDoubleList.listOutput.selectedIndexes()[0].row()]
             try:
                 indexExists = self.datasetOperationsTable.loc[currentIndex]
             except:
@@ -367,7 +438,20 @@ class modelCreationTab(object):
             predForcing = str(self.datasetOperationsTable.loc[currentIndex]['ForcingFlag'])
 
             # Update the dataset list with the single display option
-            self.modelTab.layoutAggregationOptions.activeSelection.refreshDatasetListFromExtenal(self.modelTab.layoutSimpleDoubleList.listOutput.datasetTable.loc[currentIndex])
+            if len(self.modelTab.layoutSimpleDoubleList.listOutput.selectedIndexes()) > 1:
+                self.modelTab.layoutAggregationOptions.activeSelection.showMultipleItemsSelected()
+            else:
+                self.modelTab.layoutAggregationOptions.activeSelection.refreshDatasetListFromExtenal(self.modelTab.layoutSimpleDoubleList.listOutput.datasetTable.loc[currentIndex])
+
+            # Set the list coloration
+            selIdxs = self.modelTab.layoutSimpleDoubleList.listOutput.selectedIndexes()
+            for selIdx in selIdxs:
+                # selIdxRow = self.modelTab.layoutSimpleDoubleList.listOutput.datasetTable.index[selIdx.row()]
+                if accumMethod == 'None' or accumPeriod == 'None' or predForcing == 'None':
+                    self.modelTab.layoutSimpleDoubleList.listOutput.itemColors[selIdx.row()] = QtCore.Qt.darkGray
+                else:
+                    self.modelTab.layoutSimpleDoubleList.listOutput.itemColors[selIdx.row()] = QtCore.Qt.white
+            self.modelTab.layoutSimpleDoubleList.listOutput.updateColors()
 
             # Set date selector range
             minT = parser.parse(str(np.sort(list(set(self.dataTable.loc[(slice(None),currentIndex[0]),'Value'].index.get_level_values(0).values)))[0]))
@@ -375,14 +459,6 @@ class modelCreationTab(object):
             self.modelTab.layoutAggregationOptions.periodStart.setMinimumDateTime(minT)
             self.modelTab.layoutAggregationOptions.periodStart.setMaximumDateTime(maxT)
             self.modelTab.layoutAggregationOptions.periodStart.setDate(minT)
-
-            # Set the list coloration
-            if accumMethod == 'None' or accumPeriod == 'None' or predForcing == 'None':
-                self.modelTab.layoutSimpleDoubleList.listOutput.itemColors[self.modelTab.layoutSimpleDoubleList.listOutput.currentIndex().row()] = QtCore.Qt.darkGray
-                self.modelTab.layoutSimpleDoubleList.listOutput.updateColors()
-            else:
-                self.modelTab.layoutSimpleDoubleList.listOutput.itemColors[self.modelTab.layoutSimpleDoubleList.listOutput.currentIndex().row()] = QtCore.Qt.white
-                self.modelTab.layoutSimpleDoubleList.listOutput.updateColors()
 
             # Set aggregation option on UI
             if accumMethod == 'None':
@@ -396,7 +472,7 @@ class modelCreationTab(object):
 
             # Set aggregation period on UI
             if accumPeriod != 'None':
-                predPeriodItems = accumPeriod.split("/") #R/1978-03-01/P1M/F12M
+                predPeriodItems = accumPeriod.split("/") #R/1978-03-01/P1M/F12M/S1Y
                 self.modelTab.layoutAggregationOptions.periodStart.setDate(parser.parse(predPeriodItems[1]))
                 predPeriodPStep = str(predPeriodItems[2])[-1]
                 a = self.modelTab.layoutAggregationOptions.predictorResamplingOptions.index(predPeriodPStep)
@@ -407,6 +483,15 @@ class modelCreationTab(object):
                 self.modelTab.layoutAggregationOptions.freqChar.setCurrentIndex(self.modelTab.layoutAggregationOptions.predictorResamplingOptions.index(predPeriodFStep))
                 predPeriodFNum = ''.join(map(str,[int(s) for s in predPeriodItems[3] if s.isdigit()]))
                 self.modelTab.layoutAggregationOptions.freqInteger.setValue(int(predPeriodFNum))
+                if len(predPeriodItems) >= 5:
+                    predPeriodSStep = str(predPeriodItems[4])[-1]
+                    self.modelTab.layoutAggregationOptions.shiftChar.setCurrentIndex(self.modelTab.layoutAggregationOptions.predictorResamplingOptions.index(predPeriodSStep))
+                    predPeriodSNum = ''.join(map(str, [int(s) for s in predPeriodItems[4] if s.isdigit()]))
+                    self.modelTab.layoutAggregationOptions.shiftInteger.setValue(int(predPeriodSNum))
+                else:
+                    self.modelTab.layoutAggregationOptions.shiftChar.setCurrentIndex(2)
+                    self.modelTab.layoutAggregationOptions.shiftInteger.setValue(0)
+
 
             # Set forcing flag on UI
             if predForcing != 'None':
@@ -455,25 +540,23 @@ class modelCreationTab(object):
         Applies the attributes from the simple predictor page into the dataset operations table
 
         """
-        # todo: write this function when the aggregation group is stable
 
         # Clear the button click
         self.modelTab.layoutSimpleApplyButton.setChecked(False)
 
-        # Get the current datasest index
-        rowIdx = self.modelTab.layoutSimpleDoubleList.listOutput.currentIndex().row()
-
-        if rowIdx >= 0:
-
-            currentIndex = self.modelTab.layoutSimpleDoubleList.listOutput.datasetTable.index[rowIdx]
-
-            # Apply selected options
-            self.datasetOperationsTable.loc[currentIndex]['AccumulationMethod'] = self.modelTab.layoutAggregationOptions.selectedAggOption
-            self.datasetOperationsTable.loc[currentIndex]['AccumulationDateStart'] = self.modelTab.layoutAggregationOptions.periodStart.dateTime().toString("yyyy-MM-dd")
-            self.datasetOperationsTable.loc[currentIndex]['AccumulationDateStop'] = \
-                (parser.parse(str(np.sort(list(set(self.dataTable.loc[(slice(None),currentIndex[0]),'Value'].index.get_level_values(0).values)))[-1]))).strftime("%Y-%m-%d")
-            self.datasetOperationsTable.loc[currentIndex]['AccumulationPeriod'] = self.modelTab.layoutAggregationOptions.selectedAggPeriod
-            self.datasetOperationsTable.loc[currentIndex]['ForcingFlag'] = str(self.modelTab.layoutAggregationOptions.predForceCheckBox.checkState() == 2)
+        # Get the current datasest indexes
+        rowIdxs = self.modelTab.layoutSimpleDoubleList.listOutput.selectedIndexes()
+        #rowIdx = self.modelTab.layoutSimpleDoubleList.listOutput.currentIndex().row()
+        for rowIdx in rowIdxs:
+            if rowIdx.row() >= 0:
+                currentIndex = self.modelTab.layoutSimpleDoubleList.listOutput.datasetTable.index[rowIdx.row()]
+                # Apply selected options
+                self.datasetOperationsTable.loc[currentIndex]['AccumulationMethod'] = self.modelTab.layoutAggregationOptions.selectedAggOption
+                self.datasetOperationsTable.loc[currentIndex]['AccumulationDateStart'] = self.modelTab.layoutAggregationOptions.periodStart.dateTime().toString("yyyy-MM-dd")
+                self.datasetOperationsTable.loc[currentIndex]['AccumulationDateStop'] = (parser.parse(str(np.sort(list(
+                    set(self.dataTable.loc[(slice(None), currentIndex[0]), 'Value'].index.get_level_values(0).values)))[-1]))).strftime("%Y-%m-%d")
+                self.datasetOperationsTable.loc[currentIndex]['AccumulationPeriod'] = self.modelTab.layoutAggregationOptions.selectedAggPeriod
+                self.datasetOperationsTable.loc[currentIndex]['ForcingFlag'] = str(self.modelTab.layoutAggregationOptions.predForceCheckBox.checkState() == 2)
 
         self.updateSimpleLayoutAggregationOptions()
 
@@ -491,11 +574,8 @@ class modelCreationTab(object):
         self.modelTab.layoutSimpleDoubleList.resetOutputItems()
 
         # Clear the checkboxes
-        self.modelTab.layoutSimpleExtendCheckBox.updateToUnchecked()
-        self.modelTab.layoutSimpleFillCheckBox.updateToUnchecked()
-
-        # Clear the aggregation options
-        # todo: Add this functionality
+        self.modelTab.layoutSimpleExtendCheckBox.setChecked(False)
+        self.modelTab.layoutSimpleFillCheckBox.setChecked(False)
 
         ### Reset the button state ###
         self.modelTab.layoutSimpleClearButton.setChecked(False)
@@ -521,8 +601,10 @@ class modelCreationTab(object):
             self.modelTab.predictorPlot.hide()
             self.modelTab.predictorCorrelationPlot.show()
             self.modelTab.predictorPlotButton.setText('<strong style="font-size: 12px; color:darkcyan">Show resampled data time-series</strong>')
+    # </editor-fold>
 
 
+    # <editor-fold desc="Expand Expert subtab functions...">
     def updateFillSubtab(self):
         """
         Updates the state of the fill subtab methods pane based on the method selector
@@ -1145,6 +1227,7 @@ class modelCreationTab(object):
         else:
             raise NotImplementedError('Type of window plot is not understood')
 
+
     def updateWindowCorrelation(self):
         """
 
@@ -1220,8 +1303,26 @@ class modelCreationTab(object):
 
         # Update the plot
         self.updateWindowPlot()
+    # </editor-fold>
+    # </editor-fold>
 
 
+    # ====================================================================================================================
+    # SUMMARY TAB FUNCTIONS
+    # <editor-fold desc="Expand Summary tab functions...">
+    def updateModelSettings(self, defaultSettings):
+        """
+        This function is run when the user toggles the default model settings
+        on the model settings sub-tab.
+        """
+        print("DEF SETTINGS")
+        return
+    # </editor-fold>
+
+
+    # ====================================================================================================================
+    # RUN TAB FUNCTIONS
+    # <editor-fold desc="Expand Run tab functions...">
     def applySummaryClear(self):
         """
         Clear/reset all dataset and analysis options within the application
@@ -1343,6 +1444,7 @@ class modelCreationTab(object):
             self.modelTab.summaryLayoutErrorLabel.setText(errorString)
             self.modelTab.summaryLayoutErrorLabel.setStyleSheet("color : red")
             self.modelTab.summaryLayoutErrorLabel.setVisible(True)
+            return
         else:
             # Populate self.modelRunsTable with validated entries
             self.modelRunsTable.loc[0]['PredictorPool'] = predPool
@@ -1354,6 +1456,15 @@ class modelCreationTab(object):
             self.modelRunsTable.loc[0]['RegressionTypes'] = regAlgs
             self.modelRunsTable.loc[0]['FeatureSelectionTypes'] = selAlgs
             self.modelRunsTable.loc[0]['ScoringParameters'] = scoreParams
+
+            # Ask user if sure
+            msgBox = self.clearAppTablesPrompt(forecastEquationsTable=True)
+            result = msgBox.exec_()
+            if result == QtGui.QMessageBox.Ok:
+                self.clearAppTables(forecastEquationsTable=True)
+            else:
+                return
+
             ### Kick off the analysis ###
             self.updateStatusMessage('Running regression calculations. Please wait...')
             print('INFO: ---- MODEL RUN TABLE ----')
@@ -1371,7 +1482,7 @@ class modelCreationTab(object):
             self.forecastEquationsTable.drop(self.forecastEquationsTable.index, inplace=True)
             resultCounter = 0
             for result in self.rg.resultsList:
-                if resultCounter >= 1000:
+                if resultCounter >= 500:
                     break
 
                 self.forecastEquationsTable.loc[resultCounter] = [None] * self.forecastEquationsTable.columns.shape[0]
@@ -1406,65 +1517,14 @@ class modelCreationTab(object):
 
             print('INFO: Model run complete!')
             self.updateStatusMessage('Model run complete! ' + str(len(self.rg.resultsList)) + ' models were evaluated.')
+            self.modelTab.resultsMetricTable.clearTable()
+            self.modelTab.resultsMetricTable.loadDataIntoModel(self.forecastEquationsTable)
+    # </editor-fold>
 
 
-    def updateTargetInfo(self):
-        try:
-            predictandData = self.modelTab.targetSelect.currentData()
-            predID = predictandData.name
-            # Get Min dataset date
-            minT = parser.parse(str(np.sort(list(set(self.dataTable.loc[(slice(None),predID),'Value'].index.get_level_values(0).values)))[0]))
-            maxT = parser.parse(str(np.sort(list(set(self.dataTable.loc[(slice(None),predID),'Value'].index.get_level_values(0).values)))[-1]))
-            selT = parser.parse(self.modelTab.periodStart.dateTime().toString("yyyy-MM-ddThh:mm:ss.zzz"))
-            self.modelTab.targetPeriodStartYear.setText(str(minT.year))
-            self.modelTab.targetPeriodEndYear.setText(str(maxT.year))
-        except:
-            pass
-
-
-
-    def applyPredictandAggregationOption(self):
-        # todo: doc string
-
-        self.modelTab.predictandApplyButton.setChecked(False)
-
-        predictandData = self.modelTab.targetSelect.currentData()
-        predID = predictandData.name
-        # Get Min dataset date
-        minT = parser.parse(str(np.sort(list(set(self.dataTable.loc[(slice(None),predID),'Value'].index.get_level_values(0).values)))[0]))
-        maxT = parser.parse(str(np.sort(list(set(self.dataTable.loc[(slice(None),predID),'Value'].index.get_level_values(0).values)))[-1]))
-        selT = parser.parse(self.modelTab.periodStart.dateTime().toString("yyyy-MM-ddThh:mm:ss.zzz"))
-        if (parser.parse(str(minT.year) + '-'+str(selT.month)+ '-'+str(selT.day))<minT):
-            startT = parser.parse(str(minT.year + 1) + '-' + str(selT.month) + '-' + str(selT.day))
-        else:
-            startT = parser.parse(str(minT.year) + '-' + str(selT.month) + '-' + str(selT.day))
-
-        nDays = self.modelTab.periodEnd.date().toJulianDay() - self.modelTab.periodStart.date().toJulianDay() + 1 #dates inclusive
-        periodString = "R/" + startT.strftime("%Y-%m-%d") + "/P" + str(nDays) + "D/F12M" #(e.g. R/1978-02-01/P1M/F1Y)
-        if self.modelRunsTable.shape[0] < 1:
-            self.modelRunsTable.loc[0] = [None] * self.modelRunsTable.columns.shape[0]
-
-        #self.modelRunsTable.loc[0]['ModelTrainingPeriod'] = minT.strftime("%Y") + "/" + maxT.strftime("%Y") + "/1900"
-        excludedYears = self.modelTab.targetPeriodExcludedYears.text()
-        if excludedYears == '':
-            excludedYears = '1900'
-        startYear = self.modelTab.targetPeriodStartYear.text()
-        if startYear == '':
-            startYear = minT.strftime("%Y")
-            self.modelTab.targetPeriodStartYear.setText(minT.strftime("%Y"))
-        endYear = self.modelTab.targetPeriodEndYear.text()
-        if endYear == '':
-            endYear = maxT.strftime("%Y")
-            self.modelTab.targetPeriodEndYear.setText(maxT.strftime("%Y"))
-        self.modelRunsTable.loc[0]['ModelTrainingPeriod'] = startYear + "/" + endYear + "/" + excludedYears
-        self.modelRunsTable.loc[0]['Predictand'] = predID
-        self.modelRunsTable.loc[0]['PredictandPeriod'] = periodString
-        self.modelRunsTable.loc[0]['PredictandMethod'] = self.modelTab.methodCombo.currentData()
-
-        # Set the coloration to white
-        # self.modelTab.layoutSimpleDoubleList.listOutput.itemColors[self.modelTab.layoutSimpleDoubleList.listOutput.currentIndex().row()] = QtCore.Qt.white
-
-
+    # ====================================================================================================================
+    # RESULTS TAB FUNCTIONS
+    # <editor-fold desc="Expand Results tab functions...">
     def generateSelectedModel(self, selected, deselected):
         # todo: doc string
 
@@ -1484,64 +1544,7 @@ class modelCreationTab(object):
         QtWidgets.QApplication.restoreOverrideCursor()
 
         # Update UI with selected model metadata
-        self.modelTab.resultSelectedList.clear()
-        self.modelTab.resultSelectedList.addItem('----- MODEL REGRESSION -----')
-        self.modelTab.resultSelectedList.addItem('Model Index: ' + str(modelIdx))
-        self.modelTab.resultSelectedList.addItem('Model Processes: ' + str(self.modelTab.selectedModel.forecastEquation.EquationMethod))
-        self.modelTab.resultSelectedList.addItem('Model Predictor IDs: ' + str(self.modelTab.selectedModel.forecastEquation.EquationPredictors))
-        self.modelTab.resultSelectedList.addItem('Selected Range (years): ' + str(self.modelTab.selectedModel.trainingDates))
-        usedYears = ", ".join([str(years) for years in self.modelTab.selectedModel.years])
-        self.modelTab.resultSelectedList.addItem('Used Range (years): ' + usedYears)
-        self.modelTab.resultSelectedList.addItem(' ')
-        self.modelTab.resultSelectedList.addItem('----- MODEL VARIABLES -----')
-        self.modelTab.resultSelectedList.addItem('Predictand Y: ' + str(self.modelTab.parent.datasetTable.loc[self.modelTab.selectedModel.yID].DatasetName) + ' - ' + str(self.modelTab.parent.datasetTable.loc[self.modelTab.selectedModel.yID].DatasetParameter))
-        equation = 'Y ='
-        hasCoefs = True
-        for i in range(len(self.modelTab.selectedModel.xIDs)):
-            self.modelTab.resultSelectedList.addItem('Predictor X' + str(i+1) + ': ' + str(
-                self.modelTab.parent.datasetTable.loc[self.modelTab.selectedModel.xIDs[i]].DatasetName) + ' - ' + str(
-                self.modelTab.parent.datasetTable.loc[self.modelTab.selectedModel.xIDs[i]].DatasetParameter))
-            try:
-                if hasCoefs:
-                    coef = self.modelTab.selectedModel.regression.coef[i]
-                    const = 'X' + str(i+1)
-                    if coef >= 0:
-                        equation = equation + ' + (' + ("%0.5f" % coef) + ')' + const
-                    else:
-                        equation = equation + ' - (' + ("%0.5f" % (coef * -1.0)) + ')' + const
-            except:
-                hasCoefs = False
-
-        self.modelTab.resultSelectedList.addItem(' ')
-        if hasCoefs:
-            self.modelTab.resultSelectedList.addItem('----- MODEL EQUATION -----')
-            if self.modelTab.selectedModel.regression.intercept >= 0:
-                equation = equation + ' + ' + ("%0.5f" % self.modelTab.selectedModel.regression.intercept)
-            else:
-                equation = equation + ' - ' + ("%0.5f" % (self.modelTab.selectedModel.regression.intercept * -1.0))
-            self.modelTab.resultSelectedList.addItem('' + equation)
-            self.modelTab.resultSelectedList.addItem(' ')
-
-        isPrinComp = True if self.modelTab.selectedModel.regression.NAME == 'Principal Components Regression' else False
-        if isPrinComp:
-            self.modelTab.resultSelectedList.addItem('----- MODEL COMPONENTS -----')
-            self.modelTab.resultSelectedList.addItem('Principal Components Count: ' + str(self.modelTab.selectedModel.regression.num_pcs))
-            eigVecs = self.modelTab.selectedModel.regression.eigenvectors[self.modelTab.selectedModel.regression.num_pcs]
-            usedVecs = ", ".join([("%0.5f" % eigVec) for eigVec in eigVecs])
-            self.modelTab.resultSelectedList.addItem('Used Eigenvectors: ' + usedVecs)
-            eigVals = self.modelTab.selectedModel.regression.eigenvalues
-            eigVals = ", ".join([("%0.5f" % eigVal) for eigVal in eigVals])
-            self.modelTab.resultSelectedList.addItem('Eigenvalues: ' + eigVals)
-            self.modelTab.resultSelectedList.addItem(' ')
-
-        self.modelTab.resultSelectedList.addItem('----- MODEL SCORES (Regular | Cross-Validated) -----')
-        for scorer in self.modelTab.selectedModel.regression.scoringParameters:
-            try:
-                regScore = self.modelTab.selectedModel.regression.scores[scorer]
-                cvScore = self.modelTab.selectedModel.regression.cv_scores[scorer]
-                self.modelTab.resultSelectedList.addItem(scorer + ': ' + ("%0.5f" % regScore) + ' | ' + ("%0.5f" % cvScore))
-            except:
-                pass
+        self.modelTab.selectedModel.report(modelIdx, self.modelTab.resultSelectedList)
 
         # Update Plots
         self.modelTab.resultsObservedForecstPlot.updateScatterPlot(self.modelTab.selectedModel.regressionData)
@@ -1573,15 +1576,11 @@ class modelCreationTab(object):
             self.resetForecastsTab()
         except:
             return
+    # </editor-fold>
 
 
-    def addPredictorToDatasetOperationTable(self):
-        for idx in self.modelTab.layoutSimpleDoubleList.listOutput.datasetTable.index:
-            if idx not in self.datasetOperationsTable.index:
-                self.datasetOperationsTable.loc[idx, list(self.datasetOperationsTable.columns)] = [None] * len(
-                    self.datasetOperationsTable.columns)
-
-
+    # ====================================================================================================================
+    # TAB CHANGE FUNCTION
     def updateTabDependencies(self, tabIndex):
         # todo: doc string
 
@@ -1626,6 +1625,6 @@ class modelCreationTab(object):
 
         elif tabIndex == 4:
             self.updateStatusMessage('Updating generated forecasts table...')
-            self.modelTab.resultsMetricTable.loadDataIntoModel(self.forecastEquationsTable)
+            # self.modelTab.resultsMetricTable.loadDataIntoModel(self.forecastEquationsTable)
             self.updateStatusMessage('')
 

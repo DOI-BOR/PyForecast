@@ -788,6 +788,7 @@ class SpreadSheetForecastEquations(QtWidgets.QWidget):
         # Add the filtering into the plot
         self.model = QtGui.QStandardItemModel(10, len(data.columns))
         self.model.setHorizontalHeaderLabels(data.columns)
+        self.model.setSortRole(QtCore.Qt.DisplayRole)
         self.proxy = QtCore.QSortFilterProxyModel(self)
         self.proxy.setSourceModel(self.model)
         self.view.setModel(self.proxy)
@@ -804,7 +805,7 @@ class SpreadSheetForecastEquations(QtWidgets.QWidget):
 
         # Set the header actions
         self.horizontalHeader = self.view.horizontalHeader()
-        self.horizontalHeader.sectionClicked.connect(self.on_view_horizontalHeader_sectionClicked)
+        self.horizontalHeader.sectionDoubleClicked.connect(self.on_view_horizontalHeader_sectionClicked)
 
         # Set the size policies
         self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding)
@@ -843,8 +844,15 @@ class SpreadSheetForecastEquations(QtWidgets.QWidget):
             self.indexArray = [[self.model.createIndex(0, j) for j in range(0, len(self.equations.columns), 1)]]
 
         # Add the values into the columns
-        [[self.model.setItem(i, j, QtGui.QStandardItem(self.datasetIndexedList[i][j])) for j in range(0, len(self.datasetIndexedList[0]), 1)]
-         for i in range(0, len(self.datasetIndexedList), 1)]
+        for i in range(0, len(self.datasetIndexedList), 1):
+            for j in range(0, len(self.datasetIndexedList[0]), 1):
+                tableItem = QtGui.QStandardItem()
+                if j == 0:
+                    tableItem.setData(int(self.datasetIndexedList[i][j]), QtCore.Qt.DisplayRole)
+                else:
+                    tableItem.setData((self.datasetIndexedList[i][j]), QtCore.Qt.DisplayRole)
+                self.model.setItem(i, j, tableItem)
+
         self.view.resizeColumnsToContents()
 
 
@@ -853,7 +861,7 @@ class SpreadSheetForecastEquations(QtWidgets.QWidget):
         data = dataTable.drop(dataTable.columns[cols], axis=1)
         if len(data) == 0:
             data['PIPE'] = ''
-            data['PreProcessingMethod'] = ''
+            data['Pre-ProcessingMethod'] = ''
             data['RegressionMethod'] = ''
             data['CrossValidation'] = ''
             data['ModelIndex'] = ''
@@ -862,6 +870,16 @@ class SpreadSheetForecastEquations(QtWidgets.QWidget):
                 'EquationMethod'].str.split('/', expand=True)
             data['ModelIndex'] = data.index
             data = data.astype({"ModelIndex": int})
+            # Search-replace model run option values
+            for preProc in list(self.parent.parent.preProcessors):
+                data.replace({'Pre-ProcessingMethod': {preProc:self.parent.parent.preProcessors[preProc]['name']}}, inplace=True)
+            for regr in list(self.parent.parent.regressors):
+                data.replace({'RegressionMethod': {regr:self.parent.parent.regressors[regr]['name']}}, inplace=True)
+            for cVal in list(self.parent.parent.crossValidators):
+                data.replace({'CrossValidation': {cVal:self.parent.parent.crossValidators[cVal]['name']}}, inplace=True)
+            predCounts = list(map(str, list(data['EquationPredictors'].apply(len))))
+            predLists = list(map(str, list(data['EquationPredictors'])))
+            data['EquationPredictors'] = [i.zfill(2) + ' Predictors: ' + j for i, j in zip(predCounts, predLists)]
         data.drop('PIPE', axis=1, inplace=True)
         data = data[data.columns[::-1]]
         return data

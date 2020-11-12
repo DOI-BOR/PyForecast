@@ -60,11 +60,15 @@ class datasetComboBox(QtWidgets.QComboBox):
         
         self.setModel(self.datasetList.model())
         self.setView(self.datasetList)
+        self.internalDatasetId = self.datasetList.datasetTable.iloc[0].name
 
         self.datasetList.itemActivated.connect(lambda item: self.setCurrentIndex(self.datasetList.row(item)))
-
         self.datasetList.itemPressed.connect(lambda x: self.setCurrentIndex(self.datasetList.row(x)))
-        self.currentIndexChanged.connect(lambda x: self.hidePopup())
+        self.currentIndexChanged.connect(self.getdatasetID)
+
+    def getdatasetID(self):
+        self.internalDatasetId = self.datasetList.selectedItems()[0].data(QtCore.Qt.UserRole).name
+        self.hidePopup()
 
 class addRemoveButton(QtWidgets.QLabel):
     clicked = QtCore.pyqtSignal()

@@ -4,6 +4,7 @@ from resources.GUI.Dialogs import PreferencesGUI
 from datetime import datetime
 import pickle
 import time
+import webbrowser
 from PyQt5.QtWidgets import QFileDialog, QDialog, QMessageBox
 
 class menuBar(object):
@@ -12,14 +13,25 @@ class menuBar(object):
     def setupMenuBar(self):
         """
         """
-        self.appMenu.preferencesAction.triggered.connect(self.openPreferencesGUI)
+        # File menu
         self.appMenu.saveAction.triggered.connect(self.saveForecastFile)
         self.appMenu.saveAction.setShortcut("Ctrl+S")
         self.appMenu.saveAsAction.triggered.connect(lambda: self.saveForecastFile(True))
         self.appMenu.openAction.triggered.connect(self.openForecastFile)
         self.appMenu.openAction.setShortcut("Ctrl+O")
+        # Edit menu
+        self.appMenu.preferencesAction.triggered.connect(self.openPreferencesGUI)
         self.appMenu.viewTablesAction.triggered.connect(self.viewDatabase)
+        # About Menu
+        self.appMenu.documentationAction.triggered.connect(self.viewDocumentation)
+        self.appMenu.updateAction.triggered.connect(self.viewReleases)
         return
+
+    def viewDocumentation(self):
+        webbrowser.open('https://github.com/usbr/PyForecast/wiki')
+
+    def viewReleases(self):
+        webbrowser.open('https://github.com/usbr/PyForecast/releases')
 
     def viewDatabase(self):
         """
@@ -146,3 +158,61 @@ class menuBar(object):
     def updateStatusMessage(self, message, messageFormat=None):
         self.statusBar().showMessage(message)
         self.statusBar().repaint()
+
+
+    def clearAppTablesPrompt(self, datasetTables=False, modelRunsTable=False, forecastEquationsTable=False,
+                             savedForecastEquationsTable=False, forecastsTable=False):
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Critical)
+        msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+        msg.setWindowTitle('Are you sure?')
+        msg.setText('This will clear tables that processes shown below use. Press OK to continue... ')
+        tableText = ''
+        if datasetTables:
+            modelRunsTable=True
+            forecastEquationsTable=True
+            savedForecastEquationsTable=True
+            forecastsTable=True
+            tableText += '- Selected datasets in the Datasets tab and downloaded data in the Data tab<br>'
+        if modelRunsTable:
+            forecastEquationsTable=True
+            savedForecastEquationsTable=True
+            forecastsTable=True
+            tableText += '- Result tables in the Create Models tab<br>'
+        if forecastEquationsTable:
+            savedForecastEquationsTable=True
+            forecastsTable=True
+            tableText += '- Saved models in the Forecasts tab<br>'
+        if savedForecastEquationsTable:
+            forecastsTable=True
+            tableText += '- Forecasts saved and generated in the Forecasts tab<br>'
+        msg.setInformativeText(tableText)
+        return msg
+
+
+    def clearAppTables(self, datasetTables=False, modelRunsTable=False, forecastEquationsTable=False,
+                       savedForecastEquationsTable=False, forecastsTable=False):
+        if datasetTables:
+            modelRunsTable=True
+            forecastEquationsTable=True
+            savedForecastEquationsTable=True
+            forecastsTable=True
+            self.initializeDatasetTables()
+            self.initializeModelRunTable()
+            self.resetDataTab()
+            self.resetDatasetTab()
+        if modelRunsTable:
+            forecastEquationsTable=True
+            savedForecastEquationsTable=True
+            forecastsTable=True
+            self.initializeModelRunResultsTable()
+            self.resetModelCreationTab()
+        if forecastEquationsTable:
+            savedForecastEquationsTable=True
+            forecastsTable=True
+            self.initializeSavedModelsTable()
+            self.resetModelCreationTab()
+        if savedForecastEquationsTable:
+            forecastsTable=True
+            self.initializeForecastsTable()
+            self.resetForecastsTab()

@@ -4,6 +4,7 @@ from resources.modules.Miscellaneous.DataProcessor import resampleDataSet
 from resources.modules.ModelCreationTab import PredictionIntervalBootstrap
 from scipy.stats import iqr
 from sklearn.neighbors import KernelDensity
+from PyQt5 import QtGui, QtWidgets
 
 
 class Model(object):
@@ -115,29 +116,133 @@ class Model(object):
         :param year:
         :return:
         """
-
-        # Move the fore/hind-cast year to the end of the array
-        XY_ = np.hstack((self.xTraining,self.yTraining))
-        yearRowIdx = self.predictorData.index.get_loc(int(year))
-        yearRow = XY_[yearRowIdx]
-        XY_ = np.delete(XY_, yearRowIdx, axis=0)
-        XY_ = np.vstack((XY_,yearRow))
-
-        # Run a bootstrap to get a prediction range
+        # Setup Bootstrap dataset
+        XY_ = np.hstack((self.xTraining, self.yTraining))
+        if xData is not None:
+            xDataBootstrap = xData.reset_index(drop=True)
+            xDataBootstrap.loc[len(xDataBootstrap)] = 0
+            XY_ = np.vstack((XY_, xDataBootstrap))
+            XY_ = XY_.astype(np.float)
+        if year is not None:
+            # Move the fore/hind-cast year to the end of the array
+            yearRowIdx = self.predictorData.index.get_loc(int(year))
+            yearRow = XY_[yearRowIdx]
+            XY_ = np.delete(XY_, yearRowIdx, axis=0)
+            XY_ = np.vstack((XY_, yearRow))
+            xData = self.predictorData.loc[int(year)]
+        # Run prediction interval bootstrap
         print('INFO: Running prediction bootstrap...')
-        predBootstrap = PredictionIntervalBootstrap.computePredictionInterval(self, XY_, self.preprocessorClass, self.regressionClass, self.crossValidator, nRuns=5000)
+        predBootstrap = PredictionIntervalBootstrap.computePredictionInterval(self, XY_, self.preprocessorClass,
+                                                                              self.regressionClass,
+                                                                              self.crossValidator,
+                                                                              nRuns=500)
         self.predictionRange = pd.DataFrame(np.percentile(predBootstrap, range(1, 100)), index=range(1, 100))
-
         # Run a prediction with the input data
         try:
-            if xData is not None:
-                self.prediction = self.regression.predict(xData)
-            if year is not None:
-                xData = self.predictorData.loc[int(year)]
-                self.prediction = self.regression.predict(xData)
+            self.prediction = self.regression.predict(xData)
         except:
             # Report the 50th percentile prediction bootstrap if prediction fails.
             self.prediction = self.predictionRange.loc[50]
-
         return
 
+
+    def report(self, modelIdx, listWidget):
+        listWidget.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
+        # Update UI with selected model metadata
+        listWidget.clear()
+        listWidget.addItem('----- MODEL REGRESSION -----')
+        listWidget.addItem('Model Index: ' + str(modelIdx))
+        listWidget.addItem(
+            'Model Processes: ' + str(self.forecastEquation.EquationMethod))
+        listWidget.addItem(
+            'Model Predictor IDs: ' + str(self.forecastEquation.EquationPredictors))
+        listWidget.addItem(
+            'Selected Range (years): ' + str(self.trainingDates))
+        usedYears = ", ".join([str(years) for years in self.years])
+        listWidget.addItem('Used Range (years): ' + usedYears)
+        listWidget.addItem(' ')
+
+        listWidget.addItem('----- MODEL VARIABLES -----')
+        listWidget.addItem('Predictand Y: ' + str(
+            self.parent.datasetTable.loc[self.yID].DatasetName) + ' - ' + str(
+            self.parent.datasetTable.loc[self.yID].DatasetParameter))
+        equation = 'Y ='
+        hasCoefs = True
+        hasNegativeCoef = False
+        for i in range(len(self.xIDs)):
+            listWidget.addItem('Predictor X' + str(i + 1) + ': ' + str(
+                self.parent.datasetTable.loc[
+                    self.xIDs[i]].DatasetName) + ' - ' + str(
+                self.parent.datasetTable.loc[self.xIDs[i]].DatasetParameter))
+            try:
+                if hasCoefs:
+                    coef = self.regression.coef[i]
+                    const = 'X' + str(i + 1)
+                    if coef >= 0:
+                        equation = equation + ' + (' + ("%0.5f" % coef) + ')' + const
+                    else:
+                        equation = equation + ' - (' + ("%0.5f" % (coef * -1.0)) + ')' + const
+                        hasNegativeCoef = True
+            except:
+                hasCoefs = False
+
+        listWidget.addItem(' ')
+        if hasCoefs:
+            listWidget.addItem('----- MODEL EQUATION -----')
+            if self.regression.intercept >= 0:
+                equation = equation + ' + ' + ("%0.5f" % self.regression.intercept)
+            else:
+                equation = equation + ' - ' + ("%0.5f" % (self.regression.intercept * -1.0))
+            listWidget.addItem('' + equation)
+            if hasNegativeCoef:
+                widg = QtWidgets.QListWidgetItem('WARNING: Generated equation has at least 1 negative coefficient')
+                widg.setForeground(QtGui.QColor("#FF0000"))
+                listWidget.addItem(widg)
+            listWidget.addItem(' ')
+
+        isPrinComp = True if self.regression.NAME == 'Principal Components Regression' else False
+        if isPrinComp:
+            listWidget.addItem('----- MODEL COMPONENTS -----')
+            listWidget.addItem(
+                'Principal Components Count: ' + str(self.regression.num_pcs))
+            usedCoefs = self.regression.pc_coef[
+                        :self.regression.num_pcs]
+            coefVals = ", ".join([("%0.5f" % coef) for coef in usedCoefs])
+            listWidget.addItem('Principal Components Coefficients: ' + coefVals)
+            eigVecs = self.regression.eigenvectors[:,
+                      :self.regression.num_pcs]
+            for i in range(len(self.xIDs)):
+                listWidget.addItem(
+                    'X' + str(i + 1) + ' Eigenvector: ' + ("%0.5f" % eigVecs[i]))
+            listWidget.addItem(' ')
+
+        isZScore = True if self.regression.NAME == 'Z-Score Regression' else False
+        if isZScore:
+            listWidget.addItem('----- MODEL COMPONENTS -----')
+            for i in range(len(self.xIDs)):
+                listWidget.addItem('X' + str(i + 1) + ' Y Correlation: ' + (
+                            "%0.5f" % self.regression.zRsq[i]))
+            equation = 'Z-Score Equation: Y = ('
+            if self.regression.zcoef[0] > 0:
+                equation = equation + ("%0.5f" % self.regression.zcoef[0]) + ')MC'
+            else:
+                equation = equation + '-' + ("%0.5f" % self.regression.zcoef[0]) + ')MC'
+            if self.regression.zintercept > 0:
+                equation = equation + ' + ' + ("%0.5f" % self.regression.zintercept)
+            else:
+                equation = equation + ' - ' + ("%0.5f" % self.regression.zintercept)
+            listWidget.addItem(equation)
+            listWidget.addItem(
+                '               MC: Weighted Z-Score Multiple Component Indexed Value')
+            listWidget.addItem(' ')
+
+        listWidget.addItem('----- MODEL SCORES (Regular | Cross-Validated) -----')
+        for scorer in self.regression.scoringParameters:
+            try:
+                regScore = self.regression.scores[scorer]
+                cvScore = self.regression.cv_scores[scorer]
+                listWidget.addItem(
+                    scorer + ': ' + ("%0.5f" % regScore) + ' | ' + ("%0.5f" % cvScore))
+            except:
+                pass
+        return
