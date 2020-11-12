@@ -57,6 +57,7 @@ class forecastsTab(object):
         self.forecastsTab.modelYearSpin.valueChanged.connect(self.updateForecastYearData)
         self.forecastsTab.runModelButton.clicked.connect(self.generateModelPrediction)
         self.forecastsTab.saveModelButton.clicked.connect(self.saveModelPrediction)
+        self.forecastsTab.exportModelButton.clicked.connect(self.exportModelRun)
 
         # Connect forecast comparison actions
         self.savedForecastSelectionModel = self.forecastsTab.savedForecastsPane.selectionModel()
@@ -88,7 +89,7 @@ class forecastsTab(object):
         QtWidgets.QApplication.restoreOverrideCursor()
 
         # Update UI with selected model metadata
-        self.forecastsTab.selectedModel.report(modelIdx, self.forecastsTab.resultSelectedList)
+        self.forecastsTab.selectedModel.report(self.forecastsTab.resultSelectedList)
 
         # Update Plots
         self.forecastsTab.resultsObservedForecstPlot.updateScatterPlot(self.forecastsTab.selectedModel.regressionData)
@@ -167,7 +168,9 @@ class forecastsTab(object):
 
 
     def saveModelPrediction(self):
-        print('Saving prediction. Prediction=' + ('%0.0f' % self.forecastsTab.selectedModel.prediction) +
+        ### Reset the button state ###
+        self.forecastsTab.saveModelButton.setChecked(False)
+        print('INFO: Saving prediction. Prediction=' + ('%0.0f' % self.forecastsTab.selectedModel.prediction) +
               ' - Bootstrapped Prediction Range: [10%=' + ('%0.0f' % self.forecastsTab.selectedModel.predictionRange.loc[10]) +
               ', 25%=' + ('%0.0f' % self.forecastsTab.selectedModel.predictionRange.loc[25]) +
               ', 50%=' + ('%0.0f' % self.forecastsTab.selectedModel.predictionRange.loc[50]) +
@@ -181,6 +184,14 @@ class forecastsTab(object):
             self.forecastsTable.drop(fcastIdx, inplace=True)
         self.forecastsTab.selectedModel.predictionRange.loc[-1] = self.forecastsTab.selectedModel.prediction
         self.forecastsTable.loc[eqID,fcastYear,fcastExc]=[self.forecastsTab.selectedModel.predictionRange]
+
+
+    def exportModelRun(self):
+        ### Reset the button state ###
+        self.forecastsTab.exportModelButton.setChecked(False)
+        print('INFO: Exporting model')
+        self.forecastsTab.selectedModel.export()
+
     # </editor-fold>
 
 

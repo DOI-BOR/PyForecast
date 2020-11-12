@@ -5,6 +5,7 @@ from resources.modules.ModelCreationTab import PredictionIntervalBootstrap
 from scipy.stats import iqr
 from sklearn.neighbors import KernelDensity
 from PyQt5 import QtGui, QtWidgets
+import tempfile, os, csv
 
 
 class Model(object):
@@ -146,31 +147,46 @@ class Model(object):
         return
 
 
-    def report(self, modelIdx, listWidget):
+    def report(self, listWidget):
         listWidget.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
         # Update UI with selected model metadata
         listWidget.clear()
-        listWidget.addItem('----- MODEL REGRESSION -----')
-        listWidget.addItem('Model Index: ' + str(modelIdx))
-        listWidget.addItem(
+        list = self.buildReportList()
+        for i in range(len(list)):
+            text = list[i]
+            if 'WARNING' in text:
+                widg = QtWidgets.QListWidgetItem(text)
+                widg.setForeground(QtGui.QColor("#FF0000"))
+                listWidget.addItem(widg)
+            else:
+                listWidget.addItem(text)
+
+        return
+
+
+    def buildReportList(self):
+        list = []
+        list.append('----- MODEL REGRESSION -----')
+        #list.append('Model Index: ' + str(modelIdx))
+        list.append(
             'Model Processes: ' + str(self.forecastEquation.EquationMethod))
-        listWidget.addItem(
+        list.append(
             'Model Predictor IDs: ' + str(self.forecastEquation.EquationPredictors))
-        listWidget.addItem(
+        list.append(
             'Selected Range (years): ' + str(self.trainingDates))
         usedYears = ", ".join([str(years) for years in self.years])
-        listWidget.addItem('Used Range (years): ' + usedYears)
-        listWidget.addItem(' ')
+        list.append('Used Range (years): ' + usedYears)
+        list.append(' ')
 
-        listWidget.addItem('----- MODEL VARIABLES -----')
-        listWidget.addItem('Predictand Y: ' + str(
+        list.append('----- MODEL VARIABLES -----')
+        list.append('Predictand Y: ' + str(
             self.parent.datasetTable.loc[self.yID].DatasetName) + ' - ' + str(
             self.parent.datasetTable.loc[self.yID].DatasetParameter))
         equation = 'Y ='
         hasCoefs = True
         hasNegativeCoef = False
         for i in range(len(self.xIDs)):
-            listWidget.addItem('Predictor X' + str(i + 1) + ': ' + str(
+            list.append('Predictor X' + str(i + 1) + ': ' + str(
                 self.parent.datasetTable.loc[
                     self.xIDs[i]].DatasetName) + ' - ' + str(
                 self.parent.datasetTable.loc[self.xIDs[i]].DatasetParameter))
@@ -186,42 +202,42 @@ class Model(object):
             except:
                 hasCoefs = False
 
-        listWidget.addItem(' ')
+        list.append(' ')
         if hasCoefs:
-            listWidget.addItem('----- MODEL EQUATION -----')
+            list.append('----- MODEL EQUATION -----')
             if self.regression.intercept >= 0:
                 equation = equation + ' + ' + ("%0.5f" % self.regression.intercept)
             else:
                 equation = equation + ' - ' + ("%0.5f" % (self.regression.intercept * -1.0))
-            listWidget.addItem('' + equation)
+            list.append('' + equation)
             if hasNegativeCoef:
-                widg = QtWidgets.QListWidgetItem('WARNING: Generated equation has at least 1 negative coefficient')
-                widg.setForeground(QtGui.QColor("#FF0000"))
-                listWidget.addItem(widg)
-            listWidget.addItem(' ')
+                #widg = QtWidgets.QListWidgetItem('WARNING: Generated equation has at least 1 negative coefficient')
+                #widg.setForeground(QtGui.QColor("#FF0000"))
+                list.append('WARNING: Generated equation has at least 1 negative coefficient')
+            list.append(' ')
 
         isPrinComp = True if self.regression.NAME == 'Principal Components Regression' else False
         if isPrinComp:
-            listWidget.addItem('----- MODEL COMPONENTS -----')
-            listWidget.addItem(
+            list.append('----- MODEL COMPONENTS -----')
+            list.append(
                 'Principal Components Count: ' + str(self.regression.num_pcs))
             usedCoefs = self.regression.pc_coef[
                         :self.regression.num_pcs]
             coefVals = ", ".join([("%0.5f" % coef) for coef in usedCoefs])
-            listWidget.addItem('Principal Components Coefficients: ' + coefVals)
+            list.append('Principal Components Coefficients: ' + coefVals)
             eigVecs = self.regression.eigenvectors[:,
                       :self.regression.num_pcs]
             for i in range(len(self.xIDs)):
-                listWidget.addItem(
+                list.append(
                     'X' + str(i + 1) + ' Eigenvector: ' + ("%0.5f" % eigVecs[i]))
-            listWidget.addItem(' ')
+            list.append(' ')
 
         isZScore = True if self.regression.NAME == 'Z-Score Regression' else False
         if isZScore:
-            listWidget.addItem('----- MODEL COMPONENTS -----')
+            list.append('----- MODEL COMPONENTS -----')
             for i in range(len(self.xIDs)):
-                listWidget.addItem('X' + str(i + 1) + ' Y Correlation: ' + (
-                            "%0.5f" % self.regression.zRsq[i]))
+                list.append('X' + str(i + 1) + ' Y Correlation: ' + (
+                        "%0.5f" % self.regression.zRsq[i]))
             equation = 'Z-Score Equation: Y = ('
             if self.regression.zcoef[0] > 0:
                 equation = equation + ("%0.5f" % self.regression.zcoef[0]) + ')MC'
@@ -231,18 +247,51 @@ class Model(object):
                 equation = equation + ' + ' + ("%0.5f" % self.regression.zintercept)
             else:
                 equation = equation + ' - ' + ("%0.5f" % self.regression.zintercept)
-            listWidget.addItem(equation)
-            listWidget.addItem(
+            list.append(equation)
+            list.append(
                 '               MC: Weighted Z-Score Multiple Component Indexed Value')
-            listWidget.addItem(' ')
+            list.append(' ')
 
-        listWidget.addItem('----- MODEL SCORES (Regular | Cross-Validated) -----')
+        list.append('----- MODEL SCORES (Regular | Cross-Validated) -----')
         for scorer in self.regression.scoringParameters:
             try:
                 regScore = self.regression.scores[scorer]
                 cvScore = self.regression.cv_scores[scorer]
-                listWidget.addItem(
+                list.append(
                     scorer + ': ' + ("%0.5f" % regScore) + ' | ' + ("%0.5f" % cvScore))
             except:
                 pass
+
+        return list
+
+
+    def export(self):
+        # Get regular displayed model info
+        list = self.buildReportList()
+        list = [w.replace(',', ';') for w in list]
+        # Get underlying data
+        xy = pd.DataFrame(np.column_stack((self.regression.x,self.regression.y,self.regression.y_p)))
+        headerList = ['X' + str(i+1) for i in range(0,len(self.xIDs))]
+        headerList.append('Y')
+        headerList.append('Ymodeled')
+        xy.columns = headerList
+        xy.index = self.years
+        # Combine lists
+        xyVals = xy.to_string(header=True, index=True, index_names=True).split('\n')
+        xyStrings = [','.join(i.split()) for i in xyVals]
+        list.append(' ')
+        list.append('----- MODELING DATASET -----')
+        list.extend(xyStrings)
+        # Write to temp csv file and open
+        handle, fn = tempfile.mkstemp(suffix='.csv')
+        with os.fdopen(handle, "w", encoding='utf8', errors='surrogateescape', newline='\n') as f:
+            writer = csv.writer(f)
+            try:
+                for line in list:
+                    writer.writerow([line,])
+            except Exception as e:
+                print('INFO: Model export error row:', e)
+        print('INFO: Model exported to file ' + fn)
+        os.startfile(fn)
+
         return

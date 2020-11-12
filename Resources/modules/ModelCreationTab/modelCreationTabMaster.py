@@ -1544,7 +1544,7 @@ class modelCreationTab(object):
         QtWidgets.QApplication.restoreOverrideCursor()
 
         # Update UI with selected model metadata
-        self.modelTab.selectedModel.report(modelIdx, self.modelTab.resultSelectedList)
+        self.modelTab.selectedModel.report(self.modelTab.resultSelectedList)
 
         # Update Plots
         self.modelTab.resultsObservedForecstPlot.updateScatterPlot(self.modelTab.selectedModel.regressionData)

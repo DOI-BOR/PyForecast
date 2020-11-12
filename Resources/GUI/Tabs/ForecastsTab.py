@@ -164,6 +164,9 @@ class ForecastsTab(QtWidgets.QWidget):
         self.selectedModelDataTable.view.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectColumns)
         self.selectedModelDataTable.view.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
 
+        self.exportModelButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Export Model</strong>')
+        self.exportModelButton.setMaximumSize(150, 50)
+        self.exportModelButton.setEnabled(True)
         self.runModelButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Run Model</strong>')
         self.runModelButton.setMaximumSize(150, 50)
         self.runModelButton.setEnabled(False)
@@ -171,6 +174,7 @@ class ForecastsTab(QtWidgets.QWidget):
         self.saveModelButton.setMaximumSize(150, 50)
         self.saveModelButton.setEnabled(False)
         modelRunButtonsLayout = QtWidgets.QHBoxLayout()
+        modelRunButtonsLayout.addWidget(self.exportModelButton)
         modelRunButtonsLayout.addWidget(self.runModelButton)
         modelRunButtonsLayout.addWidget(self.saveModelButton)
         modelRunButtonsLayoutWidget = QtWidgets.QWidget()
