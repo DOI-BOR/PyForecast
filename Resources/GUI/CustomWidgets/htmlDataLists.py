@@ -17,7 +17,12 @@ class Icons(object):
         "soil": os.path.abspath("resources/GraphicalResources/icons/sprout-24px.svg"),
         'snotel': os.path.abspath("resources/GraphicalResources/icons/terrain-24px.svg"),
         'other': os.path.abspath("resources/GraphicalResources/icons/language-24px.svg"),
+        'clock':os.path.abspath("resources/GraphicalResources/icons/clock-24px.svg"),
+        'function': os.path.abspath("resources/GraphicalResources/icons/function-24px.svg"),
     }
+
+
+
 
 class DatasetTab_searchResultsBox(object):
 
@@ -51,7 +56,7 @@ class DatasetTab_searchResultsBox(object):
         if hasattr(self.parent.parent, "keywordSearchTable"):
             return self.parent.parent.keywordSearchTable.iterrows()
         else:
-            return []
+            return enumerate([])
 
     def contextMenu(self):
 
@@ -79,6 +84,8 @@ class DatasetTab_searchResultsBox(object):
 
         return tooltipText
 
+    def ComboBoxText(self, dataset):
+        return ""
 
     def generateHTML(self, dataset):
         """
@@ -186,6 +193,8 @@ class DatasetTab_SelectedDatasetList(object):
 
         return tooltipText
 
+    def ComboBoxText(self, dataset):
+        return ""
 
     def generateHTML(self, dataset):
         """
@@ -237,22 +246,62 @@ class DataTab_datasetList(DatasetTab_SelectedDatasetList):
     def __init__(self, parent=None):
         DatasetTab_SelectedDatasetList.__init__(self,parent)
 
+    def ComboBoxText(self, dataset):
+        return "{0}: {3} - {1} ({2})".format(dataset['DatasetExternalID'], dataset['DatasetName'],
+                                                 dataset['DatasetParameter'], dataset['DatasetType'])
+
     def contextMenu(self):
         return
+
+class ModelCreationTab_selectedTarget(DatasetTab_SelectedDatasetList):
+    FORMAT_STRING = """
+        <table border="0" width="100%">
+        <tr>
+            <td width="50" style="padding-left: 2px; padding-right: 10px;" align="left" valign="middle"><img src="{IconPath}"></td>
+            <td align="left"><strong style="color:#007396; font-size:14px">{DatasetName}</strong><br>
+                    <strong>ID: </strong>{DatasetExternalID}<br>
+                    <strong>Type: </strong>{DatasetAgency} {DatasetType}<br>
+                    <strong>Parameter: </strong>{DatasetParameter}</td>
+        </tr>
+        <tr>
+        <td width="50" style="padding-left: 2px; padding-right: 10px;" align="left" valign="middle"></td>
+        <td style="text-align:right; color: #8c9f9d">{DatasetID}</td>
+        </tr>
+        </table>
+        """
+    def __init__(self, parent = None):
+        DatasetTab_SelectedDatasetList.__init__(self, parent)
+
+    def ComboBoxText(self, dataset):
+        return "{0}: {3} - {1} ({2})".format(dataset['DatasetExternalID'], dataset['DatasetName'],
+                                                         dataset['DatasetParameter'], dataset['DatasetType'])
+
+    def contextMenu(self):
+        return
+
+    def iterator(self):
+        if hasattr(self.parent.parent, 'modelTab'):
+            item = self.parent.parent.modelTab.datasetList.currentItem()
+            return enumerate([item.data(QtCore.Qt.UserRole)]) if item is not None else enumerate([])
+        else:
+            return enumerate([])
+
 
 class ModelCreationTab_PredictorList(object):
 
     FORMAT_STRING = """
         <table border="0" width="100%">
         <tr>
-            <td width="50" style="padding-left: 2px; padding-right: 10px;" align="left" valign="middle"><img src="{IconPath}"></td>
-            <td align="left"><strong style="color:#007396; font-size:14px"><span style="font-size:18px;font-family:consolas;color:red">{PredictorForced}</span>{DatasetName} ({DatasetExternalID})</strong><br>
-                    <strong style="color:#237539; font-size:12px">{PredictorParameter}</strong><br>
-                    <strong>Method: </strong>{PredictorMethod}<br>
-                    <strong>Start Date: </strong>{PredictorStartDate}<br>
-                    <strong>Duration: </strong>{PredictorDuration}<br>
-                    {Filling}<strong>Filled? </strong>{FillMethod}<br>
-                    {Extending}<strong>Extended? </strong>{ExtendMethod}</td>
+            <td valign="middle" align="center"><img src="{iconPath}"/></td>
+            <td valign="middle"><span style="font-size:16px;color: #1a888a">{Forced} {PredictorName} ({predictorID})</span><br><span style="font-size:13px;color: #32a852">{PredictorParameter}</span></td>
+        </tr>
+        <tr>
+            <td align="center"><img src="resources/GraphicalResources/icons/clock-24px.svg" height="24" width="24"/></td>
+            <td valign="middle">{predictorStart} (continuing for {duration})</td>
+        </tr>
+        <tr>
+            <td align="center"><img src="./resources/GraphicalResources/icons/function-24px.svg" height="24" width="24"/></td>
+            <td valign="middle">{method} {extending} {filling}</td>
         </tr>
         </table>
         """
@@ -261,19 +310,47 @@ class ModelCreationTab_PredictorList(object):
 
         self.dataFrame = parent.parent.modelRunsTable.iloc[-1]
         self.dataFrame2 = parent.parent.datasetTable
-        self.iterator = enumerate(zip(
+        self.icons = Icons()
+        self.parent = parent
+        self.usesButtons = False
+        self.buttonText = ""
+        self.contextMenu()
+
+        return
+
+    def ComboBoxText(self, dataset):
+        return ""
+
+    def ToolTip(self, dataset):
+
+        return ""
+
+    def contextMenu(self):
+        # Create a context menu
+        self.parent.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
+
+        # Create Button List
+        self.contextList = [
+            "Remove Predictor"
+        ]
+
+        # Iterate over menuItems
+        for item in self.contextList:
+            # Create a new action in the ListWidget Object
+            setattr(self.parent, item.replace(' ', '_') + 'Action', QtWidgets.QAction(item))
+
+            # Add the action to the listwidget
+            self.parent.addAction(getattr(self.parent, item.replace(' ', '_') + 'Action'))
+
+        return
+
+    def iterator(self):
+        return enumerate(zip(
             self.dataFrame.PredictorPool,
             self.dataFrame.PredictorForceFlag,
             self.dataFrame.PredictorPeriods,
             self.dataFrame.PredictorMethods,
         ))
-        self.icons = Icons()
-        self.usesButtons = False
-        self.buttonText = ""
-
-        return
-
-
     def generateHTML(self, dataset):
         """
         Generates an HTML entry for the given index in the table
@@ -307,18 +384,16 @@ class ModelCreationTab_PredictorList(object):
                     iconPath = value
 
         html = self.FORMAT_STRING.format(
-            IconPath=iconPath,
-            PredictorForced="F " if forceFlag else "",
+            iconPath=iconPath,
+            Forced='<span style="color:magenta">[F] </span>' if forceFlag else "",
+            predictorID=datasetTableEntry.DatasetExternalID,
             PredictorParameter=datasetTableEntry.DatasetParameter,
-            DatasetName=datasetTableEntry.DatasetName,
-            DatasetExternalID=datasetTableEntry.DatasetExternalID,
-            PredictorMethod=method.title(),
-            PredictorStartDate=startDate.strftime('%B %d'),
-            PredictorDuration=duration_string,
-            FillMethod='NONE',
-            ExtendMethod='NONE',
-            Filling='NONE',
-            Extending='NONE',
+            PredictorName=datasetTableEntry.DatasetName,
+            method=method.title() + ' value of period',
+            predictorStart=startDate.strftime('%B %d'),
+            duration=duration_string,
+            extending="",
+            filling="",
 
         )
 
@@ -359,6 +434,10 @@ class ListItem(QtWidgets.QListWidgetItem):
         self.widget.setToolTip(self.toolTipText)
 
         self.setSizeHint(QtCore.QSize(0, self.widget.sizeHint().height()*1.2))
+
+        # Set a displayrole for combo boxes
+        self.setForeground(QtGui.QBrush(QtGui.QColor(0, 0, 0, 0)))
+        self.setData(QtCore.Qt.DisplayRole, self.parent.listClass.ComboBoxText(itemData))
 
         return
 
@@ -432,7 +511,9 @@ if __name__ == '__main__':
 
     import pandas as pd
     import sys
-    import numpy as np
+    import os
+    os.chdir("C:\\Users\\KFoley\\PycharmProjects\\PyForecast\\")
+    print(os.listdir('resources'))
 
     # Debugging dataset
     app = QtWidgets.QApplication(sys.argv)
@@ -505,7 +586,7 @@ if __name__ == '__main__':
         ""
     ]
 
-    w = HTML_LIST(mw, listName='DatasetTab_SelectedDatasetList')
+    w = HTML_LIST(mw, listName='ModelCreationTab_PredictorList')
     mw.setCentralWidget(w)
     mw.show()
     sys.exit(app.exec_())

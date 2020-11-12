@@ -10,6 +10,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 
 from resources.GUI.CustomWidgets.DatasetList_HTML_Formatted import ListHTMLFormatted, DatasetListHTMLFormatted, DatasetListHTMLFormattedMultiple
 from resources.GUI.CustomWidgets.DoubleList import DoubleListMultipleInstance
+from resources.GUI.CustomWidgets.htmlDataLists import HTML_LIST
 from resources.GUI.CustomWidgets.AggregationOptions import AggregationOptions
 from resources.GUI.CustomWidgets.PyQtGraphs import ModelTabTargetPlot, FillExtendTabPlots, ResultsTabPlots, WindowTabPlots
 from resources.GUI.CustomWidgets.customTabs import EnhancedTabWidget
@@ -53,7 +54,8 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.dataPlot = ModelTabTargetPlot(self, objectName='ModelTabPlot')
         self.dataPlot.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.targetSelect = QtWidgets.QComboBox()
-        self.datasetList = DatasetListHTMLFormatted(self, datasetTable = self.parent.datasetTable, addButtons=False)
+        self.datasetList = HTML_LIST(self.parent, "DataTab_datasetList")#'
+        #self.datasetList =  DatasetListHTMLFormatted(self, datasetTable = self.parent.datasetTable, addButtons=False)
         self.targetSelect.setModel(self.datasetList.model())
         self.targetSelect.setView(self.datasetList)
 
@@ -61,8 +63,10 @@ class ModelCreationTab(QtWidgets.QWidget):
         layout.addWidget(QtWidgets.QLabel("Forecast Target"), 0, 0, 1, 1)
         layout.addWidget(self.targetSelect, 0, 1, 1, 3)
         
-        self.selectedItemDisplay = DatasetListHTMLFormatted(self, addButtons=False, objectName='ModelTargetList')
-        self.selectedItemDisplay.setFixedHeight(99)
+        #self.selectedItemDisplay = DatasetListHTMLFormatted(self, addButtons=False, objectName='ModelTargetList')
+        self.selectedItemDisplay = HTML_LIST(self.parent, "ModelCreationTab_selectedTarget")
+        self.selectedItemDisplay.setFixedHeight(121)
+        self.selectedItemDisplay.setStyleSheet("QWidget {border-bottom: 0px solid darkgray}")
         self.selectedItemDisplay.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
         
         layout.addWidget(self.selectedItemDisplay, 1, 1, 1, 3)
@@ -220,7 +224,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Connect the DoubleList with the dataset hmtl list to keep everything in sync. This will automatically
         # populate the DoubleList entries
-        self.datasetList.updateSignalToExternal.connect(self.layoutDataDoubleList.update)
+        #self.datasetList.updateSignalToExternal.connect(self.layoutDataDoubleList.update)
 
         # Connect the doublelists together. This will keep the selection in sync between the simple and expert modes
         self.layoutDataDoubleList.updatedLinkedList.connect(self.layoutSimpleDoubleList.updateLinkedDoubleLists)
@@ -398,7 +402,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Connect the DoubleList with the dataset hmtl list to keep everything in sync. This will automatically
         # populate the DoubleList entries
-        self.datasetList.updateSignalToExternal.connect(self.layoutSimpleDoubleList.update)
+        #self.datasetList.updateSignalToExternal.connect(self.layoutSimpleDoubleList.update)
 
         ## Define the data plots
         plotLayout = QtWidgets.QVBoxLayout()
