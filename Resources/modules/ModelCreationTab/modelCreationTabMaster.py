@@ -93,8 +93,8 @@ class modelCreationTab(object):
         self.modelTab.periodEnd.dateChanged.connect(lambda x: self.plotTarget())
         self.modelTab.methodCombo.currentIndexChanged.connect(lambda x: self.plotTarget())
         self.modelTab.customMethodSpecEdit.editingFinished.connect(self.plotTarget)
-        #self.modelTab.targetSelect.currentIndexChanged.connect(lambda x: self.modelTab.selectedItemDisplay.setDatasetTable(self.datasetTable.loc[self.modelTab.datasetList.item(x).data(QtCore.Qt.UserRole).name])  if x >= 0 else None)
-        self.modelTab.targetSelect.currentIndexChanged.connect(lambda x: self.modelTab.selectedItemDisplay.refreshList())
+        self.modelTab.targetSelect.currentIndexChanged.connect(lambda x: self.modelTab.selectedItemDisplay.setDatasetTable(self.datasetTable.loc[self.modelTab.datasetList.item(x).data(QtCore.Qt.UserRole).name])  if x >= 0 else None)
+        #self.modelTab.targetSelect.currentIndexChanged.connect(lambda x: self.modelTab.selectedItemDisplay.refreshList())
         self.modelTab.methodCombo.currentIndexChanged.connect(lambda x: self.modelTab.customMethodSpecEdit.show() if self.modelTab.methodCombo.itemData(x) == 'custom' else self.modelTab.customMethodSpecEdit.hide())
         self.modelTab.defButton.toggled.connect(lambda checked: self.updateModelSettings(checked))
 
