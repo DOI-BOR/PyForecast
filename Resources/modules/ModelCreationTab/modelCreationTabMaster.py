@@ -270,12 +270,13 @@ class modelCreationTab(object):
         self.modelTab.predictandApplyButton.setChecked(False)
 
         # Ask user if sure
-        msgBox = self.clearAppTablesPrompt(modelRunsTable=True)
-        result = msgBox.exec_()
-        if result == QtGui.QMessageBox.Ok:
-            self.clearAppTables(modelRunsTable=True)
-        else:
-            return
+        if len(self.modelRunsTable) > 0:
+            msgBox = self.clearAppTablesPrompt(modelRunsTable=True)
+            result = msgBox.exec_()
+            if result == QtGui.QMessageBox.Ok:
+                self.clearAppTables(modelRunsTable=True)
+            else:
+                return
 
         predictandData = self.modelTab.targetSelect.currentData()
         predID = predictandData.name
@@ -1378,156 +1379,171 @@ class modelCreationTab(object):
         Start the regression analysis using the specified settings
 
         """
+        
+        ### Check and warn if defaults are set ###
+        continueConfirmation = False
+        if self.modelTab.defButton.isChecked():
+            msgBox = self.startDefaultConfirmationPrompt()
+            result = msgBox.exec_()
+
+            if result == QtGui.QMessageBox.Ok:
+                continueConfirmation = True
+            else:
+                continueConfirmation = False
+
+        else:
+            continueConfirmation = True
 
         ### Reset the button state ###
         self.modelTab.summaryStartButton.setChecked(False)
         errorString = 'Model Errors: '
 
-        ### Check if a predictand has been selected
-        if self.modelRunsTable.shape[0] < 1:
-            errorString += 'Select and define a valid predictand from the Forecast Target tab. '
+        #### Continue only if valid valid options are present ####
+        if continueConfirmation:
 
-        ### Get predictors ###
-        predPool = []
-        predPeriods = []
-        predMethods = []
-        predForced = []
+            ### Check if a predictand has been selected ###
+            if self.modelRunsTable.shape[0] < 1:
+                errorString += 'Select and define a valid predictand from the Forecast Target tab. '
 
-        for index, row in self.datasetOperationsTable.iterrows():
-            predPool.append(row.name[0])
-            predPeriods.append(str(row['AccumulationPeriod']))
-            predMethods.append(str(row['AccumulationMethod']))
-            predForced.append(str(row['ForcingFlag']))
+            ### Get predictors ###
+            predPool = []
+            predPeriods = []
+            predMethods = []
+            predForced = []
 
-        if len(predPool) < 1:
-            errorString += 'Select at least 1 predictor from the Predictors tab. '
+            for index, row in self.datasetOperationsTable.iterrows():
+                predPool.append(row.name[0])
+                predPeriods.append(str(row['AccumulationPeriod']))
+                predMethods.append(str(row['AccumulationMethod']))
+                predForced.append(str(row['ForcingFlag']))
 
-        if predPeriods.count('None') > 0 or predMethods.count('None') > 0 or predForced.count('None') > 0:
-            errorString += 'Fully define aggregation options for selected predictors on the Predictors tab. '
+            if len(predPool) < 1:
+                errorString += 'Select at least 1 predictor from the Predictors tab. '
 
-        ### Get base model run definitions ###
+            if predPeriods.count('None') > 0 or predMethods.count('None') > 0 or predForced.count('None') > 0:
+                errorString += 'Fully define aggregation options for selected predictors on the Predictors tab. '
 
-        # Cross validators
-        crossVals = []
-        for crossVal in self.modelTab.optionsCrossValidators:
-            if crossVal.isChecked():
-                crossVals.append(crossVal.objectName())
+            ### Get base model run definitions ###
 
-        # Pre-processors
-        preProcList = []
-        for preProc in self.modelTab.optionsPreprocessor:
-            if preProc.isChecked():
-                preProcList.append(preProc.objectName())
+            # Cross validators
+            crossVals = []
+            for crossVal in self.modelTab.optionsCrossValidators:
+                if crossVal.isChecked():
+                    crossVals.append(crossVal.objectName())
 
-        # Regression algorithms
-        regAlgs = []
-        for regAlg in self.modelTab.optionsRegression:
-            if regAlg.isChecked():
-                regAlgs.append(regAlg.objectName())
+            # Pre-processors
+            preProcList = []
+            for preProc in self.modelTab.optionsPreprocessor:
+                if preProc.isChecked():
+                    preProcList.append(preProc.objectName())
 
-        # Feature selection algorithms
-        selAlgs = []
-        for selAlg in self.modelTab.optionsSelection:
-            if selAlg.isChecked():
-                selAlgs.append(selAlg.objectName())
+            # Regression algorithms
+            regAlgs = []
+            for regAlg in self.modelTab.optionsRegression:
+                if regAlg.isChecked():
+                    regAlgs.append(regAlg.objectName())
 
-        # Scoring parameters
-        scoreParams = []
-        for scoreParam in self.modelTab.optionsScoring:
-            if scoreParam.isChecked():
-                scoreParams.append(scoreParam.objectName())
+            # Feature selection algorithms
+            selAlgs = []
+            for selAlg in self.modelTab.optionsSelection:
+                if selAlg.isChecked():
+                    selAlgs.append(selAlg.objectName())
 
-        if len(crossVals) != 1:
-            errorString += 'Select 1 Cross-Validation algorithm from the Options tab. '
+            # Scoring parameters
+            scoreParams = []
+            for scoreParam in self.modelTab.optionsScoring:
+                if scoreParam.isChecked():
+                    scoreParams.append(scoreParam.objectName())
 
-        if len(preProcList) < 1 or len(regAlgs) < 1 or len(selAlgs) < 1 or len(scoreParams) < 1:
-            errorString += 'Select at least 1 Preprocessor, Regressor, Feature Selector, and Model Scoring option from the Options tab. '
+            if len(crossVals) != 1:
+                errorString += 'Select 1 Cross-Validation algorithm from the Options tab. '
+
+            if len(preProcList) < 1 or len(regAlgs) < 1 or len(selAlgs) < 1 or len(scoreParams) < 1:
+                errorString += 'Select at least 1 Preprocessor, Regressor, Feature Selector, and Model Scoring option from the Options tab. '
 
 
-        ### Apply operations to datasets ###
+            ### Apply operations to datasets ###
 
-        ### Final go no-go ###
-        if len(errorString) > 20:
-            self.modelTab.summaryLayoutErrorLabel.setText(errorString)
-            self.modelTab.summaryLayoutErrorLabel.setStyleSheet("color : red")
-            self.modelTab.summaryLayoutErrorLabel.setVisible(True)
-            return
-        else:
-            # Populate self.modelRunsTable with validated entries
-            self.modelRunsTable.loc[0]['PredictorPool'] = predPool
-            self.modelRunsTable.loc[0]['PredictorForceFlag'] = predForced
-            self.modelRunsTable.loc[0]['PredictorPeriods'] = predPeriods
-            self.modelRunsTable.loc[0]['PredictorMethods'] = predMethods
-            self.modelRunsTable.loc[0]['CrossValidationType'] = crossVals[0]
-            self.modelRunsTable.loc[0]['Preprocessors'] = preProcList
-            self.modelRunsTable.loc[0]['RegressionTypes'] = regAlgs
-            self.modelRunsTable.loc[0]['FeatureSelectionTypes'] = selAlgs
-            self.modelRunsTable.loc[0]['ScoringParameters'] = scoreParams
-
-            # Ask user if sure
-            msgBox = self.clearAppTablesPrompt(forecastEquationsTable=True)
-            result = msgBox.exec_()
-            if result == QtGui.QMessageBox.Ok:
-                self.clearAppTables(forecastEquationsTable=True)
-            else:
-                return
-
-            ### Kick off the analysis ###
-            self.updateStatusMessage('Running regression calculations. Please wait...')
-            print('INFO: ---- MODEL RUN TABLE ----')
-            print(self.modelRunsTable.iloc[0])
-            print('-------------------------')
-            print('INFO: Beginning regression calculations...')
-            self.rg = None
-            self.rg = RegressionWorker.RegressionWorker(self.modelTab.parent, modelRunTableEntry=self.modelRunsTable.iloc[0])
-            self.rg.setData()
-            self.rg.run()
-
-            ### Populate self.forecastEquationsTable ###
-            print('INFO: Populating forecast equations table...')
-            self.updateStatusMessage('Populating forecast equations table...')
-            self.forecastEquationsTable.drop(self.forecastEquationsTable.index, inplace=True)
-            resultCounter = 0
-            for result in self.rg.resultsList:
-                if resultCounter >= 500:
-                    break
-
-                self.forecastEquationsTable.loc[resultCounter] = [None] * self.forecastEquationsTable.columns.shape[0]
-                resultPredictors = self.rg.resultsList[resultCounter]['Model']
-
-                self.forecastEquationsTable.loc[resultCounter]['EquationSource'] = 'PyForecast'
-                # self.parent.forecastEquationsTable.loc[resultCounter]['EquationComment'] = ''
-                self.forecastEquationsTable.loc[resultCounter]['ModelTrainingPeriod'] = self.modelRunsTable.loc[0]['ModelTrainingPeriod']
-                self.forecastEquationsTable.loc[resultCounter]['EquationPredictand'] = self.modelRunsTable.loc[0]['Predictand']
-                self.forecastEquationsTable.loc[resultCounter]['PredictandPeriod'] = self.modelRunsTable.loc[0]['PredictandPeriod']
-                self.forecastEquationsTable.loc[resultCounter]['PredictandMethod'] = self.modelRunsTable.loc[0]['PredictandMethod']
-                self.forecastEquationsTable.loc[resultCounter]['EquationCreatedOn'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                # self.forecastEquationsTable.loc[resultCounter]['EquationIssueDate'] = ''
-                self.forecastEquationsTable.loc[resultCounter]['EquationMethod'] = self.rg.resultsList[resultCounter]['Method']
-                self.forecastEquationsTable.loc[resultCounter]['EquationSkill'] = self.rg.resultsList[resultCounter]['Score']
-                self.forecastEquationsTable.loc[resultCounter]['EquationPredictors'] = list(compress(predPool, resultPredictors))
-                self.forecastEquationsTable.loc[resultCounter]['PredictorPeriods'] = list(compress(predPeriods, resultPredictors))
-                self.forecastEquationsTable.loc[resultCounter]['PredictorMethods'] = list(compress(predMethods, resultPredictors))
-                # self.forecastEquationsTable.loc[resultCounter]['DirectEquation'] = ''
-                resultCounter += 1
-
-            if len(self.rg.resultsList) >= 1:
-                # bestModel = self.rg.resultsList[0]
-                # print("\nA total of {0} models were assessed".format(len(self.rg.resultsList)))
-                # print("\nThe best model found was: ")
-                # print("\t-> Predictors: {0}".format(''.join(['1' if i else '0' for i in bestModel['Model']])))
-                # print("\t-> Method:     {0}".format(bestModel["Method"]))
-                # print("\t-> Scores:     {0}".format(bestModel['Score']))
-                self.modelTab.summaryLayoutErrorLabel.setText('Success! ' + str(len(self.rg.resultsList)) + ' models were evaluated...')
-                self.modelTab.summaryLayoutErrorLabel.setStyleSheet("color : green")
+            ### Final go no-go ###
+            if len(errorString) > 20:
+                self.modelTab.summaryLayoutErrorLabel.setText(errorString)
+                self.modelTab.summaryLayoutErrorLabel.setStyleSheet("color : red")
                 self.modelTab.summaryLayoutErrorLabel.setVisible(True)
+                return
+            else:
+                # Populate self.modelRunsTable with validated entries
+                self.modelRunsTable.loc[0]['PredictorPool'] = predPool
+                self.modelRunsTable.loc[0]['PredictorForceFlag'] = predForced
+                self.modelRunsTable.loc[0]['PredictorPeriods'] = predPeriods
+                self.modelRunsTable.loc[0]['PredictorMethods'] = predMethods
+                self.modelRunsTable.loc[0]['CrossValidationType'] = crossVals[0]
+                self.modelRunsTable.loc[0]['Preprocessors'] = preProcList
+                self.modelRunsTable.loc[0]['RegressionTypes'] = regAlgs
+                self.modelRunsTable.loc[0]['FeatureSelectionTypes'] = selAlgs
+                self.modelRunsTable.loc[0]['ScoringParameters'] = scoreParams
 
-            print('INFO: Model run complete!')
-            self.updateStatusMessage('Model run complete! ' + str(len(self.rg.resultsList)) + ' models were evaluated.')
-            self.modelTab.resultsMetricTable.clearTable()
-            self.modelTab.resultsMetricTable.loadDataIntoModel(self.forecastEquationsTable)
-    # </editor-fold>
+                # Ask user if sure
+                msgBox = self.clearAppTablesPrompt(forecastEquationsTable=True)
+                result = msgBox.exec_()
+                if result == QtGui.QMessageBox.Ok:
+                    self.clearAppTables(forecastEquationsTable=True)
+                else:
+                    return
 
+                ### Kick off the analysis ###
+                self.updateStatusMessage('Running regression calculations. Please wait...')
+                print('INFO: ---- MODEL RUN TABLE ----')
+                print(self.modelRunsTable.iloc[0])
+                print('-------------------------')
+                print('INFO: Beginning regression calculations...')
+                self.rg = None
+                self.rg = RegressionWorker.RegressionWorker(self.modelTab.parent, modelRunTableEntry=self.modelRunsTable.iloc[0])
+                self.rg.setData()
+                self.rg.run()
+
+                ### Populate self.forecastEquationsTable ###
+                print('INFO: Populating forecast equations table...')
+                self.updateStatusMessage('Populating forecast equations table...')
+                self.forecastEquationsTable.drop(self.forecastEquationsTable.index, inplace=True)
+                resultCounter = 0
+                for result in self.rg.resultsList:
+                    if resultCounter >= 500:
+                        break
+
+                    self.forecastEquationsTable.loc[resultCounter] = [None] * self.forecastEquationsTable.columns.shape[0]
+                    resultPredictors = self.rg.resultsList[resultCounter]['Model']
+
+                    self.forecastEquationsTable.loc[resultCounter]['EquationSource'] = 'PyForecast'
+                    # self.parent.forecastEquationsTable.loc[resultCounter]['EquationComment'] = ''
+                    self.forecastEquationsTable.loc[resultCounter]['ModelTrainingPeriod'] = self.modelRunsTable.loc[0]['ModelTrainingPeriod']
+                    self.forecastEquationsTable.loc[resultCounter]['EquationPredictand'] = self.modelRunsTable.loc[0]['Predictand']
+                    self.forecastEquationsTable.loc[resultCounter]['PredictandPeriod'] = self.modelRunsTable.loc[0]['PredictandPeriod']
+                    self.forecastEquationsTable.loc[resultCounter]['PredictandMethod'] = self.modelRunsTable.loc[0]['PredictandMethod']
+                    self.forecastEquationsTable.loc[resultCounter]['EquationCreatedOn'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    # self.forecastEquationsTable.loc[resultCounter]['EquationIssueDate'] = ''
+                    self.forecastEquationsTable.loc[resultCounter]['EquationMethod'] = self.rg.resultsList[resultCounter]['Method']
+                    self.forecastEquationsTable.loc[resultCounter]['EquationSkill'] = self.rg.resultsList[resultCounter]['Score']
+                    self.forecastEquationsTable.loc[resultCounter]['EquationPredictors'] = list(compress(predPool, resultPredictors))
+                    self.forecastEquationsTable.loc[resultCounter]['PredictorPeriods'] = list(compress(predPeriods, resultPredictors))
+                    self.forecastEquationsTable.loc[resultCounter]['PredictorMethods'] = list(compress(predMethods, resultPredictors))
+                    # self.forecastEquationsTable.loc[resultCounter]['DirectEquation'] = ''
+                    resultCounter += 1
+
+                if len(self.rg.resultsList) >= 1:
+                    # bestModel = self.rg.resultsList[0]
+                    # print("\nA total of {0} models were assessed".format(len(self.rg.resultsList)))
+                    # print("\nThe best model found was: ")
+                    # print("\t-> Predictors: {0}".format(''.join(['1' if i else '0' for i in bestModel['Model']])))
+                    # print("\t-> Method:     {0}".format(bestModel["Method"]))
+                    # print("\t-> Scores:     {0}".format(bestModel['Score']))
+                    self.modelTab.summaryLayoutErrorLabel.setText('Success! ' + str(len(self.rg.resultsList)) + ' models were evaluated...')
+                    self.modelTab.summaryLayoutErrorLabel.setStyleSheet("color : green")
+                    self.modelTab.summaryLayoutErrorLabel.setVisible(True)
+
+                print('INFO: Model run complete!')
+                self.updateStatusMessage('Model run complete! ' + str(len(self.rg.resultsList)) + ' models were evaluated.')
+                self.modelTab.resultsMetricTable.clearTable()
+                self.modelTab.resultsMetricTable.loadDataIntoModel(self.forecastEquationsTable)
 
     # ====================================================================================================================
     # RESULTS TAB FUNCTIONS
@@ -1634,4 +1650,23 @@ class modelCreationTab(object):
             self.updateStatusMessage('Updating generated forecasts table...')
             # self.modelTab.resultsMetricTable.loadDataIntoModel(self.forecastEquationsTable)
             self.updateStatusMessage('')
+
+    def startDefaultConfirmationPrompt(self):
+        """
+        Prompts the user regarding the user of default options prior to allowing a model run.
+
+        """
+
+        msg = QtWidgets.QMessageBox()
+        msg.setIcon(QtWidgets.QMessageBox.Critical)
+        msg.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+        msg.setWindowTitle('Confirm default settings')
+        msg.setText('Use of the default settings is intended to be a first order analysis that provides a high-level '
+                    'overview of a basin. It may be inaccurate, subject to large uncertainties, and is not suitable '
+                    'for all forecasts. \n\nPlease confirm the use of default settings prior to proceeding.')
+
+        return msg
+
+    def clearAppTablesPrompt(self, modelRunsTable):
+        pass
 
