@@ -44,7 +44,7 @@ class AggregationOptions(QtWidgets.QWidget):
         # Display selected predictor info
         self.activeSelection = DatasetListHTMLFormattedMultiple(self, addButtons=False)
         self.activeSelection.setContentsMargins(0, 0, 0, 0)
-        self.activeSelection.setFixedHeight(114)
+        self.activeSelection.setFixedHeight(110)
         self.activeSelection.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         layout1.addWidget(self.activeSelection)
 

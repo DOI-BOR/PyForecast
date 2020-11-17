@@ -480,12 +480,12 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
         self.buttonAllToInput = QtWidgets.QPushButton("<<")
 
         # Add the input table to the layout
-        layoutInput = QtWidgets.QVBoxLayout()
-        layoutInput.addWidget(inputTitleWidget)
-        layoutInput.addWidget(self.listInput)
+        self.layoutInput = QtWidgets.QVBoxLayout()
+        self.layoutInput.addWidget(inputTitleWidget)
+        self.layoutInput.addWidget(self.listInput)
 
         layoutInputWidget = QtWidgets.QWidget()
-        layoutInputWidget.setLayout(layoutInput)
+        layoutInputWidget.setLayout(self.layoutInput)
         layout.addWidget(layoutInputWidget)
 
         # Setup the button box
@@ -501,12 +501,12 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
         layout.addLayout(layoutm)
 
         # Create the output column layout
-        layoutOutput = QtWidgets.QVBoxLayout()
-        layoutOutput.addWidget(outputTitleWidget)
-        layoutOutput.addWidget(self.listOutput)
+        self.layoutOutput = QtWidgets.QVBoxLayout()
+        self.layoutOutput.addWidget(outputTitleWidget)
+        self.layoutOutput.addWidget(self.listOutput)
 
         layoutOutputWidget = QtWidgets.QWidget()
-        layoutOutputWidget.setLayout(layoutOutput)
+        layoutOutputWidget.setLayout(self.layoutOutput)
         layout.addWidget(layoutOutputWidget)
 
         # Create buttons to move items up and down in the order

@@ -1,107 +1,9 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
 
 
-class richTextDescriptionButton(QtWidgets.QPushButton):
+class richTextButtonCheckbox(QtWidgets.QPushButton):
 
     updateLinkedButton = QtCore.pyqtSignal(bool)
-
-    def __init__(self, parent=None, richText=""):
-
-        QtWidgets.QPushButton.__init__(self)
-        self.setCheckable(True)
-        self.setAutoExclusive(False)
-        self.lab = QtWidgets.QLabel(richText, self)
-        self.lab.mousePressEvent = lambda ev: self.click()
-        self.lab.setTextFormat(QtCore.Qt.RichText)
-
-        self.richTextChecked = """
-        <table border=0>
-        <tr><td><img src="resources/GraphicalResources/icons/check_box-24px.svg"></td>
-        <td>{0}</td></tr>
-        </table>
-        """.format(richText)
-
-        self.richTextUnChecked = """
-        <table border=0>
-        <tr><td><img src="resources/GraphicalResources/icons/check_box_outline_blank-24px.svg"></td>
-        <td>{0}</td></tr>
-        </table>
-        """.format(richText)
-
-        self.lab.setText(self.richTextUnChecked)
-        self.lab.setWordWrap(True)
-        self.lab.setContentsMargins(10, 10, 10, 10)
-
-        self.lab.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-
-        self.lab.setMinimumHeight(self.heightMM())
-        self.lab.setMaximumHeight(self.heightMM() * 3)
-        self.lab.setFixedWidth(self.width())
-        self.setFixedHeight(self.heightMM())
-
-        self.lab.setAlignment(QtCore.Qt.AlignTop)
-
-    def click(self):
-        QtWidgets.QAbstractButton.click(self)
-        if self.isChecked():
-            self.lab.setText(self.richTextChecked)
-        else:
-            self.lab.setText(self.richTextUnChecked)
-
-        # Emit an update signal to allow status update on linked buttons
-        self.updateLinkedButton.emit(self.isChecked())
-
-    def resizeEvent(self, ev):
-        QtWidgets.QPushButton.resizeEvent(self, ev)
-        self.lab.setFixedWidth(self.width())
-        self.lab.setFixedHeight(self.height() * 5)
-
-        self.parent().parent().setMinimumHeight(self.height() * 5)
-        self.parent().resizeEvent(ev)
-        self.parent().parent().resizeEvent(ev)
-
-        if ev.oldSize().width() > 0 and ev.oldSize().height() > 0 and ev.size().width() > 0:
-            if ev.size().width() < 300:
-                self.setFixedHeight(140)
-
-            elif ev.size().width() < 400:
-                self.setFixedHeight(110)
-
-            elif ev.size().width() < 500:
-                self.setFixedHeight(100)
-
-            else:
-                self.setFixedHeight(90)
-
-            self.parent().resizeEvent(ev)
-
-    def updateToChecked(self):
-        """
-        Update the button status to checked and emit a synchronization signal
-
-        """
-
-        self.lab.setText(self.richTextChecked)
-        self.setChecked(True)
-
-        # Emit an update signal to allow status update on linked buttons
-        self.updateLinkedButton.emit(self.isChecked())
-
-    def updateToUnchecked(self):
-        """
-        Update the button status to unchecked and emit a synchronization signal
-
-        """
-
-        self.lab.setText(self.richTextUnChecked)
-        self.setChecked(False)
-
-        # Emit an update signal to allow status update on linked buttons
-        self.updateLinkedButton.emit(self.isChecked())
-
-
-class richTextButtonCheckbox(QtWidgets.QPushButton):
 
     def __init__(self, text=None):
         """
@@ -124,7 +26,7 @@ class richTextButtonCheckbox(QtWidgets.QPushButton):
         self.setAutoExclusive(False)
 
         self.__lyt = QtWidgets.QHBoxLayout()
-        self.__lyt.setContentsMargins(2, 2, 2, 2)
+        self.__lyt.setContentsMargins(2, 5, 10, 10)
         self.__lyt.setSpacing(0)
         self.setLayout(self.__lyt)
 
@@ -190,7 +92,12 @@ class richTextButtonCheckbox(QtWidgets.QPushButton):
         else:
             self.__lbl.setText(self.richTextUnChecked)
 
+        # Update the button geometry
         self.updateGeometry()
+
+        # Emit an update signal to allow status update on linked buttons
+        self.updateLinkedButton.emit(self.isChecked())
+
 
     def sizeHint(self):
         """
@@ -214,7 +121,7 @@ class richTextButtonCheckbox(QtWidgets.QPushButton):
         # Return the size hint to avoid thrown errors
         return labelSize
 
-    def update_from_exteral(self, externalStatus):
+    def update_from_external(self, externalStatus):
         """
         Updates clicked state from a linked external button
 
