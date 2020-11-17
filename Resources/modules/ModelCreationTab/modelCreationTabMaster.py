@@ -270,12 +270,13 @@ class modelCreationTab(object):
         self.modelTab.predictandApplyButton.setChecked(False)
 
         # Ask user if sure
-        msgBox = self.clearAppTablesPrompt(modelRunsTable=True)
-        result = msgBox.exec_()
-        if result == QtGui.QMessageBox.Ok:
-            self.clearAppTables(modelRunsTable=True)
-        else:
-            return
+        if len(self.modelRunsTable) > 0:
+            msgBox = self.clearAppTablesPrompt(modelRunsTable=True)
+            result = msgBox.exec_()
+            if result == QtGui.QMessageBox.Ok:
+                self.clearAppTables(modelRunsTable=True)
+            else:
+                return
 
         predictandData = self.modelTab.targetSelect.currentData()
         predID = predictandData.name
