@@ -438,6 +438,8 @@ class DoubleListUniqueInstance(QtWidgets.QWidget):
 class DoubleListMultipleInstance(QtWidgets.QWidget):
 
     updatedOutputList = QtCore.pyqtSignal()
+    predictorAdded = QtCore.pyqtSignal()
+    predictorRemoved = QtCore.pyqtSignal()
     updatedLinkedList = QtCore.pyqtSignal(DatasetListHTMLFormatted, DatasetListHTMLFormattedMultiple)
 
     def __init__(self, initialDataframe, inputTitle, outputTitle, inputDefaultColor=QtCore.Qt.white,
@@ -699,6 +701,7 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
         # Emit for the updated linked doublelists
         self.updatedLinkedList.emit(self.listInput, self.listOutput)
         self.updatedOutputList.emit()
+        self.predictorRemoved.emit()
 
     def _setAllOutputItems(self):
         """
@@ -727,6 +730,7 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
         # Emit for the updated linked doublelists
         self.updatedLinkedList.emit(self.listInput, self.listOutput)
         self.updatedOutputList.emit()
+        self.predictorAdded.emit()
 
     def _setSingleInputItem(self):
         """
@@ -758,6 +762,7 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
         # Emit for the updated linked doublelists
         self.updatedLinkedList.emit(self.listInput, self.listOutput)
         self.updatedOutputList.emit()
+        self.predictorRemoved.emit()
 
     def _setSingleOutputItem(self, event_status, row_index=None, refresh=True):
         """
@@ -818,6 +823,7 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
             # Emit for the updated linked doublelists
             self.updatedLinkedList.emit(self.listInput, self.listOutput)
             self.updatedOutputList.emit()
+            self.predictorAdded.emit()
 
     def _setButtonUpClicked(self):
         """

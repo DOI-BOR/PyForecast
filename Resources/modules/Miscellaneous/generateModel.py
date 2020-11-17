@@ -270,14 +270,14 @@ class Model(object):
         list = self.buildReportList()
         list = [w.replace(',', ';') for w in list]
         # Get underlying data
-        xy = pd.DataFrame(np.column_stack((self.regression.x,self.regression.y,self.regression.y_p)))
-        headerList = ['X' + str(i+1) for i in range(0,len(self.xIDs))]
+        xy = pd.DataFrame(np.column_stack((self.years,self.regression.x,self.regression.y,self.regression.y_p)))
+        headerList = ['Year']
+        headerList.extend(['X' + str(i+1) for i in range(0,len(self.xIDs))])
         headerList.append('Y')
         headerList.append('Ymodeled')
         xy.columns = headerList
-        xy.index = self.years
         # Combine lists
-        xyVals = xy.to_string(header=True, index=True, index_names=True).split('\n')
+        xyVals = xy.to_string(header=True, index=False, index_names=True).split('\n')
         xyStrings = [','.join(i.split()) for i in xyVals]
         list.append(' ')
         list.append('----- MODELING DATASET -----')
@@ -289,9 +289,9 @@ class Model(object):
             try:
                 for line in list:
                     writer.writerow([line,])
+                print('INFO: Model exported to file ' + fn)
+                os.startfile(fn)
             except Exception as e:
-                print('INFO: Model export error row:', e)
-        print('INFO: Model exported to file ' + fn)
-        os.startfile(fn)
+                print('WARNING: Model export error:', e)
 
         return

@@ -105,7 +105,8 @@ class modelCreationTab(object):
         ### Connect the simple predictor setup page ###
         # Link the doublelist to the output
         self.modelTab.layoutSimpleDoubleList.listOutput.itemSelectionChanged.connect(self.updateSimpleLayoutAggregationOptions)
-        self.modelTab.layoutSimpleDoubleList.updatedOutputList.connect(self.addPredictorToDatasetOperationTable)
+        self.modelTab.layoutSimpleDoubleList.predictorAdded.connect(self.addPredictorToDatasetOperationTable)
+        self.modelTab.layoutSimpleDoubleList.predictorRemoved.connect(self.removePredictorFromDatasetOperationTable)
 
         # Set the button actions
         self.modelTab.layoutSimplePlotButton.clicked.connect(self.showSimplePlots)
@@ -198,52 +199,52 @@ class modelCreationTab(object):
     #
     #     return
     #
-    #
-    # def autoGeneratePredictors(self):
-    #     """
-    #     Generates default predictors based on the input to the
-    #     previous sections.
-    #     """
-    #
-    #     # First verify that all the previous sections have been filled in correctly
-    #     # PLACEHOLDERS
-    #     target = None  # DatasetID
-    #     targetPeriodStart = None  # Month-Day combo, e.g.April 1st
-    #     targetPeriodEnd = None  # Month-Day combo e.g. July 31st
-    #     forecastIssueDay = None  # Month-day combo e.g. Feb 01
-    #
-    #     # Set up a list to store the suggestions
-    #     suggestedPredictors = []
-    #
-    #     # Iterate over the datasetlist and add each predictors default resampling
-    #     # method for the prior period
-    #     for i, dataset in self.datasetTable.iterrows():
-    #
-    #         # Pull the default resampling method
-    #         method = dataset['DatasetDefaultResampling']
-    #
-    #         # Check dataset parameter, we'll use this to generate the resample period
-    #         if any(map(lambda x: x in dataset['DatasetParameter'].upper(), ['SWE', 'SNOW'])):
-    #             period = 'R/{0}/P1D/F1Y'.format(datetime.strftime(forecastIssueDay - timedelta(days=1), '%Y-%m-%d'))
-    #
-    #         elif any(map(lambda x: x in dataset['DatasetParameter'].upper(), ['TEMP', 'INDEX'])):
-    #             period = 'R/{0}/P28D/F1Y'.format(datetime.strftime(forecastIssueDay - timedelta(weeks=4), '%Y-%m-%d'))
-    #
-    #         elif any(map(lambda x: x in dataset['DatasetParameter'].upper(), ['PRECIP'])):
-    #             wyStart = datetime(forecastIssueDay.year if forecastIssueDay.month > 10 else forecastIssueDay.year - 1,
-    #                                10, 1)
-    #             period = 'R/{0}/P{1}D/F1Y'.format(datetime.strftime(wyStart, '%Y-%m-%d'),
-    #                                               (forecastIssueDay - wyStart).days - 1)
-    #
-    #         elif any(map(lambda x: x in dataset['DatasetParameter'].upper(), ['FLOW'])):
-    #             wyStart = datetime(forecastIssueDay.year if forecastIssueDay.month > 10 else forecastIssueDay.year - 1,
-    #                                10, 1)
-    #             period = 'R/{0}/P1M/F1Y'.format(datetime.strftime(wyStart, '%Y-%m-%d'))
-    #
-    #         suggestedPredictors.append((dataset.name, method, period))
-    #
-    #         # Add the predictors to the GUI
-    #     return
+    #TODO: JR - implement this code into the pred-selection process
+    def autoGeneratePredictors(self):
+        """
+        Generates default predictors based on the input to the
+        previous sections.
+        """
+
+        # First verify that all the previous sections have been filled in correctly
+        # PLACEHOLDERS
+        target = None  # DatasetID
+        targetPeriodStart = None  # Month-Day combo, e.g.April 1st
+        targetPeriodEnd = None  # Month-Day combo e.g. July 31st
+        forecastIssueDay = None  # Month-day combo e.g. Feb 01
+
+        # Set up a list to store the suggestions
+        suggestedPredictors = []
+
+        # Iterate over the datasetlist and add each predictors default resampling
+        # method for the prior period
+        for i, dataset in self.datasetTable.iterrows():
+
+            # Pull the default resampling method
+            method = dataset['DatasetDefaultResampling']
+
+            # Check dataset parameter, we'll use this to generate the resample period
+            if any(map(lambda x: x in dataset['DatasetParameter'].upper(), ['SWE', 'SNOW'])):
+                period = 'R/{0}/P1D/F1Y'.format(datetime.strftime(forecastIssueDay - timedelta(days=1), '%Y-%m-%d'))
+
+            elif any(map(lambda x: x in dataset['DatasetParameter'].upper(), ['TEMP', 'INDEX'])):
+                period = 'R/{0}/P28D/F1Y'.format(datetime.strftime(forecastIssueDay - timedelta(weeks=4), '%Y-%m-%d'))
+
+            elif any(map(lambda x: x in dataset['DatasetParameter'].upper(), ['PRECIP'])):
+                wyStart = datetime(forecastIssueDay.year if forecastIssueDay.month > 10 else forecastIssueDay.year - 1,
+                                   10, 1)
+                period = 'R/{0}/P{1}D/F1Y'.format(datetime.strftime(wyStart, '%Y-%m-%d'),
+                                                  (forecastIssueDay - wyStart).days - 1)
+
+            elif any(map(lambda x: x in dataset['DatasetParameter'].upper(), ['FLOW'])):
+                wyStart = datetime(forecastIssueDay.year if forecastIssueDay.month > 10 else forecastIssueDay.year - 1,
+                                   10, 1)
+                period = 'R/{0}/P1M/F1Y'.format(datetime.strftime(wyStart, '%Y-%m-%d'))
+
+            suggestedPredictors.append((dataset.name, method, period))
+
+            # Add the predictors to the GUI
+        return
 
 
     # ====================================================================================================================
@@ -416,6 +417,12 @@ class modelCreationTab(object):
             if idx not in self.datasetOperationsTable.index:
                 self.datasetOperationsTable.loc[idx, list(self.datasetOperationsTable.columns)] = [None] * len(
                     self.datasetOperationsTable.columns)
+
+
+    def removePredictorFromDatasetOperationTable(self):
+        for idx in self.datasetOperationsTable.index:
+            if idx not in self.modelTab.layoutSimpleDoubleList.listOutput.datasetTable.index:
+                self.datasetOperationsTable.drop(idx, inplace=True)
 
 
     def updateSimpleLayoutAggregationOptions(self):
