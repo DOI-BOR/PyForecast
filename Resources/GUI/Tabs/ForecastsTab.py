@@ -13,7 +13,7 @@ from resources.GUI.CustomWidgets.customTabs import EnhancedTabWidget
 from resources.GUI.CustomWidgets.SpreadSheet import SpreadSheetForecastEquations, GenericTableView
 from resources.GUI.CustomWidgets.PyQtGraphs import ResultsTabPlots
 from resources.modules.ForecastsTab.forecastTabMaster import *
-from resources.GUI.CustomWidgets.richTextButtons import richTextButton, richTextButtonCheckbox, richTextDescriptionButton
+from resources.GUI.CustomWidgets.richTextButtons import richTextButton, richTextButtonCheckbox
 
 
 class ForecastsTab(QtWidgets.QWidget):

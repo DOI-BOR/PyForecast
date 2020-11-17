@@ -14,7 +14,7 @@ from resources.GUI.CustomWidgets.htmlDataLists import HTML_LIST
 from resources.GUI.CustomWidgets.AggregationOptions import AggregationOptions
 from resources.GUI.CustomWidgets.PyQtGraphs import ModelTabTargetPlot, FillExtendTabPlots, ResultsTabPlots, WindowTabPlots
 from resources.GUI.CustomWidgets.customTabs import EnhancedTabWidget
-from resources.GUI.CustomWidgets.richTextButtons import richTextButton, richTextButtonCheckbox, richTextDescriptionButton
+from resources.GUI.CustomWidgets.richTextButtons import richTextButton, richTextButtonCheckbox
 from resources.GUI.CustomWidgets.SpreadSheet import SpreadSheetViewOperations, SpreadSheetForecastEquations
 from resources.GUI.WebMap import webMapView
 from resources.modules.ModelCreationTab.modelCreationTabMaster import *
@@ -37,22 +37,15 @@ class ModelCreationTab(QtWidgets.QWidget):
         overallLayout.setSpacing(0)
         self.overallStackWidget = QtWidgets.QStackedWidget()
         targetSelectLayout = QtWidgets.QVBoxLayout()
-        predictorLayout = QtWidgets.QVBoxLayout()
-        optionsLayout = QtWidgets.QVBoxLayout()
-        summaryLayout = QtWidgets.QVBoxLayout()
-        workflowLayout = QtWidgets.QVBoxLayout()
-
 
         self.workflowWidget = EnhancedTabWidget(self, 'above', 'vertical', True, False, True)
 
         # ===================================================================================================================
-
         # Layout the Target Selection Widget
-        widg = QtWidgets.QWidget()
-        widg.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
+
+        # Setup the control widgets
         layout = QtWidgets.QGridLayout()
-        self.dataPlot = ModelTabTargetPlot(self, objectName='ModelTabPlot')
-        self.dataPlot.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+
         self.targetSelect = QtWidgets.QComboBox()
         #self.datasetList = HTML_LIST(self.parent, "DataTab_datasetList")#'
         self.datasetList =  DatasetListHTMLFormatted(self, datasetTable = self.parent.datasetTable, addButtons=False)
@@ -130,19 +123,40 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Create the apply button
         self.predictandApplyButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Apply</strong>')
         self.predictandApplyButton.setMaximumSize(125, 50)
-        layout.addWidget(self.predictandApplyButton, 8, 0, 1, 1)
+        self.predictandApplyButton.setMinimumSize(100, 35)
+        # self.predictandApplyButton.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
+        layout.addWidget(self.predictandApplyButton, 8, 3, 1, 1, QtCore.Qt.AlignRight)
 
+        # Configure the layout spacing
+        layout.setVerticalSpacing(15)
+        layout.setHorizontalSpacing(5)
+        layout.setContentsMargins(10, 10, 10, 10)
 
-        layout.setVerticalSpacing(0)
-        layout.setHorizontalSpacing(0)
-        layout.setContentsMargins(0,0,0,0)
-        
-        widg.setLayout(layout)
-        #widg.setStyleSheet("""QWidget {border: 1px solid red}""")
-        widg.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
-        self.dataPlot.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        targetSelectLayout.addWidget(widg)
+        # Create a group box for appearance consistency
+        groupBox = QtWidgets.QGroupBox()
+        groupBox.setLayout(layout)
+        groupBox.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
+
+        # Create the data plot
+        self.dataPlot = ModelTabTargetPlot(self, objectName='ModelTabPlot')
+        self.dataPlot.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding)
+
+        # Create the description text for the page
+        label = QtWidgets.QLabel()
+        label.setTextFormat(QtCore.Qt.RichText)
+        label.setText('<strong style="font-size: 24px">Which variable should PyForecast forecast?</strong>')
+
+        # Add the widgets into the main layout
+        targetSelectLayout.addWidget(label)
+        targetSelectLayout.addItem(QtWidgets.QSpacerItem(0, 10, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
+        targetSelectLayout.addWidget(groupBox)
+        targetSelectLayout.addItem(QtWidgets.QSpacerItem(0, 10, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
         targetSelectLayout.addWidget(self.dataPlot)
+        targetSelectLayout.setContentsMargins(15, 15, 15, 15)
+
+        targetSelectLayout.setSpacing(0)
+
+        # Promote the main layout to a widget and add to the main panel
         widg = QtWidgets.QWidget()
         widg.setLayout(targetSelectLayout)
         self.workflowWidget.addTab(widg, "FORECAST<br>TARGET", "resources/GraphicalResources/icons/target-24px.svg", "#FFFFFF", iconSize=(66,66))
@@ -156,18 +170,26 @@ class ModelCreationTab(QtWidgets.QWidget):
         predictorScrollableArea = QtWidgets.QScrollArea()
         predictorScrollableArea.setWidgetResizable(True)
         predictorLayout = QtWidgets.QVBoxLayout()
-        predictorLayout.setContentsMargins(0, 0, 0, 0)
+        predictorLayout.setContentsMargins(15, 15, 15, 15)
 
-        # Create the initial dialog for the type of analysis
+        # Create the description text for the page
         label = QtWidgets.QLabel()
         label.setTextFormat(QtCore.Qt.RichText)
-        label.setText('<strong style="font-size: 18px">Mode: <strong>')
-        label.setFixedWidth(100)
+        label.setText('<strong style="font-size: 24px">Which variables should PyForecast use as predictors?</strong>')
+        predictorLayout.addWidget(label)
 
-        self.defaultPredictorButton = QtWidgets.QRadioButton("Default")
+        # Create the initial dialog for the type of analysis
+        labelMode = QtWidgets.QLabel()
+        labelMode.setTextFormat(QtCore.Qt.RichText)
+        labelMode.setText('<strong style="font-size: 12px">Select workflow configuration:</strong>')
+        labelMode.setFixedWidth(250)
+
+        self.defaultPredictorButton = QtWidgets.QRadioButton('Default')
+        self.defaultPredictorButton.setStyleSheet('QRadioButton{font: 8pt sans-serif;} QRadioButton::indicator { width: 12px; height: 12px;};')
         self.defaultPredictorButton.setChecked(True)
         self.defaultPredictorButton.setFixedWidth(100)
-        self.expertPredictorButton = QtWidgets.QRadioButton("Expert")
+        self.expertPredictorButton = QtWidgets.QRadioButton('Expert')
+        self.expertPredictorButton.setStyleSheet('QRadioButton{font: 8pt; sans-serif} QRadioButton::indicator { width: 12px; height: 12px;};')
         self.expertPredictorButton.setFixedWidth(100)
 
         bgroup = QtWidgets.QButtonGroup()
@@ -176,27 +198,28 @@ class ModelCreationTab(QtWidgets.QWidget):
         bgroup.setExclusive(True)
 
         predictorModeLayout = QtWidgets.QHBoxLayout()
-        predictorModeLayout.addWidget(label)
+        predictorModeLayout.addWidget(labelMode)
         predictorModeLayout.addWidget(self.defaultPredictorButton)
         predictorModeLayout.addWidget(self.expertPredictorButton)
         predictorModeLayout.setAlignment(QtCore.Qt.AlignLeft)
 
         gb = QtWidgets.QGroupBox("")
         gb.setLayout(predictorModeLayout)
+        predictorLayout.addSpacerItem(QtWidgets.QSpacerItem(0, 5, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
         predictorLayout.addWidget(gb)
 
         # Space between the setup options and the tabs
-        predictorLayout.addSpacerItem(QtWidgets.QSpacerItem(0, 0, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
+        predictorLayout.addSpacerItem(QtWidgets.QSpacerItem(0, 10, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
 
         # Create the layout for the simple analysis
         self.layoutPredictorSimpleAnalysis = QtWidgets.QScrollArea()
-        self.layoutPredictorSimpleAnalysis.setContentsMargins(15, 15, 15, 15)
+        self.layoutPredictorSimpleAnalysis.setContentsMargins(0, 0, 0, 0)
         self.layoutPredictorSimpleAnalysis.setWidgetResizable(True)
         self.layoutPredictorSimpleAnalysis.setFrameShape(QtWidgets.QFrame.NoFrame)
 
         # Create the layout object for the expert analysis
         self.layoutPredictorExpertAnalysis = QtWidgets.QVBoxLayout()
-        self.layoutPredictorExpertAnalysis.setContentsMargins(15, 15, 15, 15)
+        self.layoutPredictorExpertAnalysis.setContentsMargins(0, 0, 0, 0)
 
         ### Create the simple analysis tab ###
         # Fill the remaining area with the layout options
@@ -211,6 +234,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Create the initial box layout
         layoutData = QtWidgets.QHBoxLayout()
 
+
         ## Add the webmap object to the current layout ##
         self.webMapView = webMapView.webMapView()
         layoutData.addWidget(self.webMapView)
@@ -221,6 +245,17 @@ class ModelCreationTab(QtWidgets.QWidget):
                                                                '<strong style="font-size: 18px">Available Datasets<strong>',
                                                                '<strong style="font-size: 18px">Selected Datasets<strong>',
                                                                operations_dataframe=self.parent.datasetOperationsTable)
+
+        # Adjust the spacing on the doublelist
+        self.layoutDataDoubleList.setContentsMargins(0, 0, 0, 0)
+        self.layoutDataDoubleList.layout().setContentsMargins(10, 0, 0, 0)
+
+        self.layoutDataDoubleList.listOutput.setContentsMargins(0, 0, 0, 0)
+        self.layoutDataDoubleList.layoutOutput.setContentsMargins(0, 0, 0, 0)
+
+        self.layoutDataDoubleList.listInput.setContentsMargins(0, 0, 0, 0)
+        self.layoutDataDoubleList.layoutInput.setContentsMargins(0, 0, 0, 0)
+
 
         # Connect the DoubleList with the dataset hmtl list to keep everything in sync. This will automatically
         # populate the DoubleList entries
@@ -317,13 +352,16 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Create the scrollable area
         SA = QtWidgets.QScrollArea()
         SA.setWidgetResizable(True)
+        SA.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Maximum)
 
         # Construct the layout object
         optionsLayout = self._createOptionsTabLayout()
+        # optionsLayout.setAlignment(QtCore.Qt.AlignTop)
 
         # Set the layout into the widget
         widg = QtWidgets.QWidget()
         widg.setLayout(optionsLayout)
+        widg.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Minimum)
 
         # Add the widget to the scrollable area
         SA.setWidget(widg)
@@ -335,12 +373,14 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Create the scrollable area
         summarySA = QtWidgets.QScrollArea()
         summarySA.setWidgetResizable(True)
+        summarySA.setContentsMargins(0, 0, 0, 0)
 
         # Lay out the summary widget
         summaryWidget = QtWidgets.QWidget()
 
         # Create the horizontal layout widget
-        summaryLayout = QtWidgets.QHBoxLayout()
+        summaryLayout = QtWidgets.QVBoxLayout()
+        summaryLayout.setContentsMargins(15, 15, 15, 15)
 
         ### Setup the layout ###
         # Create the layout by calling to the setup function, returning a layout object
@@ -360,6 +400,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Create the scrollable area
         resultsSA = QtWidgets.QScrollArea()
         resultsSA.setWidgetResizable(True)
+        resultsSA.setContentsMargins(0, 0, 0, 0)
 
         # Setup the layout
         self._createResultsTabLayout(resultsSA)
@@ -390,12 +431,20 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         """
 
+
         ## Create the DoubleList selector object ##
         # Create the output list
         self.layoutSimpleDoubleList = DoubleListMultipleInstance(self.parent.datasetTable,
                                                                  '<strong style="font-size: 18px">Available Datasets<strong>',
                                                                  '<strong style="font-size: 18px">Selected Datasets<strong>',
                                                                  outputDefaultColor=QtCore.Qt.darkGray)
+        self.layoutSimpleDoubleList.setContentsMargins(0, 0, 0, 0)
+        self.layoutSimpleDoubleList.layout().setContentsMargins(0, 0, 0, 0)
+
+        self.layoutSimpleDoubleList.listInput.setContentsMargins(0, 0, 0, 0)
+        self.layoutSimpleDoubleList.layoutInput.setContentsMargins(0, 0, 0, 0)
+        self.layoutSimpleDoubleList.listOutput.setContentsMargins(0, 0, 0, 0)
+        self.layoutSimpleDoubleList.layoutOutput.setContentsMargins(0, 0, 0, 0)
 
         # Update the output colors to show that the list will be active
         self.layoutSimpleDoubleList.listOutput.itemColors = []
@@ -406,17 +455,21 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ## Define the data plots
         plotLayout = QtWidgets.QVBoxLayout()
-        plotLayout.setContentsMargins(0, 0, 0, 0)
+        plotLayout.setContentsMargins(0, 10, 0, 0)
+
         # resampling plot
         self.predictorPlot = ModelTabTargetPlot(self, objectName='PredictorPlot')#ResultsTabPlots(self, xLabel='Date', yLabel='Value')
         self.predictorPlot.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+
         # correlation plot of resampled predictor to target
         self.predictorCorrelationPlot = ResultsTabPlots(self, xLabel='Resampled Predictor', yLabel='Resampled Target', title='Resampled Data Correlation')
         self.predictorCorrelationPlot.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.predictorCorrelationPlot.hide()
+
         # toggle button to switch plots
         self.predictorPlotButton = richTextButton('<strong style="font-size: 12px; color:darkcyan">Show resampled data correlation to target</strong>')
         self.predictorPlotButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Preferred)
+
         # add everything to layout
         plotLayout.addWidget(self.predictorPlot)
         plotLayout.addWidget(self.predictorCorrelationPlot)
@@ -435,18 +488,25 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         ## Create the objects on the right side ##
         configurationLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Dataset Configuration<strong>')
-        configurationLabel.setContentsMargins(0, 10, 0, 0)
+        configurationLabel.setContentsMargins(0, 0, 0, 0)
 
         # Aggregation options widget
         self.layoutAggregationOptions = AggregationOptions(False, orientation='vertical')
 
         # Simple fill
-        self.layoutSimpleFillCheckBox = QtWidgets.QCheckBox("Fill Data: Automatically fill the selected time series using default properties.")
-        self.layoutSimpleFillCheckBox.setChecked(False)
+        self.layoutSimpleFill = richTextButtonCheckbox('<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(
+                'Fill data', 'Automatically fill the selected time series using default properties'))
+        self.layoutSimpleFill.setChecked(False)
+        self.layoutSimpleFill.setDisabled(True)
+        self.layoutSimpleFill.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
 
         # Simple extend
-        self.layoutSimpleExtendCheckBox = QtWidgets.QCheckBox("Extend Data: Automatically extend the selected time series using default properties.")
-        self.layoutSimpleExtendCheckBox.setChecked(False)
+        self.layoutSimpleExtend = richTextButtonCheckbox('<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(
+                                                                'Extend data',
+                                                                'Automatically extend the selected time series using default properties\n'))
+        self.layoutSimpleExtend.setChecked(False)
+        self.layoutSimpleExtend.setDisabled(True)
+        self.layoutSimpleExtend.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
 
         ### Create buttons to apply predictor operations ###
         # Create the show plots button
@@ -463,6 +523,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Create the layout, wrap it, and add to the right layout
         buttonLayout = QtWidgets.QHBoxLayout()
+        buttonLayout.setContentsMargins(0, 0, 0, 0)
         buttonLayout.addWidget(self.layoutSimplePlotButton)
         buttonLayout.addWidget(self.layoutSimpleClearButton)
         buttonLayout.addWidget(self.layoutSimpleApplyButton)
@@ -472,14 +533,15 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Create the right side options layout
         layoutSimpleOptions = QtWidgets.QVBoxLayout()
+        layoutSimpleOptions.setContentsMargins(0, 0, 0, 0)
         layoutSimpleOptions.setAlignment(QtCore.Qt.AlignTop)
         layoutSimpleOptions.addWidget(configurationLabel)
         layoutSimpleOptions.addWidget(self.layoutAggregationOptions)
-        optionalLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Data Filling Configuration (optional)<strong>')
-        optionalLabel.setContentsMargins(0, 10, 0, 0)
+        optionalLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Timeseries Configuration<strong>')
+        optionalLabel.setContentsMargins(0, 0, 0, 0)
         layoutSimpleOptions.addWidget(optionalLabel)
-        layoutSimpleOptions.addWidget(self.layoutSimpleFillCheckBox, alignment=QtCore.Qt.AlignTop)
-        layoutSimpleOptions.addWidget(self.layoutSimpleExtendCheckBox, alignment=QtCore.Qt.AlignTop)
+        layoutSimpleOptions.addWidget(self.layoutSimpleFill, alignment=QtCore.Qt.AlignTop)
+        layoutSimpleOptions.addWidget(self.layoutSimpleExtend, alignment=QtCore.Qt.AlignTop)
         layoutSimpleOptions.addSpacerItem(QtWidgets.QSpacerItem(10, 10, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding))
         layoutSimpleOptions.addWidget(buttonLayoutWidget)
 
@@ -496,17 +558,6 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Add the right side to the simple layout
         layoutSimple.addWidget(layoutSimpleOptionsWidget, 1)
-
-
-        # # Set the items into the layout
-        # layoutSimpleTopWidget = QtWidgets.QWidget()
-        # layoutSimpleTopWidget.setLayout(layoutSimple)
-        # layoutSimpleBottomWidget = QtWidgets.QWidget()
-        # layoutSimpleBottomWidget.setLayout(bottomLayout)
-        # layoutSimpleMain = QtWidgets.QVBoxLayout()
-        # layoutSimpleMain.addWidget(layoutSimpleTopWidget)
-        # layoutSimpleMain.addWidget(layoutSimpleBottomWidget)
-
         predictorLayoutSimple.setLayout(layoutSimple)
 
 
@@ -1160,42 +1211,58 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Create the page master layout
         layoutMain = QtWidgets.QVBoxLayout()
-        layoutMain.setContentsMargins(0, 0, 0, 0)
+        layoutMain.setContentsMargins(15, 15, 15, 15)
 
         # Create the description text for the page
         label = QtWidgets.QLabel()
         label.setTextFormat(QtCore.Qt.RichText)
         label.setText('<strong style="font-size: 24px">How should PyForecast build and evaluate models?</strong>')
+        label.setSizePolicy( QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
         layoutMain.addWidget(label)
 
-        # Forecast Issue Date
-        # Model Training Period
+        ### Create the initial dialog for the type of analysis ###
+        labelMode = QtWidgets.QLabel()
+        labelMode.setTextFormat(QtCore.Qt.RichText)
+        labelMode.setText('<strong style="font-size: 12px">Select workflow configuration:</strong>')
+        labelMode.setFixedWidth(250)
 
-        label = QtWidgets.QLabel()
-        label.setTextFormat(QtCore.Qt.RichText)
-        label.setText('<strong style="font-size: 18px">Select options below or choose the default options<strong>')
-        layoutMain.addWidget(label)
-        self.defButton = QtWidgets.QRadioButton("Choose Defaults")
+        self.defButton = QtWidgets.QRadioButton('Default')
+        self.defButton.setStyleSheet('QRadioButton{font: 8pt sans-serif;} QRadioButton::indicator { width: 12px; height: 12px;};')
         self.defButton.setChecked(True)
-        self.expertButton = QtWidgets.QRadioButton("I'm an expert! Let me choose")
+        self.defButton.setFixedWidth(100)
+        self.expertButton = QtWidgets.QRadioButton('Expert')
+        self.expertButton.setStyleSheet('QRadioButton{font: 8pt; sans-serif} QRadioButton::indicator { width: 12px; height: 12px;};')
+        self.expertButton.setFixedWidth(100)
+
         bgroup = QtWidgets.QButtonGroup()
-        gb = QtWidgets.QGroupBox("")
-        bgroup.addButton(self.defButton)
-        bgroup.addButton(self.expertButton)
+        bgroup.addButton(self.defaultPredictorButton)
+        bgroup.addButton(self.expertPredictorButton)
         bgroup.setExclusive(True)
-        layout2 = QtWidgets.QVBoxLayout()
-        layout2.addWidget(self.defButton)
-        layout2.addWidget(self.expertButton)
-        gb.setLayout(layout2)
+
+        predictorModeLayout = QtWidgets.QHBoxLayout()
+        predictorModeLayout.addWidget(labelMode)
+        predictorModeLayout.addWidget(self.defButton)
+        predictorModeLayout.addWidget(self.expertButton)
+        predictorModeLayout.setAlignment(QtCore.Qt.AlignLeft)
+
+        gb = QtWidgets.QGroupBox("")
+        gb.setLayout(predictorModeLayout)
+        gb.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+        layoutMain.addSpacerItem(QtWidgets.QSpacerItem(0, 5, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
         layoutMain.addWidget(gb)
+        layoutMain.addSpacerItem(QtWidgets.QSpacerItem(0, 10, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
 
         ### Setup the cross-validation algorithms ###
         ## Create the label ##
         label = QtWidgets.QLabel()
         label.setTextFormat(QtCore.Qt.RichText)
         label.setText('<strong style="font-size: 18px">Cross-Validation Algorithms</strong>')
+        label.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         layoutMain.addWidget(label)
-        layoutMain.addWidget(QtWidgets.QLabel("Select one algorithm:"))
+
+        label = QtWidgets.QLabel("Select one algorithm:")
+        label.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        layoutMain.addWidget(label)
 
         ## Set the boxes containing options into the layout grid ##
         # Create and format the layout
@@ -1211,23 +1278,33 @@ class ModelCreationTab(QtWidgets.QWidget):
                     cvKey = list((self.parent.crossValidators.keys()))[(3 * i) + j]
                     cvText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(
                         self.parent.crossValidators[cvKey]['name'], self.parent.crossValidators[cvKey]['description'])
-                    button = richTextDescriptionButton(self, cvText)
+                    button = richTextButtonCheckbox(cvText)
                     button.setObjectName(str(cvKey))
 
                     # Add the button to the layout and the tracking list
                     crossValidationLayout.addWidget(button, i, j, 1, 1)
                     self.optionsCrossValidators.append(button)
 
+        # Promote the layout to a widget
+        crossValidationLayoutWidget = QtWidgets.QWidget()
+        crossValidationLayoutWidget.setLayout(crossValidationLayout)
+        crossValidationLayoutWidget.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Maximum)
 
-        layoutMain.addLayout(crossValidationLayout)
+        # layoutMain.addLayout(crossValidationLayout)
+        layoutMain.addWidget(crossValidationLayoutWidget)
+        layoutMain.addSpacerItem(QtWidgets.QSpacerItem(0, 10, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
 
         ### Setup the preprocessing algorithms ###
         ## Create the label ##
         label = QtWidgets.QLabel()
         label.setTextFormat(QtCore.Qt.RichText)
         label.setText('<strong style="font-size: 18px">Preprocessing Algorithms</strong>')
+        label.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         layoutMain.addWidget(label)
-        layoutMain.addWidget(QtWidgets.QLabel("Select one or more algorithms:"))
+
+        label = QtWidgets.QLabel("Select one or more algorithms:")
+        label.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        layoutMain.addWidget(label)
 
         ## Set the boxes containing options into the layout grid ##
         # Create and format the layout
@@ -1243,22 +1320,32 @@ class ModelCreationTab(QtWidgets.QWidget):
                     prKey = list((self.parent.preProcessors.keys()))[(3 * i) + j]
                     regrText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(
                         self.parent.preProcessors[prKey]['name'], self.parent.preProcessors[prKey]['description'])
-                    button = richTextDescriptionButton(self, regrText)
+                    button = richTextButtonCheckbox(regrText)
                     button.setObjectName(str(prKey))
 
                     # Add the button to the layout and the tracking list
                     optionsPreprocessorLayout.addWidget(button, i, j, 1, 1)
                     self.optionsPreprocessor.append(button)
 
-        layoutMain.addLayout(optionsPreprocessorLayout)
+        # Promote the layout to a widget
+        optionsPreprocessorLayoutWidget = QtWidgets.QWidget()
+        optionsPreprocessorLayoutWidget.setLayout(optionsPreprocessorLayout)
+
+        # layoutMain.addLayout(optionsPreprocessorLayout)
+        layoutMain.addWidget(optionsPreprocessorLayoutWidget)
+        layoutMain.addSpacerItem(QtWidgets.QSpacerItem(0, 10, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
 
         ### Setup the regression algorithms ###
         ## Create the label ##
         label = QtWidgets.QLabel()
         label.setTextFormat(QtCore.Qt.RichText)
         label.setText('<strong style="font-size: 18px">Regression Algorithms</strong>')
+        label.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         layoutMain.addWidget(label)
-        layoutMain.addWidget(QtWidgets.QLabel("Select one or more algorithms:"))
+
+        label = QtWidgets.QLabel("Select one or more algorithms:")
+        label.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        layoutMain.addWidget(label)
 
         ## Set the boxes containing options into the layout grid ##
         # Create and format the layout
@@ -1275,22 +1362,32 @@ class ModelCreationTab(QtWidgets.QWidget):
                     regrText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}<br>More Info: {2}'.format(
                         self.parent.regressors[regrKey]['name'], self.parent.regressors[regrKey]['description'],
                         self.parent.regressors[regrKey]['website'])
-                    button = richTextDescriptionButton(self, regrText)
+                    button = richTextButtonCheckbox(regrText)
                     button.setObjectName(str(regrKey))
 
                     # Add the button to the layout and the tracking list
                     optionsRegressionLayout.addWidget(button, i, j, 1, 1)
                     self.optionsRegression.append(button)
 
-        layoutMain.addLayout(optionsRegressionLayout)
+        # Promote the layout to a widget
+        optionsRegressionLayoutWidget = QtWidgets.QWidget()
+        optionsRegressionLayoutWidget.setLayout(optionsRegressionLayout)
+
+        # layoutMain.addLayout(optionsRegressionLayout)
+        layoutMain.addWidget(optionsRegressionLayoutWidget)
+        layoutMain.addSpacerItem(QtWidgets.QSpacerItem(0, 10, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
 
         ### Setup the model selection algorithms ###
         ## Create the label ##
         label = QtWidgets.QLabel()
         label.setTextFormat(QtCore.Qt.RichText)
         label.setText('<strong style="font-size: 18px">Model Selection Algorithms</strong>')
+        label.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         layoutMain.addWidget(label)
-        layoutMain.addWidget(QtWidgets.QLabel("Select one or more algorithms:"))
+
+        label = QtWidgets.QLabel("Select one or more algorithms:")
+        label.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        layoutMain.addWidget(label)
 
         ## Set the boxes containing options into the layout grid ##
         # Create and format the layout
@@ -1307,22 +1404,32 @@ class ModelCreationTab(QtWidgets.QWidget):
                     regrText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(
                         self.parent.featureSelectors[regrKey]['name'],
                         self.parent.featureSelectors[regrKey]['description'])
-                    button = richTextDescriptionButton(self, regrText)
+                    button = richTextButtonCheckbox(regrText)
                     button.setObjectName(str(regrKey))
 
                     # Add the button to the layout and the holding list
                     optionsSelectionLayout.addWidget(button, i, j, 1, 1)
                     self.optionsSelection.append(button)
 
-        layoutMain.addLayout(optionsSelectionLayout)
+        # Promote the layout to a widget
+        optionsSelectionLayoutWidget = QtWidgets.QWidget()
+        optionsSelectionLayoutWidget.setLayout(optionsSelectionLayout)
+
+        # layoutMain.addLayout(optionsSelectionLayout)
+        layoutMain.addWidget(optionsSelectionLayoutWidget)
+        layoutMain.addSpacerItem(QtWidgets.QSpacerItem(0, 10, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
 
         ### Setup the model scoring algorithms ###
         ## Create the label ##
         label = QtWidgets.QLabel()
         label.setTextFormat(QtCore.Qt.RichText)
         label.setText('<strong style="font-size: 18px">Model Scoring</strong>')
+        label.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         layoutMain.addWidget(label)
-        layoutMain.addWidget(QtWidgets.QLabel("Select one or more scoring parameters (used to rank models):"))
+
+        label = QtWidgets.QLabel("Select one or more scoring parameters (used to rank models):")
+        label.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        layoutMain.addWidget(label)
 
         ## Set the boxes containing options into the layout grid ##
         # Create and format the layout
@@ -1341,14 +1448,19 @@ class ModelCreationTab(QtWidgets.QWidget):
                     regrText = '<strong style="font-size: 13px; color:darkcyan">{2}</strong><br>{0}'.format(
                         self.parent.scorers['info'][nameKey]['NAME'], self.parent.scorers['info'][nameKey]['WEBSITE'],
                         self.parent.scorers['info'][nameKey]['HTML'])
-                    button = richTextDescriptionButton(self, regrText)
+                    button = richTextButtonCheckbox(regrText)
                     button.setObjectName(str(nameKey))
 
                     # Add the button to the layout and the holding list
                     optionsScoringLayout.addWidget(button, i, j, 1, 1)
                     self.optionsScoring.append(button)
 
-        layoutMain.addLayout(optionsScoringLayout)
+        # Promote the layout ot a widget
+        optionsScoringLayoutWidget = QtWidgets.QWidget()
+        optionsScoringLayoutWidget.setLayout(optionsScoringLayout)
+
+        # layoutMain.addLayout(optionsScoringLayout)
+        layoutMain.addWidget(optionsScoringLayoutWidget)
 
         # items = (layout.itemAt(i) for i in range(layout.count()))
         # print(items)
@@ -1359,7 +1471,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         # layout2.addWidget(richTextButton(self, '<strong style="color:maroon">Principal Components Regression</strong><br>Ordinary Least Squares'))
         # layout2.addWidget(richTextButton(self, '<strong style="color:maroon">Z-Score Regression</strong><br>Ordinary Least Squares'))
 
-        layoutMain.addSpacerItem(QtWidgets.QSpacerItem(100, 100, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding))
+        #layoutMain.addSpacerItem(QtWidgets.QSpacerItem(100, 100, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding))
 
         return layoutMain
 
@@ -1378,9 +1490,21 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         """
 
+        ### Create the description text for the page ###
+        label = QtWidgets.QLabel()
+        label.setTextFormat(QtCore.Qt.RichText)
+        label.setText('<strong style="font-size: 24px">Summary of the PyForecast analysis</strong>')
+        mainLayout.addWidget(label)
+
+        ### Create a horizontal layout to add the left and right pages into ###
+        tabLayout = QtWidgets.QHBoxLayout()
+        tabLayout.setContentsMargins(0, 0, 0, 0)
+
         ### Create the left side dataset summary table ###
         # Create a vertical layout
         listLayout = QtWidgets.QVBoxLayout()
+        listLayout.setContentsMargins(0, 10, 5, 0)
+
         #listLayout.setContentsMargins(2, 2, 2, 2)
         listLayout.addWidget(QtWidgets.QLabel('<strong style="font-size: 18px">Model Training Period<strong>'))
         self.summaryLayoutLabel1 = QtWidgets.QLabel('     Period: None')
@@ -1410,11 +1534,12 @@ class ModelCreationTab(QtWidgets.QWidget):
         #listLayoutWidget.setStyleSheet("background-color:white;")
 
         # Add to the layout
-        mainLayout.addWidget(listLayoutWidget)
+        tabLayout.addWidget(listLayoutWidget)
 
         ### Create the right side of the pane ###
         ## Create a vertical layout ##
         summaryRightLayout = QtWidgets.QVBoxLayout()
+        summaryRightLayout.setContentsMargins(5, 10, 0, 0)
 
         ## Layout the cross validators grid ##
         # Create the label
@@ -1425,6 +1550,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Create the grid layout
         crossValidatorLayout = QtWidgets.QGridLayout()
+        crossValidatorLayout.setContentsMargins(0, 0, 0, 0)
 
         # Loop and fill the cross validation options
         numCrossValidators = len(self.parent.crossValidators.keys())
@@ -1444,13 +1570,14 @@ class ModelCreationTab(QtWidgets.QWidget):
 
                     # Link the button with the corresponding box on the options tab
                     recipricalBox = self.optionsCrossValidators[counter]
-                    recipricalBox.updateLinkedButton.connect(button.update_from_exteral)
+                    recipricalBox.updateLinkedButton.connect(button.update_from_external)
                     counter += 1
 
         # Wrap the layout in a widget and add to the layout
         crossValidatorLayoutWidget = QtWidgets.QWidget()
         crossValidatorLayoutWidget.setLayout(crossValidatorLayout)
         summaryRightLayout.addWidget(crossValidatorLayoutWidget)
+        summaryRightLayout.addSpacerItem(QtWidgets.QSpacerItem(0, 10, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
 
         ## Layout the preprocessors grid ##
         # Create the label
@@ -1461,6 +1588,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Create the grid layout
         preprocessorLayout = QtWidgets.QGridLayout()
+        preprocessorLayout.setContentsMargins(0, 0, 0, 0)
 
         # Loop and fill the preprocessor options
         numPreProcessors = len(self.parent.preProcessors.keys())
@@ -1480,13 +1608,14 @@ class ModelCreationTab(QtWidgets.QWidget):
 
                     # Link the button with the corresponding box on the options tab
                     recipricalBox = self.optionsPreprocessor[counter]
-                    recipricalBox.updateLinkedButton.connect(button.update_from_exteral)
+                    recipricalBox.updateLinkedButton.connect(button.update_from_external)
                     counter += 1
 
         # Wrap the layout in a widget and add to the layout
         preprocessorLayoutWidget = QtWidgets.QWidget()
         preprocessorLayoutWidget.setLayout(preprocessorLayout)
         summaryRightLayout.addWidget(preprocessorLayoutWidget)
+        summaryRightLayout.addSpacerItem(QtWidgets.QSpacerItem(0, 10, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
 
         ## Layout the regressors grid ##
         # Create the label
@@ -1497,6 +1626,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Create the grid layout
         regressorLayout = QtWidgets.QGridLayout()
+        regressorLayout.setContentsMargins(0, 0, 0, 0)
 
         # Loop and fill the preprocessor options
         numRegressors = len(self.parent.regressors.keys())
@@ -1505,7 +1635,7 @@ class ModelCreationTab(QtWidgets.QWidget):
             for j in range(3):
                 if (i * 3) + j < numRegressors:
                     prKey = list((self.parent.regressors.keys()))[(3 * i) + j]
-                    regrText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong><br>{1}'.format(self.parent.regressors[prKey]['name'], '')
+                    regrText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong>'.format(self.parent.regressors[prKey]['name'])
 
                     # Disable the button to prevent user adjustements
                     button = richTextButtonCheckbox(regrText)
@@ -1516,7 +1646,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
                     # Link the button with the corresponding box on the options tab
                     recipricalBox = self.optionsRegression[counter]
-                    recipricalBox.updateLinkedButton.connect(button.update_from_exteral)
+                    recipricalBox.updateLinkedButton.connect(button.update_from_external)
                     counter += 1
 
 
@@ -1524,6 +1654,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         regressorLayoutWidget = QtWidgets.QWidget()
         regressorLayoutWidget.setLayout(regressorLayout)
         summaryRightLayout.addWidget(regressorLayoutWidget)
+        summaryRightLayout.addSpacerItem(QtWidgets.QSpacerItem(0, 10, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
 
         ## Layout the feature selectors grid ##
         # Create the label
@@ -1534,6 +1665,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Create the grid layout
         selectorLayout = QtWidgets.QGridLayout()
+        selectorLayout.setContentsMargins(0, 0, 0, 0)
 
         # Loop and fill the preprocessor options
         numSelector = len(self.parent.featureSelectors.keys())
@@ -1544,7 +1676,7 @@ class ModelCreationTab(QtWidgets.QWidget):
                     prKey = list((self.parent.featureSelectors.keys()))[(3 * i) + j]
                     regrText = '<strong style="font-size: 13px; color: darkcyan">{0}</strong>'.format(self.parent.featureSelectors[prKey]['name'])
 
-                    # Disable the button to prevent user adjustements
+                    # Disable the button to prevent user adjustments
                     button = richTextButtonCheckbox(regrText)
                     button.setDisabled(True)
 
@@ -1553,15 +1685,16 @@ class ModelCreationTab(QtWidgets.QWidget):
 
                     # Link the button with the corresponding box on the options tab
                     recipricalBox = self.optionsSelection[counter]
-                    recipricalBox.updateLinkedButton.connect(button.update_from_exteral)
+                    recipricalBox.updateLinkedButton.connect(button.update_from_external)
                     counter += 1
 
         # Wrap the layout in a widget and add to the layout
         selectorLayoutWidget = QtWidgets.QWidget()
         selectorLayoutWidget.setLayout(selectorLayout)
         summaryRightLayout.addWidget(selectorLayoutWidget)
+        summaryRightLayout.addSpacerItem(QtWidgets.QSpacerItem(0, 10, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
 
-        ## Layout the feature selectors grid ##
+        ## Layout the scoring grid ##
         # Create the label
         scoringLabelWidget = QtWidgets.QLabel('<strong style="font-size: 18px">Model Scoring</strong>')
 
@@ -1570,6 +1703,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
         # Create the grid layout
         scoringLayout = QtWidgets.QGridLayout()
+        scoringLayout.setContentsMargins(0, 0, 0, 0)
 
         # Loop and fill the preprocessor options
         numScorers = len(self.parent.scorers['info'].keys())
@@ -1589,7 +1723,7 @@ class ModelCreationTab(QtWidgets.QWidget):
 
                     # Link the button with the corresponding box on the options tab
                     recipricalBox = self.optionsScoring[counter]
-                    recipricalBox.updateLinkedButton.connect(button.update_from_exteral)
+                    recipricalBox.updateLinkedButton.connect(button.update_from_external)
                     counter += 1
 
         # Wrap the layout in a widget and add to the layout
@@ -1639,7 +1773,12 @@ class ModelCreationTab(QtWidgets.QWidget):
         rightLayoutWidget.setLayout(summaryRightLayout)
 
         # Add the widget to the main layout
-        mainLayout.addWidget(rightLayoutWidget)
+        tabLayout.addWidget(rightLayoutWidget)
+
+        ### Promote the tab layout to a widget and add to the main layout ###
+        tabLayoutWidget = QtWidgets.QWidget()
+        tabLayoutWidget.setLayout(tabLayout)
+        mainLayout.addWidget(tabLayoutWidget)
 
     def _createResultsTabLayout(self, resultSA):
         """
@@ -1659,10 +1798,12 @@ class ModelCreationTab(QtWidgets.QWidget):
         ### Create the left side dataset summary table ###
         # Create a horizontal layout
         topLayout = QtWidgets.QHBoxLayout()
+        topLayout.setContentsMargins(0, 0, 0, 5)
 
         # Create the list of model filters
         ## Create the table to show the metrics ##
         topInfoLayoutTable = QtWidgets.QVBoxLayout()
+        topInfoLayoutTable.setContentsMargins(0, 0, 5, 0)
 
         resultSelectedLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Available Regressions<strong>')
         topInfoLayoutTable.addWidget(resultSelectedLabel)
@@ -1673,11 +1814,11 @@ class ModelCreationTab(QtWidgets.QWidget):
         topInfoLayoutTableWidget = QtWidgets.QWidget()
         topInfoLayoutTableWidget.setLayout(topInfoLayoutTable)
         topInfoLayoutTableWidget.setContentsMargins(0, 0, 0, 0)
-
         topLayout.addWidget(topInfoLayoutTableWidget)
 
         # Create a list for the selected model metadata
         topInfoLayout = QtWidgets.QVBoxLayout()
+        topInfoLayout.setContentsMargins(5, 0, 0, 0)
 
         resultSelectedLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Selected Model Info<strong>')
         topInfoLayout.addWidget(resultSelectedLabel)
@@ -1694,12 +1835,13 @@ class ModelCreationTab(QtWidgets.QWidget):
         ### Create the right side items ###
         ## Create the initial layouts ##
         bottomLayout = QtWidgets.QHBoxLayout()
+        bottomLayout.setContentsMargins(0, 5, 0, 0)
 
         bottomLayoutHorizontal = QtWidgets.QHBoxLayout()
-        bottomLayoutHorizontal.setContentsMargins(0, 0, 0, 0)
+        bottomLayoutHorizontal.setContentsMargins(0, 0, 5, 0)
 
         rightLayoutVertical = QtWidgets.QVBoxLayout()
-        rightLayoutVertical.setContentsMargins(0, 0, 0, 0)
+        rightLayoutVertical.setContentsMargins(5, 0, 0, 0)
 
         ## Create the main left observed/forecast plot ##
         self.resultsObservedForecstPlot = ResultsTabPlots(self, xLabel='Observed', yLabel='Prediction')
@@ -1708,6 +1850,7 @@ class ModelCreationTab(QtWidgets.QWidget):
         ## Create the upper right inflow/year plot ##
         self.resultsInflowYearPlot = ResultsTabPlots(self, xLabel='Year', yLabel='Value')
         self.resultsInflowYearPlot.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+
 
         ## Create the lower right residual/year plot ##
         self.resultsResidualYearPlot = ResultsTabPlots(self, xLabel='Year', yLabel='Error')
@@ -1721,21 +1864,24 @@ class ModelCreationTab(QtWidgets.QWidget):
         # Wrap the vertical layout as a widget 
         rightLayoutVerticalWidget = QtWidgets.QWidget()
         rightLayoutVerticalWidget.setLayout(rightLayoutVertical)
+        rightLayoutVerticalWidget.setContentsMargins(0, 0, 0, 0)
 
         # Add items to the horizontal layout
         bottomLayoutHorizontal.addWidget(self.resultsObservedForecstPlot)
-        bottomLayoutHorizontal.addWidget(rightLayoutVerticalWidget)
 
         # Wrap the horizontal layout as a widget
         rightLayoutHorizontalWidget = QtWidgets.QWidget()
         rightLayoutHorizontalWidget.setLayout(bottomLayoutHorizontal)
+        rightLayoutHorizontalWidget.setContentsMargins(0, 0, 0, 0)
 
         # Add items into the main right layout
         bottomLayout.addWidget(rightLayoutHorizontalWidget)
+        bottomLayout.addWidget(rightLayoutVerticalWidget)
 
         ### Add the items into the layout ###
         # Create the horizontal layout
         layoutMain = QtWidgets.QVBoxLayout()
+        layoutMain.setContentsMargins(15, 15, 15, 15)
 
         ## Add the left layout ##
         # Promote the layout to a widget
