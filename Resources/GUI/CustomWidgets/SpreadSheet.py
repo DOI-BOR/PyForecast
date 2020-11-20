@@ -857,9 +857,10 @@ class SpreadSheetForecastEquations(QtWidgets.QWidget):
 
 
     def processData(self, dataTable):
-        cols = [0, 1, 2, 3, 4, 5, 6, 7, 11, 12, 13]
+        cols = [0, 2, 3, 4, 5, 6, 7, 11, 12, 13]
         data = dataTable.drop(dataTable.columns[cols], axis=1)
         if len(data) == 0:
+            data['EquationComment'] = ''
             data['PIPE'] = ''
             data['Pre-ProcessingMethod'] = ''
             data['RegressionMethod'] = ''

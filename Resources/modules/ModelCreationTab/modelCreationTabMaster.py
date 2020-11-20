@@ -1478,7 +1478,6 @@ class modelCreationTab(object):
             if len(preProcList) < 1 or len(regAlgs) < 1 or len(selAlgs) < 1 or len(scoreParams) < 1:
                 errorString += 'Select at least 1 Preprocessor, Regressor, Feature Selector, and Model Scoring option from the Options tab. '
 
-
             ### Apply operations to datasets ###
 
             ### Final go no-go ###
@@ -1531,7 +1530,6 @@ class modelCreationTab(object):
                     resultPredictors = self.rg.resultsList[resultCounter]['Model']
 
                     self.forecastEquationsTable.loc[resultCounter]['EquationSource'] = 'PyForecast'
-                    # self.parent.forecastEquationsTable.loc[resultCounter]['EquationComment'] = ''
                     self.forecastEquationsTable.loc[resultCounter]['ModelTrainingPeriod'] = self.modelRunsTable.loc[0]['ModelTrainingPeriod']
                     self.forecastEquationsTable.loc[resultCounter]['EquationPredictand'] = self.modelRunsTable.loc[0]['Predictand']
                     self.forecastEquationsTable.loc[resultCounter]['PredictandPeriod'] = self.modelRunsTable.loc[0]['PredictandPeriod']
@@ -1544,6 +1542,8 @@ class modelCreationTab(object):
                     self.forecastEquationsTable.loc[resultCounter]['PredictorPeriods'] = list(compress(predPeriods, resultPredictors))
                     self.forecastEquationsTable.loc[resultCounter]['PredictorMethods'] = list(compress(predMethods, resultPredictors))
                     # self.forecastEquationsTable.loc[resultCounter]['DirectEquation'] = ''
+                    self.forecastEquationsTable.loc[resultCounter]['EquationComment'] = \
+                        ["NegativeCoefficients:"+str(self.rg.resultsList[resultCounter]['NegativeCoefficients'])]
                     resultCounter += 1
 
                 if len(self.rg.resultsList) >= 1:

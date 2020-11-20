@@ -120,7 +120,8 @@ class FeatureSelector(object):
             {"Model":modelStr, "Score":score, 
              "Method":"PIPE/{0}/{1}/{2}".format(self.parent.preprocessor.FILE_NAME, 
                                       self.regressionName,  
-                                      self.regression.crossValidation)})
+                                      self.regression.crossValidation),
+             "NegativeCoefficients": np.any(np.array(self.regression.coef) < 0)})
 
         return
 

@@ -202,15 +202,11 @@ class RegressionWorker(QtCore.QRunnable):
 
                     # Iterate over the feature selection methods
                     for featSel in self.featureSelectionSchemes:
-                        
-
-
                         # In our first run of the feature selection scheme, 
                         # use the scheme's default initial model. In the 
                         # case of brute force scheme, the scheme will
                         # see all models from this initialization
                         if i == 0:
-
                             print("\t-> Using Feature Selection: ", featSel)
                             print("\t   Initializing with default model predictors")
                             
@@ -220,11 +216,9 @@ class RegressionWorker(QtCore.QRunnable):
                                         regression = regression, 
                                         crossValidation = self.crossValidationScheme, 
                                         scoringParameters = self.scoringParameters)
-                                    
 
                         # Otherwise, generate a random model.
                         else:
-
                             # Generate a random model
                             model = ba.bitarray(list(np.random.randint(0, 2, self.xTraining.shape[1])))
 
