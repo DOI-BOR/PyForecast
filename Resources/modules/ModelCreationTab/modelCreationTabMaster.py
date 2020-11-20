@@ -289,7 +289,14 @@ class modelCreationTab(object):
         else:
             startT = parser.parse(str(minT.year) + '-' + str(selT.month) + '-' + str(selT.day))
 
-        nDays = self.modelTab.periodEnd.date().toJulianDay() - self.modelTab.periodStart.date().toJulianDay() + 1 #dates inclusive
+        t1 = self.modelTab.periodStart.date()
+        t2 = self.modelTab.periodEnd.date()
+        if t1.month() > 9:
+            t1 = parser.parse('1900-'+str(t1.month())+ '-'+str(t1.day()))
+        else:
+            t1 = parser.parse('1901-'+str(t1.month())+ '-'+str(t1.day()))
+        t2 = parser.parse('1901-' + str(t2.month()) + '-' + str(t2.day()))
+        nDays = (t2-t1).days
         periodString = "R/" + startT.strftime("%Y-%m-%d") + "/P" + str(nDays) + "D/F12M" #(e.g. R/1978-02-01/P1M/F1Y)
         if self.modelRunsTable.shape[0] < 1:
             self.modelRunsTable.loc[0] = [None] * self.modelRunsTable.columns.shape[0]
@@ -331,12 +338,22 @@ class modelCreationTab(object):
         datasetID = dataset.name
 
         # Get the period string
-        start = self.modelTab.periodStart.date().toString("1900-MM-dd")
-        start_dt = pd.to_datetime(start)
-        end = self.modelTab.periodEnd.date().toString("1900-MM-dd")
-        end_dt = pd.to_datetime(end)
-        length = (end_dt - start_dt).days
-        period = 'R/{0}/P{1}D/F12M'.format(start, length)
+        t1 = self.modelTab.periodStart.date()
+        t2 = self.modelTab.periodEnd.date()
+        if t1.month() > 9:
+            t1 = parser.parse('1900-' + str(t1.month()) + '-' + str(t1.day()))
+        else:
+            t1 = parser.parse('1901-' + str(t1.month()) + '-' + str(t1.day()))
+        t2 = parser.parse('1901-' + str(t2.month()) + '-' + str(t2.day()))
+        nDays = (t2-t1).days
+        period = "R/" + self.modelTab.periodStart.date().toString("1900-MM-dd") + "/P" + str(nDays) + "D/F12M"  # (e.g. R/1978-02-01/P1M/F1Y)
+
+        # start = self.modelTab.periodStart.date().toString("1900-MM-dd")
+        # start_dt = pd.to_datetime(start)
+        # end = self.modelTab.periodEnd.date().toString("1900-MM-dd")
+        # end_dt = pd.to_datetime(end)
+        # length = (end_dt - start_dt).days
+        # period = 'R/{0}/P{1}D/F12M'.format(start, length)
 
         # Get the forecast method. If the method is 'custom', get the custom method as well
         method = str(self.modelTab.methodCombo.currentData())
@@ -359,7 +376,7 @@ class modelCreationTab(object):
             x = pd.DataFrame(
                 np.random.random((10000,1)),
                 index = pd.MultiIndex.from_arrays(
-                    [pd.date_range(start=start_dt, periods=10000), 10000*[12013]],
+                    [pd.date_range(start=t1, periods=10000), 10000*[12013]],
                     names = ['Datetime', 'DatasetInternalID']
                 ),
                 columns = ['Value']
@@ -403,7 +420,7 @@ class modelCreationTab(object):
         self.modelTab.dataPlot.displayData(x, y, [units], [dataset['DatasetParameter'] + ': ' + dataset['DatasetName']])
 
         # Set a title for the plot
-        self.modelTab.dataPlot.plot.setTitle('<strong style="font-family: Open Sans, Arial;">{4} {0} - {1} {2} {3}</strong>'.format(start_dt.strftime("%b %d"), end_dt.strftime("%b %d"), methodText.title(), dataset['DatasetParameter'], dataset['DatasetName'] ))
+        self.modelTab.dataPlot.plot.setTitle('<strong style="font-family: Open Sans, Arial;">{4} {0} - {1} {2} {3}</strong>'.format(t1.strftime("%b %d"), t2.strftime("%b %d"), methodText.title(), dataset['DatasetParameter'], dataset['DatasetName'] ))
 
         return
     # </editor-fold>
