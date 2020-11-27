@@ -860,11 +860,14 @@ class SpreadSheetForecastEquations(QtWidgets.QWidget):
         cols = [0, 2, 3, 4, 5, 6, 7, 11, 12, 13]
         data = dataTable.drop(dataTable.columns[cols], axis=1)
         if len(data) == 0:
-            data['EquationComment'] = ''
             data['PIPE'] = ''
+            data['EquationComment'] = ''
+            data['EquationMethod'] = ''
+            data['EquationSkill'] = ''
+            data['EquationPredictors'] = ''
             data['Pre-ProcessingMethod'] = ''
             data['RegressionMethod'] = ''
-            data['CrossValidation'] = ''
+            data['CrossValidation'] = 'No model runs found'
             data['ModelIndex'] = ''
         else:
             data[['PIPE', 'Pre-ProcessingMethod', 'RegressionMethod', 'CrossValidation']] = data[
@@ -882,6 +885,7 @@ class SpreadSheetForecastEquations(QtWidgets.QWidget):
             predLists = list(map(str, list(data['EquationPredictors'])))
             data['EquationPredictors'] = [i.zfill(2) + ' Predictors: ' + j for i, j in zip(predCounts, predLists)]
         data.drop('PIPE', axis=1, inplace=True)
+        data.drop('EquationMethod', axis=1, inplace=True)
         data = data[data.columns[::-1]]
         return data
     

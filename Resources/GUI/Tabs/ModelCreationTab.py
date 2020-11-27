@@ -1223,15 +1223,16 @@ class ModelCreationTab(QtWidgets.QWidget):
         ### Create the initial dialog for the type of analysis ###
         labelMode = QtWidgets.QLabel()
         labelMode.setTextFormat(QtCore.Qt.RichText)
-        labelMode.setText('<strong style="font-size: 12px">Select workflow configuration:</strong>')
+        labelMode.setText('<strong style="font-size: 12px">Select modeling configuration:</strong>')
         labelMode.setFixedWidth(250)
 
         self.defButton = QtWidgets.QRadioButton('Default')
         self.defButton.setStyleSheet('QRadioButton{font: 8pt sans-serif;} QRadioButton::indicator { width: 12px; height: 12px;};')
-        self.defButton.setChecked(True)
+        self.defButton.setChecked(False)
         self.defButton.setFixedWidth(100)
         self.expertButton = QtWidgets.QRadioButton('Expert')
         self.expertButton.setStyleSheet('QRadioButton{font: 8pt; sans-serif} QRadioButton::indicator { width: 12px; height: 12px;};')
+        self.expertButton.setChecked(True)
         self.expertButton.setFixedWidth(100)
 
         bgroup = QtWidgets.QButtonGroup()

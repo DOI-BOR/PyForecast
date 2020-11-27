@@ -28,6 +28,7 @@ class modelCreationTab(object):
         Initialize the Tab
         """
         self.connectEventsModelCreationTab()
+        self.modelTab.defButton.setChecked(True)
 
         return
 
@@ -56,27 +57,11 @@ class modelCreationTab(object):
         self.modelTab.layoutSimpleDoubleList.updatedLinkedList.emit(self.modelTab.layoutSimpleDoubleList.listInput, self.modelTab.layoutSimpleDoubleList.listOutput)
         self.modelTab.layoutSimpleDoubleList.updatedOutputList.emit()
 
-        try:
-            self.clickOption([self.modelRunsTable.loc[0]['CrossValidationType']], self.modelTab.optionsCrossValidators)
-            self.clickOption(self.modelRunsTable.loc[0]['RegressionTypes'], self.modelTab.optionsRegression)
-            self.clickOption(self.modelRunsTable.loc[0]['FeatureSelectionTypes'], self.modelTab.optionsSelection)
-            self.clickOption(self.modelRunsTable.loc[0]['ScoringParameters'], self.modelTab.optionsScoring)
-            self.clickOption(self.modelRunsTable.loc[0]['Preprocessors'], self.modelTab.optionsPreprocessor)
-        except:
-            print('INFO: No model run options defined in forecast file')
+        self.modelTab.expertButton.setChecked(True)
 
         self.modelTab.resultsMetricTable.clearTable()
         self.modelTab.resultsMetricTable.loadDataIntoModel(self.forecastEquationsTable)
 
-        return
-
-
-    def clickOption(self, selectedOptions, optionList):
-        for i in selectedOptions:
-            for j in optionList:
-                if i == j.objectName():
-                    if not j.isChecked():#click only if button isn't already clicked
-                        j.click()
         return
 
 
@@ -1340,8 +1325,52 @@ class modelCreationTab(object):
         This function is run when the user toggles the default model settings
         on the model settings sub-tab.
         """
-        print("DEF SETTINGS")
+        if defaultSettings:
+            self.clickDefaults(self.modelTab.optionsCrossValidators, 1, False)
+            self.clickDefaults(self.modelTab.optionsPreprocessor, 3, False)
+            self.clickDefaults(self.modelTab.optionsRegression, 2, False)
+            self.clickDefaults(self.modelTab.optionsSelection, 3, False)
+            self.clickDefaults(self.modelTab.optionsScoring, 5, False)
+        else:
+            try:
+                self.clickOption([self.modelRunsTable.loc[0]['CrossValidationType']], self.modelTab.optionsCrossValidators)
+                self.clickOption(self.modelRunsTable.loc[0]['Preprocessors'], self.modelTab.optionsPreprocessor)
+                self.clickOption(self.modelRunsTable.loc[0]['RegressionTypes'], self.modelTab.optionsRegression)
+                self.clickOption(self.modelRunsTable.loc[0]['FeatureSelectionTypes'], self.modelTab.optionsSelection)
+                self.clickOption(self.modelRunsTable.loc[0]['ScoringParameters'], self.modelTab.optionsScoring)
+            except:
+                print('INFO: No model run options defined in forecast file')
+                self.clickDefaults(self.modelTab.optionsCrossValidators, 1, True)
+                self.clickDefaults(self.modelTab.optionsPreprocessor, 3, True)
+                self.clickDefaults(self.modelTab.optionsRegression, 2, True)
+                self.clickDefaults(self.modelTab.optionsSelection, 3, True)
+                self.clickDefaults(self.modelTab.optionsScoring, 5, True)
         return
+
+
+    def clickOption(self, selectedOptions, optionList):
+        for i in selectedOptions:
+            for j in optionList:
+                if i == j.objectName():
+                    if not j.isChecked(): #click only if button isn't already clicked
+                        j.click()
+                j.setEnabled(True)
+        return
+
+
+    def clickDefaults(self, optionList, defaultIdx, enableButtons):
+        counter = 0
+        for j in optionList:
+            if counter == defaultIdx:
+                if not j.isChecked():  # click only if button isn't already clicked
+                    j.click()
+            else:
+                if j.isChecked():
+                    j.click()
+            counter = counter + 1
+            j.setEnabled(enableButtons)
+        return
+
     # </editor-fold>
 
 
