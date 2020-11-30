@@ -145,10 +145,10 @@ class FeatureSelector(object):
         # Set up an iteration
         while True:
             
-            # Search for new predictors to add
+            # Search for new predictors to remove
             self.trySubtraction()
 
-            # Search for predictors to remove
+            # Search for predictors to add
             self.tryAddition()
 
             # Check if we've added any new predictors or removed predictors

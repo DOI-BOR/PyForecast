@@ -117,8 +117,6 @@ class RegressionWorker(QtCore.QRunnable):
         self.modelRunTableEntry['PredictorMethods'] = list(np.delete(self.modelRunTableEntry['PredictorMethods'], popindex))
         self.modelRunTableEntry['PredictorForceFlag'] = list(np.delete(self.modelRunTableEntry['PredictorForceFlag'], popindex))
 
-            
-
         # Compute the target data
         self.y = resampleDataSet(
             self.parent.dataTable.loc[(slice(None), self.modelRunTableEntry['Predictand']), 'Value'],
@@ -129,10 +127,9 @@ class RegressionWorker(QtCore.QRunnable):
         data = self.y.loc[self.trainingDates[0]: self.trainingDates[1]]
         idx = list(filter(lambda date: date not in self.excludeYears, data.index))
         self.yTraining = self.y.loc[idx].values # Training Data
-        
 
         # Set the forced predictors
-        print("force flag", self.modelRunTableEntry['PredictorForceFlag'])
+        print("INFO: Forced Predictors ", self.modelRunTableEntry['PredictorForceFlag'])
         # Check if forced predictors is an array of strings or booleans
         if isinstance(self.modelRunTableEntry['PredictorForceFlag'][0], (int, float)):
             self.forcedPredictors = ba.bitarray(self.modelRunTableEntry['PredictorForceFlag'])
@@ -149,7 +146,7 @@ class RegressionWorker(QtCore.QRunnable):
         self.yTraining = np.array(self.yTraining).reshape(-1,1)
 
         # Compute the total number of model combinations that are possible
-        self.numPossibleModels = int('1'*self.xTraining.shape[1], 2)
+        self.numPossibleModels = int('1'*(self.xTraining.shape[1] - self.forcedPredictors.count(True)), 2)
 
         # Create a table to store results
         self.resultsList = []
@@ -172,11 +169,11 @@ class RegressionWorker(QtCore.QRunnable):
         Iterates over the regression types provided and performs 
         feature selection on each one. 
         """
-
+        print("INFO: Iterating through Pre-Processing, Regression, and Feature Selection schemes...")
         # Iterate over the preprocessing schemes
         for preprocessor in self.preprocessors:
 
-            print("\nUsing Preprocessor: ", preprocessor)
+            #print("\nUsing Preprocessor: ", preprocessor)
 
             # Initialize the preprocesser
             self.preprocessor = preprocessor(np.concatenate([self.xTraining, self.yTraining], axis=1))
@@ -188,7 +185,7 @@ class RegressionWorker(QtCore.QRunnable):
             # Iterate over the regression methods
             for regression in self.regressionSchemes:
                 
-                print("-> Using Regression: ", regression)
+                #print("-> Regression: ", regression)
 
                 # Create a model list to store already computed models (Used for feature seleciton 
                 # algorithms to keep track of model scores)
@@ -207,8 +204,8 @@ class RegressionWorker(QtCore.QRunnable):
                         # case of brute force scheme, the scheme will
                         # see all models from this initialization
                         if i == 0:
-                            print("\t-> Using Feature Selection: ", featSel)
-                            print("\t   Initializing with default model predictors")
+                            print("-> Using: ", regression, "-", preprocessor.NAME, "-", featSel.NAME, "- Model: Default Predictors")
+                            #print("\t   Initializing with default model predictors")
                             
                             # Initialize the feature selection scheme with the scheme's default model
                             f = featSel(    
@@ -222,8 +219,12 @@ class RegressionWorker(QtCore.QRunnable):
                             # Generate a random model
                             model = ba.bitarray(list(np.random.randint(0, 2, self.xTraining.shape[1])))
 
-                            print("\t-> Using Feature Selection: ", featSel)
-                            print("\t   Initializing with model: ", model.to01())
+                            # Add any forced predictors
+                            if self.forcedPredictors.any():
+                                model = model | self.forcedPredictors
+
+                            print("-> Using: ", regression, "-", preprocessor.NAME, "-", featSel.NAME, "- Model:", model.to01())
+                            #print("\t   Initializing with model: ", model.to01())
 
                             # Initialize the feature selection scheme with the random model
                             f = featSel(    
