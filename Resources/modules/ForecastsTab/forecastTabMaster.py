@@ -9,6 +9,7 @@ import datetime
 from itertools import compress
 from dateutil import parser
 from statsmodels.tsa.stattools import ccf
+import tempfile, os, csv
 
 from resources.modules.Miscellaneous.generateModel import Model
 from resources.GUI.CustomWidgets.SpreadSheet import GenericTableModel
@@ -52,6 +53,7 @@ class forecastsTab(object):
         self.savedEquationSelectionModel.selectionChanged.connect(self.generateSavedModel)
         self.forecastsTab.savedModelsTable.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.forecastsTab.savedModelsTable.customContextMenuRequested.connect(self.savedModelTableRightClick)
+        self.forecastsTab.exportSavedModelsButton.clicked.connect(self.generateSavedModelsAnalysis)
 
         # Connect model data year and forecasting actions
         self.forecastsTab.modelYearSpin.valueChanged.connect(self.updateForecastYearData)
@@ -134,6 +136,102 @@ class forecastsTab(object):
             action = menu.exec_(self.forecastsTab.savedModelsTable.view.mapToGlobal(pos))
             if action ==deleteAction:
                 self.deleteSavedModelAction(row, column)
+
+
+    def generateSavedModelsAnalysis(self):
+        self.forecastsTab.exportSavedModelsButton.setChecked(False)
+        modelsTable = self.savedForecastEquationsTable
+        self.buildModelAnalysisReport(modelsTable)
+        return
+
+
+    def buildModelAnalysisReport(self, modelsTable):
+        if modelsTable.shape[0] < 1:
+            return
+        print('INFO: Generating model analyis')
+        datasetTable = self.datasetTable
+        predictorsTable = self.datasetOperationsTable
+        # Create dataframe for output
+        df = pd.DataFrame(columns=[str(i) for i in predictorsTable.index.values.tolist()])
+        df.insert(0, "modelmetric", 0)
+        df.insert(0, "modelpreproc", 0)
+        df.insert(0, "modelregres", 0)
+        df.insert(0, "modelcv", 0)
+        df.insert(0, "modelnum", 0)
+        # Create metadata rows
+        df = df.append(pd.Series(name='colheader'))
+        df = df.append(pd.Series(name='predname'))
+        df = df.append(pd.Series(name='extids'))
+        df = df.append(pd.Series(name='agency'))
+        df = df.append(pd.Series(name='units'))
+        df = df.append(pd.Series(name='accummethod'))
+        df = df.append(pd.Series(name='accumperiod'))
+        df = df.append(pd.Series(name='forcedflag'))
+        # Populate predictor metadata cells
+        for index, row in predictorsTable.iterrows():
+            df.loc['colheader', str(index)] = 'PREDICTOR'
+            df.loc['predname', str(index)] = datasetTable.loc[index[0]].DatasetName + '-' + datasetTable.loc[
+                index[0]].DatasetParameter
+            df.loc['extids', str(index)] = datasetTable.loc[index[0]].DatasetExternalID
+            df.loc['agency', str(index)] = datasetTable.loc[index[0]].DatasetAgency
+            df.loc['units', str(index)] = datasetTable.loc[index[0]].DatasetUnits
+            df.loc['accummethod', str(index)] = predictorsTable.loc[index].AccumulationMethod
+            df.loc['accumperiod', str(index)] = predictorsTable.loc[index].AccumulationPeriod
+            df.loc['forcedflag', str(index)] = 'Forced=' + str(predictorsTable.loc[index].ForcingFlag).lower()
+        # Populate predictand metadata cells
+        predictandID = modelsTable.loc[0].EquationPredictand
+        df.loc['colheader', 'modelpreproc'] = 'PREDICTAND'
+        df.loc['predname', 'modelpreproc'] = datasetTable.loc[predictandID].DatasetName + '-' + datasetTable.loc[
+            predictandID].DatasetParameter
+        df.loc['extids', 'modelpreproc'] = datasetTable.loc[predictandID].DatasetExternalID
+        df.loc['agency', 'modelpreproc'] = datasetTable.loc[predictandID].DatasetAgency
+        df.loc['units', 'modelpreproc'] = datasetTable.loc[predictandID].DatasetUnits
+        df.loc['accummethod', 'modelpreproc'] = modelsTable.loc[0].PredictandMethod
+        df.loc['accumperiod', 'modelpreproc'] = modelsTable.loc[0].PredictandPeriod
+        # Populate column header labels
+        df.loc['colheader', 'modelmetric'] = 'TYPE'
+        df.loc['predname', 'modelmetric'] = 'NAME'
+        df.loc['extids', 'modelmetric'] = 'AGENCY ID'
+        df.loc['agency', 'modelmetric'] = 'AGENCY SOURCE'
+        df.loc['units', 'modelmetric'] = 'UNITS'
+        df.loc['accummethod', 'modelmetric'] = 'ACCUMULATION METHOD'
+        df.loc['accumperiod', 'modelmetric'] = 'ACCUMULATION PERIOD'
+        # Populate row header labels
+        df.loc['forcedflag', 'modelnum'] = 'MODEL ID'
+        df.loc['forcedflag', 'modelcv'] = 'MODEL CROSS VALIDATION'
+        df.loc['forcedflag', 'modelregres'] = 'MODEL REGRESSION'
+        df.loc['forcedflag', 'modelpreproc'] = 'MODEL PRE-PROCESSOR'
+        df.loc['forcedflag', 'modelmetric'] = 'MODEL SCORING METRIC'
+        # Populate model rows
+        for index, row in modelsTable.iterrows():
+            df = df.append(pd.Series(name=str(index)))
+            df.loc[str(index), 'modelnum'] = str(index)
+            df.loc[str(index), 'modelpreproc'] = self.preProcessors[row.EquationMethod.split('/')[1]]['name']#row.EquationMethod.split('/')[1]
+            df.loc[str(index), 'modelregres'] = self.regressors[row.EquationMethod.split('/')[2]]['name']#row.EquationMethod.split('/')[2]
+            df.loc[str(index), 'modelcv'] = self.crossValidators[row.EquationMethod.split('/')[3]]['name']#row.EquationMethod.split('/')[3]
+            df.loc[str(index), 'modelmetric'] = str(row.EquationSkill)
+            preds = row.EquationPredictors
+            predStrings = []
+            for pred in preds:
+                instanceCounter = 0
+                predString = '(' + str(pred) + ', ' + str(instanceCounter) + ')'
+                while predString in predStrings:
+                    instanceCounter = instanceCounter + 1
+                    predString = '(' + str(pred) + ', ' + str(instanceCounter) + ')'
+                predStrings.append(predString)
+            for predString in predStrings:
+                df.loc[str(index), predString] = 1
+        # Write to temp csv file and open
+        handle, fn = tempfile.mkstemp(suffix='.csv')
+        with os.fdopen(handle, "w", encoding='utf8', errors='surrogateescape', newline='\n') as f:
+            try:
+                df.to_csv(fn, index=False, header=False)
+                print('INFO: Model analysis exported to file ' + fn)
+                os.startfile(fn)
+            except Exception as e:
+                print('WARNING: Model analysis export error:', e)
+        print('INFO: Exporting model analyis')
+        return
 
 
     def deleteSavedModelAction(self, row, column):

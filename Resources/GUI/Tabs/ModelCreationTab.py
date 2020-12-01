@@ -1812,6 +1812,11 @@ class ModelCreationTab(QtWidgets.QWidget):
         self.resultsMetricTable = SpreadSheetForecastEquations(self.parent.forecastEquationsTable, parent=self)
         topInfoLayoutTable.addWidget(self.resultsMetricTable)
 
+        self.exportResultModelsButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Generated Models Analysis</strong>')
+        self.exportResultModelsButton.setMaximumSize(250, 50)
+        self.exportResultModelsButton.setEnabled(True)
+        topInfoLayoutTable.addWidget(self.exportResultModelsButton)
+
         topInfoLayoutTableWidget = QtWidgets.QWidget()
         topInfoLayoutTableWidget.setLayout(topInfoLayoutTable)
         topInfoLayoutTableWidget.setContentsMargins(0, 0, 0, 0)

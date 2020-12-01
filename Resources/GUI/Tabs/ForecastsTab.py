@@ -103,8 +103,13 @@ class ForecastsTab(QtWidgets.QWidget):
         resultSelectedLabel = QtWidgets.QLabel('<strong style="font-size: 18px">Saved Models<strong>')
         topInfoLayoutTable.addWidget(resultSelectedLabel)
 
-        self.savedModelsTable = SpreadSheetForecastEquations(self.parent.forecastEquationsTable, parent=self)
+        self.savedModelsTable = SpreadSheetForecastEquations(self.parent.savedForecastEquationsTable, parent=self)
         topInfoLayoutTable.addWidget(self.savedModelsTable)
+
+        self.exportSavedModelsButton = richTextButton('<strong style="font-size: 16px; color:darkcyan">Saved Models Analysis</strong>')
+        self.exportSavedModelsButton.setMaximumSize(250, 50)
+        self.exportSavedModelsButton.setEnabled(True)
+        topInfoLayoutTable.addWidget(self.exportSavedModelsButton)
 
         topInfoLayoutTableWidget = QtWidgets.QWidget()
         topInfoLayoutTableWidget.setLayout(topInfoLayoutTable)
