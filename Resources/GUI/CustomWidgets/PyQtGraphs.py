@@ -1655,7 +1655,13 @@ class ModelTabTargetPlot(pg.GraphicsLayoutWidget):
         self.plot.addItem(medianBar)
         xAxis = self.plot.getAxis('bottom')
         ticks = [i.year for i in x]
-        xAxis.setTicks([[(x2[j], str(v)) for j, v in enumerate(ticks)]])
+        # Cleaner year labels
+        if len(ticks) > 40:
+            xAxis.setTicks([[(x2[j * 2], "'" + str(v)[-2:]) for j, v in enumerate(ticks[::2])]])
+        elif len(ticks) > 30:
+            xAxis.setTicks([[(x2[j], "'" + str(v)[-2:]) for j, v in enumerate(ticks)]])
+        else:
+            xAxis.setTicks([[(x2[j], str(v)) for j, v in enumerate(ticks)]])
         buff = (np.nanmax(y) - np.nanmin(y))/10
         self.plot.setLimits(xMin=self.plot.xMin - barWidth, xMax=self.plot.xMax + barWidth, yMin=self.plot.yMin-buff, yMax=self.plot.yMax+buff)
         self.plot.setRange(xRange=(self.plot.xMin - barWidth, self.plot.xMax + barWidth), yRange=(self.plot.yMin-buff, self.plot.yMax+buff))
