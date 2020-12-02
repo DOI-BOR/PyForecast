@@ -161,54 +161,44 @@ class forecastsTab(object):
         # Create metadata rows
         df = df.append(pd.Series(name='colheader'))
         df = df.append(pd.Series(name='predname'))
-        df = df.append(pd.Series(name='extids'))
         df = df.append(pd.Series(name='agency'))
+        df = df.append(pd.Series(name='extids'))
         df = df.append(pd.Series(name='units'))
         df = df.append(pd.Series(name='accummethod'))
         df = df.append(pd.Series(name='accumperiod'))
+        df = df.append(pd.Series(name='selectcount'))
         df = df.append(pd.Series(name='forcedflag'))
+        df = df.append(pd.Series(name='modheader'))
         # Populate predictor metadata cells
         for index, row in predictorsTable.iterrows():
-            df.loc['colheader', str(index)] = 'PREDICTOR'
+            df.loc['colheader', str(index)] = '|PREDICTOR|'
             df.loc['predname', str(index)] = datasetTable.loc[index[0]].DatasetName + '-' + datasetTable.loc[
                 index[0]].DatasetParameter
-            df.loc['extids', str(index)] = datasetTable.loc[index[0]].DatasetExternalID
             df.loc['agency', str(index)] = datasetTable.loc[index[0]].DatasetAgency
+            df.loc['extids', str(index)] = datasetTable.loc[index[0]].DatasetExternalID
             df.loc['units', str(index)] = datasetTable.loc[index[0]].DatasetUnits
             df.loc['accummethod', str(index)] = predictorsTable.loc[index].AccumulationMethod
             df.loc['accumperiod', str(index)] = predictorsTable.loc[index].AccumulationPeriod
-            df.loc['forcedflag', str(index)] = 'Forced=' + str(predictorsTable.loc[index].ForcingFlag).lower()
+            df.loc['forcedflag', str(index)] = str(predictorsTable.loc[index].ForcingFlag).lower()
+            df.loc['modheader', str(index)] = '|PREDICTOR SELECTED|'
         # Populate predictand metadata cells
         predictandID = modelsTable.loc[0].EquationPredictand
-        df.loc['colheader', 'modelpreproc'] = 'PREDICTAND'
+        df.loc['colheader', 'modelpreproc'] = '|PREDICTAND|'
         df.loc['predname', 'modelpreproc'] = datasetTable.loc[predictandID].DatasetName + '-' + datasetTable.loc[
             predictandID].DatasetParameter
-        df.loc['extids', 'modelpreproc'] = datasetTable.loc[predictandID].DatasetExternalID
         df.loc['agency', 'modelpreproc'] = datasetTable.loc[predictandID].DatasetAgency
+        df.loc['extids', 'modelpreproc'] = datasetTable.loc[predictandID].DatasetExternalID
         df.loc['units', 'modelpreproc'] = datasetTable.loc[predictandID].DatasetUnits
         df.loc['accummethod', 'modelpreproc'] = modelsTable.loc[0].PredictandMethod
         df.loc['accumperiod', 'modelpreproc'] = modelsTable.loc[0].PredictandPeriod
-        # Populate column header labels
-        df.loc['colheader', 'modelmetric'] = 'TYPE'
-        df.loc['predname', 'modelmetric'] = 'NAME'
-        df.loc['extids', 'modelmetric'] = 'AGENCY ID'
-        df.loc['agency', 'modelmetric'] = 'AGENCY SOURCE'
-        df.loc['units', 'modelmetric'] = 'UNITS'
-        df.loc['accummethod', 'modelmetric'] = 'ACCUMULATION METHOD'
-        df.loc['accumperiod', 'modelmetric'] = 'ACCUMULATION PERIOD'
-        # Populate row header labels
-        df.loc['forcedflag', 'modelnum'] = 'MODEL ID'
-        df.loc['forcedflag', 'modelcv'] = 'MODEL CROSS VALIDATION'
-        df.loc['forcedflag', 'modelregres'] = 'MODEL REGRESSION'
-        df.loc['forcedflag', 'modelpreproc'] = 'MODEL PRE-PROCESSOR'
-        df.loc['forcedflag', 'modelmetric'] = 'MODEL SCORING METRIC'
+        df.loc['accumperiod', 'modelpreproc'] = modelsTable.loc[0].PredictandPeriod
         # Populate model rows
         for index, row in modelsTable.iterrows():
             df = df.append(pd.Series(name=str(index)))
             df.loc[str(index), 'modelnum'] = str(index)
-            df.loc[str(index), 'modelpreproc'] = self.preProcessors[row.EquationMethod.split('/')[1]]['name']#row.EquationMethod.split('/')[1]
-            df.loc[str(index), 'modelregres'] = self.regressors[row.EquationMethod.split('/')[2]]['name']#row.EquationMethod.split('/')[2]
-            df.loc[str(index), 'modelcv'] = self.crossValidators[row.EquationMethod.split('/')[3]]['name']#row.EquationMethod.split('/')[3]
+            df.loc[str(index), 'modelpreproc'] = self.preProcessors[row.EquationMethod.split('/')[1]]['name']
+            df.loc[str(index), 'modelregres'] = self.regressors[row.EquationMethod.split('/')[2]]['name']
+            df.loc[str(index), 'modelcv'] = self.crossValidators[row.EquationMethod.split('/')[3]]['name']
             df.loc[str(index), 'modelmetric'] = str(row.EquationSkill)
             preds = row.EquationPredictors
             predStrings = []
@@ -221,6 +211,26 @@ class forecastsTab(object):
                 predStrings.append(predString)
             for predString in predStrings:
                 df.loc[str(index), predString] = 1
+        # Sum predictor-selected counts
+        selCount = df[df == 1].sum()
+        selCount['modelnum', 'modelcv', 'modelregres', 'modelpreproc', 'modelmetric'] = [np.nan, np.nan, np.nan, np.nan, np.nan]
+        df.loc['selectcount'] = selCount
+        # Populate column header labels
+        df.loc['colheader', 'modelmetric'] = '|TYPE|'
+        df.loc['predname', 'modelmetric'] = '|NAME|'
+        df.loc['agency', 'modelmetric'] = '|AGENCY SOURCE|'
+        df.loc['extids', 'modelmetric'] = '|AGENCY ID|'
+        df.loc['units', 'modelmetric'] = '|UNITS|'
+        df.loc['accummethod', 'modelmetric'] = '|ACCUMULATION METHOD|'
+        df.loc['accumperiod', 'modelmetric'] = '|ACCUMULATION PERIOD|'
+        df.loc['selectcount', 'modelmetric'] = '|SELECTED COUNT|'
+        df.loc['forcedflag', 'modelmetric'] = '|PREDICTOR FORCED|'
+        # Populate row header labels
+        df.loc['modheader', 'modelnum'] = '|MODEL ID|'
+        df.loc['modheader', 'modelcv'] = '|MODEL CROSS VALIDATION|'
+        df.loc['modheader', 'modelregres'] = '|MODEL REGRESSION|'
+        df.loc['modheader', 'modelpreproc'] = '|MODEL PRE-PROCESSOR|'
+        df.loc['modheader', 'modelmetric'] = '|MODEL SCORING METRIC(S)|'
         # Write to temp csv file and open
         handle, fn = tempfile.mkstemp(suffix='.csv')
         with os.fdopen(handle, "w", encoding='utf8', errors='surrogateescape', newline='\n') as f:

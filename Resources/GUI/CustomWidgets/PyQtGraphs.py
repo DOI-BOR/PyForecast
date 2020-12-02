@@ -204,14 +204,16 @@ class DateTimeAxis(pg.AxisItem):
 
     def tickStrings(self, values, scale, spacing):
         # Set the datetime display based on the zoom level
-        if spacing > 7 * 365.24 * 86400:
-            # FIX BUG (UTCFROMTIMESTAMP DOES NOT ACCEPT NEGATIVE NUMBERS)
-            if min(values) < 0:
-                return [(datetime(1970,1,1) + timedelta(seconds = value)).strftime("%Y-%m") for value in values]
-            return [datetime.utcfromtimestamp(value).strftime('%Y-%m') for value in values]
-        if min(values) < 0:
-            return [(datetime(1970, 1, 1) + timedelta(seconds=value)).strftime("%Y-%m") for value in values]
-        return [datetime.utcfromtimestamp(value).strftime('%Y-%m-%d') for value in values]
+        strings = []
+        for v in values:
+            if v < 0:
+                strings.append((datetime(1970, 1, 1) + timedelta(seconds=v)).strftime("%Y-%m"))
+            else:
+                if spacing > 7 * 365.24 * 86400:
+                    strings.append(datetime.utcfromtimestamp(v).strftime('%Y-%m'))
+                else:
+                    strings.append(datetime.utcfromtimestamp(v).strftime('%Y-%m-%d'))
+        return strings
 
 
 class DateTimeAxis_years(pg.AxisItem):
