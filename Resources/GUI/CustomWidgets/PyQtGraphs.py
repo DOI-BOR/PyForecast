@@ -410,6 +410,13 @@ class TimeSeriesPlot(pg.PlotItem):
                 self.viewbox_axis_2.removeItem(item)
                 self.viewbox_axis_2.removeItem(self.circle_items_axis_2[j])
 
+        # CLEAR ANY EXISTING DATA
+        for j, item in enumerate(self.line_items):
+            if item.isActive:
+                item.isActive = False
+                self.removeItem(item)
+                self.removeItem(self.circle_items[j])
+
         self.clear()
 
         # CHECK IF THERE IS ANY DATA TO PLOT
@@ -602,6 +609,12 @@ class TimeSeriesSliderPlot(pg.PlotItem):
 
         # CLEAR ANY EXISTING DATA
         self.clear()
+
+        # CLEAR ANY EXISTING DATA
+        for j, item in enumerate(self.line_items):
+            if item.isActive:
+                item.isActive = False
+                self.removeItem(item)
 
         # CONVERT X TO INTEGER SERIES
         x = x.astype("int64")/1000000000
