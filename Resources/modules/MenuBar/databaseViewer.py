@@ -13,12 +13,12 @@ class viewerWindow(QtWidgets.QDialog):
         self.forecastsTable = parent.forecastsTable
 
         tabWidget = QtWidgets.QTabWidget()
-        tabWidget.addTab(datasetTableDisplay(self.datasetTable), "Dataset Table")
-        tabWidget.addTab(datasetTableDisplay(self.datasetOperationsTable), "Dataset Operations Table")
+        tabWidget.addTab(datasetTableDisplay(self.datasetTable.copy()), "Dataset Table")
+        tabWidget.addTab(datasetTableDisplay(self.datasetOperationsTable.copy()), "Dataset Operations Table")
         #tabWidget.addTab(datasetTableDisplay(self.dataTable), "Raw Data Table")
-        tabWidget.addTab(datasetTableDisplay(self.modelRunsTable), "Defined Model Regression Table")
+        tabWidget.addTab(datasetTableDisplay(self.modelRunsTable.copy()), "Defined Model Regression Table")
         #tabWidget.addTab(datasetTableDisplay(self.forecastEquationsTable), "Generated Forecast Models Table")
-        tabWidget.addTab(datasetTableDisplay(self.savedForecastEquationsTable), "Saved Forecast Models Table")
+        tabWidget.addTab(datasetTableDisplay(self.savedForecastEquationsTable.copy()), "Saved Forecast Models Table")
         #tabWidget.addTab(datasetTableDisplay(self.forecastsTable), "Forecasts Table")
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(tabWidget)
