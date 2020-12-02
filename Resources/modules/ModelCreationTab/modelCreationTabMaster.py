@@ -86,7 +86,6 @@ class modelCreationTab(object):
         # Create an update method for when the tab widget gets changed to refresh elements
         self.modelTab.workflowWidget.currentChanged.connect(self.updateTabDependencies)
 
-
         ### Connect the simple predictor setup page ###
         # Link the doublelist to the output
         self.modelTab.layoutSimpleDoubleList.listOutput.itemSelectionChanged.connect(self.updateSimpleLayoutAggregationOptions)
@@ -103,7 +102,6 @@ class modelCreationTab(object):
         self.modelTab.targetSelect.currentIndexChanged.connect(self.updateTargetInfo)
         self.modelTab.predictandApplyButton.clicked.connect(self.applyPredictandAggregationOption)
 
-
         ### Connect the fill page ###
         # Connect the list widget to the right panel to adjust the display
         self.modelTab.fillList.currentRowChanged.connect(self.updateFillOptionsOnDataset)
@@ -117,7 +115,6 @@ class modelCreationTab(object):
 
         # Connect the stacked widget with the selection combo box
         self.modelTab.layoutFillMethodSelector.currentIndexChanged.connect(self.updateFillSubtab)
-
 
         ### Connect the extend page ###
         # Connect the list widget to the right panel to adjust the display
@@ -135,7 +132,6 @@ class modelCreationTab(object):
 
         # Link the button to the apply function
         self.modelTab.layoutExtendApplyButton.clicked.connect(self.applyExtendOptionsToDataset)
-
 
         ### Connect the window page ###
         # Connect the list widget to the right panel to adjust the display
@@ -168,6 +164,7 @@ class modelCreationTab(object):
         self.selectionModel.selectionChanged.connect(self.generateSelectedModel)
         self.modelTab.resultsMetricTable.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.modelTab.resultsMetricTable.customContextMenuRequested.connect(self.modelTableRightClick)
+        self.modelTab.exportResultModelsButton.clicked.connect(self.generateModelsAnalysis)
 
         return
 
@@ -1594,6 +1591,13 @@ class modelCreationTab(object):
     # ====================================================================================================================
     # RESULTS TAB FUNCTIONS
     # <editor-fold desc="Expand Results tab functions...">
+    def generateModelsAnalysis(self):
+        self.modelTab.exportResultModelsButton.setChecked(False)
+        modelsTable = self.forecastEquationsTable
+        self.buildModelAnalysisReport(modelsTable)
+        return
+
+
     def generateSelectedModel(self, selected, deselected):
         # todo: doc string
 
