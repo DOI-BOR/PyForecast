@@ -1323,11 +1323,11 @@ class modelCreationTab(object):
         on the model settings sub-tab.
         """
         if defaultSettings:
-            self.clickDefaults(self.modelTab.optionsCrossValidators, 1, False)
-            self.clickDefaults(self.modelTab.optionsPreprocessor, 3, False)
-            self.clickDefaults(self.modelTab.optionsRegression, 2, False)
-            self.clickDefaults(self.modelTab.optionsSelection, 3, False)
-            self.clickDefaults(self.modelTab.optionsScoring, 5, False)
+            self.clickDefaults(self.modelTab.optionsCrossValidators, [2], False)
+            self.clickDefaults(self.modelTab.optionsPreprocessor, [3], False)
+            self.clickDefaults(self.modelTab.optionsRegression, [2, 3, 5], False)
+            self.clickDefaults(self.modelTab.optionsSelection, [2], False)
+            self.clickDefaults(self.modelTab.optionsScoring, [5], False)
         else:
             try:
                 self.clickOption([self.modelRunsTable.loc[0]['CrossValidationType']], self.modelTab.optionsCrossValidators)
@@ -1337,28 +1337,31 @@ class modelCreationTab(object):
                 self.clickOption(self.modelRunsTable.loc[0]['ScoringParameters'], self.modelTab.optionsScoring)
             except:
                 print('INFO: No model run options defined in forecast file')
-                self.clickDefaults(self.modelTab.optionsCrossValidators, 1, True)
-                self.clickDefaults(self.modelTab.optionsPreprocessor, 3, True)
-                self.clickDefaults(self.modelTab.optionsRegression, 2, True)
-                self.clickDefaults(self.modelTab.optionsSelection, 3, True)
-                self.clickDefaults(self.modelTab.optionsScoring, 5, True)
+                self.clickDefaults(self.modelTab.optionsCrossValidators, [2], True)
+                self.clickDefaults(self.modelTab.optionsPreprocessor, [3], True)
+                self.clickDefaults(self.modelTab.optionsRegression, [2, 3, 5], True)
+                self.clickDefaults(self.modelTab.optionsSelection, [2], True)
+                self.clickDefaults(self.modelTab.optionsScoring, [5], True)
         return
 
 
     def clickOption(self, selectedOptions, optionList):
         for i in selectedOptions:
             for j in optionList:
+                j.setEnabled(True)
                 if i == j.objectName():
                     if not j.isChecked(): #click only if button isn't already clicked
                         j.click()
-                j.setEnabled(True)
+                else:
+                    if j.isChecked():
+                        j.click()
         return
 
 
     def clickDefaults(self, optionList, defaultIdx, enableButtons):
         counter = 0
         for j in optionList:
-            if counter == defaultIdx:
+            if counter in defaultIdx:
                 if not j.isChecked():  # click only if button isn't already clicked
                     j.click()
             else:

@@ -20,7 +20,8 @@ from    PyQt5   import  QtWidgets, \
 from    resources.GUI.Tabs  import  DatasetsTab, DataTab, ModelCreationTab, ForecastsTab
 from    resources.GUI.CustomWidgets import SVGIcon, customTabs
 
-myappid = u'reclamation.PyForecastv3.2b'
+softwareVersion = '4.0.0'
+myappid = u'reclamation.PyForecastv' + softwareVersion
 if platform.system() == 'Windows':
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
@@ -37,7 +38,8 @@ class UI_MainWindow(object):
         Physically lays out the application.
         """
         # Window
-        self.setWindowTitle("PyForecast - Untitled.fcst")
+        self.setWindowTitle("PyForecast V" + softwareVersion + " - Untitled.fcst")
+        self.softwareVersion = softwareVersion
         self.setMinimumSize(QtCore.QSize(900,750))
 
         # Fonts

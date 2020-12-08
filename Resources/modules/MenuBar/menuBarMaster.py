@@ -133,7 +133,7 @@ class menuBar(object):
         
         #self.userOptionsConfig.read('resources/temp/user_options.txt')
         # Apply the files and tables to the tabs
-        self.setWindowTitle("PyForecast - " + str(fname))
+        self.setWindowTitle("PyForecast V" + self.softwareVersion + " - " + str(fname))
         self.resetDatasetTab()
         self.resetDataTab()
         self.resetModelCreationTab()
