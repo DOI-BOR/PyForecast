@@ -1551,12 +1551,14 @@ class modelCreationTab(object):
                 self.updateStatusMessage('Populating forecast equations table...')
                 self.forecastEquationsTable.drop(self.forecastEquationsTable.index, inplace=True)
                 resultCounter = 0
-                for result in self.rg.resultsList:
-                    if resultCounter >= 500:
-                        break
+                df = pd.DataFrame(self.rg.resultsList)
+                df[['PIPE', 'Pre-ProcessingMethod', 'RegressionMethod', 'CrossValidation']] = df['Method'].str.split(
+                    '/', expand=True)
+                df = df.groupby('RegressionMethod').head(100) #get top-100 models out of each regression method
 
+                for result in df.iterrows():
                     self.forecastEquationsTable.loc[resultCounter] = [None] * self.forecastEquationsTable.columns.shape[0]
-                    resultPredictors = self.rg.resultsList[resultCounter]['Model']
+                    resultPredictors = result[1].Model
 
                     self.forecastEquationsTable.loc[resultCounter]['EquationSource'] = 'PyForecast'
                     self.forecastEquationsTable.loc[resultCounter]['ModelTrainingPeriod'] = self.modelRunsTable.loc[0]['ModelTrainingPeriod']
@@ -1565,8 +1567,8 @@ class modelCreationTab(object):
                     self.forecastEquationsTable.loc[resultCounter]['PredictandMethod'] = self.modelRunsTable.loc[0]['PredictandMethod']
                     self.forecastEquationsTable.loc[resultCounter]['EquationCreatedOn'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     # self.forecastEquationsTable.loc[resultCounter]['EquationIssueDate'] = ''
-                    self.forecastEquationsTable.loc[resultCounter]['EquationMethod'] = self.rg.resultsList[resultCounter]['Method']
-                    self.forecastEquationsTable.loc[resultCounter]['EquationSkill'] = self.rg.resultsList[resultCounter]['Score']
+                    self.forecastEquationsTable.loc[resultCounter]['EquationMethod'] = result[1].Method
+                    self.forecastEquationsTable.loc[resultCounter]['EquationSkill'] = result[1].Score
                     self.forecastEquationsTable.loc[resultCounter]['EquationPredictors'] = list(compress(predPool, resultPredictors))
                     self.forecastEquationsTable.loc[resultCounter]['PredictorPeriods'] = list(compress(predPeriods, resultPredictors))
                     self.forecastEquationsTable.loc[resultCounter]['PredictorMethods'] = list(compress(predMethods, resultPredictors))
@@ -1590,6 +1592,9 @@ class modelCreationTab(object):
                 self.updateStatusMessage('Model run complete! ' + str(len(self.rg.resultsList)) + ' models were evaluated.')
                 self.modelTab.resultsMetricTable.clearTable()
                 self.modelTab.resultsMetricTable.loadDataIntoModel(self.forecastEquationsTable)
+
+    # </editor-fold>
+
 
     # ====================================================================================================================
     # RESULTS TAB FUNCTIONS
