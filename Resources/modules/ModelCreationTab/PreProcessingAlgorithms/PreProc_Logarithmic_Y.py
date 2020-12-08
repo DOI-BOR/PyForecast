@@ -88,7 +88,6 @@ class preprocessor(object):
         # Make a copy of the data
         data_c = data.copy()
 
-
         # Log transform the y data
         data_c[:,-1] = np.log(data_c[:,-1])
 

@@ -33,8 +33,8 @@ class preprocessor(object):
         # Create an array to store transformed data
         self.transformedData = self.data
 
-        # take the natural logarithm of the y data, leaving the 
-        # x data alone.
+        # take the natural logarithm of the x data, leaving the
+        # y data alone.
         self.transformedData[:, :-1] = np.log(self.transformedData[:,:-1])
 
         return
@@ -84,8 +84,7 @@ class preprocessor(object):
         # Make a copy of the data
         data_c = data.copy()
 
-
-        # Log transform the y data
+        # Log transform the x data
         data_c[:,:-1] = np.log(data_c[:,:-1])
 
         return data_c

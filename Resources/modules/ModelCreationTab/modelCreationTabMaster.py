@@ -1550,16 +1550,13 @@ class modelCreationTab(object):
                 print('INFO: Populating forecast equations table...')
                 self.updateStatusMessage('Populating forecast equations table...')
                 self.forecastEquationsTable.drop(self.forecastEquationsTable.index, inplace=True)
-                resultCounter = 0
                 df = pd.DataFrame(self.rg.resultsList)
-                df[['PIPE', 'Pre-ProcessingMethod', 'RegressionMethod', 'CrossValidation']] = df['Method'].str.split(
-                    '/', expand=True)
+                df[['PIPE', 'Pre-ProcessingMethod', 'RegressionMethod', 'CrossValidation']] = df['Method'].str.split('/', expand=True)
                 df = df.groupby('RegressionMethod').head(100) #get top-100 models out of each regression method
-
+                resultCounter = 0
                 for result in df.iterrows():
                     self.forecastEquationsTable.loc[resultCounter] = [None] * self.forecastEquationsTable.columns.shape[0]
                     resultPredictors = result[1].Model
-
                     self.forecastEquationsTable.loc[resultCounter]['EquationSource'] = 'PyForecast'
                     self.forecastEquationsTable.loc[resultCounter]['ModelTrainingPeriod'] = self.modelRunsTable.loc[0]['ModelTrainingPeriod']
                     self.forecastEquationsTable.loc[resultCounter]['EquationPredictand'] = self.modelRunsTable.loc[0]['Predictand']
@@ -1578,12 +1575,6 @@ class modelCreationTab(object):
                     resultCounter += 1
 
                 if len(self.rg.resultsList) >= 1:
-                    # bestModel = self.rg.resultsList[0]
-                    # print("\nA total of {0} models were assessed".format(len(self.rg.resultsList)))
-                    # print("\nThe best model found was: ")
-                    # print("\t-> Predictors: {0}".format(''.join(['1' if i else '0' for i in bestModel['Model']])))
-                    # print("\t-> Method:     {0}".format(bestModel["Method"]))
-                    # print("\t-> Scores:     {0}".format(bestModel['Score']))
                     self.modelTab.summaryLayoutErrorLabel.setText('Success! ' + str(len(self.rg.resultsList)) + ' models were evaluated...')
                     self.modelTab.summaryLayoutErrorLabel.setStyleSheet("color : green")
                     self.modelTab.summaryLayoutErrorLabel.setVisible(True)
