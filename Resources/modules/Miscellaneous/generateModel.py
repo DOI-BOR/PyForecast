@@ -179,17 +179,19 @@ class Model(object):
         list.append(' ')
 
         list.append('----- MODEL VARIABLES -----')
-        list.append('Predictand Y: ' + str(
-            self.parent.datasetTable.loc[self.yID].DatasetName) + ' - ' + str(
-            self.parent.datasetTable.loc[self.yID].DatasetParameter))
+        list.append('Predictand Y: ' + str(self.parent.datasetTable.loc[self.yID].DatasetName) + ' - ' +
+                    str(self.parent.datasetTable.loc[self.yID].DatasetParameter) + ' {Period: ' +
+                    str(self.yPeriod) + ', Resampling: ' +
+                    str(self.yMethod) + '}')
         equation = 'Y ='
         hasCoefs = True
         hasNegativeCoef = False
         for i in range(len(self.xIDs)):
-            list.append('Predictor X' + str(i + 1) + ': ' + str(
-                self.parent.datasetTable.loc[
-                    self.xIDs[i]].DatasetName) + ' - ' + str(
-                self.parent.datasetTable.loc[self.xIDs[i]].DatasetParameter))
+            list.append('Predictor X' + str(i + 1) + ': ' +
+                        str(self.parent.datasetTable.loc[self.xIDs[i]].DatasetName) + ' - ' +
+                        str(self.parent.datasetTable.loc[self.xIDs[i]].DatasetParameter) + ' {Period: ' +
+                        str(self.xPeriods[i]) + ', Resampling: ' +
+                        str(self.xMethods[i]) + '}')
             try:
                 if hasCoefs:
                     coef = self.regression.coef[i]
