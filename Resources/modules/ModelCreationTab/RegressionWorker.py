@@ -25,7 +25,7 @@ from sklearn.cluster import KMeans
 REGRESSION_STOP_ITERATIONS = {
     "Regr_MultipleLinearRegressor": 20000,
     "Regr_PCARegressor": 10000,
-    "Regr_ZScore":20000,
+    "Regr_ZScore":10000,
     "Regr_SVM_RBF":4000,
     "Regr_MLPerceptron":500,
     "Regr_GammaGLM":2000
@@ -146,7 +146,7 @@ class RegressionWorker(QtCore.QRunnable):
         self.yTraining = np.array(self.yTraining).reshape(-1,1)
 
         # Compute the total number of model combinations that are possible
-        self.numPossibleModels = int('1'*(self.xTraining.shape[1] - self.forcedPredictors.count(True)), 2)
+        self.numPossibleModels = int('1'*(max(1, self.xTraining.shape[1] - self.forcedPredictors.count(True))), 2)
 
         # Create a table to store results
         self.resultsList = []

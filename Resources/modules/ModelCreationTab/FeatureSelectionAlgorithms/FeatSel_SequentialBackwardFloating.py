@@ -183,6 +183,16 @@ class FeatureSelector(object):
         # Make a copy of the predictors that we can manipulate
         model = self.currentPredictors.copy()
 
+        # Catch case if all predictors are forced
+        if all(model):
+            # Check that we haven't already computed this model combination
+            if model.to01() not in self.parent.computedModels:
+                # Compute the model score
+                score = self.scoreModel(model)
+                # Log the model results so that we don't try it again if we can avoid it
+                self.logCombinationResult(model, score)
+            return
+
         # Keep track of whether we added a predictor
         predictorAdded = False
 
