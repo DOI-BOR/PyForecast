@@ -122,7 +122,8 @@ def dataLoader(dataset, startDate, endDate):
         df = df[~df.index.duplicated(keep='first')] # Remove duplicates from the dataset
         if 'monthly2daily' in opts:
             print('INFO: Monthly data converted to daily')
-            df[df.columns[0]] = df[df.columns[0]].str.replace('[^\d.]', '').astype(float) #remove data flags
+            df[df.columns[0]] = df[df.columns[0]].str.replace('[^\d.]', '') #remove data flags
+            df[df.columns[0]] = pd.to_numeric(df[df.columns[0]],errors='coerce') #convert values to floats
             df = ConvertMonthlyToDaily(df)
         df = df[~df.index.isnull()]
         df.columns = ['USBR | ' + stationID + ' | ' + dataset.DatasetParameter + ' | ' +
