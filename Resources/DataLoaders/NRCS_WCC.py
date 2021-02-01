@@ -52,7 +52,8 @@ def dataLoader(stationDict, startDate, endDate):
     """
  
     # Set up the soap service
-    NRCS = Client('http://www.wcc.nrcs.usda.gov/awdbWebService/services?WSDL')
+    #NRCS = Client('http://www.wcc.nrcs.usda.gov/awdbWebService/services?WSDL')
+    NRCS = Client('https://wcc.sc.egov.usda.gov/awdbWebService/services?WSDL')
 
     # Get the station triplet
     triplet = NRCS.service.getStations(
