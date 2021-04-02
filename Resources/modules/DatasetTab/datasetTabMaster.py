@@ -347,7 +347,10 @@ class datasetTab(object):
 
         # Also refresh the dataset lists elsewhere in the software
         self.dataTab.datasetList.refreshList()#.datasetList.setDatasetTable(self.datasetTable)
-        self.modelTab.datasetList.refreshList()#setDatasetTable(self.datasetTable)
+        try:
+            self.modelTab.datasetList.refreshList()#setDatasetTable(self.datasetTable)
+        except:
+            print('INFO: No model-tab dataset list to refresh.')
 
 
     def addDatasetsFromWebMap(self, datasetAdditionMessage, refresh_gui = True):

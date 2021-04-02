@@ -104,7 +104,7 @@ class downloadDataThreadWorker(QtCore.QRunnable):
             dataset = self.datasetTable.loc[currentDataset]
 
             # Check whether the dataset is a composite dataset
-            if not pd.isnull(dataset['DatasetCompositeEquation']):
+            if not pd.isnull(dataset['DatasetCompositeEquation']) and dataset['DatasetDataloader'] == "COMPOSITE":
 
                 # Check whether all the datasets in the composite are available for composing
                 requiredDatasets = [int(i) for i in dataset['DatasetCompositeEquation'].split('/')[1].split(',')]

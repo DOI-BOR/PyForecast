@@ -18,8 +18,7 @@ class CombinedDatasetTbl(QtWidgets.QTableWidget):
         self.setColumnWidth(4, 70)
         self.addRow(0)
         self.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
-        
-        
+
         return
 
     def addRow(self, idx):
@@ -28,7 +27,11 @@ class CombinedDatasetTbl(QtWidgets.QTableWidget):
         addWidg.clicked.connect(lambda : self.addRow(self.rowCount()))
         removeWidg = addRemoveButton(add=False, idx = idx)
         removeWidg.clicked.connect(lambda : self.removeRow(removeWidg.idx) if removeWidg.idx != 0 else print("idx: {0}".format(removeWidg.idx)))
-        datasetSelect = datasetComboBox(self.parent)
+        #[JR] HAX
+        try:
+            datasetSelect = datasetComboBox(self.parent)
+        except:
+           datasetSelect = QtWidgets.QComboBox()
         coefficient = QtWidgets.QLineEdit()
         validator = QtGui.QDoubleValidator(-1000000,100000,10)
         coefficient.setValidator(validator)
