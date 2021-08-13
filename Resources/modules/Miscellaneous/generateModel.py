@@ -39,7 +39,7 @@ class Model(object):
         return
 
 
-    def generate(self):
+    def generate(self, excludeYears = True):
         """
         Data processing code adapted from Resources/Modules/ModelCreationTab/RegressionWorker.py setData()
 
@@ -48,6 +48,8 @@ class Model(object):
         # Iterate over predictor datasets and append to arrays
         popindex = []
         self.xTraining = []
+        if not excludeYears:
+            self.excludeYears = []
         for i in range(len(self.xIDs)):
 
             data = resampleDataSet(
@@ -138,6 +140,9 @@ class Model(object):
                                                                               self.crossValidator,
                                                                               nRuns=500)
         self.predictionRange = pd.DataFrame(np.percentile(predBootstrap, range(1, 100)), index=range(1, 100))
+        print('INFO: Prediction[5,25,50,75,95]=[' + str(self.predictionRange.loc[5][0]) + ',' +
+              str(self.predictionRange.loc[25][0]) + ',' + str(self.predictionRange.loc[50][0]) + ',' +
+              str(self.predictionRange.loc[75][0]) + ',' + str(self.predictionRange.loc[95][0]) + ']')
         # Run a prediction with the input data
         try:
             self.prediction = self.regression.predict(xData)
@@ -174,6 +179,8 @@ class Model(object):
             'Model Predictor IDs: ' + str(self.forecastEquation.EquationPredictors))
         list.append(
             'Selected Range (years): ' + str(self.trainingDates))
+        list.append(
+            'Excluded Range (years): ' + str(self.excludeYears))
         usedYears = ", ".join([str(years) for years in self.years])
         list.append('Used Range (years): ' + usedYears)
         list.append(' ')

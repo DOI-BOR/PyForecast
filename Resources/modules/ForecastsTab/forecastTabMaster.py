@@ -87,7 +87,7 @@ class forecastsTab(object):
         QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
         self.forecastsTab.selectedModel = Model(self.forecastsTab.parent, forecastEquationTableEntry)
         self.forecastsTab.selectedModel.equationID = modelIdx
-        self.forecastsTab.selectedModel.generate()
+        self.forecastsTab.selectedModel.generate(excludeYears=False)
         QtWidgets.QApplication.restoreOverrideCursor()
 
         # Update UI with selected model metadata
@@ -97,8 +97,13 @@ class forecastsTab(object):
         self.forecastsTab.resultsObservedForecstPlot.updateScatterPlot(self.forecastsTab.selectedModel.regressionData)
 
         # Update model run year and table
+        ## restrict runnable years to used ones for the model
         self.forecastsTab.modelYearSpin.setRange(self.forecastsTab.selectedModel.years[0], self.forecastsTab.selectedModel.years[-1])
         self.forecastsTab.modelYearSpin.setValue(self.forecastsTab.selectedModel.years[-1])
+        ## use years defined as part of the training period
+        self.forecastsTab.modelYearSpin.setRange(self.forecastsTab.selectedModel.trainingDates[0], self.forecastsTab.selectedModel.trainingDates[-1])
+        self.forecastsTab.modelYearSpin.setValue(self.forecastsTab.selectedModel.trainingDates[-1])
+
         self.updateForecastYearData()
         self.forecastsTab.runModelButton.setEnabled(True)
         self.forecastsTab.saveModelButton.setEnabled(False)
@@ -146,6 +151,9 @@ class forecastsTab(object):
 
 
     def buildModelAnalysisReport(self, modelsTable):
+        self.updateStatusMessage('PyForecast may become unresponsive during this process. Look at the console window to view progress...')
+        qm = QtGui.QMessageBox()
+        alsoExportValues = qm.question(self, 'PyForecast Model Analysis', "Would you also like to export the model values/hindcasts?", qm.Yes | qm.No)
         if modelsTable.shape[0] < 1:
             return
         print('INFO: Generating model analyis')
@@ -158,6 +166,8 @@ class forecastsTab(object):
         df.insert(0, "modelregres", 0)
         df.insert(0, "modelcv", 0)
         df.insert(0, "modelnum", 0)
+        # Create dataframe for model outputs
+        df2 = pd.DataFrame(columns = ['|MODEL ID|', '|PERIOD|', '|YEAR|', '|OBSERVED|', '|MODELED VALUE|', '|CV MODELED VALUE|'])
         # Create metadata rows
         df = df.append(pd.Series(name='colheader'))
         df = df.append(pd.Series(name='predname'))
@@ -211,6 +221,13 @@ class forecastsTab(object):
                 predStrings.append(predString)
             for predString in predStrings:
                 df.loc[str(index), predString] = 1
+            if alsoExportValues == qm.Yes:
+                print('INFO: Generating model ' + str(index) + ' of ' + str(modelsTable.shape[0]))
+                ithModel = Model(self.modelTab.parent, row)
+                ithModel.generate()
+                for modelIdx, modelRow in ithModel.regressionData.iterrows():
+                    df2.loc[str(index) + '-' + str(modelRow['Years'])] = [str(index), str(ithModel.yPeriod), str(modelRow['Years']),
+                                                                 str(modelRow['Observed']), str(modelRow['Prediction']), str(modelRow['CV-Prediction'])]
         # Sum predictor-selected counts
         selCount = df[df == 1].sum()
         selCount['modelnum', 'modelcv', 'modelregres', 'modelpreproc', 'modelmetric'] = [np.nan, np.nan, np.nan, np.nan, np.nan]
@@ -240,7 +257,17 @@ class forecastsTab(object):
                 os.startfile(fn)
             except Exception as e:
                 print('WARNING: Model analysis export error:', e)
+        if alsoExportValues == qm.Yes:
+            handle, fn = tempfile.mkstemp(suffix='.csv')
+            with os.fdopen(handle, "w", encoding='utf8', errors='surrogateescape', newline='\n') as f:
+                try:
+                    df2.to_csv(fn, index=False, header=True)
+                    print('INFO: Model analysis exported to file ' + fn)
+                    os.startfile(fn)
+                except Exception as e:
+                    print('WARNING: Model analysis export error:', e)
         print('INFO: Exporting model analyis')
+        self.updateStatusMessage('Model analysis complete!')
         return
 
 
