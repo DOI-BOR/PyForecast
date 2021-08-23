@@ -1,4 +1,4 @@
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore, QtGui
 from datetime import datetime
 from resources.modules.Miscellaneous import  loggingAndErrors
 
@@ -80,6 +80,10 @@ class preferencesDialog(QtWidgets.QDialog):
         self.appDatetimeSelector.setMaximumDate(QtCore.QDate(today.year, today.month, today.day))
         self.appDatetimeSelector.setDate(QtCore.QDate(today.year, today.month, today.day))
         layout.addRow(QtWidgets.QLabel("Set Application Date"), self.appDatetimeSelector)
+        self.savedModelsCountInput = QtWidgets.QLineEdit()
+        self.onlyInt = QtGui.QIntValidator()
+        self.savedModelsCountInput.setValidator(self.onlyInt)
+        layout.addRow(QtWidgets.QLabel("Max Saved Model Count"), self.savedModelsCountInput)
 
         self.generalTab.setLayout(layout)
 

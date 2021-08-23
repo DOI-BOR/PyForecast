@@ -1552,7 +1552,7 @@ class modelCreationTab(object):
                 self.forecastEquationsTable.drop(self.forecastEquationsTable.index, inplace=True)
                 df = pd.DataFrame(self.rg.resultsList)
                 df[['PIPE', 'Pre-ProcessingMethod', 'RegressionMethod', 'CrossValidation']] = df['Method'].str.split('/', expand=True)
-                df = df.groupby('RegressionMethod').head(100) #get top-100 models out of each regression method
+                df = df.groupby('RegressionMethod').head(200) #get top-100 models out of each regression method
                 resultCounter = 0
                 for result in df.iterrows():
                     self.forecastEquationsTable.loc[resultCounter] = [None] * self.forecastEquationsTable.columns.shape[0]
