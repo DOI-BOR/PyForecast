@@ -6,7 +6,8 @@ from scipy.stats import iqr
 from sklearn.neighbors import KernelDensity
 from PyQt5 import QtGui, QtWidgets
 import tempfile, os, csv
-
+from sklearn.experimental import enable_iterative_imputer
+from sklearn.impute import IterativeImputer
 
 class Model(object):
 
@@ -81,6 +82,16 @@ class Model(object):
         # Convert data lists to numpy arrays
         self.xTraining = np.array(self.xTraining).T
         self.yTraining = np.array(self.yTraining).reshape(-1, 1)
+
+        # Handle missing data
+        # MICE imputation
+        imp = IterativeImputer(max_iter=50, min_value=0, verbose=0)
+        imp.fit(self.xTraining)
+        self.xTraining = imp.transform(self.xTraining)
+        #[JR] - Fill data with column average if NaN/missing -- need a place to turn this on/off
+        #colMeans = np.nanmean(self.xTraining, axis=0)
+        #nanIdxs = np.where(np.isnan(self.xTraining))
+        #self.xTraining[nanIdxs] = np.take(colMeans, nanIdxs[1])
 
         # Compute the preprocessed dataset
         self.preprocessor = self.preprocessorClass(np.concatenate([self.xTraining, self.yTraining], axis=1))

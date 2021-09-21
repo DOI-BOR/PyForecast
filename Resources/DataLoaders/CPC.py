@@ -46,7 +46,24 @@ def dataLoader(stationDict, startDate, endDate):
     stationNum = stationDict['DatasetExternalID']
 
     # Grab the ENSO Nino3.4 data (SST and Anom)
-    if stationNum == 'nino3.4':
+    if stationNum == 'nino3.4' or stationNum == 'nino12' or stationNum == 'nino3' or stationNum == 'nino4':
+
+        # Use Nino3.4 index values by default
+        monIdx = 9
+        wekIdx = 3
+        idxLbl = 'Nino3.4 ANOM'
+        if stationNum == 'nino12':
+            monIdx = 3
+            wekIdx = 1
+            idxLbl = 'Nino1+2 ANOM'
+        if stationNum == 'nino3':
+            monIdx = 5
+            wekIdx = 2
+            idxLbl = 'Nino3 ANOM'
+        if stationNum == 'nino4':
+            monIdx = 7
+            wekIdx = 4
+            idxLbl = 'Nino4 ANOM'
 
         # We'll get as much weekly data as we can, then backfill with monthly data
         # Here are the relevant URLs
@@ -67,9 +84,9 @@ def dataLoader(stationDict, startDate, endDate):
             year = str(values[0])
             month = '0'+str(values[1])
             timestamps.append(pd.to_datetime(year + month[-2:] + '15', format='%Y%m%d'))
-            anoms.append(float(values[9]))
+            anoms.append(float(values[monIdx]))
 
-        dfMonth = pd.DataFrame(np.array(anoms).T, index = timestamps, columns = ['Nino3.4 ANOM | Indice | degC'])
+        dfMonth = pd.DataFrame(np.array(anoms).T, index = timestamps, columns = [idxLbl + ' | Indice | degC'])
 
         # Process the weekly data
         dataWeek = StringIO(dataWeek.content.decode('utf-8'))
@@ -79,9 +96,9 @@ def dataLoader(stationDict, startDate, endDate):
         for line in dataWeek[4:]:
             values = line.split('     ')
             timestamps.append(pd.to_datetime(values[0]))
-            anoms.append(float(values[3][4:]))
+            anoms.append(float(values[wekIdx][4:]))
 
-        dfWeek = pd.DataFrame(np.array(anoms).T, index = timestamps, columns = ['Nino3.4 ANOM | Indice | degC'])
+        dfWeek = pd.DataFrame(np.array(anoms).T, index = timestamps, columns = [idxLbl + ' | Indice | degC'])
 
         # Merge the 2 datasets, keeping all the weekly data and cutting some monthly
         dfMonth = dfMonth[dfMonth.index < dfWeek.index[0]]
