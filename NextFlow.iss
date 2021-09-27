@@ -13,10 +13,10 @@
 ; Run required batch file to consolidate all the stuff that InnoSetup needs.
 ;#expr Exec("C:\Users\jrocha\Documents\Python\NextFlow\installerPreBuild.bat")
 
-#define MyAppName "NextFlow"
-#define MyAppVersion "1.0"
+#define MyAppName "PyForecast"
+#define MyAppVersion "4.0"
 #define MyAppPublisher "USBR"
-#define MyAppURL "https://github.com/usbr/PyForecast/tree/NextFlow"
+#define MyAppURL "https://github.com/usbr/PyForecast"
 #define MyAppExeName "main.exe"
 #define bin "dist\main\"
 
@@ -33,7 +33,7 @@ AppUpdatesURL={#MyAppURL}
 DefaultDirName=C:\{#MyAppName}
 DisableProgramGroupPage=yes
 ; Assign a name to the installer file
-OutputBaseFilename=Install_NextFlow
+OutputBaseFilename=Install_PyForecastV4
 ; Define the icon to use for the installer and the application
 SetupIconFile={#bin}resources\GraphicalResources\icons\icon.ico
 Compression=lzma
