@@ -57,10 +57,87 @@ class modelCreationTab(object):
         self.modelTab.layoutSimpleDoubleList.updatedLinkedList.emit(self.modelTab.layoutSimpleDoubleList.listInput, self.modelTab.layoutSimpleDoubleList.listOutput)
         self.modelTab.layoutSimpleDoubleList.updatedOutputList.emit()
 
-        self.modelTab.expertButton.setChecked(True)
-
         self.modelTab.resultsMetricTable.clearTable()
         self.modelTab.resultsMetricTable.loadDataIntoModel(self.forecastEquationsTable)
+
+        # Set model-creation tab inputs
+        #self.modelTab.expertButton.setChecked(True)
+        modelRunEntry = self.modelRunsTable
+        if len(modelRunEntry.index) == 1:
+            runStartYr = modelRunEntry['ModelTrainingPeriod'][0].split('/')[0]
+            runEndYr = modelRunEntry['ModelTrainingPeriod'][0].split('/')[1]
+            runExcludeYr = modelRunEntry['ModelTrainingPeriod'][0].split('/')[2]
+            runPredictand = modelRunEntry['Predictand'][0]
+            runPredictandT1 = datetime.datetime.strptime(modelRunEntry['PredictandPeriod'][0].split('/')[1], '%Y-%m-%d')
+            runPredictandT2Offset = modelRunEntry['PredictandPeriod'][0].split('/')[2][1:len(modelRunEntry['PredictandPeriod'][0].split('/')[2])-1]
+            runPredictandT2 = runPredictandT1 + datetime.timedelta(days=int(runPredictandT2Offset))
+            runPredictandMethod = modelRunEntry['PredictandMethod'][0]
+            runCV = modelRunEntry['CrossValidationType'][0]
+            runPreproc = modelRunEntry['Preprocessors'][0]
+            runRegressions = modelRunEntry['RegressionTypes'][0]
+            runFeatSel = modelRunEntry['FeatureSelectionTypes'][0]
+            runScorer = modelRunEntry['ScoringParameters'][0]
+
+            # Set predictand
+            predIdx = 0
+            for i in range(self.modelTab.targetSelect.count()):
+                if runPredictand == self.modelTab.targetSelect.itemData(i).name:
+                    predIdx = i
+            self.modelTab.targetSelect.setCurrentIndex(predIdx)
+            # Set aggregation scheme
+            aggIdx = self.modelTab.methodCombo.findData(runPredictandMethod)
+            self.modelTab.methodCombo.setCurrentIndex(aggIdx)
+            # Set predictand dates
+            self.modelTab.periodStart.setDateTime(
+                QtCore.QDateTime(QtCore.QDate().currentDate().year(), runPredictandT1.month, runPredictandT1.day, 0, 0))
+            self.modelTab.periodEnd.setDateTime(
+                QtCore.QDateTime(QtCore.QDate().currentDate().year(), runPredictandT2.month, runPredictandT2.day, 0, 0))
+            # Set training period
+            self.modelTab.targetPeriodStartYear.setText(runStartYr)
+            self.modelTab.targetPeriodEndYear.setText(runEndYr)
+            if runExcludeYr != '1900':
+                self.modelTab.targetPeriodExcludedYears.setText(runExcludeYr)
+            # Set CV algos
+            for j in range (len(self.modelTab.optionsCrossValidators)):
+                jthReg = self.modelTab.optionsCrossValidators[j].objectName()
+                if jthReg in [runCV]:
+                    self.modelTab.optionsCrossValidators[j].setChecked(True)
+                else:
+                    self.modelTab.optionsCrossValidators[j].setChecked(False)
+                self.modelTab.optionsCrossValidators[j].clicked_update()
+            # Set Pre-Processing algos
+            for j in range (len(self.modelTab.optionsPreprocessor)):
+                jthReg = self.modelTab.optionsPreprocessor[j].objectName()
+                if jthReg in runPreproc:
+                    self.modelTab.optionsPreprocessor[j].setChecked(True)
+                else:
+                    self.modelTab.optionsPreprocessor[j].setChecked(False)
+                self.modelTab.optionsPreprocessor[j].clicked_update()
+            # Set regression algos
+            for j in range (len(self.modelTab.optionsRegression)):
+                jthReg = self.modelTab.optionsRegression[j].objectName()
+                if jthReg in runRegressions:
+                    self.modelTab.optionsRegression[j].setChecked(True)
+                else:
+                    self.modelTab.optionsRegression[j].setChecked(False)
+                self.modelTab.optionsRegression[j].clicked_update()
+            # Set Feature Selection algos
+            for j in range (len(self.modelTab.optionsSelection)):
+                jthReg = self.modelTab.optionsSelection[j].objectName()
+                if jthReg in runFeatSel:
+                    self.modelTab.optionsSelection[j].setChecked(True)
+                else:
+                    self.modelTab.optionsSelection[j].setChecked(False)
+                self.modelTab.optionsRegression[j].clicked_update()
+            # Set Scoring algos
+            for j in range (len(self.modelTab.optionsScoring)):
+                jthReg = self.modelTab.optionsScoring[j].objectName()
+                if jthReg in runScorer:
+                    self.modelTab.optionsScoring[j].setChecked(True)
+                else:
+                    self.modelTab.optionsScoring[j].setChecked(False)
+                self.modelTab.optionsScoring[j].clicked_update()
+
 
         return
 
