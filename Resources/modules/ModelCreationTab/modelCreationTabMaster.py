@@ -61,9 +61,10 @@ class modelCreationTab(object):
         self.modelTab.resultsMetricTable.loadDataIntoModel(self.forecastEquationsTable)
 
         # Set model-creation tab inputs
-        #self.modelTab.expertButton.setChecked(True)
         modelRunEntry = self.modelRunsTable
-        if len(modelRunEntry.index) == 1:
+        if len(modelRunEntry.index) == 1 and not hasattr(self.modelTab,'initialized'):
+            self.modelTab.initialized = True
+            self.modelTab.expertButton.setChecked(True)
             runStartYr = modelRunEntry['ModelTrainingPeriod'][0].split('/')[0]
             runEndYr = modelRunEntry['ModelTrainingPeriod'][0].split('/')[1]
             runExcludeYr = modelRunEntry['ModelTrainingPeriod'][0].split('/')[2]
