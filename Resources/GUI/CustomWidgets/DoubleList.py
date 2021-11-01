@@ -777,53 +777,56 @@ class DoubleListMultipleInstance(QtWidgets.QWidget):
         None
 
         """
-
-        # Get the current row of index
+        # Get the selected row indeces
         if row_index is None:
-            input_row_index = self.listInput.currentRow()
+            input_row_indices = [x.row() for x in self.listInput.selectedIndexes()]
         else:
-            input_row_index = row_index
+            input_row_indices = [row_index]
+            
+        # Loop through the selected row indices
+        for input_row_index in input_row_indices:
+            # Append the row into the output table
+            rows = self.listInput.datasetTable.iloc[input_row_index, :]
 
-        # Append the row into the output table
-        rows = self.listInput.datasetTable.iloc[input_row_index, :]
+            # Determine the instance number to assign to the entry
+            try:
+                i_number_of_existing = len(self.listOutput.datasetTable.loc[[rows.name]])
+            except:
+                i_number_of_existing = 0
 
-        # Determine the instance number to assign to the entry
-        try:
-            i_number_of_existing = len(self.listOutput.datasetTable.loc[[rows.name]])
-        except:
-            i_number_of_existing = 0
+            # Check that there's not a gap in the numbering scheme
+            if i_number_of_existing > 0:
+                # Get the instance numbers of the datasets
+                indices = [x[1] for x in self.listOutput.datasetTable.loc[[rows.name]].index]
 
-        # Check that there's not a gap in the numbering scheme
-        if i_number_of_existing > 0:
-            # Get the instance numbers of the datasets
-            indices = [x[1] for x in self.listOutput.datasetTable.loc[[rows.name]].index]
+                # Determine if there are gaps in the values
+                indicesOrdered = [True if x == indices[x] else False for x in range(0, len(indices), 1)]
 
-            # Determine if there are gaps in the values
-            indicesOrdered = [True if x == indices[x] else False for x in range(0, len(indices), 1)]
+                # Replace with the first available missing index
+                if not all(indicesOrdered):
+                    # Replace with the first missing index
+                    for entry in range(0, len(indicesOrdered), 1):
+                        if not indicesOrdered[entry]:
+                            i_number_of_existing = entry
+                            break
 
-            # Replace with the first available missing index
-            if not all(indicesOrdered):
-                # Replace with the first missing index
-                for entry in range(0, len(indicesOrdered), 1):
-                    if not indicesOrdered[entry]:
-                        i_number_of_existing = entry
-                        break
+            self.listOutput.datasetTable.loc[(rows.name, i_number_of_existing), :] = rows
 
-        self.listOutput.datasetTable.loc[(rows.name, i_number_of_existing), :] = rows
+            # Add an entry into the color table
+            if self.listOutput.itemColors is not None:
+                self.listOutput.itemColors.append(self.outputDefaultColor)
 
-        # Add an entry into the color table
-        if self.listOutput.itemColors is not None:
-            self.listOutput.itemColors.append(self.outputDefaultColor)
+            # Trigger refreshes of the input and output lists
+            if refresh:
+                self.listInput.refreshDatasetList()
+                self.listOutput.refreshDatasetList()
 
-        # Trigger refreshes of the input and output lists
-        if refresh:
-            self.listInput.refreshDatasetList()
-            self.listOutput.refreshDatasetList()
+                # Emit for the updated linked doublelists
+                self.updatedLinkedList.emit(self.listInput, self.listOutput)
+                self.updatedOutputList.emit()
+                self.predictorAdded.emit()
 
-            # Emit for the updated linked doublelists
-            self.updatedLinkedList.emit(self.listInput, self.listOutput)
-            self.updatedOutputList.emit()
-            self.predictorAdded.emit()
+
 
     def _setButtonUpClicked(self):
         """
