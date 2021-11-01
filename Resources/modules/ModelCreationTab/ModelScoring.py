@@ -10,6 +10,7 @@ SCORING_RULES = {
     "MSE":      False,
     "AIC":      False,
     "AIC_C":    False,
+    "STD_ERR":  False,
 }
 
 def sortScores(scores = None):
@@ -143,6 +144,11 @@ class Scorers(object):
             "NAME":"Adjusted Coefficient of Determination",
             "WEBSITE":"https://en.wikipedia.org/wiki/Coefficient_of_determination#Adjusted_R2",
             "HTML":"<strong>R<sup>2</sup><sub>adj</sub></strong>"
+        },
+        "STD_ERR":{
+            "NAME":"Standard Error",
+            "WEBSITE":"https://en.wikipedia.org/wiki/Standard_error",
+            "HTML":"<strong>Standard Error</strong>"
         }
     }
 
@@ -267,3 +273,21 @@ class Scorers(object):
         adj_r2 = 1 - (1 - r2)*(n_samples - 1)/(n_samples - n_features - 1)
         
         return adj_r2
+
+
+    def STD_ERR(self,y_obs, y_prd, n_features):
+        """
+        Computes the standard deviation of the error term between
+        the observed Y Values and the predicted Y Values. The standard
+        error is computed with the formula:
+
+            std_err = StandardDeviation(y_obs - y_prd) / SquareRoot(n_samples)
+
+        """
+
+        n_samples = len(y_obs)                  # Number of samples
+        ss_res = (y_obs-y_prd)                  # Array of errors
+
+        std_err = np.std(ss_res) / np.sqrt(n_samples)
+
+        return std_err

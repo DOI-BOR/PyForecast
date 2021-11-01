@@ -60,7 +60,7 @@ class modelCreationTab(object):
         self.modelTab.resultsMetricTable.clearTable()
         self.modelTab.resultsMetricTable.loadDataIntoModel(self.forecastEquationsTable)
 
-        # Set model-creation tab inputs
+        # Set model-creation tab inputs only once on forecast-file load
         modelRunEntry = self.modelRunsTable
         if len(modelRunEntry.index) == 1 and not hasattr(self.modelTab,'initialized'):
             self.modelTab.initialized = True
