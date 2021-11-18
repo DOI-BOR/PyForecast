@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from resources.modules.Miscellaneous import loggingAndErrors
 from PyQt5 import QtCore, QtGui, QtWidgets
+from resources.modules.ModelCreationTab import PredictionIntervalBootstrap
 
 import pandas as pd
 from scipy import stats
@@ -103,6 +104,9 @@ class forecastsTab(object):
         ## use years defined as part of the training period
         self.forecastsTab.modelYearSpin.setRange(self.forecastsTab.selectedModel.trainingDates[0], self.forecastsTab.selectedModel.trainingDates[-1])
         self.forecastsTab.modelYearSpin.setValue(self.forecastsTab.selectedModel.trainingDates[-1])
+        ## use years with available data
+        self.forecastsTab.modelYearSpin.setRange(self.forecastsTab.selectedModel.dataDates[0], self.forecastsTab.selectedModel.dataDates[-1])
+        self.forecastsTab.modelYearSpin.setValue(self.forecastsTab.selectedModel.dataDates[-1])
 
         self.updateForecastYearData()
         self.forecastsTab.runModelButton.setEnabled(True)
@@ -113,10 +117,10 @@ class forecastsTab(object):
     def updateForecastYearData(self):
         lookupYear = self.forecastsTab.modelYearSpin.value()
         try:
-            lookupData = self.forecastsTab.selectedModel.predictorData.loc[int(lookupYear)]
+            lookupData = self.forecastsTab.selectedModel.x.loc[int(lookupYear)]
         except:
             return
-        remainingData = self.forecastsTab.selectedModel.predictorData.drop(index=lookupYear)
+        remainingData = self.forecastsTab.selectedModel.x.drop(index=lookupYear)
         remainingAvg = remainingData.mean()
         lookupAvg = 100.0 * lookupData / remainingAvg
         remainingPctls = remainingData.quantile([0,.1,.25,.5,.75,.9,1])
@@ -167,7 +171,8 @@ class forecastsTab(object):
         df.insert(0, "modelcv", 0)
         df.insert(0, "modelnum", 0)
         # Create dataframe for model outputs
-        df2 = pd.DataFrame(columns = ['|MODEL ID|', '|PERIOD|', '|YEAR|', '|OBSERVED|', '|MODELED VALUE|', '|CV MODELED VALUE|'])
+        df2 = pd.DataFrame(columns = ['|MODEL ID|', '|PERIOD|', '|YEAR|', '|OBSERVED|', '|MODELED VALUE|',
+                                      '|CV MODELED VALUE|','|P10|','|P25|','|P50|','|P75|','|P90|'])
         # Create metadata rows
         df = df.append(pd.Series(name='colheader'))
         df = df.append(pd.Series(name='predname'))
@@ -222,12 +227,42 @@ class forecastsTab(object):
             for predString in predStrings:
                 df.loc[str(index), predString] = 1
             if alsoExportValues == qm.Yes:
-                print('INFO: Generating model ' + str(index) + ' of ' + str(modelsTable.shape[0]))
                 ithModel = Model(self.modelTab.parent, row)
-                ithModel.generate()
-                for modelIdx, modelRow in ithModel.regressionData.iterrows():
-                    df2.loc[str(index) + '-' + str(modelRow['Years'])] = [str(index), str(ithModel.yPeriod), str(modelRow['Years']),
-                                                                 str(modelRow['Observed']), str(modelRow['Prediction']), str(modelRow['CV-Prediction'])]
+                try:
+                    ithModel.generate()
+                    print('INFO: Processing model ' + str(index) + ' of ' + str(modelsTable.shape[0]) + '...')
+                    for modelIdx, modelRow in ithModel.regressionData.iterrows():
+                        # Setup Bootstrap dataset
+                        jthYear = modelRow['Years']
+                        XY_ = np.hstack((ithModel.xTraining, ithModel.yTraining))
+                        if jthYear is not None:
+                            # Move the fore/hind-cast year to the end of the array
+                            yearRowIdx = ithModel.predictorData.index.get_loc(int(jthYear))
+                            yearRow = XY_[yearRowIdx]
+                            XY_ = np.delete(XY_, yearRowIdx, axis=0)
+                            XY_ = np.vstack((XY_, yearRow))
+                        # Run prediction interval bootstrap
+                        print('INFO:      Running prediction bootstrap '+ str(int(jthYear)) + '...')
+                        predBootstrap = PredictionIntervalBootstrap.computePredictionInterval(ithModel, XY_, ithModel.preprocessorClass,
+                                                                              ithModel.regressionClass,
+                                                                              ithModel.crossValidator,
+                                                                              nRuns=200)
+                        pctlPredictions = pd.DataFrame(np.percentile(predBootstrap, range(1, 100)), index=range(1, 100))
+                        df2.loc[str(index) + '-' + str(modelRow['Years'])] = [str(index), str(ithModel.yPeriod),
+                                                                              str(modelRow['Years']),
+                                                                              str(modelRow['Observed']),
+                                                                              str(modelRow['Prediction']),
+                                                                              str(modelRow['CV-Prediction']),
+                                                                              str(pctlPredictions.loc[10][0]),
+                                                                              str(pctlPredictions.loc[25][0]),
+                                                                              str(pctlPredictions.loc[50][0]),
+                                                                              str(pctlPredictions.loc[75][0]),
+                                                                              str(pctlPredictions.loc[90][0])]
+
+
+                except:
+                    print('INFO: Failed model ' + str(index) + ' of ' + str(modelsTable.shape[0]))
+
         # Sum predictor-selected counts
         selCount = df[df == 1].sum()
         selCount['modelnum', 'modelcv', 'modelregres', 'modelpreproc', 'modelmetric'] = [np.nan, np.nan, np.nan, np.nan, np.nan]

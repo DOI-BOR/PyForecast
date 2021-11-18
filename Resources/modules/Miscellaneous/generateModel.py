@@ -49,6 +49,7 @@ class Model(object):
         # Iterate over predictor datasets and append to arrays
         popindex = []
         self.xTraining = []
+        self.x = []
         if not excludeYears:
             self.excludeYears = []
         for i in range(len(self.xIDs)):
@@ -60,6 +61,9 @@ class Model(object):
             )
 
             data.set_axis([idx.year if idx.month < 10 else idx.year + 1 for idx in data.index], axis=0, inplace=True)
+            idx = list(filter(lambda date: date not in self.excludeYears, data.index))
+            self.dataDates = idx
+            self.x.append(list(data.loc[idx]))  # X-Data
             data = data.loc[self.trainingDates[0]: self.trainingDates[1]]
             idx = list(filter(lambda date: date not in self.excludeYears, data.index))
             self.xTraining.append(list(data.loc[idx]))  # Training Data
@@ -78,8 +82,11 @@ class Model(object):
         # Add any missing data for the current water year to the arrays
         maxListLength = max([len(i) for i in self.xTraining])
         [i.append(np.nan) for i in self.xTraining if len(i) < maxListLength]
+        maxListLength = max([len(i) for i in self.x])
+        [i.append(np.nan) for i in self.x if len(i) < maxListLength]
 
         # Convert data lists to numpy arrays
+        self.x = np.array(self.x).T
         self.xTraining = np.array(self.xTraining).T
         self.yTraining = np.array(self.yTraining).reshape(-1, 1)
 
@@ -119,6 +126,7 @@ class Model(object):
                                                   self.regression.y_p_cv-self.regression.y]),
                                            index=['Years','Observed', 'Prediction', 'CV-Prediction','PredictionError','CV-PredictionError']).T
         self.predictorData = pd.DataFrame(data=self.regression.x, index=self.years,columns=self.forecastEquation.EquationPredictors)
+        self.x = pd.DataFrame(data=self.x[:len(self.dataDates)], index=self.dataDates,columns=self.forecastEquation.EquationPredictors)
 
         return
 
@@ -149,11 +157,12 @@ class Model(object):
         predBootstrap = PredictionIntervalBootstrap.computePredictionInterval(self, XY_, self.preprocessorClass,
                                                                               self.regressionClass,
                                                                               self.crossValidator,
-                                                                              nRuns=500)
+                                                                              nRuns=1000)
         self.predictionRange = pd.DataFrame(np.percentile(predBootstrap, range(1, 100)), index=range(1, 100))
-        print('INFO: Prediction[5,25,50,75,95]=[' + str(self.predictionRange.loc[5][0]) + ',' +
-              str(self.predictionRange.loc[25][0]) + ',' + str(self.predictionRange.loc[50][0]) + ',' +
-              str(self.predictionRange.loc[75][0]) + ',' + str(self.predictionRange.loc[95][0]) + ']')
+        print('INFO: Prediction[5,10,25,50,75,90,95]=[' + str(self.predictionRange.loc[5][0]) + ',' +
+              str(self.predictionRange.loc[10][0]) + ',' + str(self.predictionRange.loc[25][0]) + ',' +
+              str(self.predictionRange.loc[50][0]) + ',' + str(self.predictionRange.loc[75][0]) + ',' +
+              str(self.predictionRange.loc[90][0]) + ',' + str(self.predictionRange.loc[95][0]) + ']')
         # Run a prediction with the input data
         try:
             self.prediction = self.regression.predict(xData)
