@@ -197,16 +197,16 @@ class forecastsTab(object):
             df.loc['forcedflag', str(index)] = str(predictorsTable.loc[index].ForcingFlag).lower()
             df.loc['modheader', str(index)] = '|PREDICTOR SELECTED|'
         # Populate predictand metadata cells
-        predictandID = modelsTable.loc[0].EquationPredictand
+        predictandID = modelsTable.loc[modelsTable.index[0]].EquationPredictand
         df.loc['colheader', 'modelpreproc'] = '|PREDICTAND|'
         df.loc['predname', 'modelpreproc'] = datasetTable.loc[predictandID].DatasetName + '-' + datasetTable.loc[
             predictandID].DatasetParameter
         df.loc['agency', 'modelpreproc'] = datasetTable.loc[predictandID].DatasetAgency
         df.loc['extids', 'modelpreproc'] = datasetTable.loc[predictandID].DatasetExternalID
         df.loc['units', 'modelpreproc'] = datasetTable.loc[predictandID].DatasetUnits
-        df.loc['accummethod', 'modelpreproc'] = modelsTable.loc[0].PredictandMethod
-        df.loc['accumperiod', 'modelpreproc'] = modelsTable.loc[0].PredictandPeriod
-        df.loc['accumperiod', 'modelpreproc'] = modelsTable.loc[0].PredictandPeriod
+        df.loc['accummethod', 'modelpreproc'] = modelsTable.loc[modelsTable.index[0]].PredictandMethod
+        df.loc['accumperiod', 'modelpreproc'] = modelsTable.loc[modelsTable.index[0]].PredictandPeriod
+        df.loc['accumperiod', 'modelpreproc'] = modelsTable.loc[modelsTable.index[0]].PredictandPeriod
         # Populate model rows
         for index, row in modelsTable.iterrows():
             df = df.append(pd.Series(name=str(index)))

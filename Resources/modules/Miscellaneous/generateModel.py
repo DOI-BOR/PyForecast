@@ -152,17 +152,23 @@ class Model(object):
             XY_ = np.delete(XY_, yearRowIdx, axis=0)
             XY_ = np.vstack((XY_, yearRow))
             xData = self.predictorData.loc[int(year)]
+        
         # Run prediction interval bootstrap
-        print('INFO: Running prediction bootstrap...')
-        predBootstrap = PredictionIntervalBootstrap.computePredictionInterval(self, XY_, self.preprocessorClass,
-                                                                              self.regressionClass,
-                                                                              self.crossValidator,
-                                                                              nRuns=1000)
-        self.predictionRange = pd.DataFrame(np.percentile(predBootstrap, range(1, 100)), index=range(1, 100))
-        print('INFO: Prediction[5,10,25,50,75,90,95]=[' + str(self.predictionRange.loc[5][0]) + ',' +
-              str(self.predictionRange.loc[10][0]) + ',' + str(self.predictionRange.loc[25][0]) + ',' +
-              str(self.predictionRange.loc[50][0]) + ',' + str(self.predictionRange.loc[75][0]) + ',' +
-              str(self.predictionRange.loc[90][0]) + ',' + str(self.predictionRange.loc[95][0]) + ']')
+        try:
+            print('INFO: Running prediction bootstrap...')
+            predBootstrap = PredictionIntervalBootstrap.computePredictionInterval(self, XY_, self.preprocessorClass,
+                                                                                  self.regressionClass,
+                                                                                  self.crossValidator,
+                                                                                  nRuns=1000)
+            self.predictionRange = pd.DataFrame(np.percentile(predBootstrap, range(1, 100)), index=range(1, 100))
+            print('INFO: Prediction[5,10,25,50,75,90,95]=[' + str(self.predictionRange.loc[5][0]) + ',' +
+                  str(self.predictionRange.loc[10][0]) + ',' + str(self.predictionRange.loc[25][0]) + ',' +
+                  str(self.predictionRange.loc[50][0]) + ',' + str(self.predictionRange.loc[75][0]) + ',' +
+                  str(self.predictionRange.loc[90][0]) + ',' + str(self.predictionRange.loc[95][0]) + ']')
+        except:
+            print('INFO: Prediction bootstrap failed!')
+            self.predictionRange = pd.DataFrame(np.nan, index=range(1,100), columns=[''])
+
         # Run a prediction with the input data
         try:
             self.prediction = self.regression.predict(xData)
