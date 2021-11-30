@@ -1,5 +1,5 @@
 # PyForecast
-PyForecast is a statistical modeling tool useful in predicting monthly and seasonal inflows and streamflows. The tool collects meterological and hydrologic datasets, analyzes hundreds to thousands of predictor subsets, and returns statistical regressions between predictors and streamflows. Check out the [Wiki](https://github.com/usbr/PyForecast/wiki) for background information and a brief walkthrough for how to use the software. Beta testing is underway, you may download an installer at [this link](https://github.com/usbr/PyForecast/releases/tag/beta) to install PyForecast on your machine.
+PyForecast is a statistical modeling tool useful in predicting monthly and seasonal inflows and streamflows. The tool collects meterological and hydrologic datasets, analyzes hundreds to thousands of predictor subsets, and returns statistical regressions between predictors and streamflows. Check out the [Wiki](https://github.com/usbr/PyForecast/wiki) for background information and a brief walkthrough for how to use the software. Beta testing is underway, you may download an installer at [this link](https://github.com/usbr/PyForecast/releases) to install PyForecast on your machine.
 
 ## Requirements
 * Python 3.X with the following libraries installed
