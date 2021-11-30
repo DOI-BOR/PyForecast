@@ -37,11 +37,11 @@ ECHO OOOOOOOOOOOOOOO
 pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org fuzzywuzzy -U --user
 ECHO OOOOOOOOOOOOOOOO
 pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org bitarray -U --user
-ECHO OOOOOOOOOOOOOOOO
-pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org statsmodels -U --user
 ECHO OOOOOOOOOOOOOOOOO
-pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org -Iv pyqtchart==5.9.2 --user
+pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org statsmodels -U --user
 ECHO OOOOOOOOOOOOOOOOOO
+pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org -Iv pyqtchart==5.9.2 --user
+ECHO OOOOOOOOOOOOOOOOOOO
 ECHO.
 ECHO Press any key to exit
 PAUSE
