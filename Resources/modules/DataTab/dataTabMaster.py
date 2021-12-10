@@ -177,12 +177,11 @@ class dataTab(object):
             # updated values are those where there are both old and new values, but they are different
             updatedValuesNew = pd.DataFrame(mergedDataTable[(mergedDataTable['_merge'] == 'both') & (mergedDataTable['Value_new'] != mergedDataTable['Value_old']) & (mergedDataTable['EditFlag'] == False)][['Value_new', 'EditFlag']])
             if not updatedValuesNew.empty:
-                
-                if loggingAndErrors.displayDialogYesNo("The newly fetched data contains updates to old values. Do you want to replace the old values with the updated data? \n\n Note that any updated values will affect forecasts and model skill, though no equations will be changed."):
-                
-                    updatedValuesNew.columns = ['Value', 'EditFlag']
-                    self.dataTable = self.dataTable.append(updatedValuesNew)
-                    self.dataTable = self.dataTable[~self.dataTable.index.duplicated(keep='last')]
+                # JR - Remove check for updating data since user is already selecting to do so on the Data Tab via the 'Update with new data' radio button
+                #if loggingAndErrors.displayDialogYesNo("The newly fetched data contains updates to old values. Do you want to replace the old values with the updated data? \n\n Note that any updated values will affect forecasts and model skill, though no equations will be changed."):
+                updatedValuesNew.columns = ['Value', 'EditFlag']
+                self.dataTable = self.dataTable.append(updatedValuesNew)
+                self.dataTable = self.dataTable[~self.dataTable.index.duplicated(keep='last')]
 
             # Set the data for the spreadsheet and initialize the plots
             self.dataTab.spreadsheet.model().loadDataIntoModel(self.dataTable, self.datasetTable)
