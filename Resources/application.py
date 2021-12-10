@@ -136,7 +136,6 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
         self.threadPool = QtCore.QThreadPool()
 
         # Show the application
-        self.fileOpened = False
         self.show()#.showMaximized()
 
         return

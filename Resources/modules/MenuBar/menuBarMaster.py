@@ -86,12 +86,6 @@ class menuBar(object):
     def openForecastFile(self):
         """
         """
-        if self.fileOpened:
-            self.showMessageBox("Warning", "Forecast file already open",
-                                "Start another PyForecast window or close and " +
-                                "reopen PyForecast to open another forecast file")
-            return
-
         fname = QFileDialog.getOpenFileName(self, 'Open File','*.fcst')[0]
         #self.applicationPrefsConfig['FILE OPS']['file_name'] = fname
         if fname == '':
@@ -138,7 +132,6 @@ class menuBar(object):
         self.resetDataTab()
         self.resetModelCreationTab()
         self.resetForecastsTab()
-        self.fileOpened = True
         self.updateStatusMessage('Forecast file loaded!')
 
 
