@@ -32,7 +32,9 @@ forecastExtension = ['fcst']
 forecastFiles = [fn for fn in os.listdir(forecastDirectory) if any(fn.endswith(ext) for ext in forecastExtension)]
 for file in forecastFiles:
     fname = file
+    fname = forecastDirectory + "\\" + fname
     outListEntry = file + ","
+
     ######################################################
     # Load data and populate all the PyForecast tables
     print(fname + '#########################################')
@@ -122,8 +124,7 @@ for file in forecastFiles:
             outListEntry += 'Forecast cannot be issued -- missing data,NaN,NaN'
         else:
             ithModel.predict(ithModel.x.loc[endYear])
-            outListEntry += 'OK,'+ str(ithModel.prediction) + ',' + str(';'.join(map(str, ithModel.predictionRange)))
-
+            outListEntry += 'OK ModelId=' + str(ithModelEntry.name) + ','+ str(ithModel.prediction) + ',' + str(';'.join(map(str, ithModel.predictionRange)))
 
     print('----- OK!')
     print(' ')
