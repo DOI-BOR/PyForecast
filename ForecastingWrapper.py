@@ -11,9 +11,9 @@ warnings.filterwarnings("ignore")
 ######################################################
 # Wrapper script inputs and outputs
 pathString = r"C:\Users\jrocha\Desktop\_TLWRK_STUFF\ForecastRebuild\CSCI\PyCastFiles"
-wyInput = 2021
+wyInput = 2020
 outList = []
-outList.append('FILENAME,RUNMESSAGE,PREDICTION,PREDICTIONRANGE')
+outList.append('FILENAME,RUNMESSAGE,PREDICTION,PREDICTIONRANGE[P10;P25;P50;P75;P90]')
 
 ######################################################
 # Start PyForecast in the background
@@ -90,7 +90,7 @@ for file in forecastFiles:
 
     while pyCast.threadPool.activeThreadCount() > 0:
         print('  downloading data - active threads=' + str(pyCast.threadPool.activeThreadCount()))
-        time.sleep(3)
+        time.sleep(5)
 
     #isDonwloading = True
     #dSetIds = np.unique(pyCast.dataTable.index.get_level_values('DatasetInternalID'))
@@ -121,10 +121,14 @@ for file in forecastFiles:
         ithModel.generate()
         if endYear not in ithModel.x.index:
             print('Forecast cannot be issued -- missing data...')
-            outListEntry += 'Forecast cannot be issued -- missing data,NaN,NaN'
+            ithOutListEntry = outListEntry + 'MISSING DATA ModelId=' + str(ithModelEntry.name) + ',nan,nan,nan,nan,nan,nan'
         else:
-            ithModel.predict(ithModel.x.loc[endYear])
-            outListEntry += 'OK ModelId=' + str(ithModelEntry.name) + ','+ str(ithModel.prediction) + ',' + str(';'.join(map(str, ithModel.predictionRange)))
+            try:
+                ithModel.predict(ithModel.x.loc[endYear])
+                ithOutListEntry = outListEntry + 'OK ModelId=' + str(ithModelEntry.name) + ','+ str(ithModel.prediction) + ',' + str(','.join(map(str, ithModel.predictionRange.values[[10,25,50,75,90],0])))
+            except:
+                ithOutListEntry = outListEntry + 'FAILED ModelId=' + str(ithModelEntry.name) + ',nan,nan,nan,nan,nan,nan'
+        outList.append(ithOutListEntry.replace("[", "").replace("]", ""))
 
     print('----- OK!')
     print(' ')
@@ -133,6 +137,6 @@ for file in forecastFiles:
 # Write output file
 date_time = datetime.datetime.now()
 tsString = date_time.strftime("%d%b%YT%H%M%S")
-with open(forecastDirectory + r'\ForecastWrapperOutput-' + tsString + '.csv', 'w') as f:
+with open(forecastDirectory + r'\ForecastWrapperOutput-' + tsString.upper() + '.csv', 'w') as f:
     for item in outList:
         f.write("%s\n" % item)
