@@ -1,12 +1,9 @@
 ######################################################
 # Import modules
 import resources.application as app
-import os
-import pickle
-import datetime
-import time
-import warnings
+import os, pickle, datetime, time, warnings, sys
 warnings.filterwarnings("ignore")
+from PyQt5 import QtGui, QtWidgets, QtCore
 
 ######################################################
 # Wrapper script inputs and outputs
@@ -19,6 +16,8 @@ outList.append('FILENAME,RUNMESSAGE,PREDICTION,PREDICTIONRANGE[P10;P25;P50;P75;P
 # Start PyForecast in the background
 print('#########################################')
 print('Starting dummy PyForecast instance in the background...')
+# Begin loading the application
+dummyApp = QtWidgets.QApplication(sys.argv)
 pyCast = app.mainWindow()
 pyCast.hide()
 print('----- OK!')
