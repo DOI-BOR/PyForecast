@@ -1,16 +1,17 @@
 ######################################################
 # Import modules
 import resources.application as app
-import os, pickle, datetime, time, warnings, sys
+import os, pickle, datetime, time, warnings, sys, pandas
 warnings.filterwarnings("ignore")
-from PyQt5 import QtGui, QtWidgets, QtCore
+from PyQt5 import QtWidgets
+from resources.modules.Miscellaneous.generateModel import Model
 
 ######################################################
 # Wrapper script inputs and outputs
 pathString = r"C:\Users\jrocha\Desktop\_TLWRK_STUFF\ForecastRebuild\CSCI\PyCastFiles"
 wyInput = 2020
 outList = []
-outList.append('FILENAME,RUNMESSAGE,PREDICTION,PREDICTIONRANGE[P10;P25;P50;P75;P90]')
+outList.append('FILENAME,RUNMESSAGE,PREDICTION,PREDICTIONRANGE[P10;P25;P50;P75;P90],XVALUES[n-Predictors]')
 
 ######################################################
 # Start PyForecast in the background
@@ -88,23 +89,8 @@ for file in forecastFiles:
     pyCast.downloadData()
 
     while pyCast.threadPool.activeThreadCount() > 0:
-        print('  downloading data - active threads=' + str(pyCast.threadPool.activeThreadCount()))
+        print('  still downloading data - active threads=' + str(pyCast.threadPool.activeThreadCount()))
         time.sleep(5)
-
-    #isDonwloading = True
-    #dSetIds = np.unique(pyCast.dataTable.index.get_level_values('DatasetInternalID'))
-    #dSetCompletion = np.zeros((len(dSetIds),1), dtype=bool)
-    #while isDonwloading:
-        #for dSetIdx in range(len(dSetIds)):
-        #    dSetId = dSetIds[dSetIdx]
-        #    maxT = pyCast.dataTable[pyCast.dataTable.index.get_level_values('DatasetInternalID').isin([dSetId])].index.max()[0]
-        #    if maxT == datetime.datetime(endYearT, 9, 30):
-        #        dSetCompletion[dSetIdx] = True
-        #if np.count_nonzero(dSetCompletion) == len(dSetIds):
-        #    isDonwloading = False
-        #else:
-        #    print('Active threads = ' + str(pyCast.threadPool.activeThreadCount()))
-        #    time.sleep(3)
 
     print('----- OK!')
     print(' ')
@@ -113,7 +99,6 @@ for file in forecastFiles:
     # Loop through the saved forecast models and generate forecasts
     print(fname + '#########################################')
     print('Generating forecasts...')
-    from resources.modules.Miscellaneous.generateModel import Model
     for modelIdx in range(len(pyCast.savedForecastEquationsTable)):
         ithModelEntry = pyCast.savedForecastEquationsTable.iloc[modelIdx]
         ithModel = Model(parent=pyCast,forecastEquationTableEntry=ithModelEntry)
@@ -124,7 +109,10 @@ for file in forecastFiles:
         else:
             try:
                 ithModel.predict(ithModel.x.loc[endYear])
-                ithOutListEntry = outListEntry + 'OK ModelId=' + str(ithModelEntry.name) + ','+ str(ithModel.prediction) + ',' + str(','.join(map(str, ithModel.predictionRange.values[[10,25,50,75,90],0])))
+                xValues = pandas.concat([ithModel.x.loc[endYear], pyCast.datasetTable], axis=1, join="inner").iloc[:,[4,2,5,3,0]]
+                xStrings = x = xValues.to_string(header=False, index=False, index_names=False).split('\n')
+                xString = [' '.join(ele.split()) for ele in xStrings]
+                ithOutListEntry = outListEntry + 'OK ModelId=' + str(ithModelEntry.name) + ','+ str(ithModel.prediction) + ',' + str(','.join(map(str, ithModel.predictionRange.values[[10,25,50,75,90],0]))) + ',' + xString
             except:
                 ithOutListEntry = outListEntry + 'FAILED ModelId=' + str(ithModelEntry.name) + ',nan,nan,nan,nan,nan,nan'
         outList.append(ithOutListEntry.replace("[", "").replace("]", ""))
