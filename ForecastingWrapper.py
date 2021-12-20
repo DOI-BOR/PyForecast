@@ -11,7 +11,7 @@ from resources.modules.Miscellaneous.generateModel import Model
 pathString = r"C:\Users\jrocha\Desktop\_TLWRK_STUFF\ForecastRebuild\CSCI\PyCastFiles"
 wyInput = 2020
 outList = []
-outList.append('FILENAME,RUNMESSAGE,PREDICTION,PREDICTIONRANGE[P10;P25;P50;P75;P90],XVALUES[n-Predictors]')
+outList.append('FILENAME,RUNMESSAGE,PREDICTION,PREDICTIONRANGE[P10],PREDICTIONRANGE[P25],PREDICTIONRANGE[P50],PREDICTIONRANGE[P75],PREDICTIONRANGE[P90],XVALUES[n-Predictors]')
 
 ######################################################
 # Start PyForecast in the background
@@ -110,8 +110,8 @@ for file in forecastFiles:
             try:
                 ithModel.predict(ithModel.x.loc[endYear])
                 xValues = pandas.concat([ithModel.x.loc[endYear], pyCast.datasetTable], axis=1, join="inner").iloc[:,[4,2,5,3,0]]
-                xStrings = x = xValues.to_string(header=False, index=False, index_names=False).split('\n')
-                xString = [' '.join(ele.split()) for ele in xStrings]
+                xStrings = xValues.to_string(header=False, index=False, index_names=False).split('\n')
+                xString = ','.join([' '.join(ele.split()) for ele in xStrings])
                 ithOutListEntry = outListEntry + 'OK ModelId=' + str(ithModelEntry.name) + ','+ str(ithModel.prediction) + ',' + str(','.join(map(str, ithModel.predictionRange.values[[10,25,50,75,90],0]))) + ',' + xString
             except:
                 ithOutListEntry = outListEntry + 'FAILED ModelId=' + str(ithModelEntry.name) + ',nan,nan,nan,nan,nan,nan'
