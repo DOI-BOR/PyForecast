@@ -8,8 +8,8 @@ from resources.modules.Miscellaneous.generateModel import Model
 
 ######################################################
 # Wrapper script inputs and outputs
-pathString = r"C:\Users\jrocha\Desktop\_TLWRK_STUFF\ForecastRebuild\CSCI\PyCastFiles"
-wyInput = 2020
+pathString = r"C:\Users\jrocha\Desktop\_TLWRK_STUFF\Forecasting\JAN2022"
+wyInput = 2022
 outList = []
 outList.append('FILENAME,RUNMESSAGE,PREDICTION,PREDICTIONRANGE[P10],PREDICTIONRANGE[P25],PREDICTIONRANGE[P50],PREDICTIONRANGE[P75],PREDICTIONRANGE[P90],XVALUES[n-Predictors]')
 
@@ -77,12 +77,14 @@ for file in forecastFiles:
     # Download and update data to the user defined WY
     print(fname + '#########################################')
     print('Downloading and updating data...')
-    startYear = pyCast.dataTable.index.max()[0].year
-    pyCast.dataTab.startYearInput.setValue(startYear)
     endYear = datetime.date.today().year
     if datetime.date.today().month > 9:
         endYear = endYear + 1
     endYear = wyInput
+    startYear = pyCast.dataTable.index.max()[0].year
+    if startYear == endYear:
+        startYear = endYear - 1
+    pyCast.dataTab.startYearInput.setValue(startYear)
     pyCast.dataTab.endYearInput.setValue(endYear)
     pyCast.dataTab.freshDownloadOption.setChecked(False)
     pyCast.dataTab.updateOption.setChecked(True)
@@ -102,19 +104,25 @@ for file in forecastFiles:
     for modelIdx in range(len(pyCast.savedForecastEquationsTable)):
         ithModelEntry = pyCast.savedForecastEquationsTable.iloc[modelIdx]
         ithModel = Model(parent=pyCast,forecastEquationTableEntry=ithModelEntry)
-        ithModel.generate()
-        if endYear not in ithModel.x.index:
-            print('Forecast cannot be issued -- missing data...')
-            ithOutListEntry = outListEntry + 'MISSING DATA ModelId=' + str(ithModelEntry.name) + ',nan,nan,nan,nan,nan,nan'
-        else:
-            try:
-                ithModel.predict(ithModel.x.loc[endYear])
-                xValues = pandas.concat([ithModel.x.loc[endYear], pyCast.datasetTable], axis=1, join="inner").iloc[:,[4,2,5,3,0]]
-                xStrings = xValues.to_string(header=False, index=False, index_names=False).split('\n')
-                xString = ','.join([' '.join(ele.split()) for ele in xStrings])
-                ithOutListEntry = outListEntry + 'OK ModelId=' + str(ithModelEntry.name) + ','+ str(ithModel.prediction) + ',' + str(','.join(map(str, ithModel.predictionRange.values[[10,25,50,75,90],0]))) + ',' + xString
-            except:
-                ithOutListEntry = outListEntry + 'FAILED ModelId=' + str(ithModelEntry.name) + ',nan,nan,nan,nan,nan,nan'
+        try:
+            # JR - BREAKPOINT GOES ON THE NEXT LINE
+            ithModel.generate()
+            if endYear not in ithModel.x.index:
+                print('Forecast cannot be issued -- missing data...')
+                ithOutListEntry = outListEntry + 'MISSING DATA ModelId=' + str(ithModelEntry.name) + ',nan,nan,nan,nan,nan,nan'
+            else:
+                try:
+                    # JR - BREAKPOINT GOES ON THE NEXT LINE
+                    ithModel.predict(ithModel.x.loc[endYear])
+                    xValues = pandas.concat([ithModel.x.loc[endYear], pyCast.datasetTable], axis=1, join="inner").iloc[:, [4, 2, 5, 3, 0]]
+                    xStrings = xValues.to_string(header=False, index=False, index_names=False).split('\n')
+                    xString = ','.join([' '.join(ithString.split()) for ithString in xStrings])
+                    # JR - BREAKPOINT GOES ON THE NEXT LINE
+                    ithOutListEntry = outListEntry + 'OK ModelId=' + str(ithModelEntry.name) + ',' + str(ithModel.prediction) + ',' + str(','.join(map(str, ithModel.predictionRange.values[[10,25,50,75,90],0]))) + ',' + xString
+                except:
+                    ithOutListEntry = outListEntry + 'FAILED ModelId=' + str(ithModelEntry.name) + ',nan,nan,nan,nan,nan,nan'
+        except:
+            ithOutListEntry = outListEntry + 'FAILED regenerating model - potential data errors...'
         outList.append(ithOutListEntry.replace("[", "").replace("]", ""))
 
     print('----- OK!')
