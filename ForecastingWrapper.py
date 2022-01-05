@@ -12,7 +12,7 @@ if __name__ == '__main__':
     pathString = r"C:\Users\jrocha\Desktop\_TLWRK_STUFF\Forecasting\JAN2022"
     wyInput = 2022
     outList = []
-    outList.append('FILENAME,RUNMESSAGE,PREDICTION,PREDICTIONRANGE[P10],PREDICTIONRANGE[P25],PREDICTIONRANGE[P50],PREDICTIONRANGE[P75],PREDICTIONRANGE[P90],XVALUES[n-Predictors]')
+    outList.append('FILENAME,RUNMESSAGE,PREDICTION,PREDICTIONRANGE[P10],PREDICTIONRANGE[P25],PREDICTIONRANGE[P50],PREDICTIONRANGE[P75],PREDICTIONRANGE[P90],MODELEQUATION,MODELVARIABLES[n-Predictors],XVALUES[n-Predictors]')
 
     ######################################################
     # Start PyForecast in the background
@@ -21,7 +21,6 @@ if __name__ == '__main__':
     # Begin loading the application
     dummyApp = QtWidgets.QApplication(sys.argv)
     pyCast = app.mainWindow()
-    #pyCast.show()
     pyCast.hide()
     print('----- OK!')
     print(' ')
@@ -113,25 +112,36 @@ if __name__ == '__main__':
             ithModel = Model(parent=pyCast,forecastEquationTableEntry=ithModelEntry)
             try:
                 # JR - BREAKPOINT GOES ON THE NEXT LINE
-                ithModel.generate()
+                ithModel.generate() #Regenerate Model
                 if endYear not in ithModel.x.index:
                     print('Forecast cannot be issued -- missing data...')
                     ithOutListEntry = outListEntry + 'MISSING DATA ModelId=' + str(ithModelEntry.name) + ',nan,nan,nan,nan,nan,nan'
+                    print('----- FAIL!')
                 else:
                     try:
                         # JR - BREAKPOINT GOES ON THE NEXT LINE
-                        ithModel.predict(ithModel.x.loc[endYear])
+                        ithModel.predict(ithModel.x.loc[endYear]) #Make a prediction
+                        # Build model output strings
+                        equationString = ithModel.modelReport[ithModel.modelReport.index("----- MODEL EQUATION -----") + 1]
+                        equationVariables = ithModel.modelReport[(ithModel.modelReport.index("----- MODEL VARIABLES -----") + 1):(ithModel.modelReport.index("----- MODEL EQUATION -----") - 1)]
+                        equationVariables = [w.replace(',', ';') for w in equationVariables]
+                        equationVariablesString = ','.join([' '.join(ithString.split()) for ithString in equationVariables])
                         xValues = pandas.concat([ithModel.x.loc[endYear], pyCast.datasetTable], axis=1, join="inner").iloc[:, [4, 2, 5, 3, 0]]
                         xStrings = xValues.to_string(header=False, index=False, index_names=False).split('\n')
                         xString = ','.join([' '.join(ithString.split()) for ithString in xStrings])
-                        ithOutListEntry = outListEntry + 'OK ModelId=' + str(ithModelEntry.name) + ',' + str(ithModel.prediction) + ',' + str(','.join(map(str, ithModel.predictionRange.values[[10,25,50,75,90],0]))) + ',' + xString
+                        # Build model output row
+                        ithOutListEntry = outListEntry + 'OK ModelId=' + str(ithModelEntry.name) + ',' + str(ithModel.prediction) + ',' + str(','.join(map(str, ithModel.predictionRange.values[[10,25,50,75,90],0]))) + ',' + equationString + ',' + equationVariablesString + ',' + xString
+                        print('----- OK!')
                     except:
                         ithOutListEntry = outListEntry + 'FAILED ModelId=' + str(ithModelEntry.name) + ',nan,nan,nan,nan,nan,nan'
+                        print('----- FAIL!')
             except:
-                ithOutListEntry = outListEntry + 'FAILED regenerating model - potential data errors...'
+                ithOutListEntry = outListEntry + 'FAILED regenerating model - potential model and/or data errors...'
+                print('----- FAIL!')
+
+            # Add output row to output array
             outList.append(ithOutListEntry.replace("[", "").replace("]", ""))
 
-        print('----- OK!')
         print(' ')
 
     ######################################################

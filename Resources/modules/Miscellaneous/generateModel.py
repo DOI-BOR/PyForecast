@@ -31,6 +31,7 @@ class Model(object):
         self.trainingDates = list(map(int, modelTrainingStrings[:2]))
         if len(modelTrainingStrings) > 2:
             self.excludeYears = list(map(int, modelTrainingStrings[2].split(',')))
+        self.modelReport = []
 
         # Build regression object
         self.regression = self.regressionClass(parent = self,
@@ -62,7 +63,8 @@ class Model(object):
 
             data.set_axis([idx.year if idx.month < 10 else idx.year + 1 for idx in data.index], axis=0, inplace=True)
             idx = list(filter(lambda date: date not in self.excludeYears, data.index))
-            self.dataDates = idx
+            if (i == 0 or len(idx) < len(self.dataDates)):
+                self.dataDates = idx
             self.x.append(list(data.loc[idx]))  # X-Data
             data = data.loc[self.trainingDates[0]: self.trainingDates[1]]
             idx = list(filter(lambda date: date not in self.excludeYears, data.index))
@@ -128,6 +130,9 @@ class Model(object):
         self.predictorData = pd.DataFrame(data=self.regression.x, index=self.years,columns=self.forecastEquation.EquationPredictors)
         self.x = pd.DataFrame(data=self.x[:len(self.dataDates)], index=self.dataDates,columns=self.forecastEquation.EquationPredictors)
 
+        # Build model report
+        self.buildReportList()
+
         return
 
 
@@ -175,6 +180,7 @@ class Model(object):
         except:
             # Report the 50th percentile prediction bootstrap if prediction fails.
             self.prediction = self.predictionRange.loc[50]
+
         return
 
 
@@ -182,9 +188,10 @@ class Model(object):
         listWidget.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
         # Update UI with selected model metadata
         listWidget.clear()
-        list = self.buildReportList()
-        for i in range(len(list)):
-            text = list[i]
+        if bool(self.modelReport):
+            self.buildReportList()
+        for i in range(len(self.modelReport)):
+            text = self.modelReport[i]
             if 'WARNING' in text:
                 widg = QtWidgets.QListWidgetItem(text)
                 widg.setForeground(QtGui.QColor("#FF0000"))
@@ -297,12 +304,14 @@ class Model(object):
             except:
                 pass
 
-        return list
+        self.modelReport = list
 
 
     def export(self):
         # Get regular displayed model info
-        list = self.buildReportList()
+        if bool(self.modelReport):
+            self.buildReportList()
+        list = self.modelReport
         list = [w.replace(',', ';') for w in list]
         # Get underlying data
         xy = pd.DataFrame(np.column_stack((self.years,self.regression.x,self.regression.y,self.regression.y_p)))
