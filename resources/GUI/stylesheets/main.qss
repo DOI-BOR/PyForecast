@@ -1,0 +1,325 @@
+QMainWindow {
+    background: #007396;
+    font-family: "Segoe UI";
+    font-size: 15px;
+    color: #003E51
+}
+QMenuBar { 
+    background-color: #d2d2d2;
+    font-family: "Segoe UI";
+    color: black;
+    border-bottom: 1px solid darkgray
+}
+QMenuBar::item:selected {
+    background: #707070;
+    color: black;
+}
+QStackedWidget {
+    background: #e8e8e8;
+}
+QStatusBar {
+    background: #003E51;
+    color: #ffffff;
+}
+QWidget#EnhancedTabWidget {
+    background: #003E51;
+    font-family: "Segoe UI";
+    font-size: 15px;
+}
+QWidget#EnhancedTabWidget_tint {
+    background: #002b39;
+    font-family: "Segoe UI";
+    font-size: 15px;
+}
+QWidget#EnhancedTabWidget QWidget#TabLabel {
+    padding: 0px;
+    margin: 0px;
+    background: #003E51;
+    color: #b6b6b6;
+    border: 0px solid #007396;
+    border-color: #007396;
+}
+QWidget#EnhancedTabWidget_tint QWidget#TabLabel {
+    padding: 0px;
+    margin: 0px;
+    background: #002b39;
+    color: #b6b6b6;
+    border: 0px solid #007396;
+    border-color: #007396;
+}
+QWidget#EnhancedTabWidget QLabel#LabelText {
+    padding: 0px;
+    border-width: 0px;
+    background: #003E51;
+    font-size: 12px;
+    color: #b6b6b6;
+}
+QWidget#EnhancedTabWidget_tint QLabel#LabelText {
+    padding: 0px;
+    border-width: 0px;
+    background: #002b39;
+    font-size: 12px;
+    color: #b6b6b6;
+}
+QWidget#EnhancedTabWidget QLabel#LabelIcon {
+    padding: 0px;
+    border-width: 0px;
+    background: #003E51;
+    color: #b6b6b6;
+}
+QWidget#EnhancedTabWidget_tint QLabel#LabelIcon {
+    padding: 0px;
+    border-width: 0px;
+    background: #002b39;
+    color: #b6b6b6;
+}
+QTabBar {
+    color: #d6d6d6;
+    font-family: "Segoe UI Semibold";
+}
+
+QTabBar::tab {
+    background: #007396;
+    min-width: 10ex;
+    padding: 5px;
+    border-style: inset;
+    border-left: 1px solid #003E51;
+}
+QTabBar::tab:first {
+    border-left: 0px;
+}
+QTabBar::tab:last {
+    border-right: 1px solid #003E51;
+}
+QTabWidget[objectName="datasetTabPane"] QTabBar::tab {
+    background: #007396;
+    min-width: 10ex;
+    padding-top: 15px;
+    border-style: inset;
+    border-top: 1px solid #003E51;
+    border-left: 0px;
+    border-right: 1px solid #003E51
+}
+QTabWidget[objectName="datasetTabPane"] QTabBar::tab:first {
+    border-top: 0px solid #003E51;
+}
+QTabWidget[objectName="datasetTabPane"] QTabBar::tab:last {
+    border-bottom: 1px solid #003E51;
+}
+QTabWidget[objectName="datasetTabPane"]::pane {
+    background: #f0f0f0;
+    border-right: 1px solid #003E51;
+    border-top: 0px;
+}
+QTabWidget[objectName="datasetTabPane"] QTabBar::tab::selected {
+    color: #ffffff;
+    background: #003E51;
+    border-right: 3px solid #ffffff;
+}
+
+QTabBar::tab:hover{
+    color: #ffffff;
+}
+QTabBar::tab:selected {
+    color: #ffffff;
+    background: #003E51;
+    
+    border-top: 3px solid #ffffff;
+}
+QTabWidget::pane {
+    background: #dddddd;
+    border-top: 1px solid #003E51;
+}
+
+QTabWidget {
+    background: #e8e8e8;
+    font-family: "Segoe UI";
+    font-size: 15px;
+    color: #003E51;
+}
+
+QSplitter {
+    border: 0px;
+}
+QSplitter::handle:horizontal {
+    width: 1px;
+    
+}
+QLabel {
+    font-family: "Open Sans Regular", "Open Sans SemiBold", "Open Sans";
+    color: #003E51;
+    padding-left: 7px;
+    padding-right: 7px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+QListWidget {
+    border: 0px;
+    border-top: 1px solid darkgray;
+    background: #FFFFFF;
+}
+QWidget#listItemWidget {
+    border-bottom: 1px solid darkgray
+}
+QWidget#listItemWidget QLabel {
+    padding: 2px;
+}
+QListWidget#ModelTargetList {
+    border-radius: 2px;
+    border: 1px solid darkgray;
+}
+QLineEdit {
+    font-family: "Open Sans Light", "Open Sans Regular", "Open Sans", "Arial";
+    border: 0px;
+    margin-left: 5px;
+    margin-right: 5px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    padding: 5px;
+    background: #FFFFFF;
+}
+
+QPushButton {
+    margin-left: 4px;
+    margin-right: 4px;
+    margin-bottom: 2px;
+    padding: 5px;
+}
+QComboBox {
+    margin-left: 5px;
+    margin-right: 5px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    border: 1px solid gray;
+    border-radius: 0px;
+    padding: 1px 18px 1px 3px;
+    min-width: 6em;
+    font-family: "Open Sans Light", "Open Sans Regular", "Open Sans", "Arial";
+    background: #F0F0F0;
+}
+QSpinBox {
+    margin-left: 5px;
+    margin-right: 5px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    border: 1px solid gray;
+    border-radius: 0px;
+    padding: 1px 18px 1px 3px;
+    min-width: 6em;
+    font-family: "Open Sans Light", "Open Sans Regular", "Open Sans", "Arial";
+    background: #F0F0F0;
+}
+QComboBox:editable {
+    background: white;
+}
+QComboBox:!editable, QComboBox::drop-down:editable {
+     background: #D8D8D8;
+}
+QComboBox:on { /* shift the text when the popup opens */
+    padding-top: 3px;
+    padding-left: 4px;
+}
+
+QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    border-left-width: 1px;
+    border-left-color: darkgray;
+    border-left-style: solid; /* just a single line */
+    border-top-right-radius: 0px; /* same radius as the QComboBox */
+    border-bottom-right-radius: 0px;
+}
+QComboBox QAbstractItemView {
+    border: 1px solid gray;
+    margin-left: 5px;
+}
+QComboBox::drop-down:hover {
+    background: #bbbbbb;
+}
+QComboBox::down-arrow {
+    image: url(resources/GraphicalResources/icons/keyboard_arrow_down-24px.svg);
+}
+QDateTimeEdit::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    border-left-width: 1px;
+    border-left-color: darkgray;
+    border-left-style: solid; /* just a single line */
+    border-top-right-radius: 0px; /* same radius as the QComboBox */
+    border-bottom-right-radius: 0px;
+}
+QGraphicsView {
+    border-radius: 10px;
+    border: 1px solid darkgray;
+}
+
+QTableView {
+    border: 0px;
+}
+QDateTimeEdit {
+    font-family: "Open Sans Light", "Open Sans Regular", "Open Sans", "Arial";
+    border: 0px;
+    margin-left: 5px;
+    margin-right: 5px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    padding: 5px;
+}
+QDateTimeEdit::down-arrow {
+    image: url(resources/GraphicalResources/icons/keyboard_arrow_down-24px.svg);
+}
+QDateTimeEdit::down-arrow:on { /* shift the arrow when popup is open */
+    top: 1px;
+    left: 1px;
+}
+QSpinBox::up-arrow {
+    image: url(resources/GraphicalResources/icons/keyboard_arrow_up-24px.svg);
+}
+QSpinBox::up-button {
+    subcontrol-origin: border;
+    subcontrol-position: top right;
+    margin: 0px;
+    padding: 12px;
+    border: 1px solid darkgray;
+    background: #D8D8D8;
+}
+QSpinBox::down-button {
+    subcontrol-origin: border;
+    subcontrol-position: bottom right;
+    margin: 0px;
+    padding: 12px;
+    border: 1px solid darkgray;
+    background: #D8D8D8;
+}
+QSpinBox::down-button:hover {
+    background: #bbbbbb;
+}
+QSpinBox::up-button:hover {
+    background: #bbbbbb;
+}
+
+QSpinBox::down-arrow {
+    image: url(resources/GraphicalResources/icons/keyboard_arrow_down-24px.svg);
+}
+
+QComboBox::down-arrow:on { /* shift the arrow when popup is open */
+    top: 1px;
+    left: 1px;
+}
+QProgressBar {
+    font-family: "Open Sans Regular", "Open Sans", "Arial";
+    margin-left: 5px;
+    margin-right: 5px;
+    text-align: center;
+    color: #000000;
+}
+QProgressBar::chunk {
+    background:#007396 ;   
+}
+QLabel#workflowLabel {
+    background: #4e4e4e;
+    color: #d8d8d8;
+    border-right: 1px solid gray;
+    margin: 0px;
+    border-bottom: 1px solid gray;
+}
