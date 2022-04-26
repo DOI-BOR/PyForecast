@@ -123,6 +123,7 @@ def dataLoader(stationDict, startDate, endDate):
         datetimes = pd.to_datetime(dataMonth[['year','month','day']])
         dataMonth.set_index(pd.DatetimeIndex(datetimes), inplace=True)
         del dataMonth['year'], dataMonth['month'], dataMonth['day']
+        dataMonth.loc[dataMonth.index[-1] + pd.DateOffset(months=1) - pd.DateOffset(days=1)] = [np.nan]
         dataMonth = dataMonth.resample('D').mean()
         dataMonth = dataMonth.fillna(method='ffill')
         dataMonth = dataMonth[dataMonth.index >= startDate]
@@ -177,6 +178,7 @@ def dataLoader(stationDict, startDate, endDate):
         datetimes = pd.to_datetime(dataMonth[['year','month','day']])
         dataMonth.set_index(pd.DatetimeIndex(datetimes), inplace=True)
         del dataMonth['year'], dataMonth['month'], dataMonth['day']
+        dataMonth.loc[dataMonth.index[-1] + pd.DateOffset(months=1) - pd.DateOffset(days=1)] = [np.nan]
         dataMonth = dataMonth.resample('D').mean()
         dataMonth = dataMonth.fillna(method='ffill')
         dataMonth = dataMonth[dataMonth.index >= startDate]
@@ -186,22 +188,29 @@ def dataLoader(stationDict, startDate, endDate):
         return df
 
     elif stationNum == 'pdo':
-        #FIXXXXX
         """
         Pacific Multidecadal Oscillation (PDO)
         """
-        url = "https://www.ncdc.noaa.gov/teleconnections/pdo/data.json"
-        response = requests.get(url)
-        response = response.json()
-        data = response['data']
-        dates = [pd.to_datetime(i, format='%Y%m') for i in list(data.keys())]
-        values = [float(val) for val in list(data.values())]
-        values = [np.nan if x == -99.99 else x for x in values]
-        df = pd.DataFrame(values, index=dates, columns=['PDO'])
-        df = df.asfreq('D')
-        df.fillna(method='ffill', inplace=True)
-        df = df[df.index>=startDate]
-        df = df[df.index<=endDate]
+
+        url = 'https://www.ncei.noaa.gov/pub/data/cmb/ersst/v5/index/ersst.v5.pdo.dat'
+        r = requests.get(url)
+        s = r.content.decode('utf-8').replace('-99.99', ' -99.99')
+        df = pd.read_csv(StringIO(s), sep='\s+', skiprows=[0], na_values=[-99.99])
+        df = df.melt(id_vars=['Year'],var_name='month')
+        df['day'] = len(df.index)*[1]
+        datetimes = pd.to_datetime(df[['Year','month','day']].apply(lambda row: f'{row.Year}-{row.month}-{row.day}',axis=1))
+        df.set_index(pd.DatetimeIndex(datetimes), inplace=True)
+        df = df.sort_index().dropna()
+        del df['Year'], df['month'], df['day']
+        df.loc[df.index[-1] + pd.DateOffset(months=1) - pd.DateOffset(days=1)] = [np.nan]
+        df = df.resample('D').mean()
+        df = df.fillna(method='ffill')
+        df = df[df.index >= startDate]
+        df = df[df.index <= endDate]
+        df1 = pd.DataFrame(index = pd.date_range(startDate, endDate))
+        df1 = pd.concat([df, df1], axis = 1)
+        df = df1
+
         return df
     
     elif stationNum == 'menso':
@@ -210,7 +219,7 @@ def dataLoader(stationDict, startDate, endDate):
         """
         #https://psl.noaa.gov/enso/mei/data/meiv2.data
         url = "https://psl.noaa.gov/enso/mei/data/meiv2.data"
-        df = pd.read_csv(url, skiprows=1, names=['year','1','2','3','4','5','6','7','8','9','10','11','12'], sep='\s+')
+        df = pd.read_csv(url, skiprows=1, names=['year','1','2','3','4','5','6','7','8','9','10','11','12'], sep='\s+', error_bad_lines=False)
         lastRow = df.index[df['year']=='Multivariate'].tolist()[0] -1
         df = df[df.index<lastRow]
         df = df.melt(id_vars=['year'],var_name='month')
@@ -228,8 +237,10 @@ def dataLoader(stationDict, startDate, endDate):
             endDay = 28
         else:
             endDay = 30
+
         for day in range(lastDate.day,endDay + 1):
             df.loc[datetime(lastDate.year, lastDate.month, day)] = df.loc[lastDate]
+
         df.fillna(method='ffill',inplace=True)
         df = df[df.index>=startDate]
         df = df[df.index<=endDate]
@@ -240,7 +251,7 @@ def dataLoader(stationDict, startDate, endDate):
         Southern Oscillation Index (SOI) 
         """
         url = "https://psl.noaa.gov/data/correlation/soi.data"
-        df = pd.read_csv(url, skiprows=1, names=['year','1','2','3','4','5','6','7','8','9','10','11','12'], sep='\s+')
+        df = pd.read_csv(url, skiprows=1, names=['year','1','2','3','4','5','6','7','8','9','10','11','12'], sep='\s+', error_bad_lines=False)
         lastRow = df.index[df['year']=='SOI'].tolist()[0] -1
         df = df[df.index<lastRow]
         df = df.melt(id_vars=['year'],var_name='month')
@@ -270,7 +281,7 @@ def dataLoader(stationDict, startDate, endDate):
         Oceanic Nino Index (ONI) 
         """
         url = "https://psl.noaa.gov/data/correlation/oni.data"
-        df = pd.read_csv(url, skiprows=1, names=['year','1','2','3','4','5','6','7','8','9','10','11','12'], sep='\s+')
+        df = pd.read_csv(url, skiprows=1, names=['year','1','2','3','4','5','6','7','8','9','10','11','12'], sep='\s+', error_bad_lines=False)
         lastRow = df.index[df['year']=='ONI'].tolist()[0] -1
         df = df[df.index<lastRow]
         df = df.melt(id_vars=['year'],var_name='month')
