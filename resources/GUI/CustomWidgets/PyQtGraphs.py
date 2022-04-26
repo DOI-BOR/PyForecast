@@ -1781,7 +1781,7 @@ class DataTabPlots(pg.GraphicsLayoutWidget):
             units.append(dataset['DatasetUnits'])
 
             # GET THE DATA
-            y = self.dataTable.loc[(slice(None), datasetID), 'Value'].droplevel(1).reindex(reindex)
+            y = pd.to_numeric(self.dataTable.loc[(slice(None), datasetID), 'Value'].droplevel(1).reindex(reindex), errors='coerce')
 
             # APPEND TO THE y2 ARRAY
             y2 = np.append(y2, y.values.reshape(1,-1), axis=1 if i == 0 else 0)
