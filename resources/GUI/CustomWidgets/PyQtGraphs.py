@@ -2056,6 +2056,10 @@ class ResultsTabPlots(pg.GraphicsLayoutWidget):
         self.xExtents = [0,0]
         self.yExtents = [0,0]
 
+        # SET DEFAULT BOUNDS
+        self.resultPlot.setLimits(xMin=0, xMax=1, yMin=0, yMax=1)
+        self.resultPlot.setRange(xRange=(0, 1), yRange=(0, 1))
+
         self.textOverlay = pg.TextItem(html = '<div style="color:#4e4e4e"><h1>Oops!</h1><br> Looks like there is no data to display.<br>Select a dataset to view data.</div>', anchor=(1,1))
         self.resultPlot.addItem(self.textOverlay)
         self.textOverlay.setPos(0, 0)
@@ -2144,6 +2148,11 @@ class ResultsTabPlots(pg.GraphicsLayoutWidget):
         else:
             self.yExtents = [min(mod), max(mod)]
 
+        padding = ((self.xExtents[1] - self.xExtents[0]) / 10, (self.yExtents[1] - self.yExtents[0]) / 10)
+
+        self.resultPlot.setLimits(xMin=self.xExtents[0] - padding[0], xMax=self.xExtents[1] + padding[0], yMin=self.yExtents[0] - padding[1], yMax=self.yExtents[1] + padding[1])
+        self.resultPlot.setRange(xRange=(self.xExtents[0] - padding[0], self.xExtents[1] + padding[0]), yRange=(self.yExtents[0] - padding[1], self.yExtents[1] + padding[1]))
+
         return
 
 
@@ -2179,6 +2188,28 @@ class ResultsTabPlots(pg.GraphicsLayoutWidget):
         boxItems = BoxPlotItem(savedFcastRange,70)
         self.resultPlot.hideAxis('bottom')
         self.resultPlot.addItem(boxItems)
+        yMin = 0
+        yMax = 1
+        for b in boxItems.data:
+            if yMin == 0:
+                yMin = min(b[1:-1])
+            else:
+                yMin = min(min(b[1:-1]), yMin)
+            if yMax == 1:
+                yMax = max(b[1:-1])
+            else:
+                yMax = max(max(b[1:-1]), yMax)
+        padding = (yMax - yMin)/10
+        self.resultPlot.setLimits(xMin=0, xMax=boxItems.data[-1][0]+10, yMin=yMin-padding, yMax=yMax+padding)
+        self.resultPlot.setRange(xRange=(0, boxItems.data[-1][0]+10), yRange=(yMin-padding, yMax+padding))
+
+        comp = np.array(boxItems.data)
+        comp_med = np.nanmean(comp[:,-1])
+        comp_10 = np.nanmean(comp[:, 4])
+        comp_90 = np.nanmean(comp[:, 5])
+        self.comp_text = pg.TextItem(html=f'<div style="font-size: 14px;color: white; border:1px solid black; padding:5px; background:rgba(255,0,0, 80%)">&nbsp;&nbsp;&nbsp;<strong>Combined Forecast</strong>: {round(comp_med, 2)}&nbsp;&nbsp;&nbsp; <br>&nbsp;&nbsp;&nbsp;(90%: {round(comp_10, 2)} | 10%: {round(comp_90, 2)})&nbsp;&nbsp;&nbsp;</div>')
+        self.resultPlot.addItem(self.comp_text)
+        self.comp_text.setPos(1,yMin)
         return
 
 
@@ -2201,6 +2232,10 @@ class ResultsTabPlots(pg.GraphicsLayoutWidget):
         self.updated = True
         self.xExtents = [min(idx), max(idx)]
         self.yExtents = [min(min(obs),min(mod),min(modCv)), max(max(obs),max(mod),max(modCv))]
+        padding = ((self.xExtents[1] - self.xExtents[0])/10, (self.yExtents[1] - self.yExtents[0])/10)
+
+        self.resultPlot.setLimits(xMin=self.xExtents[0]-padding[0], xMax=self.xExtents[1]+padding[0], yMin=self.yExtents[0]-padding[1], yMax=self.yExtents[1]+padding[1])
+        self.resultPlot.setRange(xRange=(self.xExtents[0]-padding[0], self.xExtents[1]+padding[0]), yRange=(self.yExtents[0]-padding[1],self.yExtents[1]+padding[1]))
 
         return
 
@@ -2222,6 +2257,10 @@ class ResultsTabPlots(pg.GraphicsLayoutWidget):
         self.updated = True
         self.xExtents = [min(idx), max(idx)]
         self.yExtents = [min(min(err),min(errCv)), max(max(err),max(errCv))]
+        padding = ((self.xExtents[1] - self.xExtents[0]) / 10, (self.yExtents[1] - self.yExtents[0]) / 10)
+
+        self.resultPlot.setLimits(xMin=self.xExtents[0] - padding[0], xMax=self.xExtents[1] + padding[0], yMin=self.yExtents[0] - padding[1], yMax=self.yExtents[1] + padding[1])
+        self.resultPlot.setRange(xRange=(self.xExtents[0] - padding[0], self.xExtents[1] + padding[0]), yRange=(self.yExtents[0] - padding[1], self.yExtents[1] + padding[1]))
 
         return
 

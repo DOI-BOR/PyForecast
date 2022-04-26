@@ -40,7 +40,7 @@ def dataLoader(dataset, startDate, endDate):
     """
 
     # Figure out which region the station belongs to:
-    region = dataset['DatasetAgency'].split(' ')[1].strip(' ')
+    region = dataset['DatasetAgency'].split(' ')[1].strip(' ').upper()
 
     # Get the station ID
     stationID = dataset['DatasetExternalID']

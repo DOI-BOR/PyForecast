@@ -1606,12 +1606,12 @@ class modelCreationTab(object):
                 self.modelRunsTable.loc[0]['ScoringParameters'] = scoreParams
 
                 # Ask user if sure
-                msgBox = self.clearAppTablesPrompt(forecastEquationsTable=True)
-                result = msgBox.exec_()
-                if result == QtWidgets.QMessageBox.Ok:
-                    self.clearAppTables(forecastEquationsTable=True)
-                else:
-                    return
+                #msgBox = self.clearAppTablesPrompt(forecastEquationsTable=True)
+                #result = msgBox.exec_()
+                #if result == QtWidgets.QMessageBox.Ok:
+                #    self.clearAppTables(forecastEquationsTable=True)
+                #else:
+                #    return
 
                 ### Kick off the analysis ###
                 self.updateStatusMessage('Running regression calculations. Please wait...')
@@ -1720,9 +1720,11 @@ class modelCreationTab(object):
         modelIdx = tableIdx.siblingAtColumn(0).data()
         try:
             # Get model definition row and write to self.modelTab.parent.savedForecastEquationsTable
+
             forecastEquationTableEntry = self.modelTab.parent.forecastEquationsTable.iloc[int(modelIdx)]
-            if modelIdx not in self.modelTab.parent.savedForecastEquationsTable:
-                self.modelTab.parent.savedForecastEquationsTable.loc[int(modelIdx)] = forecastEquationTableEntry.values
+
+            tableLength = len(self.modelTab.parent.savedForecastEquationsTable)
+            self.modelTab.parent.savedForecastEquationsTable.loc[tableLength] = forecastEquationTableEntry.values
             self.resetForecastsTab()
         except:
             return

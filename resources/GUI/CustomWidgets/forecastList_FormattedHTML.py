@@ -128,10 +128,10 @@ class forecastList_HTML(QtWidgets.QTreeWidget):
                         modelImg = '<img style="vertical-align:bottom" src="resources/GraphicalResources/icons/NOAA.svg" width="20", height="20"/>'
                         modelNumText = '<strong>NOAA</strong>' + str(idx)
                     elif source != 'PyForecast':
-                        modelImg = '<img style="vertical-align:bottom" src="resources/GraphicalResources/icons/icon_old.ico" width="20", height="20"/>'
+                        modelImg = '<img style="vertical-align:bottom" src="resources/GraphicalResources/icons/icon.ico" width="20", height="20"/>'
                         modelNumText = '<strong>{0}</strong>'.format(source) + str(idx)
                     else:
-                        modelImg = '<img style="vertical-align:bottom" src="resources/GraphicalResources/icons/icon_old.ico" width="20", height="20"/>'
+                        modelImg = '<img style="vertical-align:bottom" src="resources/GraphicalResources/icons/icon.ico" width="20", height="20"/>'
                         modelNumText = model
 
                     # Parse the equation method into human readable format

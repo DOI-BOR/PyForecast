@@ -97,6 +97,9 @@ class forecastsTab(object):
         # Update Plots
         self.forecastsTab.resultsObservedForecstPlot.updateScatterPlot(self.forecastsTab.selectedModel.regressionData)
 
+
+
+
         # Update model run year and table
         ## restrict runnable years to used ones for the model
         self.forecastsTab.modelYearSpin.setRange(self.forecastsTab.selectedModel.years[0], self.forecastsTab.selectedModel.years[-1])
@@ -107,6 +110,16 @@ class forecastsTab(object):
         ## use years with available data
         self.forecastsTab.modelYearSpin.setRange(self.forecastsTab.selectedModel.dataDates[0], self.forecastsTab.selectedModel.dataDates[-1])
         self.forecastsTab.modelYearSpin.setValue(self.forecastsTab.selectedModel.dataDates[-1])
+
+        # Check if we have a svaed forecast for this equation and the selected year
+        try:
+            fcstValues = self.forecastsTable.loc[(modelIdx, self.forecastsTab.modelYearSpin.value(), slice(None), slice(None)), "ForecastValues"]
+            issueDate = fcstValues.index.get_level_values(2)[-1]
+            med = fcstValues.loc[(modelIdx, self.forecastsTab.modelYearSpin.value(), issueDate, 50)]
+            values = fcstValues.loc[(modelIdx, self.forecastsTab.modelYearSpin.value(), issueDate, slice(None))]
+            self.forecastsTab.resultsObservedForecstPlot.appendForecast(med, values )
+        except:
+            pass
 
         self.updateForecastYearData()
         self.forecastsTab.runModelButton.setEnabled(True)
