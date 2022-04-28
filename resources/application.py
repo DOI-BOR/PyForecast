@@ -297,7 +297,7 @@ class mainWindow(QtWidgets.QMainWindow, NextFlowGUI.UI_MainWindow, datasetTabMas
                 names=[
                     'ForecastEquationID',  # E.g. 1010010 (999999 for user imported forecast)
                     'Year',
-                    'Date',  # E.g.
+                    'Date',  # Issue date: e.g. 2022-04-13
                     'ForecastExceedance'  # e.g. 0.30 (for 30% exceedence)
                 ]
             ),

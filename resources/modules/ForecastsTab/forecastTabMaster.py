@@ -169,7 +169,7 @@ class forecastsTab(object):
 
     def buildModelAnalysisReport(self, modelsTable):
         self.updateStatusMessage('PyForecast may become unresponsive during this process. Look at the console window to view progress...')
-        qm = QtGui.QMessageBox()
+        qm = QtWidgets.QMessageBox()
         alsoExportValues = qm.question(self, 'PyForecast Model Analysis', "Would you also like to export the model values/hindcasts?", qm.Yes | qm.No)
         if modelsTable.shape[0] < 1:
             return

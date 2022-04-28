@@ -149,6 +149,7 @@ if __name__ == '__main__':
     if no_splash == "True":
         splash_pic = QtGui.QPixmap('resources/GraphicalResources/splash.png')
         splash = QtWidgets.QSplashScreen(splash_pic, QtCore.Qt.WindowStaysOnTopHint)
+        splash.setAttribute(QtCore.Qt.WA_TranslucentBackground, 1)
         splashFont = QtGui.QFont()
         splashFont.setPixelSize(14)
         splash.setFont(splashFont)
