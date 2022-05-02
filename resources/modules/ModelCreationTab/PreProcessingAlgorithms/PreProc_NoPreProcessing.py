@@ -68,3 +68,7 @@ class preprocessor(object):
         """
 
         return data
+
+    def inverseTransformY(self, yData):
+
+        return yData

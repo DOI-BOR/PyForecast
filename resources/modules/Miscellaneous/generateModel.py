@@ -123,9 +123,11 @@ class Model(object):
         self.regression.fit(proc_xTraining, proc_yTraining, True)
 
         # Build Model data arrays
-        self.regressionData = pd.DataFrame(data=([self.years, self.regression.y, self.regression.y_p,
-                                                  self.regression.y_p_cv, self.regression.y_p-self.regression.y,
-                                                  self.regression.y_p_cv-self.regression.y]),
+        self.regressionData = pd.DataFrame(data=([self.years, self.preprocessor.inverseTransformY(self.regression.y),
+                                                  self.preprocessor.inverseTransformY(self.regression.y_p),
+                                                  self.preprocessor.inverseTransformY(self.regression.y_p_cv),
+                                                  self.preprocessor.inverseTransformY(self.regression.y_p-self.regression.y),
+                                                  self.preprocessor.inverseTransformY(self.regression.y_p_cv-self.regression.y)]),
                                            index=['Years','Observed', 'Prediction', 'CV-Prediction','PredictionError','CV-PredictionError']).T
         self.predictorData = pd.DataFrame(data=self.regression.x, index=self.years,columns=self.forecastEquation.EquationPredictors)
         self.x = pd.DataFrame(data=self.x[:len(self.dataDates)], index=self.dataDates,columns=self.forecastEquation.EquationPredictors)

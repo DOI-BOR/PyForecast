@@ -97,3 +97,10 @@ class preprocessor(object):
             data_c[:,i] = (data_c[:,i] - self.offsets[i]) / self.scales[i] 
 
         return data_c
+
+    def inverseTransformY(self, yData):
+        """
+        Method for inverse transforming the predictand data only
+        """
+
+        return (yData - self.offsets[-1]) / self.scales[-1]

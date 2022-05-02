@@ -144,8 +144,12 @@ class forecastsTab(object):
                       ' - ' + str(self.forecastsTab.parent.datasetTable.loc[self.forecastsTab.selectedModel.xIDs[i]].DatasetParameter))
             predIdxs.append(self.forecastsTab.selectedModel.xIDs[i])
         preds = pd.Series(predNames, index=predIdxs)
+        for df in [preds, lookupData,lookupAvg,remainingAvg]:
+            df.index = [i for i in range(len(df.index))]
+        remainingPctls.columns = [i for i in range(len(remainingPctls.columns))]
         lookupDataTable = pd.concat([pd.DataFrame(data=[preds, lookupData,lookupAvg,remainingAvg]),remainingPctls])
         lookupDataTable.index = ['Predictor', str(lookupYear) + ' Value', str(lookupYear) + ' Pct-Average','Average','Min', 'P10', 'P25', 'Median', 'P75', 'P90', 'Max']
+        lookupDataTable.columns = predIdxs
         self.forecastsTab.selectedModelDataTable.loadDataIntoModel(lookupDataTable, rowHeaders=list(lookupDataTable.columns), columnHeaders=list(lookupDataTable.index))
 
 

@@ -117,6 +117,14 @@ class preprocessor(object):
         
         return data_c
 
+    def inverseTransformY(self, yData):
+        """
+        Method for inverse transforming the predictand data only
+        """
+
+        return yData
+
+
 
     def yAwareScaling(self):
         """

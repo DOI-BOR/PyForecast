@@ -31,7 +31,7 @@ class preprocessor(object):
         self.data = data
         
         # Create an array to store transformed data
-        self.transformedData = self.data
+        self.transformedData = self.data.copy()
 
         # take the natural logarithm of the x data, leaving the
         # y data alone.
@@ -104,6 +104,13 @@ class preprocessor(object):
         data_c[:,:-1] = np.exp(data_c[:,:-1])
         
         return data_c
+
+    def inverseTransformY(self, yData):
+        """
+        Method for inverse transforming the predictand data only
+        """
+
+        return yData
 
 
 ## DEBUG

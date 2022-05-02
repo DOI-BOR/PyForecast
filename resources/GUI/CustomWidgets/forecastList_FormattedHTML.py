@@ -120,16 +120,16 @@ class forecastList_HTML(QtWidgets.QTreeWidget):
                     source = model_ref['EquationSource']
                     if source == 'USACE':
                         modelImg = '<img style="vertical-align:bottom" src="resources/GraphicalResources/icons/USACE.png" width="20", height="20"/>'
-                        modelNumText = '<strong>USACE</strong>' + str(idx)
+                        modelNumText = '<strong>USACE</strong>' + str(model)
                     elif source == 'NRCS':
                         modelImg = '<img style="vertical-align:bottom" src="resources/GraphicalResources/icons/NRCS.svg" width="20", height="20"/>'
-                        modelNumText = '<strong>NRCS</strong>' + str(idx)
+                        modelNumText = '<strong>NRCS</strong>' + str(model)
                     elif source == 'NOAA':
                         modelImg = '<img style="vertical-align:bottom" src="resources/GraphicalResources/icons/NOAA.svg" width="20", height="20"/>'
-                        modelNumText = '<strong>NOAA</strong>' + str(idx)
+                        modelNumText = '<strong>NOAA</strong>' + str(model)
                     elif source != 'PyForecast':
                         modelImg = '<img style="vertical-align:bottom" src="resources/GraphicalResources/icons/icon.ico" width="20", height="20"/>'
-                        modelNumText = '<strong>{0}</strong>'.format(source) + str(idx)
+                        modelNumText = '<strong>{0}</strong>'.format(source) + str(model)
                     else:
                         modelImg = '<img style="vertical-align:bottom" src="resources/GraphicalResources/icons/icon.ico" width="20", height="20"/>'
                         modelNumText = model
@@ -148,9 +148,9 @@ class forecastList_HTML(QtWidgets.QTreeWidget):
                     fcstLow = int(round(self.parent.forecastsTable.loc[(model, year, date_, 10), "ForecastValues"]))
                     fcstHigh = int(round(self.parent.forecastsTable.loc[(model, year, date_, 90), "ForecastValues"]))
                     mag = str(self.parent.forecastsTable.loc[(model, year, date_, 50), "Magnitude"]) + ".png"
-                    if mag == 'low':
+                    if mag == 'low.png':
                         magExp = "This forecast is lower than most years analyzed"
-                    elif mag == 'high':
+                    elif mag == 'high.png':
                         magExp = "This forecast is higher than most years analyzed"
                     else:
                         magExp = "This forecast is about normal for the years analyzed"
