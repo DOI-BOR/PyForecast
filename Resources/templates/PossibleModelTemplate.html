@@ -1,0 +1,80 @@
+<html>
+<style>
+table, th, td {
+  border: 1 solid black;
+  border-radius: 10;
+  text-align: left;
+}
+ul {
+  list-style-type:none;
+}
+hr {
+  margin:10;
+}
+.mainwell {
+  font-family: 'Consolas', 'Courier New', Courier, monospace;
+  padding: 5;
+}
+</style>
+<div class="mainwell">
+  <h2>
+  {{ model.regression_model.title() }}
+  {{ genome }}
+  </h2>
+  <hr>
+  <h3>Score</h3>
+  <table width="100%" cellpadding="10">
+    <tr>
+      <th>Metric</th>
+      <th>Score</th>
+    </tr>
+    {% for score in scores %}
+    <tr>
+      <td>{{ score[0] }}</td>
+      <td>{{ "%.2f"|format(score[1]) }}</td>
+    </tr>
+    {% endfor %}
+
+  </table>
+  <hr>
+  <h3>Forecast Target</h3><br>
+  <strong>Y: {{ model.predictand.dataset.name }}</strong><br>
+  {{ model.predictand.dataset.parameter }} [{{ model.predictand.unit }}]<br>
+  {{ model.predictand.__period_str__() }} {{ model.predictand.agg_method.title() }}<br>
+  Pre-processing: {{ model.predictand.preprocessing }}
+  <hr>
+  <h3>Predictors</h3>
+  <ul>
+  {% for predictor in model.predictors %}
+    <li>
+      <strong>X{{ loop.index }}: {{ predictor.dataset.name }}</strong><br>
+      {{ predictor.dataset.parameter }} [{{ predictor.unit }}]<br>
+      {{ predictor.__period_str__()}} {{ predictor.agg_method.title() }}<br>
+      Pre-processing: {{ predictor.preprocessing.title() }}
+    </li><br>
+  {% endfor %}
+  </ul>
+<hr>
+<h3>Model Parameters</h3>
+<ul>
+  {% for key,value in param_dict.items() %}
+    {% if value is mapping %}
+    {% for key2, value2 in value.items() %}
+      <li><strong>{{ key2 }}:</strong> {{ '{0:.5g}'.format(value2) }}</li>
+    {% endfor %}
+    {% elif value is iterable %}
+      <li><strong>{{ key }}:<br></strong>
+    {% for value2 in value %}
+    &nbsp;&nbsp;{{ loop.index }} -> {{ '{0:.5g}'.format(value2) }}<br>
+    {% endfor %}
+    </li>
+    {% else %}
+      <li> <strong>{{ key }}:</strong> {{ '{0:.5g}'.format(value) }}</li>
+    {% endif %}
+  {% endfor %}
+</ul>
+<hr>
+
+</div>
+
+</html>

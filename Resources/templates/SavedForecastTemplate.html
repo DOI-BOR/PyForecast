@@ -1,0 +1,31 @@
+
+<style>
+.light {
+  font-size:small;
+  color: gray;
+}
+.big {
+  color: #703878;
+  font-size:large;
+}
+.bold {
+  font-weight: bold;
+}
+</style>
+<div width="100%" class="big bold">{{ model.predictand.period_start.strftime('%b-%d') }} - {{ model.predictand.period_end.strftime('%b-%d') }} Forecast</div><br>
+<strong>{{ model.regression_model }}</strong><br>
+<strong>{{ model.predictand.dataset.external_id }}</strong> - {{ model.predictand.agg_method }}<br>
+<strong>Predictors:</strong>
+{% for predictor in model.predictors %}
+  {% if loop.last %}
+  {{ predictor.dataset.external_id }}<br>
+  {% else %}
+  {{ predictor.dataset.external_id }},&nbsp;
+  {% endif %}
+{% endfor %}
+{% for fcst in fcsts %}
+  <span class="bold">{{ fcst[0] }}: </span>{{ fcst[1] }}
+{% endfor %}
+<div width="100%" class="light" align="right">{{model.guid}}</div>
+
+  

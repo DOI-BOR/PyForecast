@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title> Leaflet Shades · Mapzen</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css" />
+    <link rel="stylesheet" href="../src/css/leaflet-shades.css" />
+    <style>
+      html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      #map {
+        width: 100%;
+        height: 100%;
+      }
+
+      #events {
+        position: absolute;
+        z-index: 1000;
+        top: 10px;
+        right: 10px;
+        bottom: 30px;
+        overflow-x: hidden;
+        overflow-y: auto;
+        padding: 7px;
+        padding-top: 10px;
+        width: 250px;
+        background: rgba(255,255,255,0.8);
+        line-height: 1.4;
+        font-family: sans-serif;
+        box-sizing: border-box;
+      }
+
+      .event {
+        background: rgba(0,0,0,0.2);
+        font-family: monospace;
+        color: darkblue;
+        padding: 3px;
+        margin: 2px;
+      }
+
+      .description {
+        font-size: 13px;
+        font-family: sans-serif;
+      }
+
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <div id="events"> 
+      <center> 
+        <b> Event Logger </b> <br/>
+        <span class="description"> Events that are fired or listened to by Leaflet Shades are logged here and in the console. </span>
+        <hr/>
+      </center>
+    </div>
+    <script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js"></script>
+    <script src="../dist/leaflet-shades.js"></script>
+    <script>
+      var map = L.map('map', {editable: true});
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+      map.setView([0,0], 5);
+      map.editTools.startRectangle();
+
+      // var shades = new L.LeafletShades();
+      var shades = L.leafletShades();
+      shades.addTo(map); 
+ 
+      function addLog(event, description) {
+        var logger = document.getElementById('events');
+        logger.innerHTML += 
+          "<p> <span class='event'>" + event + "</span>" + 
+          " <span class='description'>" + description + "</span> </p>"
+        logger.scrollTop = logger.scrollHeight;
+      }
+
+      map.on("editable:vertex:dragend", function(e) {
+        console.log(e);
+        addLog(e.type, "updating rectangle drawing")
+      });
+
+      map.on("editable:drawing:commit", function(e) {
+        console.log(e);
+        addLog(e.type, "rectangle drawing finished")
+      });
+
+      map.on("moveend", function(e) {
+        console.log(e);
+        addLog(e.type, "map panned in/out or zoomed in/out")
+      });
+
+      shades.on("shades:bounds-changed", function(e) {
+        console.log(e);
+        addLog(e.type, "shades updated")
+      });
+    </script>
+  </body>
+</html>
