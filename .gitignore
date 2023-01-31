@@ -15,3 +15,4 @@ dist
 /*.sln
 /*.spec
 app_log.txt
+dist_cleanup.py

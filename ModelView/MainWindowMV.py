@@ -162,7 +162,7 @@ class MainWindowModelView:
 
   def OpenDocs(self, _):
 
-    QDesktopServices.openUrl(QUrl('https://github.com/usbr/PyForecast/wiki'))
+    QDesktopServices.openUrl(QUrl('https://github.com/usbr/PyForecast/tree/PyForecastV5#pyforecast-version-5-'))
     
     return
 
