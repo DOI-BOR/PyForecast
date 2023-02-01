@@ -43,7 +43,11 @@ class Logger(QObject):
 
     # Write print messages to the log file and the terminal
     if msg:
+
+      # Ensure that the message is printable
       if msg != '' and msg.isprintable():
+
+        # Split up messages longer than seventy characters into multiple lines
         if len(msg) > 70:
           c = 0
           while c < len(msg):
@@ -81,8 +85,8 @@ class PyForecast(QApplication):
   settings, stylesheets, version number, current user and filename,
   as well as all the models, and regression methods."""
 
-  new_log_message = pyqtSignal()
-  base_dir = os.path.dirname(__file__)
+  new_log_message = pyqtSignal() # Void signal emitted when a new message is added to the log
+  base_dir = os.path.dirname(__file__) # path to folder where the PyForecast.EXE file lives
 
   def __init__(self, *args, **kwargs):
     """Constructor
@@ -113,15 +117,17 @@ class PyForecast(QApplication):
     self.pid = os.getpid()
     QApplication.__init__(self, *args, **kwargs)
     sys.stdout.new_log_message.connect(self.append_log_message)
+    with open(self.base_dir + '/Resources/Stylesheets/application_style.qss', 'r') as stylesheet:
+      self.setStyleSheet(self.styleSheet() + (stylesheet.read()))
 
+    # Print out the various versions of installed software
     print(f'Using Python Version       {pyversion.major}.{pyversion.minor}.{pyversion.micro}')
     print(f"Using Qt Version           {QT_VERSION_STR}")
     with open('VERSION.TXT', 'r') as readfile:
       self.PYCAST_VERSION = readfile.read().strip()
       print(f"Using PyForecast Version   {self.PYCAST_VERSION}")
-    with open(self.base_dir + '/Resources/Stylesheets/application_style.qss', 'r') as stylesheet:
-      self.setStyleSheet(self.styleSheet() + (stylesheet.read()))
-
+    
+    # Windows specific commands to properly identify PyCast and show it's icon in the taskbar
     myappid = f'USBR.PyForecast.{self.PYCAST_VERSION}'
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     self.setWindowIcon(QIcon(self.base_dir + '/Resources/Icons/AppIcon.ico'))
@@ -203,13 +209,15 @@ class PyForecast(QApplication):
 
   def append_log_message(self, msg):
     
+    # Appends the new log message to the application log-variable and updates
+    # The gui log-dialog (if it's open).
     self.log_message += msg
     self.new_log_message.emit()
     self.processEvents()
   
 
-if __name__ == '__main__':
 
+if __name__ == '__main__':
 
   # Create the application
   app = PyForecast(sys.argv)
