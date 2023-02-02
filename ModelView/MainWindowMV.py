@@ -1,12 +1,9 @@
 from PyQt5.QtWidgets import *
-from PyQt5.QtGui import QFont, QDesktopServices, QColor
-from PyQt5.QtCore import QCoreApplication, QUrl, Qt
+from PyQt5.QtGui import QDesktopServices
+from PyQt5.QtCore import QCoreApplication, QUrl
 from Views import UnitsEditor, SettingsDialog, AppLogViewer
 from Utilities import ExcelExporter, Updater, FileLoaderSaver
-import pickle
 import os
-from pyqtspinner import WaitingSpinner
-import urllib.request
 
 # Get the global application
 app = QApplication.instance()
@@ -141,6 +138,7 @@ class MainWindowModelView:
   def clear_models(self):
     """Clears the application models.
     """
+
     app.datasets.clear_all()
     app.model_configurations.clear_all()
     app.saved_models.clear_all()
@@ -151,6 +149,7 @@ class MainWindowModelView:
   def ExportFile(self, _):
     """Exports the forecast file to an excel spreadsheet using the ExcelExporter Module
     """
+
     # Create an instance of the ExcelExporter writer
     writer = ExcelExporter.Exporter()
 
@@ -172,44 +171,68 @@ class MainWindowModelView:
       app.gui.status_bar.showMessage('Opening excel file...', 3000)
     
     return
-    
+
 
   def ChangeFont(self, size):
+    """Changes the application wide font size and modifies the configuration file"""
+
+    # Change the configuration file
     app.config['application_font_size'] = size
+    
+    # Set the application stylesheet based on the selected size
     if size == 'small':
-      #font = QFont('Arial', 9)
-      #app.setFont(font)
+     
       app.setStyleSheet(app.styleSheet()+'QWidget {font-size:9pt; font-family:"Arial"} QWidget#HeaderLabel {font-size:12pt} ')
+
     elif size == 'medium':
-      #font = QFont('Arial', 13)
-      #elf.app.setFont(font)
+
       app.setStyleSheet(app.styleSheet()+'QWidget {font-size:13pt; font-family:"Arial"} QWidget#HeaderLabel {font-size:16pt}')
-    else:
-      #font = QFont('Arial', 15)
-      #app.setFont(font)
+
+    elif size == 'large':
+
       app.setStyleSheet(app.styleSheet()+'QWidget {font-size:15pt; font-family:"Arial"} QWidget#HeaderLabel {font-size:18pt}')
 
     return
 
+
   def EditUnits(self, _):
+    """Opens the Unit Editor Dialog """
+    
     u = UnitsEditor.UnitsEditor()
+
     return
 
+
   def EditApplicationSettings(self, _):
+    """Opens the Application Settings Dialog"""
+
     s = SettingsDialog.SettingsDialog()
     s.exec()
 
+    return
+
+
   def ShowLog(self, _):
+    """Opens the log viewer dialog"""
+
     self.log_view = AppLogViewer.LogViewer()
     self.log_view.show()
 
+    return
+
+
   def OpenDocs(self, _):
+    """Opens the Github documentation page for V5"""
 
     QDesktopServices.openUrl(QUrl('https://github.com/usbr/PyForecast/tree/PyForecastV5#pyforecast-version-5-'))
     
     return
 
+
   def UpdateCheck(self, _):
+    """Opens the update check dialog box"""
     
     self.updater = Updater.UpdaterDialog()
     self.updater.exec()
+
+    return

@@ -12,13 +12,13 @@ class DatasetModelView:
     self.dt = app.gui.DatasetsTab
 
     # Load the web_map
-    #with open('Resources/WebMap/map_data.geojson', 'w') as r:
-    #  r.write(excelToGeoJSON('Resources/WebMap/PointDatasets.xlsx'))
     with open(app.base_dir + '/Resources/WebMap/map_data.geojson', 'r') as r:
       geojson = r.read()
 
+    # connect javascript console messages from the web map to the application
     self.dt.dataset_map.page.loadFinished.connect(lambda x: self.dt.dataset_map.page.runJavaScript(f"loadDatasetCatalog({geojson})"))
     self.dt.dataset_map.page.java_msg_signal.connect(self.add_dataset_from_map)
+
     # List view context menu actions
     self.dt.dataset_list.view_action.triggered.connect(self.view_dataset)
     self.dt.dataset_list.remove_action.triggered.connect(self.remove_dataset)
