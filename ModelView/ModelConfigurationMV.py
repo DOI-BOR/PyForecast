@@ -215,8 +215,8 @@ class ModelConfigurationModelView:
     config.predictand.period_start = self.ce.predictand_period_start_field.date().toPyDate()
     config.predictand.period_end = self.ce.predictand_period_end_field.date().toPyDate()
     idx = self.ce.predictand_unit_field.currentIndex()
-    idx = self.filter_units_model.mapToSource(idx)
-    config.predictand.unit = app.units[idx]
+    idx = self.filter_units_model.mapToSource(self.filter_units_model.index(idx, 0))
+    config.predictand.unit = app.units[idx.row()]
 
     app.model_configurations[configuration_idx] = config
     self.ce.summary_field.setText(config.__simple_target_string__())

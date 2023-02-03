@@ -33,7 +33,7 @@ class PredictorView(QDialog):
 
     # Iterate over the datasets in the file
     for dataset in app.datasets.datasets:
-      if dataset.unit.type == 'flow':
+      if dataset.raw_unit.type.lower() == 'flow':
         predictor = ResampledDataset(
           dataset = dataset,
           forced = False,
@@ -45,7 +45,7 @@ class PredictorView(QDialog):
         )
         self.configuration.predictor_pool.add_predictor(predictor)
         continue
-      elif dataset.unit.type == 'temperature':
+      elif dataset.raw_unit.type.lower() == 'temperature':
         predictor = ResampledDataset(
           dataset = dataset,
           forced = False,
@@ -137,7 +137,7 @@ class PredictorView(QDialog):
       agg_method = list(app.agg_methods.keys())[0],
       preprocessing = list(app.preprocessing_methods.keys())[0],
       period_start = self.configuration.issue_date - DateOffset(days=1),
-      period_end = self.configuration.issue_date,
+      period_end = self.configuration.issue_date - DateOffset(days=0),
     )
     self.configuration.predictor_pool.add_predictor(predictor)
     self.setPredictor(self.configuration.predictor_pool.rowCount()-1)

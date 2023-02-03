@@ -1,5 +1,5 @@
 import pandas as pd
-from datatime import datetime
+from datetime import datetime
 
 class Dataloader(object):
 
