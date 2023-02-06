@@ -58,6 +58,9 @@ class Unit:
       'id':self.id, 'name':self.name, 'si_id':self.si_id, 
       'si_scale':self.si_scale, 'si_offset':self.si_offset
     }
+  
+  def __eq__(self, other_unit):
+    return other_unit.id == self.id
 
   def __str__(self):
     return self.id

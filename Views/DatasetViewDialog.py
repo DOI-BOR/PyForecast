@@ -128,7 +128,7 @@ class DatasetViewer(QDialog):
     self.unitFilterModel.setFilterString(new_unit.type)
 
   def file_select(self):
-    fn, _filter = QFileDialog.getOpenFileName(self, 'Select Flat File', self.app.config['last_dir'], '*.csv, *.xlsx')
+    fn, _filter = QFileDialog.getOpenFileName(self, 'Select Flat File', self.app.config['last_dir'], 'Flat-File Files (*.csv  *.xlsx)')
     if fn:
       if fn != '':
         self.file_path.setText(fn)

@@ -145,6 +145,7 @@ class genModelDialog(QDialog):
 
   def resample_all_data(self, model):
     self.log_box.appendPlainText(' -> regenerating predictor data')
+    app.processEvents()
     for predictor in model.predictors:
       predictor.resample()
     model.predictand.resample()
@@ -169,9 +170,12 @@ class genModelDialog(QDialog):
     inc = 100/total
 
     for i, idx in enumerate(self.idx_list):
-      self.log_box.appendPlainText(f'Generating forecasts for model {i+1}')
+      
       
       model = app.saved_models[idx.row()]
+      self.log_box.appendPlainText('----------------------------------------------')
+      self.log_box.appendPlainText(f'Generating forecasts for model: {model.name}')
+      app.processEvents()
       self.resample_all_data(model)
 
       for fcst_year in fcst_years:
@@ -179,6 +183,7 @@ class genModelDialog(QDialog):
       
         
         self.prog_bar.setValue(self.prog_bar.value()+inc/2)
+        app.processEvents()
         
         regression_algorithm = app.regressors[model.regression_model](cross_validation = model.cross_validator)
         df = pd.DataFrame()
@@ -204,6 +209,7 @@ class genModelDialog(QDialog):
         for b in range(n_bootstraps):
           if b==50:
             self.prog_bar.setValue(self.prog_bar.value()+inc/2)
+            app.processEvents()
           train_idxs = np.random.choice(range(n), size=n, replace=True)
           val_idxs = np.array([idx for idx in range(n) if idx not in train_idxs])
           _, _ = regression_algorithm.cross_val_predict(x_data[train_idxs, :], predictand_data[train_idxs])
@@ -241,6 +247,7 @@ class genModelDialog(QDialog):
           
         
         model.forecasts.set_forecasts_1_99(fcst_year, percentiles)
+        app.processEvents()
 
     self.finish()
 
@@ -258,7 +265,7 @@ class genModelDialog(QDialog):
     self.year_input = QLineEdit()
     self.prog_bar = QProgressBar()
     self.year_input.setPlaceholderText('e.g. "2023" or "2011-2014" or "2003, 2004, 2006"')
-    self.log_box = QPlainTextEdit()
+    self.log_box = QPlainTextEdit(objectName='monospace')
 
     layout.addWidget(QLabel('What years should we forecast?'))
     layout.addWidget(self.year_input)

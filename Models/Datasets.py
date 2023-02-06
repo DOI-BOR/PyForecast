@@ -89,6 +89,14 @@ class Dataset:
 
   def __repr__(self):
     return f'<Dataset {self.guid} name={self.name} parameter={self.parameter}/>'
+  
+  def __eq__(self, comp_dataset):
+    if comp_dataset.external_id == self.external_id:
+      if comp_dataset.name == self.name:
+        if comp_dataset.param_code == self.param_code:
+          if comp_dataset.parameter == self.parameter:
+            return True
+    return False
 
 
 class Datasets(QAbstractListModel):

@@ -1,7 +1,7 @@
 # SEQUENTIAL MIXED FLOATING SELECTION
 # ITERATES BETWEEN FORWARD AND BACKWARD FLOATING SELECTION
 import copy
-from numpy import Inf, random
+from numpy import Inf, random, int64
 from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtWidgets import QApplication
 from time import time
@@ -13,7 +13,7 @@ class SMFS:
   NAME = "Sequential Mixed Floating Selection"
   DESCR = "todo"
 
-  def __init__(self, thread = None, configuration = None):
+  def __init__(self, thread = None, configuration = None, num_predictors = None):
 
     self.config = configuration
     self.thread = thread
@@ -50,7 +50,7 @@ class SMFS:
       self.current_combo_1 = (2**self.num_predictors) - 1
       self.first_randomizer = False
     else:
-      self.current_combo_1 = random.randint(2**self.num_predictors)
+      self.current_combo_1 = random.randint(2**self.num_predictors, dtype=int64)
       self.current_combo_1 = self.current_combo_1 | self.forcings
     
    

@@ -12,14 +12,14 @@ class BruteForce:
   NAME = "Brute Force Selection"
   DESCR = "todo"
 
-  def __init__(self, thread=None, configuration = None):
+  def __init__(self, thread=None, configuration = None, num_predictors = None):
 
     self.config = configuration
     self.thread=thread
     self.num_predictors = len(self.config.predictor_pool)
     self.forcings = ['0' if not p.forced else '1' for p in self.config.predictor_pool.predictors]
     self.forcings = int(''.join(self.forcings), base=2)
-    self.total = (2**self.num_predictors)-1
+    self.total = (2**num_predictors)-1
     self.completed = []
     self.current_index = 0
     self.running = True
@@ -36,6 +36,8 @@ class BruteForce:
         self.running = False
       model = (self.current_index | self.forcings)
       if model in self.completed:
+        if not self.running:
+          return -1
         self.current_index += 1
         return self.next()
       else:

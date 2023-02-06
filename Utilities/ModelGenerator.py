@@ -71,7 +71,7 @@ class ModelGenerator(QThread):
       
       # Load the feature selection method
       feature_selector_name = regressor.feature_selection if not bruteforce else 'Brute Force'
-      feature_selector = app.feature_selection[feature_selector_name](self, configuration = self.config)
+      feature_selector = app.feature_selection[feature_selector_name](self, configuration = self.config, num_predictors =len(self.config.predictor_pool) - num_forced - num_empty )
 
       print(f'Starting feature selection with feature selector: {feature_selector_name}')
       count = 0
@@ -83,9 +83,10 @@ class ModelGenerator(QThread):
         if predictors == -1:
           break
         bool_index = feature_selector.convert_int_to_array(predictors)
-        
+        genome = ''.join([u'\u25cf' if b else u'\u25cc' for b in bool_index])
+        self.updateTextSignal.emit(f'{genome}: Score ({regressor.scoring_metric})             ')
         run_data = df.iloc[:, bool_index + [True]].dropna()
-        if run_data.empty:
+        if  df.iloc[:, bool_index+[False]].dropna().empty:
           continue
         x_data = run_data.values[:,:-1]
         predictand_data = run_data.values[:, -1]
@@ -111,7 +112,7 @@ class ModelGenerator(QThread):
         if should_we_skip:
           continue
           
-        genome = ''.join([u'\u25cf' if b else u'\u25cc' for b in bool_index])
+        
         model = Model(
           regression_model = regressor.regression_model,
           cross_validator = regressor.cross_validation,
@@ -135,7 +136,7 @@ class ModelGenerator(QThread):
         count += 1
         sleep(0.01)
 
-      self.updateTextSignal.emit("Finished")
+    self.updateTextSignal.emit("Finished")
 
 
   def stop(self):
