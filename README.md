@@ -60,7 +60,7 @@ Dataset options can be adjusted to retrieve alternative datasets from dataloader
 
 #### Data Tab
 ![Data Tab Picture][DATA_PIC_1]
-The Data Tab allows users to download data for the selected datasets. Data is downloaded in the datasets `Raw Unit` and displayed to the user in the `Display Unit`. 
+The Data Tab allows users to download data for the selected datasets. Data is downloaded in the dataset's `Raw Unit` and displayed to the user in the `Display Unit`. 
 
 The `Download all data` button will download data for datasets using a start date of 1970-Oct-01, and ending today. The `Download recent data` button downloads data from 45-days before the datasets last datapoint until now. (Note that the 45-day parameter and the default start date of 1970-Oct-01 can both be adjusted in the [application settings](#file-menu))
 

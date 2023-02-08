@@ -28,6 +28,7 @@ class SavedModelsModelView:
     self.sm.model_list.remove_action.triggered.connect(self.remove_model)
     self.sm.model_list.generate_forecast_action.triggered.connect(self.gen_forecast)
     self.sm.model_list.open_action.triggered.connect(self.open_model)
+    self.sm.model_list.doubleClicked.connect(self.open_model)
     self.sm.model_list.selectionModel().selectionChanged.connect(self.plot_forecast)
     self.sm.year_select.valueChanged.connect(lambda i: self.plot_forecast(None,None))
     self.sm.export_values_button.pressed.connect(self.view_exceedances)
@@ -38,7 +39,7 @@ class SavedModelsModelView:
       e.exec()
 
   
-  def open_model(self):
+  def open_model(self, _=None):
     selection = self.sm.model_list.selectionModel().selectedRows()[0]
     real_idx = self.forecast_proxy_model.mapToSource(selection)
     f = ForecastViewer.ForecastViewer(real_idx)
@@ -94,10 +95,10 @@ class SavedModelsModelView:
 
   def remove_model(self):
     idx = self.sm.model_list.selectionModel().selectedRows()
+    real_idxs = [self.forecast_proxy_model.mapToSource(i) for i in idx]
     
-    for i, idx_ in enumerate(idx):
-      real_idx = self.forecast_proxy_model.mapToSource(idx_)
-      app.saved_models.remove_model(real_idx.row() - i)
+    for i, idx_ in enumerate(real_idxs):
+      app.saved_models.remove_model(idx_.row()-i)
   
   def change_dates(self, row):
     if row>=0:

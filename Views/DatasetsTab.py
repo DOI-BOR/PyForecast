@@ -43,6 +43,7 @@ class SelectedDatasetList(QListView):
     self.setContextMenuPolicy(Qt.CustomContextMenu)
     self.setSelectionMode(QAbstractItemView.ExtendedSelection)
     self.customContextMenuRequested.connect(self.customMenu)
+    self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
 
     self.add_action = QAction('Add new dataset')
     self.add_action.setStatusTip('Adds a new blank dataset to the list')
@@ -89,12 +90,12 @@ class SelectedDatasetList(QListView):
       self.view_action.setEnabled(False)
       self.remove_action.setEnabled(True)
       self.add_action.setEnabled(False)
-      list(map(lambda x: x.setEnabled(False), self.climate_actions))
+      list(map(lambda x: x.setEnabled(True), self.climate_actions))
     else:
       self.view_action.setEnabled(True)
       self.remove_action.setEnabled(True)
       self.add_action.setEnabled(False)
-      list(map(lambda x: x.setEnabled(False), self.climate_actions))
+      list(map(lambda x: x.setEnabled(True), self.climate_actions))
 
     menu.exec_(globalpos)
     

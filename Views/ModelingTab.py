@@ -111,8 +111,8 @@ class ConfigurationEditor(QWidget):
     self.exclude_years_field.setEnabled(False)
     self.exclude_check.toggled.connect(self.exclude_years_field.setEnabled)
     self.comment_field = QTextEdit()
-    self.comment_field.setMinimumHeight(100)
-    self.comment_field.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
+    self.comment_field.setMinimumHeight(35)
+    self.comment_field.setMaximumHeight(70)
     self.comment_field.setStatusTip('Add any comments for this configuration')
 
     self.predictand_field = QComboBox()

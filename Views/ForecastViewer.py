@@ -8,7 +8,7 @@ from inspect import signature
 from collections import OrderedDict
 import pyqtgraph as pg
 from Utilities import Scatterplot
-from Views import ExceedanceViewer
+from Views import ExceedanceViewer, ForecastExperimentalFeatures
 
 app = QApplication.instance()
 
@@ -207,12 +207,12 @@ class ForecastViewer(QDialog):
     overviewTab = QWidget()
     targetPredictorsTab = QWidget()
     forecastsTab = QWidget()
-    experimentalTab = QWidget()
+    self.experimentalTab = ForecastExperimentalFeatures.ExperimentalFeatures()
 
     self.tw.addTab(overviewTab, 'Overview')
     self.tw.addTab(targetPredictorsTab, 'Target and Predictors')
     self.tw.addTab(forecastsTab, 'Forecasts')
-    self.tw.addTab(experimentalTab, 'Experimental')
+    self.tw.addTab(self.experimentalTab, 'Experimental')
 
     ll = QVBoxLayout()
     ll.addWidget(self.tw)
@@ -318,7 +318,7 @@ class ForecastViewer(QDialog):
     targetPredictorsTab.setLayout(layout2)
 
     # FORECASTS TAB
-    self.model_fit_table = QTableWidget() # INCLUDES FORECASTS AS COLUMN
+    self.model_fit_table = QTableWidget() 
     self.model_fit_table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
     self.model_fit_table.setSelectionBehavior(QAbstractItemView.SelectRows)
     self.model_plots_ft = ModelPlots()
@@ -338,16 +338,22 @@ class ForecastViewer(QDialog):
     self.forecast_90 = QLineEdit()
     self.forecast_90.setReadOnly(True)
 
-    layout3 = QGridLayout()
-    layout3.addWidget(QLabel("Model Fit Information"), 0, 0, 1, 1)
-    layout3.addWidget(self.model_fit_table, 1, 0, 4, 1)
-    layout3.addWidget(QLabel("Forecasts"), 0, 1, 1, 1)
+    layout3 = QHBoxLayout()
+    splitter = QSplitter(Qt.Horizontal)
+    vboxLayout = QVBoxLayout()
+    vboxLayout.addWidget(QLabel("Model Fit Information"))
+    vboxLayout.addWidget(self.model_fit_table)
+    w = QWidget()
+    w.setLayout(vboxLayout)
+    splitter.addWidget(w)
+    vlayout = QVBoxLayout()
+    vlayout.addWidget(QLabel("Forecasts"))
     hlayout = QHBoxLayout()
     hlayout.addStretch(1)
     hlayout.addWidget(QLabel('Select Forecast Year'))
     hlayout.addWidget(self.forecast_year_select)
-    layout3.addLayout(hlayout, 1, 1, 1, 1)
-    layout3.addWidget(self.model_plots_ft, 2, 1, 1, 1)
+    vlayout.addLayout(hlayout)
+    vlayout.addWidget(self.model_plots_ft)
     hlayout = QHBoxLayout()
     hlayout.addWidget(QLabel("90% : "))
     hlayout.addWidget(self.forecast_10)
@@ -359,11 +365,15 @@ class ForecastViewer(QDialog):
     hlayout.addWidget(self.forecast_70)
     hlayout.addWidget(QLabel("10% : "))
     hlayout.addWidget(self.forecast_90)
-    layout3.addLayout(hlayout, 3, 1, 1, 1)
+    vlayout.addLayout(hlayout)
     hlayout = QHBoxLayout()
     hlayout.addWidget(self.view_exceedance_button)
     hlayout.addStretch(1)
-    layout3.addLayout(hlayout, 4, 1, 1, 1)
+    vlayout.addLayout(hlayout)
+    w2 = QWidget()
+    w2.setLayout(vlayout)
+    splitter.addWidget(w2)
+    layout3.addWidget(splitter)
 
     forecastsTab.setLayout(layout3)
 

@@ -248,7 +248,7 @@ class SavedModelList(QAbstractListModel):
       self.removeRow(idx)  
       
     elif isinstance(idx, Model):
-      idx = self.datasets.index(idx)
+      idx = self.saved_models.index(idx)
       model = self.saved_models.pop(idx)
       self.removeRow(idx)  
 
@@ -263,7 +263,7 @@ class SavedModelList(QAbstractListModel):
   def append(self, model):
     self.insertRow(self.rowCount())
     self.saved_models.append(model)
-    self.dataChanged.emit(self.index(0), self.index(self.rowCount()-1))
+    self.dataChanged.emit(self.index(0), self.index(self.rowCount()))
     app.SMMV.update_combo_box(None, None)
   
   def insertRows(self, position, rows, parent=QModelIndex()):

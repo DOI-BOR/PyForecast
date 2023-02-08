@@ -9,14 +9,16 @@ import pickle
 # Get the global application
 app = QApplication.instance()
 
+# Rich Text for Rich-Text formatted listviews
 DATASET_LIST_RICH_TEXT = """
   <style>
   .light {{
-    font-size:small;
+    font-size:8pt;
     color: gray;
+    font-weight:100;
   }}
   .big {{
-    color: #00753b;
+    color: #0e67a9;
     font-weight: bold;
     font-size:large;
   }}
@@ -27,6 +29,7 @@ DATASET_LIST_RICH_TEXT = """
     overflow: hidden;
     display: inline-block;
     whitespace: nowrap;
+    font-size:medium;
   }}
   
   </style>
@@ -164,13 +167,19 @@ class Datasets(QAbstractListModel):
 
   def add_dataset(self, *args, **kwargs):
 
-    if not 'unit' in kwargs:
+    if not 'raw_unit' in kwargs:
 
-      kwargs['unit'] = app.units.get_unit('-')
+      kwargs['raw_unit'] = app.units.get_unit('-')
+      kwargs['display_unit'] = app.units.get_unit('-')
+    
+    
+
     if not 'dataloader' in kwargs:
       kwargs['dataloader'] = app.dataloaders['-']['CLASS']()
       
     dataset = Dataset(**kwargs)
+    if dataset in self.datasets:
+      return None
     self.datasets.append(dataset)
     self.insertRow(self.rowCount())
     
@@ -191,15 +200,17 @@ class Datasets(QAbstractListModel):
       idx = self.datasets.index(dataset)
       dataset = self.datasets.pop(idx)
       self.removeRow(idx)  
+      print(f'Removed Dataset: {dataset}')
     
     elif isinstance(args[0], int):
       
       idx = args[0]
       dataset = self.datasets.pop(idx)
       self.removeRow(idx) 
+      print(f'Removed Dataset: {dataset}')
   
     self.dataChanged.emit(self.index(0), self.index(self.rowCount()))    
-    print(f'Removed Dataset: {dataset}')
+    
 
     return
   

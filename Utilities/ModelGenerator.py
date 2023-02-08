@@ -78,13 +78,15 @@ class ModelGenerator(QThread):
       score_type = 1 if regressor.scoring_metric in ['R2'] else 0
       score = np.Inf if score_type == 0 else -np.Inf
       while feature_selector.running or count == 0:
+        sleep(0.005)
         predictors = feature_selector.next(score, score_type)
         self.updateProgSignal.emit(feature_selector.progress)
         if predictors == -1:
-          break
+          continue
         bool_index = feature_selector.convert_int_to_array(predictors)
         genome = ''.join([u'\u25cf' if b else u'\u25cc' for b in bool_index])
-        self.updateTextSignal.emit(f'{genome}: Score ({regressor.scoring_metric})             ')
+        genome = f'{genome:40.40}' if len(genome) < 40 else f'{genome:37.37}...'
+        self.updateTextSignal.emit(f'{genome}: Scorer ({regressor.scoring_metric}):             ')
         run_data = df.iloc[:, bool_index + [True]].dropna()
         if  df.iloc[:, bool_index+[False]].dropna().empty:
           continue
@@ -129,8 +131,8 @@ class ModelGenerator(QThread):
           scorer = regressor.scoring_metric
         )
         
-        genome = f'{genome:40.40}' if len(genome) < 40 else f'{genome:37.37}...'
-        self.updateTextSignal.emit(f'{genome}: Score ({regressor.scoring_metric}) {score:12.5g}')
+        
+        self.updateTextSignal.emit(f'{genome}: Scorer ({regressor.scoring_metric}): {score:12.5g}')
         self.updateProgSignal.emit(feature_selector.progress)
         self.newModelSignal.emit(model)
         count += 1

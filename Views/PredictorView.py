@@ -1,19 +1,105 @@
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import QDate, QStringListModel
+from PyQt5.QtCore import QDate, QStringListModel, QModelIndex, QSortFilterProxyModel, Qt
 from PyQt5.QtGui import QIcon
 from pandas import DateOffset
 from Models.ModelConfigurations import ResampledDataset
 from Utilities.HydrologyDateTimes import water_year_start_date
 app = QApplication.instance()
+
+
+
+class MethodFilterModel(QSortFilterProxyModel):
+
+  def __init__(self):
+    QSortFilterProxyModel.__init__(self)
+    self.filterString = None
+    
+  def setFilterString(self, dataset):
+    
+    self.dataset = dataset
+    text = dataset.display_unit.type
+    self.filterString = text.lower()
+    self.invalidateFilter()
+    
+  def filterAcceptsRow(self, sourceRow, sourceParent = QModelIndex()):
+    idx = self.sourceModel().index(sourceRow)
+    source_method = self.sourceModel().data(idx, Qt.DisplayRole)
+    if self.filterString == 'flow':
+      if self.dataset.display_unit.id == 'cfs':
+        if 'MCM' in source_method:
+          return False
+      elif self.dataset.display_unit.id == 'cms':
+        if 'KAF' in source_method:
+          return False
+      return True
+    else:
+      if 'MCM' in source_method or 'KAF' in source_method:
+        return False
+      else:
+        return True
+
+class UnitFilterModel(QSortFilterProxyModel):
+
+  def __init__(self):
+    QSortFilterProxyModel.__init__(self)
+    self.filterString = 'length'
+    self.dataset = None
+    self.method = ''
+
+  def setFilterString(self, dataset, method):
+    self.method = method
+    self.dataset = dataset
+    text = dataset.display_unit.type
+    self.filterString = text.lower()
+    self.invalidateFilter()
+    
+  def filterAcceptsRow(self, sourceRow, sourceParent = QModelIndex()):
+    idx = self.sourceModel().index(sourceRow, 5)
+    source_unit_type = self.sourceModel().data(idx, Qt.DisplayRole)
+    idx2 = self.sourceModel().index(sourceRow, 0)
+    source_unit_id = self.sourceModel().data(idx2, Qt.DisplayRole)
+    
+    if 'MCM' in self.method:
+      if source_unit_id.value() == 'mcm':
+        return True
+      else:
+        return False
+    elif 'KAF' in self.method:
+      if source_unit_id.value() == 'kaf':
+        return True
+      else:
+        return False
+    else:
+      if source_unit_type.value() == self.filterString:
+        return True
+      else:
+        return False
+
+
+
+
 class PredictorView(QDialog):
 
   def __init__(self, app = None, selected_configuration = None):
 
     QDialog.__init__(self)
+
+    self.method_model = QStringListModel(list(app.agg_methods.keys()))
+    self.filter_method_model = MethodFilterModel()
+    self.filter_method_model.setSourceModel(self.method_model)
+    self.filter_units_model = UnitFilterModel()
+    self.filter_units_model.setSourceModel(app.units)
+
+
     self.selected_configuration = selected_configuration
     self.configuration = app.model_configurations.get_by_id(self.selected_configuration)
     self.current_idx = -1
     self.setUI()
+
+    self.predictor_field.currentIndexChanged.connect(lambda idx: self.updateMethodUnits('predictor'))
+    self.predictor_method_field.currentIndexChanged.connect(lambda idx: self.updateMethodUnits('method'))
+
+
     self.predictor_grid.setModel(self.configuration.predictor_pool)
     self.new_button.pressed.connect(self.new_predictor)
     self.delete_all_button.pressed.connect(self.delete_all)
@@ -22,6 +108,21 @@ class PredictorView(QDialog):
     self.predictor_grid.selectionModel().currentChanged.connect(lambda new, old: self.setPredictor(new.row()))
     self.save_predictor_button.pressed.connect(self.savePredictor)
     self.delete_button.pressed.connect(self.delPredictor)
+
+  def updateMethodUnits(self, type_):
+    dataset = app.datasets[self.predictor_field.currentIndex()]
+    if type_ == 'predictor':
+      self.filter_method_model.setFilterString(dataset)
+      self.filter_units_model.setFilterString(dataset, self.predictor_method_field.currentText())
+      self.predictor_unit_field.setCurrentText(dataset.display_unit.__list_form__())
+    elif type_ == 'method':
+      method = self.predictor_method_field.currentText()
+      self.filter_units_model.setFilterString(dataset, method)
+      if not ('MCM' in method) and not ('KAF' in method):
+        self.predictor_unit_field.setCurrentText(dataset.display_unit.__list_form__())
+    else:
+      return
+
 
   def autogen(self):
 
@@ -119,7 +220,7 @@ class PredictorView(QDialog):
         non_generated_predictors.append(dataset)
 
     if len(non_generated_predictors) > 0:
-      s = '\n'.join([d.__repr__() for d in non_generated_predictors])
+      s = '\n\n'.join([d.__repr__() for d in non_generated_predictors])
       ret = QMessageBox.information(self, 'Unsupported Datasets', f"The following datasets had no predictors genereated:\n\n {s}")
 
     return
@@ -169,15 +270,15 @@ class PredictorView(QDialog):
     self.predictor_field = QComboBox()
     self.predictor_field.setModel(app.datasets)
     self.predictor_method_field = QComboBox()
-    self.predictor_method_field.setModel(QStringListModel(list(app.agg_methods.keys())))
+    self.predictor_method_field.setModel(self.filter_method_model)
     self.predictor_period_start_field = QDateEdit()
     self.predictor_period_start_field.setDisplayFormat('MMM dd')
     self.predictor_period_end_field = QDateEdit()
     self.predictor_period_end_field.setDisplayFormat('MMM dd')
     self.predictor_preprocessing_field = QComboBox()  
-    self.predictor_preprocessing_field.setModel(QStringListModel(list(app.preprocessing_methods.keys())))
+    self.predictor_preprocessing_field.setModel(QStringListModel(list(filter(lambda i: not i.startswith('INV'), app.preprocessing_methods.keys()))))
     self.predictor_unit_field = QComboBox()
-    self.predictor_unit_field.setModel(app.units)
+    self.predictor_unit_field.setModel(self.filter_units_model)
     self.predictor_unit_field.setModelColumn(6)
     self.predictor_positive_box = QCheckBox()
     self.save_predictor_button = QPushButton("Save")

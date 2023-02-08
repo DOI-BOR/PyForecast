@@ -1,11 +1,13 @@
 from PyQt5.QtWidgets import *
 from Views import DatasetViewDialog
-from Utilities.GIS import excelToGeoJSON
 
 # Get the global application
 app = QApplication.instance()
 
 class DatasetModelView:
+  """DatasetModelView is an object that contains functions for connecting GUI
+  events from the Dataset's Tab to the Dataset Model. 
+  """
 
   def __init__(self):
 
@@ -22,17 +24,22 @@ class DatasetModelView:
     # List view context menu actions
     self.dt.dataset_list.view_action.triggered.connect(self.view_dataset)
     self.dt.dataset_list.remove_action.triggered.connect(self.remove_dataset)
-    self.dt.dataset_list.add_action.triggered.connect(self.add_dataset)
+    self.dt.dataset_list.add_action.triggered.connect(self.add_blank_dataset)
     self.dt.dataset_list.action1.triggered.connect(lambda c: self.add_climate_dataset(self.dt.dataset_list.action1.data()))
     self.dt.dataset_list.action2.triggered.connect(lambda c: self.add_climate_dataset(self.dt.dataset_list.action2.data()))
+    
+    # Double click event
+    self.dt.dataset_list.doubleClicked.connect(self.view_dataset)
     
     # Connect Models to Views
     self.dt.dataset_list.setModel(app.datasets)
 
+    return
+
   def add_climate_dataset(self, idx):
 
     if idx == 1:
-      app.datasets.add_dataset(
+      dataset = app.datasets.add_dataset(
         external_id = 'MENSO',
         name = 'Multivariate El Nino Southern Oscillation',
         agency = 'NOAA',
@@ -41,10 +48,10 @@ class DatasetModelView:
         display_unit = app.units.get_unit('-'),
         dataloader = app.dataloaders.get_loader_by_name('NOAA-CPC')['CLASS']()
       )
-      return
+      
       
     if idx == 2:
-      app.datasets.add_dataset(
+      dataset = app.datasets.add_dataset(
         external_id = 'PNA',
         name = 'Pacific North American Index',
         agency = 'NOAA',
@@ -53,7 +60,10 @@ class DatasetModelView:
         display_unit = app.units.get_unit('-'),
         dataloader = app.dataloaders.get_loader_by_name('NOAA-CPC')['CLASS']()
       )
-      return
+    if not dataset:
+      ret = QMessageBox.information(self.dt, 'Dataset duplicate', 'Dataset is already in dataset list.')
+    self.dt.dataset_list.scrollToBottom()
+      
 
   def add_dataset_from_map(self, msg):
 
@@ -65,7 +75,7 @@ class DatasetModelView:
     msg = msg.replace('ID:', '')
 
     id_, name, agency, dloader, param, pcode, units  = msg.split('~~')
-    app.datasets.add_dataset(
+    dataset = app.datasets.add_dataset(
       external_id = id_,
       agency = agency,
       name=name,
@@ -74,7 +84,10 @@ class DatasetModelView:
       raw_unit=app.units.get_unit(units),
       display_unit = app.units.get_unit(units),
       dataloader = app.dataloaders.get_loader_by_name(dloader)['CLASS']()
-    )    
+    ) 
+    if not dataset:
+      ret = QMessageBox.information(self.dt, 'Dataset duplicate', 'Dataset is already in dataset list.')
+    self.dt.dataset_list.scrollToBottom()
 
   def view_dataset(self, checked):
     
@@ -97,7 +110,7 @@ class DatasetModelView:
 
     return
 
-  def add_dataset(self, checked):
+  def add_blank_dataset(self, checked):
     
     new_dataset = app.datasets.add_dataset()
     dv = DatasetViewDialog.DatasetViewer(app, new_dataset.guid, new=True)

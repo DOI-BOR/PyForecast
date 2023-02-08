@@ -24,7 +24,7 @@ def last(s):
 METHODS = OrderedDict([
   ('ACCUMULATION', np.nansum),
   ('ACCUMULATION (CFS to KAF)', acc_cfs_kaf),
-  ('ACCUMULTAION (CMS to MCM)', acc_cms_mcm),
+  ('ACCUMULATION (CMS to MCM)', acc_cms_mcm),
   ('AVERAGE', np.nanmean),
   ('MAXIMUM', np.nanmax),
   ('MINIMUM', np.nanmin),

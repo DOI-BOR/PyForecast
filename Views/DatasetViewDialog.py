@@ -17,11 +17,7 @@ class UnitFilterModel(QSortFilterProxyModel):
   def filterAcceptsRow(self, sourceRow, sourceParent = QModelIndex()):
     idx = self.sourceModel().index(sourceRow, 5)
     source_unit_type = self.sourceModel().data(idx, Qt.DisplayRole)
-    if self.filterString == 'flow':
-      idx2 = self.sourceModel().index(sourceRow, 0)
-      source_unit_id = self.sourceModel().data(idx2, Qt.DisplayRole)
-      if source_unit_id.value() in ['kaf', 'mcm']:
-        return True
+    
     if source_unit_type.value() == self.filterString:
       return True
     else:

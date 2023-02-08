@@ -16,3 +16,4 @@ dist
 /*.spec
 app_log.txt
 regen_web_map.py
+Publish.py

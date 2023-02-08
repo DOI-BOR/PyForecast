@@ -9,27 +9,72 @@ from copy import deepcopy
 
 app = QApplication.instance()
 
+class MethodFilterModel(QSortFilterProxyModel):
+
+  def __init__(self):
+    QSortFilterProxyModel.__init__(self)
+    self.filterString = None
+    
+  def setFilterString(self, dataset):
+    
+    self.dataset = dataset
+    text = dataset.display_unit.type
+    self.filterString = text.lower()
+    self.invalidateFilter()
+    
+  def filterAcceptsRow(self, sourceRow, sourceParent = QModelIndex()):
+    idx = self.sourceModel().index(sourceRow)
+    source_method = self.sourceModel().data(idx, Qt.DisplayRole)
+    if self.filterString == 'flow':
+      if self.dataset.display_unit.id == 'cfs':
+        if 'MCM' in source_method:
+          return False
+      elif self.dataset.display_unit.id == 'cms':
+        if 'KAF' in source_method:
+          return False
+      return True
+    else:
+      if 'MCM' in source_method or 'KAF' in source_method:
+        return False
+      else:
+        return True
+
 class UnitFilterModel(QSortFilterProxyModel):
 
   def __init__(self):
     QSortFilterProxyModel.__init__(self)
     self.filterString = 'length'
-  def setFilterString(self, text):
+    self.dataset = None
+    self.method = ''
+
+  def setFilterString(self, dataset, method):
+    self.method = method
+    self.dataset = dataset
+    text = dataset.display_unit.type
     self.filterString = text.lower()
     self.invalidateFilter()
+    
   def filterAcceptsRow(self, sourceRow, sourceParent = QModelIndex()):
     idx = self.sourceModel().index(sourceRow, 5)
     source_unit_type = self.sourceModel().data(idx, Qt.DisplayRole)
-    if self.filterString == 'flow':
-      idx2 = self.sourceModel().index(sourceRow, 0)
-      source_unit_id = self.sourceModel().data(idx2, Qt.DisplayRole)
-      if source_unit_id.value() in ['kaf', 'mcm']:
+    idx2 = self.sourceModel().index(sourceRow, 0)
+    source_unit_id = self.sourceModel().data(idx2, Qt.DisplayRole)
+    
+    if 'MCM' in self.method:
+      if source_unit_id.value() == 'mcm':
         return True
-    if source_unit_type.value() == self.filterString:
-      return True
+      else:
+        return False
+    elif 'KAF' in self.method:
+      if source_unit_id.value() == 'kaf':
+        return True
+      else:
+        return False
     else:
-      return False
-
+      if source_unit_type.value() == self.filterString:
+        return True
+      else:
+        return False
 
 class ModelConfigurationModelView:
 
@@ -40,13 +85,18 @@ class ModelConfigurationModelView:
 
     # set the models
     self.mt.config_list.setModel(app.model_configurations)
-
-    # COnnect views with models
-    self.mt.config_editor.predictand_method_field.setModel(QStringListModel(list(app.agg_methods.keys())))
-    self.mt.config_editor.predictand_preprocessing_field.setModel(QStringListModel(list(filter(lambda x: not x.startswith('INV_'),app.preprocessing_methods.keys()))))
-    self.mt.config_editor.predictand_field.setModel(app.datasets)
+    self.method_model = QStringListModel(list(app.agg_methods.keys()))
+    self.filter_method_model = MethodFilterModel()
+    self.filter_method_model.setSourceModel(self.method_model)
     self.filter_units_model = UnitFilterModel()
     self.filter_units_model.setSourceModel(app.units)
+
+
+    # COnnect views with models
+    self.mt.config_editor.predictand_method_field.setModel(self.filter_method_model)
+    self.mt.config_editor.predictand_preprocessing_field.setModel(QStringListModel(list(filter(lambda x: not x.startswith('INV_'),app.preprocessing_methods.keys()))))
+    self.mt.config_editor.predictand_field.setModel(app.datasets)
+    
     self.mt.config_editor.predictand_unit_field.setModel(self.filter_units_model)
     self.mt.config_editor.predictand_unit_field.setModelColumn(6)
     self.mt.add_conf_button.pressed.connect(self.new_configuration)
@@ -58,13 +108,15 @@ class ModelConfigurationModelView:
     self.mt.config_editor.view_predictand_data_button.pressed.connect(lambda: self.open_view_data(-1))
     self.mt.config_editor.view_predictor_data_button.pressed.connect(lambda: self.open_view_data(None))
     self.mt.config_editor.run_button.pressed.connect(self.gen_button_pressed)
-    self.mt.config_editor.predictand_field.currentIndexChanged.connect(self.update_predictand_info)
-    self.mt.config_editor.predictand_method_field.currentTextChanged.connect(lambda text: self.mt.config_editor.predictand_unit_field.setCurrentText(app.units.get_unit('kaf').__list_form__()) if 'KAF' in text else None)
-    self.mt.config_editor.predictand_method_field.currentTextChanged.connect(lambda text: self.mt.config_editor.predictand_unit_field.setCurrentText(app.units.get_unit('mcm').__list_form__()) if 'MCM' in text else None)
+    self.mt.config_editor.predictand_field.currentIndexChanged.connect(lambda idx: self.update_predictand_info(idx, 'predictand'))
+    self.mt.config_editor.predictand_method_field.currentIndexChanged.connect(lambda idx: self.update_predictand_info(idx, 'method'))
+    #self.mt.config_editor.predictand_method_field.currentTextChanged.connect(lambda text: self.mt.config_editor.predictand_unit_field.setCurrentText(app.units.get_unit('kaf').__list_form__()) if 'KAF' in text else None)
+    #self.mt.config_editor.predictand_method_field.currentTextChanged.connect(lambda text: self.mt.config_editor.predictand_unit_field.setCurrentText(app.units.get_unit('mcm').__list_form__()) if 'MCM' in text else None)
     self.mt.config_list.remove_action.triggered.connect(self.delete_conf)
     self.mt.config_list.duplicate_action.triggered.connect(self.duplicate_conf)
 
     self.mt.config_editor.setEnabled(False)
+
 
   def delete_conf(self, _):
     idx = self.mt.config_list.selectionModel().currentIndex().row()
@@ -169,27 +221,44 @@ class ModelConfigurationModelView:
     # Set the predictors
     pl = self.ce.predictor_list
     pl.setModel(configuration.predictor_pool)
+    pl.resizeColumnsToContents()
+    pl.horizontalHeader().setStretchLastSection(True)
     self.ce.predictor_count.setText(f'There are <strong>{len(configuration.predictor_pool)}</strong> predictors in this configuration')
 
     # Set the regressors
     r = self.ce.regressor_list
     r.setModel(configuration.regressors)
+    r.resizeColumnsToContents()
+    r.horizontalHeader().setStretchLastSection(True)
     self.ce.regressor_count.setText(f'There are <strong>{len(configuration.regressors)}</strong> regressors in this configuration')
 
     configuration.predictor_pool.dataChanged.connect(lambda idx1,idx2: self.ce.predictor_list.resizeColumnsToContents())
+    configuration.predictor_pool.dataChanged.connect(lambda idx1,idx2: self.ce.predictor_list.horizontalHeader().setStretchLastSection(True))
     configuration.predictor_pool.dataChanged.connect(lambda idx1,idx2: self.ce.predictor_count.setText(f'There are <strong>{len(configuration.predictor_pool)}</strong> predictors in this configuration'))
 
     configuration.regressors.dataChanged.connect(lambda idx1,idx2: self.ce.regressor_list.resizeColumnsToContents())
+    configuration.regressors.dataChanged.connect(lambda idx1,idx2: self.ce.regressor_list.horizontalHeader().setStretchLastSection(True))
     configuration.regressors.dataChanged.connect(lambda idx1,idx2: self.ce.regressor_count.setText(f'There are <strong>{len(configuration.regressors)}</strong> regressors in this configuration'))
 
 
     self.ce.setEnabled(True)
     self.ce.deselect_all()
 
-  def update_predictand_info(self, idx):
+  def update_predictand_info(self, idx, type_):
     dataset = app.datasets[self.ce.predictand_field.currentIndex()]
-    self.filter_units_model.setFilterString(dataset.display_unit.type)    
-    self.ce.predictand_unit_field.setCurrentText(dataset.display_unit.__list_form__())
+
+    if type_ == 'predictand':
+      self.filter_method_model.setFilterString(dataset)
+      self.filter_units_model.setFilterString(dataset, self.ce.predictand_method_field.currentText())
+      self.ce.predictand_unit_field.setCurrentText(dataset.display_unit.__list_form__())
+    elif type_ == 'method':
+      method = self.ce.predictand_method_field.currentText()
+      self.filter_units_model.setFilterString(dataset, method)
+      if not ('MCM' in method) and not ('KAF' in method):
+        self.ce.predictand_unit_field.setCurrentText(dataset.display_unit.__list_form__())
+    else:
+      return
+
 
   def store_configuration(self, configuration_idx=None):
     if not configuration_idx:
