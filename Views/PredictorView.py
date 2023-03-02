@@ -108,6 +108,8 @@ class PredictorView(QDialog):
     self.predictor_grid.selectionModel().currentChanged.connect(lambda new, old: self.setPredictor(new.row()))
     self.save_predictor_button.pressed.connect(self.savePredictor)
     self.delete_button.pressed.connect(self.delPredictor)
+    if len(self.configuration.predictor_pool)>0:
+      self.predictor_grid.selectRow(0)
 
   def updateMethodUnits(self, type_):
     dataset = app.datasets[self.predictor_field.currentIndex()]
@@ -328,15 +330,21 @@ class PredictorView(QDialog):
   def savePredictor(self):
     
     self.predictor_widg.setEnabled(True)
-    predictor = self.configuration.predictor_pool[self.current_idx]
-    predictor.dataset = app.datasets[self.predictor_field.currentIndex()]
-    predictor.agg_method = self.predictor_method_field.currentText()
-    predictor.period_start = self.predictor_period_start_field.date().toPyDate()
-    predictor.period_end = self.predictor_period_end_field.date().toPyDate()
-    predictor.preprocessing = self.predictor_preprocessing_field.currentText()
-    predictor.unit = app.units[self.predictor_unit_field.currentIndex()]
-    predictor.forced = self.predictor_force_box.isChecked()
-    predictor.mustBePositive = self.predictor_positive_box.isChecked()
+
+    idx = self.predictor_unit_field.currentIndex()
+    idx = self.filter_units_model.mapToSource(self.filter_units_model.index(idx, 0))
+
+    predictor = ResampledDataset(
+      dataset = app.datasets[self.predictor_field.currentIndex()],
+      period_start = self.predictor_period_start_field.date().toPyDate(),
+      period_end = self.predictor_period_end_field.date().toPyDate(),
+      preprocessing = self.predictor_preprocessing_field.currentText(),
+      unit = app.units[idx.row()],
+      agg_method = self.predictor_method_field.currentText(),
+      forced = self.predictor_force_box.isChecked(),
+      mustBePositive = self.predictor_positive_box.isChecked()
+    )
+
     self.configuration.predictor_pool[self.current_idx] = predictor
 
   def setPredictor(self, idx):

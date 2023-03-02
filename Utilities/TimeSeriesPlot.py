@@ -11,6 +11,10 @@ class TimeSeriesPlot(pg.PlotItem):
 
     self.parent = parent
     pg.PlotItem.__init__(self)
+    self.no_dots = True
+    self.no_hover = True
+    self.no_legend = True
+
     self.setMenuEnabled(False)
     if datetimeAxis:
       b_axis = DateAxis.DateAxisItem(orientation='bottom')
@@ -37,7 +41,11 @@ class TimeSeriesPlot(pg.PlotItem):
     self.vb.sigResized.connect(self.updateViews)
     self.parent.scene().sigMouseMoved.connect(self.mouseMoved)
 
+
+
   def mouseMoved(self,event):
+    if self.no_hover:
+      return
     pos = QPoint(event.x(), event.y())
     mouse_point = self.vb.mapSceneToView(pos)
     x_ = mouse_point.x()
@@ -72,6 +80,25 @@ class TimeSeriesPlot(pg.PlotItem):
     else:
       self.unit_list = ['-']*len(data.columns)
 
+    if 'no_legend' in kwargs:
+      self.no_legend = True
+    else:
+      self.no_legend = False
+
+    if 'no_dots' in kwargs:
+      self.no_dots = True
+    else:
+      self.no_dots = False
+
+    if 'no_hover' in kwargs:
+      self.no_hover = True
+    else:
+      self.no_hover = False
+    if 'trace_width' in kwargs:
+      self.trace_width = True
+    else:
+      self.trace_width = False
+
     self.plot_dataframe(data, colors)
 
     
@@ -98,18 +125,21 @@ class TimeSeriesPlot(pg.PlotItem):
     for i, col in enumerate(dataframe.columns):
 
       y = dataframe[col]
-      if len(y.dropna()) < 300:
+      if len(y.dropna()) < 300 and not self.no_dots:
         marker = 'o'
       else:
         marker = None
       markerPen = pg.mkPen(colors[i])
       markerBrush = pg.mkBrush(colors[i])
-
-      point = pg.ScatterPlotItem(symbol='o', brush=markerBrush, pen = markerPen, size=10, pxMode=True)
-      self.hoverPoints.append(point)
+      if not self.no_hover:
+        point = pg.ScatterPlotItem(symbol='o', brush=markerBrush, pen = markerPen, size=10, pxMode=True)
+        self.hoverPoints.append(point)
 
       if PlotUtils.sameUnits(self.unit_list[i], condensed[0])[0]:
-        curve = pg.PlotDataItem(x=x, y=y.values, symbol=marker, symbolBrush=markerBrush, symbolPen = markerPen, name=col, pen=pg.mkPen(colors[i], width=1.5), connect='finite', stepMode='left')
+        if self.no_legend:
+          curve = pg.PlotDataItem(x=x, y=y.values, symbol=marker, symbolBrush=markerBrush, symbolPen = markerPen, pen=pg.mkPen(colors[i], width=1.5 if not self.trace_width else 0.5), connect='finite', stepMode='left')
+        else:
+          curve = pg.PlotDataItem(x=x, y=y.values, symbol=marker, symbolBrush=markerBrush, symbolPen = markerPen, name=col, pen=pg.mkPen(colors[i], width=1.5 if not self.trace_width else 0.5), connect='finite', stepMode='left')
         curve.setZValue(10)
         self.plot_assignments.append((curve, 0))
         self.addItem(curve)
@@ -117,12 +147,15 @@ class TimeSeriesPlot(pg.PlotItem):
         
         #pg.PlotItem.plot(self, x=x, y=dataframe[col].values, name=col, clear=True if i==0 else False, pen=pg.mkPen(colors[i]), connect='finite')
       else:
-        
-        curve = pg.PlotDataItem(x=x, y=y.values, symbol=marker, symbolBrush=markerBrush, symbolPen = markerPen, name=col, pen=pg.mkPen(colors[i], width=1.5), connect='finite', stepMode='left')
+        if self.no_legend:
+          curve = pg.PlotDataItem(x=x, y=y.values, symbol=marker, symbolBrush=markerBrush, symbolPen = markerPen, pen=pg.mkPen(colors[i], width=1.5 if not self.trace_width else 0.5), connect='finite', stepMode='left')
+        else:
+          curve = pg.PlotDataItem(x=x, y=y.values, symbol=marker, symbolBrush=markerBrush, symbolPen = markerPen, name=col, pen=pg.mkPen(colors[i], width=1.5 if not self.trace_width else 0.5), connect='finite', stepMode='left')
         curve.setZValue(10)
         self.viewbox_axis_2.addItem(curve)
         self.plot_assignments.append((curve, 1))
-        self.legend.addItem(curve, col)
+        if not self.no_legend:
+          self.legend.addItem(curve, col)
         self.viewbox_axis_2.addItem(point)
         #pg.PlotItem.plot(self.viewbox_axis_2, x=x, y=dataframe[col].values, name=col, clear=True if i==0 else False, pen=pg.mkPen(colors[i]), connect='finite')
     

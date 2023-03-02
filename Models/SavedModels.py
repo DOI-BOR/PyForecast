@@ -252,7 +252,7 @@ class SavedModelList(QAbstractListModel):
       model = self.saved_models.pop(idx)
       self.removeRow(idx)  
 
-    self.dataChanged.emit(self.index(0), self.index(self.rowCount()))
+    self.dataChanged.emit(self.index(0), self.index(self.rowCount()-1))
     app.SMMV.update_combo_box(None, None)
   
   def clear_all(self):

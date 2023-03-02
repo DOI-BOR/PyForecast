@@ -24,9 +24,21 @@ class ResampledDataset:
     self.data = pd.Series([], index=pd.DatetimeIndex([]), dtype='float64')
 
     self.__dict__.update(**kwargs)
-    diff = self.period_end - self.period_start
-    self.period_start = self.period_start.replace(year=1900)
-    self.period_end = self.period_start + diff
+
+    # Validate datetimes
+    
+    if self.period_start.month >= 10:
+      self.period_start = self.period_start.replace(year=1899)
+    else:
+      self.period_start = self.period_start.replace(year=1900)
+    if self.period_end.month >= 10:
+      self.period_end = self.period_end.replace(year=1899)
+    else:
+      self.period_end = self.period_end.replace(year=1900)
+
+    #diff = self.period_end - self.period_start
+    #self.period_start = self.period_start.replace(year=1900)
+    #self.period_end = self.period_start + diff
 
     if 'unit' not in kwargs:
       self.unit = self.dataset.display_unit
@@ -50,7 +62,7 @@ class ResampledDataset:
       a = app.agg_methods[self.agg_method]
 
       # Compute period duration
-      days = (self.period_end - self.period_start).days + 1
+      days = (self.period_end - self.period_start).days
 
       # Create the periods
       tracker = pd.Timestamp(self.period_start)

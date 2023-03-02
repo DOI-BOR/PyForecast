@@ -74,14 +74,16 @@ class DataViewer(pg.GraphicsLayoutWidget):
     newRegion = self.timesliderplot.region.getRegion()
     if not any(np.isinf(newRegion)):
         self.timeseriesplot.setXRange(*self.timesliderplot.region.getRegion(), padding=0)
-        [self.timeseriesplot.items[i].viewRangeChanged() for i in
-          range(len(self.timeseriesplot.items))]
+        for i in range(len(self.timeseriesplot.items)):
+          self.timeseriesplot.items[i].viewRangeChanged()
+          
     return
 
   def updateRegion(self, window, viewRange):
     self.timesliderplot.region.setZValue(10)
     self.timesliderplot.region.setRegion(viewRange[0])
-    [self.timeseriesplot.items[i].viewRangeChanged() for i in range(len(self.timeseriesplot.items))]
+    for i in range(len(self.timeseriesplot.items)):
+      self.timeseriesplot.items[i].viewRangeChanged()
 
     return
 

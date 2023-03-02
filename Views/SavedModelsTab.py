@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt, QEvent
 import pyqtgraph as pg
-from Utilities import RichTextDelegate
+from Utilities import RichTextDelegate, ToggleSwitch
 from datetime import datetime
 fcst_label = """
 <span style="font-family: 'Courier New', 'Courier', 'Consolas', monospace">
@@ -33,6 +33,7 @@ class SavedModelsTab(QWidget):
     self.issue_combo = QComboBox()
     self.model_list = ModelList()
     self.year_select = QSpinBox()
+    self.plot_select = ToggleSwitch.Switch(thumb_radius=11, track_radius=8)
     self.prob_plot = ProbabilityPlots()
     self._10_value = valueLabel()
     self._30_value = valueLabel()
@@ -53,6 +54,9 @@ class SavedModelsTab(QWidget):
     h.addStretch(1)
     h.addWidget(QLabel("Select Year to view"))
     h.addWidget(self.year_select)
+    h.addWidget(QLabel('|   PDF View'))
+    h.addWidget(self.plot_select)
+    h.addWidget(QLabel("CDF View"))
     vlayout2.addLayout(h)
     vlayout2.addWidget(self.prob_plot)
     vlayout2.addWidget(QLabel('<strong>Forecast Exceedances</strong>', objectName='HeaderLabel'))

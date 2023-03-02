@@ -8,6 +8,7 @@ from Utilities.ColorCycler import ColorCycler
 from Views import ForecastViewer, ExceedanceViewer
 from scipy.interpolate import InterpolatedUnivariateSpline
 from inspect import signature
+from pathos.multiprocessing import ThreadingPool as Pool
 
 app = QApplication.instance()
 
@@ -31,6 +32,7 @@ class SavedModelsModelView:
     self.sm.model_list.doubleClicked.connect(self.open_model)
     self.sm.model_list.selectionModel().selectionChanged.connect(self.plot_forecast)
     self.sm.year_select.valueChanged.connect(lambda i: self.plot_forecast(None,None))
+    self.sm.plot_select.clicked.connect(lambda b: self.plot_forecast(None, None))
     self.sm.export_values_button.pressed.connect(self.view_exceedances)
   
   def view_exceedances(self):
@@ -46,7 +48,10 @@ class SavedModelsModelView:
     f.exec()
     return
   
-  def plot_forecast(self, new_selection, _):
+  def plot_forecast(self, new_selection, _,):
+    plot_type = 'pdf'
+    if self.sm.plot_select.isChecked():
+      plot_type = 'cdf'
     selection = self.sm.model_list.selectionModel().selectedRows()
     real_idx = [self.forecast_proxy_model.mapToSource(i) for i in selection]
     year = self.sm.year_select.value()
@@ -63,7 +68,10 @@ class SavedModelsModelView:
         spl = InterpolatedUnivariateSpline(values.values, list(values.index), k=2)
         xs = np.linspace(values.min(), values.max(), 1000)
         spl_d = spl.derivative()
-        self.sm.prob_plot.plot_data(xs, spl_d(xs), color=cc.next(), label=model.name)        
+        if plot_type == 'pdf':
+          self.sm.prob_plot.plot_data(xs, spl_d(xs), color=cc.next(), label=model.name) 
+        else:
+          self.sm.prob_plot.plot_data(xs, spl(xs), color=cc.next(), label=model.name)       
 
     grouped = df.mean(axis=1)
     if not grouped.empty:
@@ -71,7 +79,10 @@ class SavedModelsModelView:
         spl = InterpolatedUnivariateSpline(grouped.values, list(grouped.index), k=2)
         xs = np.linspace(grouped.min(), grouped.max(), 1000)
         spl_d = spl.derivative()
-        self.sm.prob_plot.plot_data(xs, spl_d(xs), color=cc.next(), width=3, label='Combined')
+        if plot_type =='pdf':
+          self.sm.prob_plot.plot_data(xs, spl_d(xs), color=cc.next(), width=3, label='Combined')
+        else:
+          self.sm.prob_plot.plot_data(xs, spl(xs), color=cc.next(), width=3, label='Combined')
       self.grouped = grouped
       vals = grouped.loc[[0.1,0.3,0.5,0.7,0.9]].values
       self.sm._10_value.setText(vals[0], model.predictand.unit.id)
@@ -91,14 +102,22 @@ class SavedModelsModelView:
     self.gen_for_dialog = genModelDialog(real_idx)
     self.gen_for_dialog.last_year.connect(self.sm.year_select.setValue)
     self.gen_for_dialog.finished.connect(lambda _: self.plot_forecast(None,None))
-    self.gen_for_dialog.exec()
+    self.gen_for_dialog.show()
 
   def remove_model(self):
+    current_issue_date = self.sm.issue_combo.currentData()
+    cidx = self.sm.issue_combo.currentIndex()
+
     idx = self.sm.model_list.selectionModel().selectedRows()
     real_idxs = [self.forecast_proxy_model.mapToSource(i) for i in idx]
+    models = [app.saved_models[idx_.row()] for idx_ in real_idxs]
     
-    for i, idx_ in enumerate(real_idxs):
-      app.saved_models.remove_model(idx_.row()-i)
+    for m in models:
+      app.saved_models.remove_model(m)
+    
+    if current_issue_date in self.issue_dates:
+        self.sm.issue_combo.setCurrentIndex(cidx)
+
   
   def change_dates(self, row):
     if row>=0:
@@ -137,16 +156,19 @@ class genModelDialog(QDialog):
   def __init__(self, idx_list):
 
     QDialog.__init__(self)
-    self.setUI()
+    self.setModal(True)
+    
     self.idx_list = list(set(idx_list))
+    self.setUI()
     self.gen_button.pressed.connect(self.generate_forecasts)
-    self.prog_bar.setMaximum(100)
     self.year_ = 2000
     self.setMinimumWidth(500)
+  
+  def closeEvent(self, a0):
+    self.finish()
+    QDialog.closeEvent(self, a0)
 
   def resample_all_data(self, model):
-    self.log_box.appendPlainText(' -> regenerating predictor data')
-    app.processEvents()
     for predictor in model.predictors:
       predictor.resample()
     model.predictand.resample()
@@ -170,21 +192,14 @@ class genModelDialog(QDialog):
     total = len(self.idx_list)*len(fcst_years)
     inc = 100/total
 
-    for i, idx in enumerate(self.idx_list):
-      
-      
+    for i in range(len(self.idx_list)):
+      idx = self.idx_list[i]
       model = app.saved_models[idx.row()]
-      self.log_box.appendPlainText('----------------------------------------------')
-      self.log_box.appendPlainText(f'Generating forecasts for model: {model.name}')
       app.processEvents()
+      self.labels[i].setMessage('Resampling Data...')
       self.resample_all_data(model)
-
-      for fcst_year in fcst_years:
-        self.log_box.appendPlainText(f'   -> Generating forecasts for year: {fcst_year}')
-      
-        
-        self.prog_bar.setValue(self.prog_bar.value()+inc/2)
-        app.processEvents()
+      for y, fcst_year in enumerate(fcst_years):
+        self.labels[i].setMessage(f'Forecasting for year: {fcst_year}')
         
         regression_algorithm = app.regressors[model.regression_model](cross_validation = model.cross_validator)
         df = pd.DataFrame()
@@ -204,13 +219,16 @@ class genModelDialog(QDialog):
         predictand_data = df.values[:, -1]
 
         n = x_data.shape[0] # num samples
-        n_bootstraps = 100
+        n_bootstraps = 300 # Must be a multiple of 10
         bootstrap_predictions, validation_residuals = np.empty(n_bootstraps), []
         
         for b in range(n_bootstraps):
-          if b==50:
-            self.prog_bar.setValue(self.prog_bar.value()+inc/2)
-            app.processEvents()
+          self.labels[i].setMessage(f'Year: {fcst_year} -> Bootstrapping: {b+1:>4} / {n_bootstraps:>4}')
+          total_prog = len(fcst_years)*n_bootstraps
+          current_prog = b + (y*n_bootstraps)
+          self.labels[i].setProgress(current_prog/total_prog)
+          self.update()
+          app.processEvents()
           train_idxs = np.random.choice(range(n), size=n, replace=True)
           val_idxs = np.array([idx for idx in range(n) if idx not in train_idxs])
           _, _ = regression_algorithm.cross_val_predict(x_data[train_idxs, :], predictand_data[train_idxs])
@@ -242,18 +260,20 @@ class genModelDialog(QDialog):
         method = app.preprocessing_methods['INV_' + model.predictand.preprocessing]
         if len(signature(method).parameters)>1:
           percentiles = method(percentiles,**model.predictand.params)
-         
+          
         else:
           percentiles = method(percentiles)
-          
         
         model.forecasts.set_forecasts_1_99(fcst_year, percentiles)
-        app.processEvents()
-
-    self.finish()
+    self.last_year.emit(self.year_)
+    self.finished.emit(1)
+    app.processEvents()
 
   def finish(self):
+    
     self.last_year.emit(self.year_)
+    
+    #self.finished.emit()
     self.done(0)
 
   def setUI(self):
@@ -262,16 +282,53 @@ class genModelDialog(QDialog):
 
     self.setWindowTitle('Generate Forecasts')
 
+    self.labels = []
+
+
     self.gen_button = QPushButton("Generate Forecasts")
     self.year_input = QLineEdit()
-    self.prog_bar = QProgressBar()
     self.year_input.setPlaceholderText('e.g. "2023" or "2011-2014" or "2003, 2004, 2006"')
-    self.log_box = QPlainTextEdit(objectName='monospace')
+    
+    self.scrollarea = QScrollArea()
+    w = QWidget()
+    l = QVBoxLayout()
+    for i, idx in enumerate(self.idx_list):
+      model = app.saved_models[idx.row()]
+      label = ForecastGenLabel(model.name)
+      self.labels.append(label)
+      l.addWidget(label)
+    w.setLayout(l)
+    self.scrollarea.setWidget(w)
+    self.scrollarea.setWidgetResizable(True)
 
     layout.addWidget(QLabel('What years should we forecast?'))
     layout.addWidget(self.year_input)
-    layout.addWidget(self.prog_bar)
-    layout.addWidget(self.log_box)
+    layout.addWidget(self.scrollarea)
     layout.addWidget(self.gen_button)
 
     self.setLayout(layout)
+
+class ForecastGenLabel(QLabel):
+  
+  def __init__(self, modelName):
+    QLabel.__init__(self)
+    self.setStyleSheet('border: 1px solid black')
+    self.prog = 0.002
+    self.setProgress(self.prog)
+    self.modelName = modelName
+    self.setText(f'<strong>{modelName}</strong><br>Ready to forecast')
+  def setMessage(self, message):
+    self.setText(f'<strong>{self.modelName}</strong><br>{message}') 
+    self.update()
+    app.processEvents()
+  def setProgress(self, prog):
+    if prog >= 1:
+      prog = 0.999999
+    if prog <= 0.002:
+      prog = 0.002
+    self.prog = prog
+    self.setStyleSheet(f"""border: 1px solid black; padding: 10px;
+    background: qlineargradient( x1:0 y1:0, x2:1 y2:0, stop:0 #9deb9d, stop:{self.prog-0.001} #9deb9d, stop:{self.prog} white, stop:1 white)
+    """)
+    self.update()
+    app.processEvents()

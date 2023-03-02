@@ -7,7 +7,8 @@ from Utilities.HydrologyDateTimes import convert_to_water_year, current_water_ye
 from inspect import signature
 from collections import OrderedDict
 import pyqtgraph as pg
-from Utilities import Scatterplot
+from datetime import datetime
+from Utilities import Scatterplot, ForecastDisaggregator
 from Views import ExceedanceViewer, ForecastExperimentalFeatures
 
 app = QApplication.instance()
@@ -37,12 +38,47 @@ class ForecastViewer(QDialog):
     self.setWindowIcon(QIcon(app.base_dir + '/Resources/Icons/AppIcon.ico'))
     self.fcst_idx = fcst_idx
     self.model = app.saved_models[fcst_idx.row()]
+    self.min_forecast_year = self.model.forecasts.forecasts.index.get_level_values(0).min()
+    self.max_forecast_year = self.model.forecasts.forecasts.index.get_level_values(0).max()
     self.regression_algorithm = app.regressors[self.model.regression_model](cross_validation = self.model.cross_validator)
     self.setUI2()
     self.setForecast()
     self.forecast_year_select.valueChanged.connect(self.plot_forecast_for_view)
     self.plot_forecast_for_view(self.forecast_year_select.value())
     self.view_exceedance_button.pressed.connect(self.open_exceedances)
+
+    # Experiemental Features
+    self.experimentalTab.disagg_year_select.setMinimum(self.min_forecast_year)
+    self.experimentalTab.disagg_year_select.setMaximum(self.max_forecast_year)
+    self.experimentalTab.disagg_year_select.setValue(self.max_forecast_year)
+    self.experimentalTab.disagg_start_btn.pressed.connect(self.disagg)
+
+  def disagg(self):
+    e = self.experimentalTab
+    F = ForecastDisaggregator.ForecastDisaggregator(self.model)
+    syear = e.disagg_year_select.value()
+    smnth = e.disagg_start_edit.date().month()
+    emnth = e.disagg_end_edit.date().month()
+    sdy = e.disagg_start_edit.date().day()
+    edy = e.disagg_end_edit.date().day()
+    self.traces = F.Disaggregate(
+      syear, 
+      datetime(1900, smnth, sdy),
+      datetime(1900,emnth, edy),
+    )
+    df = pd.DataFrame()
+    idx = pd.DatetimeIndex(pd.date_range(f'{syear}-{smnth:>02}-{sdy:>02}', f'{syear}-{emnth:>02}-{edy:>02}'))
+    labels = []
+    for exc, trace in self.traces[e.disagg_year_select.value()].items():
+      for t in trace:
+        s = trace[t]['trace']
+        s = s.set_axis(idx)
+        df = pd.concat([df, s], axis=1)
+        labels.append(f"{(100*(1-exc)):>02}%: Analog Year {trace[t]['analog_year']}")
+    df.columns = labels
+    df.index = pd.DatetimeIndex(df.index)
+    e.disagg_plot_view.plot(df, no_dots=True, no_legend=True)
+
 
   def open_exceedances(self):
     forecasts = self.model.forecasts
