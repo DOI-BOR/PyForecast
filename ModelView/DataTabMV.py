@@ -123,8 +123,18 @@ class DataModelView:
       return
     selection = [app.datasets[idx.row()] for idx in self.dt.dataset_list.selectionModel().selection().indexes()]
     if len(selection) > 0:
-      ret = QMessageBox.question(self.dt, 'Download for selection?', 'Download only selected datasets ("Yes") or all datasets ("No")')
-      if ret == QMessageBox.No:
+      msgbox = QMessageBox()
+      msgbox.setIcon(QMessageBox.Question)
+      msgbox.setWindowTitle('Download for selection?')
+      msgbox.setText('Download only selected datasets ("Selected") or all datasets ("All")')
+      msgbox.setStandardButtons(QMessageBox.Yes|QMessageBox.No)
+      buttonY = msgbox.button(QMessageBox.Yes)
+      buttonY.setText('Selected')
+      buttonN = msgbox.button(QMessageBox.No)
+      buttonN.setText('All')
+      msgbox.exec_()
+      ret = msgbox.clickedButton()
+      if ret == buttonN:
         selection = None
 
     dd = DataDownloaderDialog(all_data=False, selection=selection)
@@ -138,8 +148,18 @@ class DataModelView:
       return
     selection = [app.datasets[idx.row()] for idx in self.dt.dataset_list.selectionModel().selection().indexes()]
     if len(selection) > 0:
-      ret = QMessageBox.question(self.dt, 'Download for selection?', 'Download only selected datasets ("Yes") or all datasets ("No")')
-      if ret == QMessageBox.No:
+      msgbox = QMessageBox()
+      msgbox.setIcon(QMessageBox.Question)
+      msgbox.setWindowTitle('Download for selection?')
+      msgbox.setText('Download only selected datasets ("Selected") or all datasets ("All")')
+      msgbox.setStandardButtons(QMessageBox.Yes|QMessageBox.No)
+      buttonY = msgbox.button(QMessageBox.Yes)
+      buttonY.setText('Selected')
+      buttonN = msgbox.button(QMessageBox.No)
+      buttonN.setText('All')
+      msgbox.exec_()
+      ret = msgbox.clickedButton()
+      if ret == buttonN:
         selection = None
     dd = DataDownloaderDialog(all_data=True, selection=selection)
 

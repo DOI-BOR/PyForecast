@@ -143,6 +143,8 @@ class MainWindowModelView:
     app.model_configurations.clear_all()
     app.saved_models.clear_all()
 
+    
+
     return
 
 

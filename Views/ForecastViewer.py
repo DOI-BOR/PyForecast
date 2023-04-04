@@ -132,13 +132,13 @@ class ForecastViewer(QDialog):
       training_text += f' excluding {datestr}'
     self.training_line.setText(training_text)
     self.issue_line.setText(self.model.issue_date.strftime('%B %d'))
-    self.target_name_line.setText(self.model.predictand.dataset.__str__())
-    self.target_parameter_line.setText(self.model.predictand.dataset.parameter)
+    self.target_name_line.setText(self.model.predictand.dataset().__str__())
+    self.target_parameter_line.setText(self.model.predictand.dataset().parameter)
     self.target_period_line.setText(self.model.predictand.__period_str__())
     self.target_aggregation_line.setText(self.model.predictand.agg_method)
     self.target_preprocessing_line.setText(self.model.predictand.preprocessing)
-    self.target_name_line_2.setText(self.model.predictand.dataset.__str__())
-    self.target_parameter_line_2.setText(self.model.predictand.dataset.parameter)
+    self.target_name_line_2.setText(self.model.predictand.dataset().__str__())
+    self.target_parameter_line_2.setText(self.model.predictand.dataset().parameter)
     self.target_period_line_2.setText(self.model.predictand.__period_str__())
     self.target_aggregation_line_2.setText(self.model.predictand.agg_method)
     self.target_preprocessing_line_2.setText(self.model.predictand.preprocessing)
@@ -146,8 +146,8 @@ class ForecastViewer(QDialog):
     # PRedictors
     p_text = ''
     for i, predictor in enumerate(self.model.predictors):
-      p_text += f'<li><strong>X{i+1}: {predictor.dataset.name}</strong><br>' + \
-        f'{predictor.dataset.parameter} [{predictor.unit}]<br>' + \
+      p_text += f'<li><strong>X{i+1}: {predictor.dataset().name}</strong><br>' + \
+        f'{predictor.dataset().parameter} [{predictor.unit}]<br>' + \
         f'{predictor.__period_str__()} {predictor.agg_method}<br>' + \
         f'Pre-processing: {predictor.preprocessing}</li><br>'
     self.predictor_area.setHtml(f'<ul>{p_text}</ul>')

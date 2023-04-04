@@ -38,8 +38,8 @@ hr {
   </table>
   <hr>
   <h3>Forecast Target</h3><br>
-  <strong>Y: {{ model.predictand.dataset.name }}</strong><br>
-  {{ model.predictand.dataset.parameter }} [{{ model.predictand.unit }}]<br>
+  <strong>Y: {{ model.predictand.dataset().name }}</strong><br>
+  {{ model.predictand.dataset().parameter }} [{{ model.predictand.unit }}]<br>
   {{ model.predictand.__period_str__() }} {{ model.predictand.agg_method.title() }}<br>
   Pre-processing: {{ model.predictand.preprocessing }}
   <hr>
@@ -47,8 +47,8 @@ hr {
   <ul>
   {% for predictor in model.predictors %}
     <li>
-      <strong>X{{ loop.index }}: {{ predictor.dataset.name }}</strong><br>
-      {{ predictor.dataset.parameter }} [{{ predictor.unit }}]<br>
+      <strong>X{{ loop.index }}: {{ predictor.dataset().name }}</strong><br>
+      {{ predictor.dataset().parameter }} [{{ predictor.unit }}]<br>
       {{ predictor.__period_str__()}} {{ predictor.agg_method.title() }}<br>
       Pre-processing: {{ predictor.preprocessing.title() }}
     </li><br>

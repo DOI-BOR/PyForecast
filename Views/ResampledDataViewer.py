@@ -95,9 +95,9 @@ class DataPlot(pg.GraphicsLayoutWidget):
     dataframe = dataset.data
     
     # Plot the data
-    pg.PlotItem.plot(self.timeseriesplot, x=dataframe.index, y=dataframe.values, clear=True, symbol='o', name=dataset.dataset.name, pen=pg.mkPen(self.color_cycler.next()))
+    pg.PlotItem.plot(self.timeseriesplot, x=dataframe.index, y=dataframe.values, clear=True, symbol='o', name=dataset.dataset().name, pen=pg.mkPen(self.color_cycler.next()))
     self.timeseriesplot.getAxis('bottom').setLabel('Year', **{'font-size':'14pt'})
-    self.timeseriesplot.getAxis('left').setLabel(dataset.dataset.parameter, units=dataset.unit.id, **{'font-size':'14pt'})
+    self.timeseriesplot.getAxis('left').setLabel(dataset.dataset().parameter, units=dataset.unit.id, **{'font-size':'14pt'})
 
     return
     

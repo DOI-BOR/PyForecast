@@ -93,6 +93,7 @@ class Switch(QAbstractButton):
 
     def paintEvent(self, event):  # pylint: disable=invalid-name, unused-argument
         p = QPainter(self)
+        p.save()
         p.setRenderHint(QPainter.Antialiasing, True)
         p.setPen(Qt.NoPen)
         track_opacity = self._track_opacity
@@ -129,7 +130,7 @@ class Switch(QAbstractButton):
         p.setPen(text_color)
         p.setOpacity(text_opacity)
         font = p.font()
-        font.setPixelSize(1.5 * self._thumb_radius)
+        font.setPixelSize(int(1.5 * self._thumb_radius))
         p.setFont(font)
         p.drawText(
             QRectF(
@@ -141,6 +142,7 @@ class Switch(QAbstractButton):
             Qt.AlignCenter,
             self._thumb_text[self.isChecked()],
         )
+        p.restore()
 
     def mouseReleaseEvent(self, event):  # pylint: disable=invalid-name
         super().mouseReleaseEvent(event)

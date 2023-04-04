@@ -46,7 +46,7 @@ class TimeSeriesPlot(pg.PlotItem):
   def mouseMoved(self,event):
     if self.no_hover:
       return
-    pos = QPoint(event.x(), event.y())
+    pos = QPoint(int(event.x()), int(event.y()))
     mouse_point = self.vb.mapSceneToView(pos)
     x_ = mouse_point.x()
     idx = int(x_ - x_%86400)

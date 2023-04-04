@@ -9,7 +9,7 @@
 ; 
 
 #define MyAppName "PyForecast"
-#define MyAppVersion "5.0.6"
+#define MyAppVersion "5.0.9"
 #define MyAppPublisher "USBR"
 #define MyAppURL "https://github.com/usbr/PyForecast"
 #define MyAppExeName "PyForecast.exe"

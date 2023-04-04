@@ -4,6 +4,7 @@ from PyQt5.QtCore import *
 import pandas as pd
 import numpy as np
 import pickle
+from Models.ModelConfigurations import ResampledDataset
 from datetime import datetime
 
 # Get the global application
@@ -31,7 +32,7 @@ RICH_TEXT = """<style>
 <strong>{name}</strong>
 <div width="100%" class="big bold">{predictand.period_start:%b-%d} - {predictand.period_end:%b-%d} Forecast</div><br>
 <strong>{regression_model}</strong><br>
-<strong>{predictand.dataset.external_id}</strong> - {predictand.agg_method}<br>
+<strong>{predictand_name}</strong> - {predictand.agg_method}<br>
 <strong>Predictors: </strong>{predictor_text}<br>
 <span class="bold">Forecasts</span><br>
 <span class="mono indent">{fcst_text}</span><br>
@@ -90,11 +91,11 @@ class Model:
     predictor_text = ''
     for j, predictor in enumerate(self.predictors):
       if j != len(self.predictors)-1:
-        predictor_text += f'{predictor.dataset.external_id}, '
+        predictor_text += f'{predictor.dataset().external_id}, '
       else:
-        predictor_text += f'{predictor.dataset.external_id}'
+        predictor_text += f'{predictor.dataset().external_id}'
 
-    content = RICH_TEXT.format(predictor_text = predictor_text, fcst_text = fcst_text, **self.__dict__)
+    content = RICH_TEXT.format(predictor_text = predictor_text, fcst_text = fcst_text, predictand_name = self.predictand.dataset().external_id, **self.__dict__)
 
     return content
 
@@ -213,8 +214,16 @@ class SavedModelList(QAbstractListModel):
       num_predictors = pickle.load(f)
       predictor_pool = []
       for j in range(num_predictors):
-        predictor_pool.append(pickle.load(f))
+        p = pickle.load(f)
+        p.dataset_guid = p.dataset.guid
+        del p.dataset
+        p = ResampledDataset(**p.__dict__)
+        predictor_pool.append(p)
+      
       predictand = pickle.load(f)
+      predictand.dataset_guid = predictand.dataset.guid
+      del predictand.dataset
+      predictand = ResampledDataset(**predictand.__dict__)
       training_period_start = pickle.load(f)
       training_period_end = pickle.load(f)
       training_exclude_dates = pickle.load(f)
@@ -241,6 +250,10 @@ class SavedModelList(QAbstractListModel):
     app.SMMV.update_combo_box(None, None)
     return
 
+  def add_model(self, **kwargs):
+    model = Model(**kwargs)
+    self.append(model)
+
   def remove_model(self, idx):
 
     if isinstance(idx, int):
@@ -258,6 +271,7 @@ class SavedModelList(QAbstractListModel):
   def clear_all(self):
     for sm in self.saved_models:
       self.remove_model(sm)
+    self.dataChanged.emit(self.index(0), self.index(self.rowCount()))
     app.SMMV.update_combo_box(None, None)
 
   def append(self, model):

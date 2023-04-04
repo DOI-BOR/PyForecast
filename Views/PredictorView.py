@@ -138,7 +138,7 @@ class PredictorView(QDialog):
     for dataset in app.datasets.datasets:
       if dataset.raw_unit.type.lower() == 'flow':
         predictor = ResampledDataset(
-          dataset = dataset,
+          dataset_guid = dataset.guid,
           forced = False,
           mustBePositive = False,
           agg_method = 'AVERAGE',
@@ -150,7 +150,7 @@ class PredictorView(QDialog):
         continue
       elif dataset.raw_unit.type.lower() == 'temperature':
         predictor = ResampledDataset(
-          dataset = dataset,
+          dataset_guid = dataset.guid,
           forced = False,
           mustBePositive = False,
           agg_method = 'AVERAGE',
@@ -162,7 +162,7 @@ class PredictorView(QDialog):
         continue
       elif 'NOAA-CPC' in dataset.dataloader.NAME:
         predictor = ResampledDataset(
-          dataset = dataset,
+          dataset_guid = dataset.guid,
           forced = False,
           mustBePositive = False,
           agg_method = 'AVERAGE',
@@ -174,7 +174,7 @@ class PredictorView(QDialog):
         continue
       elif 'PRECIPITATION' in dataset.parameter.upper():
         predictor = ResampledDataset(
-          dataset = dataset,
+          dataset_guid = dataset.guid,
           forced = False,
           mustBePositive = False,
           agg_method = 'ACCUMULATION',
@@ -184,7 +184,7 @@ class PredictorView(QDialog):
         )
         self.configuration.predictor_pool.add_predictor(predictor)
         predictor = ResampledDataset(
-          dataset = dataset,
+          dataset_guid = dataset.guid,
           forced = False,
           mustBePositive = False,
           agg_method = 'ACCUMULATION',
@@ -196,7 +196,7 @@ class PredictorView(QDialog):
         continue
       elif 'PDSI' in dataset.dataloader.NAME:
         predictor = ResampledDataset(
-          dataset = dataset,
+          dataset_guid = dataset.guid,
           forced = False,
           mustBePositive = False,
           agg_method = 'AVERAGE',
@@ -208,7 +208,7 @@ class PredictorView(QDialog):
         continue
       elif 'SNOW' in dataset.parameter.upper():
         predictor = ResampledDataset(
-          dataset = dataset,
+          dataset_guid = dataset.guid,
           forced = False,
           mustBePositive = True,
           agg_method = 'LAST',
@@ -234,7 +234,7 @@ class PredictorView(QDialog):
 
   def new_predictor(self):
     predictor = ResampledDataset(
-      dataset=app.datasets[0],
+      dataset_guid=app.datasets[0].guid,
       forced = False,
       mustBePositive = False,
       agg_method = list(app.agg_methods.keys())[0],
@@ -335,7 +335,7 @@ class PredictorView(QDialog):
     idx = self.filter_units_model.mapToSource(self.filter_units_model.index(idx, 0))
 
     predictor = ResampledDataset(
-      dataset = app.datasets[self.predictor_field.currentIndex()],
+      dataset_guid = app.datasets[self.predictor_field.currentIndex()].guid,
       period_start = self.predictor_period_start_field.date().toPyDate(),
       period_end = self.predictor_period_end_field.date().toPyDate(),
       preprocessing = self.predictor_preprocessing_field.currentText(),
@@ -351,7 +351,7 @@ class PredictorView(QDialog):
     self.predictor_widg.setEnabled(True)
     self.current_idx = idx
     predictor = self.configuration.predictor_pool[idx]
-    self.predictor_field.setCurrentText(predictor.dataset.__condensed_form__())
+    self.predictor_field.setCurrentText(predictor.dataset().__condensed_form__())
     self.predictor_method_field.setCurrentText(predictor.agg_method)
     self.predictor_period_start_field.setDate(QDate(predictor.period_start))
     self.predictor_period_end_field.setDate(QDate(predictor.period_end))

@@ -32,7 +32,7 @@ class HTMLDelegate(QStyledItemDelegate):
 
         style.drawControl(QStyle.CE_ItemViewItem, option, painter, option.widget)
         textRect = style.subElementRect(QStyle.SE_ItemViewItemText, option)
-        documentSize = QSize(doc.size().width(), doc.size().height())
+        documentSize = QSize(int(doc.size().width()), int(doc.size().height()))
         layoutRect = QStyle.alignedRect(Qt.LayoutDirectionAuto, option.displayAlignment, documentSize, textRect)
 
         painter.save()
@@ -57,6 +57,6 @@ class HTMLDelegate(QStyledItemDelegate):
         doc.setDocumentMargin(10)
         #sdoc.setTextWidth(option.rect.width())
         #doc.adjustSize()
-        return QSize(doc.size().width(), doc.size().height())
+        return QSize(int(doc.size().width()), int(doc.size().height()))
 
         

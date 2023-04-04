@@ -13,7 +13,7 @@ app = QApplication.instance()
 class ResampledDataset:
 
   def __init__(self, **kwargs):
-    self.dataset = Dataset()
+    self.dataset_guid = None
     self.forced = False
     self.mustBePositive = False
     self.period_start = pd.to_datetime('1900-07-01')
@@ -36,27 +36,31 @@ class ResampledDataset:
     else:
       self.period_end = self.period_end.replace(year=1900)
 
-    #diff = self.period_end - self.period_start
-    #self.period_start = self.period_start.replace(year=1900)
-    #self.period_end = self.period_start + diff
-
     if 'unit' not in kwargs:
-      self.unit = self.dataset.display_unit
+      self.unit = self.dataset().display_unit
     
     if self.agg_method == 'ACCUMULATION (CMS to MCM)':
       self.unit = app.units.get_unit('mcm')
     if self.agg_method == 'ACCUMULATION (CFS to KAF)':
       self.unit = app.units.get_unit('kaf')
   
+  def dataset(self):
+    if self.dataset_guid != None:
+      return app.datasets.get_dataset_by_guid(self.dataset_guid)
+    else:
+      return Dataset()
+
   def resample(self):
     
-    if not self.dataset.data.empty:
+    if not self.dataset().data.empty:
 
       self.data = pd.Series([], index=pd.DatetimeIndex([]), dtype='float64')
 
+      dataset = self.dataset()
+
       # reference to raw data for convienence
-      scale, offset = self.dataset.raw_unit.convert_to(self.dataset.display_unit)
-      raw = self.dataset.data*scale + offset
+      scale, offset = dataset.raw_unit.convert_to(dataset.display_unit)
+      raw = dataset.data*scale + offset
 
       # get the agg method
       a = app.agg_methods[self.agg_method]
@@ -84,9 +88,9 @@ class ResampledDataset:
       self.data.index = list(map(convert_to_water_year, self.data.index))
 
       # Convert to any new units
-      if self.unit != self.dataset.display_unit:
+      if self.unit != dataset.display_unit:
         if self.agg_method not in ['ACCUMULATION (CFS to KAF)', 'ACCUMULATION (CMS to MCM)']:
-          scale, offset = self.dataset.display_unit.convert_to(self.unit)
+          scale, offset = dataset.display_unit.convert_to(self.unit)
           self.data = self.data*scale + offset
 
 
@@ -111,10 +115,10 @@ class ResampledDataset:
         self.data = self.data.apply(method)
     
   def __list_form__(self):
-    return f'{self.dataset.name} - {self.__period_str__()} - {self.agg_method} {self.dataset.parameter:25.25}'
+    return f'{self.dataset().name} - {self.__period_str__()} - {self.agg_method} {self.dataset().parameter:25.25}'
 
   def __condensed_form__(self):
-    return f'{self.dataset.external_id}: {self.dataset.name} - {self.dataset.parameter}'
+    return f'{self.dataset().external_id}: {self.dataset().name} - {self.dataset().parameter}'
 
   def __period_str__(self):
     return f'{self.period_start:%b-%d} to {self.period_end:%b-%d}'
@@ -171,7 +175,7 @@ class ModelConfiguration:
     exclude_str = '(excluding ' + ','.join(list(map(str, self.training_exclude_dates))) + ')' if exclude else ''
 
     return  f'<i><strong>{self.name}</strong></i> will create models for a <i><strong>{self.predictand.period_start:%b-%d} through {self.predictand.period_end:%b-%d}</strong></i> forecast ' + \
-            f'targeting <strong>{self.predictand.dataset.__condensed_form__()} {self.predictand.agg_method}</strong> ' + \
+            f'targeting <strong>{self.predictand.dataset().__condensed_form__()} {self.predictand.agg_method}</strong> ' + \
             f'(to be issued on <i><strong>{self.issue_date:%b-%d}</strong></i>). This model will be trained on ' + \
             f'data from the period <i><strong>{self.training_start_date:%b-%Y} to {self.training_end_date:%b-%Y} {exclude_str}</strong></i>'
 
@@ -181,7 +185,7 @@ class ModelConfiguration:
   def __rich_text__(self):
     return f""" <span style="color:navy"><strong>Issue date: {self.issue_date:%B %d}</strong></span><br>
                 <strong>Name:</strong> {self.name}<br>
-                {self.predictand.period_start:%b %d} - {self.predictand.period_end:%b %d} {self.predictand.dataset.external_id} {self.predictand.agg_method}<br>
+                {self.predictand.period_start:%b %d} - {self.predictand.period_end:%b %d} {self.predictand.dataset().external_id} {self.predictand.agg_method}<br>
                 <strong>{self.predictor_pool.rowCount()}</strong> total predictors<br>
                 <strong>{len(self.regressors.regressors)}</strong> total regressors<br>
                 {self.comment if len(self.comment)>0 else 'no comment'}"""
@@ -286,7 +290,7 @@ class PredictorPool(QAbstractTableModel):
 
     if role == Qt.DisplayRole:
       if col == 0:
-        return predictor.dataset.__condensed_form__()
+        return predictor.dataset().__condensed_form__()
       if col == 1:
         return predictor.__period_str__()
       if col == 2:
@@ -417,6 +421,8 @@ class ModelConfigurations(QAbstractListModel):
       if not hasattr(predictand.dataset, 'raw_unit'):
           predictand.dataset.raw_unit = predictand.dataset.unit
           predictand.dataset.display_unit = predictand.dataset.unit
+      predictand.dataset_guid = predictand.dataset.guid
+      del predictand.dataset
       num_predictors = pickle.load(f)
       predictor_pool = PredictorPool()
       for i in range(num_predictors):
@@ -424,6 +430,8 @@ class ModelConfigurations(QAbstractListModel):
         if not hasattr(predictor.dataset, 'raw_unit'):
           predictor.dataset.raw_unit = predictor.dataset.unit
           predictor.dataset.display_unit = predictor.dataset.unit
+        predictor.dataset_guid = predictor.dataset.guid
+        del predictor.dataset
         predictor_pool.add_predictor(
           predictor
         )

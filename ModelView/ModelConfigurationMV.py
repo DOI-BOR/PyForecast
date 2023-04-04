@@ -137,7 +137,7 @@ class ModelConfigurationModelView:
       training_exclude_dates = conf.training_exclude_dates,
       issue_date = conf.issue_date,
       predictand = ResampledDataset(
-        dataset = conf.predictand.dataset,
+        dataset_guid = conf.predictand.dataset().guid,
         unit =  conf.predictand.unit,
         agg_method = conf.predictand.agg_method,
         preprocessing =  conf.predictand.preprocessing,
@@ -150,7 +150,7 @@ class ModelConfigurationModelView:
       
       new_conf.predictor_pool.add_predictor(
         ResampledDataset(
-          dataset = predictor.dataset,
+          dataset_guid = predictor.dataset().guid,
           unit = predictor.unit,
           agg_method=predictor.agg_method,
           preprocessing = predictor.preprocessing,
@@ -184,7 +184,7 @@ class ModelConfigurationModelView:
       training_end_date = datetime(hdt.current_water_year()-1, 9, 30),
       issue_date = datetime(hdt.current_water_year(),10,1),
       predictand = ResampledDataset(
-        dataset = app.datasets[0],
+        dataset_guid = app.datasets[0].guid,
         unit = app.datasets[0].display_unit,
         agg_method = list(app.agg_methods.keys())[0],
         preprocessing = list(app.preprocessing_methods.keys())[0],
@@ -211,7 +211,7 @@ class ModelConfigurationModelView:
     self.ce.comment_field.setText(configuration.comment)
 
     # Set the predictand
-    self.ce.predictand_field.setCurrentText(configuration.predictand.dataset.__condensed_form__())
+    self.ce.predictand_field.setCurrentText(configuration.predictand.dataset().__condensed_form__())
     self.ce.predictand_preprocessing_field.setCurrentText(configuration.predictand.preprocessing)
     self.ce.predictand_method_field.setCurrentText(configuration.predictand.agg_method)
     self.ce.predictand_period_start_field.setDate(QDate(configuration.predictand.period_start))
@@ -278,7 +278,7 @@ class ModelConfigurationModelView:
     
     # Predictand
     idx = self.ce.predictand_field.currentIndex()
-    config.predictand.dataset = app.datasets.data(app.datasets.index(idx), Qt.UserRole+2)
+    config.predictand.dataset_guid = app.datasets.data(app.datasets.index(idx), Qt.UserRole+2).guid
     config.predictand.preprocessing = self.ce.predictand_preprocessing_field.currentText()
     config.predictand.agg_method = self.ce.predictand_method_field.currentText()
     config.predictand.period_start = self.ce.predictand_period_start_field.date().toPyDate()

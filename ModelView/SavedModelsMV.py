@@ -60,7 +60,7 @@ class SavedModelsModelView:
     cc = ColorCycler()
     for idx in real_idx:
       model = app.saved_models[idx.row()]
-      self.sm.prob_plot.setLabel('bottom', f'{model.predictand.dataset.parameter} [{model.predictand.unit.id}]')
+      self.sm.prob_plot.setLabel('bottom', f'{model.predictand.dataset().parameter} [{model.predictand.unit.id}]')
       if year in model.forecasts.forecasts.index.get_level_values(0):
         values = model.forecasts.forecasts.loc[(year, slice(None))]
         df = pd.concat([df, values], axis=1)
@@ -223,7 +223,7 @@ class genModelDialog(QDialog):
         bootstrap_predictions, validation_residuals = np.empty(n_bootstraps), []
         
         for b in range(n_bootstraps):
-          self.labels[i].setMessage(f'Year: {fcst_year} -> Bootstrapping: {b+1:>4} / {n_bootstraps:>4}')
+          self.labels[i].setMessage(f'Year: {fcst_year} → Bootstrapping: {b+1:>4} / {n_bootstraps:>4}')
           total_prog = len(fcst_years)*n_bootstraps
           current_prog = b + (y*n_bootstraps)
           self.labels[i].setProgress(current_prog/total_prog)

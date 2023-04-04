@@ -217,16 +217,10 @@ class Datasets(QAbstractListModel):
   def clear_all(self):
     for dataset in self.datasets:
       self.remove_dataset(dataset)
+    self.dataChanged.emit(self.index(0), self.index(0))
+
   
-  def load_from_file(self, datasets):
-    
-    for dataset in datasets:
-      self.datasets.append(dataset)
-      print(f'Added Dataset: {dataset}')
-      self.insertRow(self.rowCount())
-    self.dataChanged.emit(self.index(0), self.index(self.rowCount()))  
-      
-  
+
   def __getitem__(self, index):
     return self.datasets[index]
 
