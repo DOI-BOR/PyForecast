@@ -9,8 +9,8 @@ from resources.modules.Miscellaneous.generateModel import Model
 if __name__ == '__main__':
     ######################################################
     # Wrapper script inputs and outputs
-    pathString = r"C:\Users\jrocha\Desktop\_TLWRK_STUFF\Forecasting\JAN2022"
-    wyInput = 2022
+    pathString = r"C:\Users\jrocha\Desktop\_TLWRK_STUFF\Forecasting\06JUN2023"
+    wyInput = 2023
     outList = []
     outList.append('FILENAME,RUNMESSAGE,PREDICTION,PREDICTIONRANGE[P10],PREDICTIONRANGE[P25],PREDICTIONRANGE[P50],PREDICTIONRANGE[P75],PREDICTIONRANGE[P90],MODELEQUATION,MODELVARIABLES[n-Predictors],XVALUES[n-Predictors]')
 
