@@ -157,10 +157,13 @@ def resampleDataSet(dailyData, resampleString, resampleMethod, customFunction = 
     frequency = isodate.parse_duration(resampleList[3].replace('F', 'P')) # >>> isodate.duration.Duration(0, 0, 0, years=1, months=1)
 
     # Create all the periods
+    periodOffset = isodate.duration.Duration(days=0)
+    if period.days == 0:
+        periodOffset = isodate.duration.Duration(days=-1)
     periods = []
     tracker = startDate
     while tracker <= today: # >>> periods = [(datetime.datetime(1978-10-01), datetime.datetime(1978-11-01))]
-        periods.append((tracker, tracker+period))
+        periods.append((tracker, tracker + period + periodOffset))
         tracker += frequency
 
     # Parse the function
