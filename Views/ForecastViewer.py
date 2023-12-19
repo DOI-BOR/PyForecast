@@ -51,7 +51,34 @@ class ForecastViewer(QDialog):
     self.experimentalTab.disagg_year_select.setMinimum(self.min_forecast_year)
     self.experimentalTab.disagg_year_select.setMaximum(self.max_forecast_year)
     self.experimentalTab.disagg_year_select.setValue(self.max_forecast_year)
+    
+    ed = self.model.predictand.period_end
+    sd = self.model.predictand.period_start
+    self.experimentalTab.disagg_start_edit.setDate(QDate(sd.year, sd.month, sd.day))
+    self.experimentalTab.disagg_end_edit.setDate(QDate(ed.year, ed.month, ed.day))
     self.experimentalTab.disagg_start_btn.pressed.connect(self.disagg)
+    self.experimentalTab.sand_load_button.pressed.connect(self.load_sand)
+    self.experimentalTab.sand_year_select.setMinimum(1990)
+    self.experimentalTab.sand_year_select.setMaximum(datetime.now().year)
+
+  def load_sand(self):
+    e = self.experimentalTab
+    e.sand_ta.clear()
+    year = e.sand_year_select.value()
+    e.sand_ta.appendPlainText('Predictors:')
+
+    df = pd.DataFrame()
+    for predictor in self.model.predictors:
+      df = pd.concat([df, predictor.data], axis=1)
+    df = pd.concat([df, self.model.predictand.data], axis=1).sort_index()
+    df = df.loc[convert_to_water_year(self.model.training_period_start):convert_to_water_year(self.model.training_period_end)].dropna()
+    df = df.drop(self.model.training_exclude_dates, errors='ignore')
+
+    for i, d in enumerate(self.model.predictors):
+      median = df.iloc[:, i].median()
+      per = len(df)
+      pct = round(100*d.data[year]/median,1)
+      e.sand_ta.appendPlainText(f'{d.dataset().__export_form__()}: {d.data.loc[year]:0.2f} {d.unit.__str__()} \n\t\t-> [{pct} percent of normal using {per} years of data]')
 
   def disagg(self):
     e = self.experimentalTab
@@ -164,6 +191,10 @@ class ForecastViewer(QDialog):
     predictand_data = df.values[:, -1]
     y_a = predictand_data
 
+    scorer_args = {
+      'num_predictors':x_data.shape[1]
+    }
+
     y_p_cv, y_a_cv = self.regression_algorithm.cross_val_predict(x_data, predictand_data)
     y_p = self.regression_algorithm.predict(x_data)
 
@@ -195,7 +226,7 @@ class ForecastViewer(QDialog):
 
     for key, widg in self.scorers.items():
       scorer = app.scorers[key]
-      widg.setText(f'{scorer(y_p, y_a):.5g}')
+      widg.setText(f'{scorer(y_p, y_a, **scorer_args):.5g}')
     
     self.model_plots.plot_model_data(y_a, y_p, years, units=self.model.predictand.unit.id)
     self.model_plots_ft.plot_model_data(y_a, y_p, years, units=self.model.predictand.unit.id)
@@ -255,7 +286,6 @@ class ForecastViewer(QDialog):
     self.setLayout(ll)
 
     # OVERVIEW TAB
-
     layout = QGridLayout()
 
     self.save_button = QPushButton('Save Changes')

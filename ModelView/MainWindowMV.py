@@ -19,6 +19,7 @@ class MainWindowModelView:
 
     # Reference to the main window GUI
     self.mw = app.gui
+    self.log_view = None
     
     # Connect events from the file-menu
     self.mw.new_option.triggered.connect(self.NewFile)
@@ -42,15 +43,16 @@ class MainWindowModelView:
     app.gui.current_file_widg.setText(f'<strong>File</strong>: {app.current_file}   ')
 
 
-  def NewFile(self, _):
+  def NewFile(self, _, Prompt=True):
     """Prompts the user if they want to save the current file, and opens a new 
     file (using the default new file name). Clears all the application models and
     top level widgets.
     """
 
-    ret = QMessageBox.question(app.gui, 'Save changes?', f"You're about to open a new file. \n\nSave changes to:\n{app.current_file}?")
-    if ret == QMessageBox.Yes:
-      self.SaveFile()
+    if Prompt:
+      ret = QMessageBox.question(app.gui, 'Save changes?', f"You're about to open a new file. \n\nSave changes to:\n{app.current_file}?")
+      if ret == QMessageBox.Yes:
+        self.SaveFile()
     
     # Clear all the models
     self.clear_models()
@@ -80,6 +82,7 @@ class MainWindowModelView:
       
       # Clear any existing data in the application
       self.clear_models()
+      app.processEvents()
 
       # Open the file and use the file-loader function to read the data into the application
       with open(str(filename), 'rb') as read_file:
@@ -142,8 +145,6 @@ class MainWindowModelView:
     app.datasets.clear_all()
     app.model_configurations.clear_all()
     app.saved_models.clear_all()
-
-    
 
     return
 

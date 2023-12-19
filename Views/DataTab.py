@@ -1,9 +1,11 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt, QEvent
 from PyQt5.QtWebEngineWidgets import *
+from PyQt5 import QtGui
 from Utilities import RichTextDelegate, ColorCycler, TimeSeriesPlot, TimeSeriesSlider
 import pyqtgraph as pg
 import numpy as np
+from Plots import DataTab as DTP
 
 # Initial PyQt Setup
 pg.setConfigOption('background', pg.mkColor('#f7f7f7'))
@@ -28,22 +30,29 @@ class DataTab(QWidget):
     self.dataset_list = SelectedDatasetList()
 
     # Create the data viewer
-    self.data_viewer = DataViewer()
+    self.data_viewer = DTP.Plot()#DataViewer()
 
     # Layout the Tab
     layout = QHBoxLayout()
-    splitter = QSplitter()
+    self.splitter = QSplitter()
     layout2 = QVBoxLayout()
     layout2.addWidget(self.data_all_button)
     layout2.addWidget(self.data_update_button)
     layout2.addWidget(self.dataset_list)
     layout2.addWidget(self.edit_data_excel_button)
-    w = QWidget()
-    w.setLayout(layout2)
-    splitter.addWidget(w)
-    splitter.addWidget(self.data_viewer)
-    layout.addWidget(splitter)
+    self.w = QWidget()
+    self.w.setLayout(layout2)
+    self.splitter.addWidget(self.w)
+    self.splitter.addWidget(self.data_viewer)
+    layout.addWidget(self.splitter)
     self.setLayout(layout)
+
+    self.splitter.splitterMoved.connect(lambda pos, idx: self.updateListSize())
+  
+  def updateListSize(self):
+    app.datasets.dataChanged.emit(app.datasets.index(0), app.datasets.index(app.datasets.rowCount()))
+    app.gui.DataTab.w.update()
+    app.gui.DataTab.dataset_list.update()
 
 class DataViewer(pg.GraphicsLayoutWidget):
 
@@ -111,6 +120,14 @@ class SelectedDatasetList(QListView):
     self.download_all_one_shot_action.setStatusTip('Downloads all the data for datasets in the selection')
     self.download_all_one_shot_action = QAction('Download all data for selection')
     self.download_all_one_shot_action.setStatusTip('Downloads all the data for datasets in the selection')
+
+  def paintEvent(self, e):
+    QListView.paintEvent(self, e)
+    if (self.model()) and (self.model().rowCount(self.rootIndex()) > 0):
+      return
+    painter = QtGui.QPainter(self.viewport())
+    painter.drawText(self.rect(), Qt.AlignCenter, 'No datasets in this forecast file')
+    painter.end()
 
   def customMenu(self, pos):
     globalpos = self.mapToGlobal(pos)

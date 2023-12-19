@@ -9,6 +9,7 @@ Description:    This CSS file contains styling information for
 
 body { 
   margin:0; padding:0; 
+  font-size: medium;
 }
 #map { 
   position:absolute; top:0; bottom:0; width:100%; 
@@ -16,28 +17,33 @@ body {
 
 .leaflet-popup-tip,
 .leaflet-popup-content-wrapper {
-  background: rgb(0, 115, 150);
-  border-radius: 2px;
-  color: aliceblue;
+  background: rgb(247, 247, 247);
+  border: 3px solid black;
+  border-radius: 8px;
+  width: max(100%, 350px);
+  color: rgb(19, 19, 19);
   font-family: 'Segoe UI', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
 }
 h1 {
   font-family: 'Segoe UI', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
-  font-size: 14px;
+  font-size: large;
   margin:0
 }
 p {
   font-family: 'Segoe UI', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
-  font-size: 12px;
+  font-size: medium;
   margin:0
 }
 .leaflet-container a {
-  color: rgb(146, 224, 255)
+  color: rgb(0, 40, 126)
 }
 select {
-  width: 200px
+  width: 100%;
 }
 button {
+  width: 100%;
+}
+/* button {
   background-color: rgb(238, 238, 238);
   border-color: rgb(29, 29, 29);
   padding: 5px;
@@ -52,7 +58,7 @@ button:hover {
   border-color:  rgb(0, 0, 0);
   background-color: rgb(202, 202, 202);
   color: #000000,
-}
+} */
 .mapboxgl-popup-content {
   color: balck;
   background-color: white;
@@ -66,7 +72,7 @@ button:hover {
                               width: 20%;}
 .leaflet-control-zoom a {
   opacity: 1;
-  color: rgb(0, 115, 150);;
+  color: rgb(17, 17, 17);;
   background-color: rgb(238, 238, 238);
 }
 
@@ -74,5 +80,5 @@ button:hover {
   background-color: rgb(238, 238, 238)
 }
 .leaflet-control-attribution a {
-color: rgb(0, 115, 150);;
+color: rgb(0, 20, 109);;
 }

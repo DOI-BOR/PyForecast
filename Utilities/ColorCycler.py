@@ -17,6 +17,7 @@ class ColorCycler:
     """Constructor"""
 
     self.index = 0      # Keeps track of which color we last returned
+    self.col = self.COLOR_CYCLER[self.index]
 
     return
 
@@ -25,7 +26,7 @@ class ColorCycler:
     """Returns the next color as a Qt-compatible color"""
 
     # Get the next color and increment the index
-    col =  self.COLOR_CYCLER[self.index]
+    self.col =  self.COLOR_CYCLER[self.index]
     self.index = (self.index + 1) % len(self.COLOR_CYCLER)
     
-    return mkColor(col)
+    return mkColor(self.col)

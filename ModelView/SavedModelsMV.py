@@ -9,9 +9,74 @@ from Views import ForecastViewer, ExceedanceViewer
 from scipy.interpolate import InterpolatedUnivariateSpline
 from inspect import signature
 from pathos.multiprocessing import ThreadingPool as Pool
+from math import factorial
 
 app = QApplication.instance()
 
+
+def savitzky_golay(y, window_size, order, deriv=0, rate=1):
+    r"""Smooth (and optionally differentiate) data with a Savitzky-Golay filter.
+    The Savitzky-Golay filter removes high frequency noise from data.
+    It has the advantage of preserving the original shape and
+    features of the signal better than other types of filtering
+    approaches, such as moving averages techniques.
+    Parameters
+    ----------
+    y : array_like, shape (N,)
+        the values of the time history of the signal.
+    window_size : int
+        the length of the window. Must be an odd integer number.
+    order : int
+        the order of the polynomial used in the filtering.
+        Must be less then `window_size` - 1.
+    deriv: int
+        the order of the derivative to compute (default = 0 means only smoothing)
+    Returns
+    -------
+    ys : ndarray, shape (N)
+        the smoothed signal (or it's n-th derivative).
+    Notes
+    -----
+    The Savitzky-Golay is a type of low-pass filter, particularly
+    suited for smoothing noisy data. The main idea behind this
+    approach is to make for each point a least-square fit with a
+    polynomial of high order over a odd-sized window centered at
+    the point.
+    Examples
+    --------
+    t = np.linspace(-4, 4, 500)
+    y = np.exp( -t**2 ) + np.random.normal(0, 0.05, t.shape)
+    ysg = savitzky_golay(y, window_size=31, order=4)
+    import matplotlib.pyplot as plt
+    plt.plot(t, y, label='Noisy signal')
+    plt.plot(t, np.exp(-t**2), 'k', lw=1.5, label='Original signal')
+    plt.plot(t, ysg, 'r', label='Filtered signal')
+    plt.legend()
+    plt.show()
+    References
+    ----------
+    .. [1] A. Savitzky, M. J. E. Golay, Smoothing and Differentiation of
+       Data by Simplified Least Squares Procedures. Analytical
+       Chemistry, 1964, 36 (8), pp 1627-1639.
+    .. [2] Numerical Recipes 3rd Edition: The Art of Scientific Computing
+       W.H. Press, S.A. Teukolsky, W.T. Vetterling, B.P. Flannery
+       Cambridge University Press ISBN-13: 9780521880688
+    """
+    
+    window_size = np.abs(window_size)
+    order = np.abs(order)
+   
+    order_range = range(order+1)
+    half_window = (window_size -1) // 2
+    # precompute coefficients
+    b = np.mat([[k**i for i in order_range] for k in range(-half_window, half_window+1)])
+    m = np.linalg.pinv(b).A[deriv] * rate**deriv * factorial(deriv)
+    # pad the signal at the extremes with
+    # values taken from the signal itself
+    firstvals = y[0] - np.abs( y[1:half_window+1][::-1] - y[0] )
+    lastvals = y[-1] + np.abs(y[-half_window-1:-1][::-1] - y[-1])
+    y = np.concatenate((firstvals, y, lastvals))
+    return np.convolve( m[::-1], y, mode='valid')
 
 class SavedModelsModelView:
 
@@ -55,7 +120,7 @@ class SavedModelsModelView:
     selection = self.sm.model_list.selectionModel().selectedRows()
     real_idx = [self.forecast_proxy_model.mapToSource(i) for i in selection]
     year = self.sm.year_select.value()
-    df = pd.DataFrame()
+    df = None
     self.sm.prob_plot.clear()
     cc = ColorCycler()
     for idx in real_idx:
@@ -63,24 +128,30 @@ class SavedModelsModelView:
       self.sm.prob_plot.setLabel('bottom', f'{model.predictand.dataset().parameter} [{model.predictand.unit.id}]')
       if year in model.forecasts.forecasts.index.get_level_values(0):
         values = model.forecasts.forecasts.loc[(year, slice(None))]
-        df = pd.concat([df, values], axis=1)
+        if df is not None:
+          df = pd.concat([df, values], axis=1)
+        else:
+          df = pd.concat([values], axis=1)
         values = values['Value']
-        spl = InterpolatedUnivariateSpline(values.values, list(values.index), k=2)
+        spl = InterpolatedUnivariateSpline(values.values, list(values.index), k=3)
+        
         xs = np.linspace(values.min(), values.max(), 1000)
         spl_d = spl.derivative()
         if plot_type == 'pdf':
-          self.sm.prob_plot.plot_data(xs, spl_d(xs), color=cc.next(), label=model.name) 
+          ys = savitzky_golay(spl_d(xs), 63, 4, 0)
+          self.sm.prob_plot.plot_data(xs, ys, color=cc.next(), label=model.name) 
         else:
           self.sm.prob_plot.plot_data(xs, spl(xs), color=cc.next(), label=model.name)       
 
     grouped = df.mean(axis=1)
     if not grouped.empty:
       if len(real_idx)>1:
-        spl = InterpolatedUnivariateSpline(grouped.values, list(grouped.index), k=2)
+        spl = InterpolatedUnivariateSpline(grouped.values, list(grouped.index), k=3)
         xs = np.linspace(grouped.min(), grouped.max(), 1000)
         spl_d = spl.derivative()
         if plot_type =='pdf':
-          self.sm.prob_plot.plot_data(xs, spl_d(xs), color=cc.next(), width=3, label='Combined')
+          ys = savitzky_golay(spl_d(xs), 63, 4, 0)
+          self.sm.prob_plot.plot_data(xs, ys, color=cc.next(), width=3, label='Combined')
         else:
           self.sm.prob_plot.plot_data(xs, spl(xs), color=cc.next(), width=3, label='Combined')
       self.grouped = grouped
@@ -91,6 +162,11 @@ class SavedModelsModelView:
       self.sm._70_value.setText(vals[3], model.predictand.unit.id)
       self.sm._90_value.setText(vals[4], model.predictand.unit.id)
       self.sm.prob_plot.plot_vlines(vals)
+    self.sm.prob_plot.reframe_to_min_max_normal(
+      model.predictand.data.min(),
+      model.predictand.data.max(),
+      model.normal
+    )
         
       
 
@@ -102,6 +178,7 @@ class SavedModelsModelView:
     self.gen_for_dialog = genModelDialog(real_idx)
     self.gen_for_dialog.last_year.connect(self.sm.year_select.setValue)
     self.gen_for_dialog.finished.connect(lambda _: self.plot_forecast(None,None))
+    self.gen_for_dialog.finished.connect(lambda _: self.sm.updateListSize())
     self.gen_for_dialog.show()
 
   def remove_model(self):
@@ -206,8 +283,28 @@ class genModelDialog(QDialog):
         for predictor in model.predictors:
           df = pd.concat([df, predictor.data], axis=1)
         df = pd.concat([df, model.predictand.data], axis=1).sort_index()
-        x_fcst_year = df.loc[fcst_year]
-        x_fcst_year = x_fcst_year.iloc[:-1].values
+        if fcst_year not in df.index:
+          msg = QMessageBox(self)
+          msg.setIcon(QMessageBox.Warning)
+          msg.setText('We do not have all the data yet for year: ' + str(fcst_year))
+          msg.setWindowTitle('Error in Generating Forecast')
+          msg.setStandardButtons(QMessageBox.Ok)
+          
+          retv= msg.exec()
+          self.labels[i].setMessage(f'Could not forecast for year: {fcst_year} - Missing data')
+          continue
+        x_fcst_year = df.loc[[fcst_year]]
+        if x_fcst_year.dropna().empty:
+          msg = QMessageBox(self)
+          msg.setIcon(QMessageBox.Warning)
+          msg.setText('We do not have all the data yet for year: ' + str(fcst_year))
+          msg.setWindowTitle('Error in Generating Forecast')
+          msg.setStandardButtons(QMessageBox.Ok)
+          
+          retv= msg.exec()
+          self.labels[i].setMessage(f'Could not forecast for year: {fcst_year} - Missing data')
+          continue
+        x_fcst_year = x_fcst_year.iloc[0].iloc[:-1].values
         df = df.loc[convert_to_water_year(model.training_period_start):convert_to_water_year(model.training_period_end)].dropna()
         df = df.drop(model.training_exclude_dates, errors='ignore')
 
@@ -253,7 +350,7 @@ class genModelDialog(QDialog):
         weight = .632 / (1 - .368 * relative_overfitting_rate)
         residuals = (1 - weight) * train_residuals + weight * validation_residuals
         C = np.array([m + o for m in bootstrap_predictions for o in residuals])
-        qs = list(range(1, 100, 1))
+        qs = np.arange(1,100,0.25)
         percentiles = np.percentile(C, q = qs) + forecast
         
 

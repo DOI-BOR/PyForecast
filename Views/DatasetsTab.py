@@ -21,17 +21,30 @@ class DatasetsTab(QWidget):
 
     # Layout the Tab
     layout = QHBoxLayout()
-    splitter = QSplitter()
-    splitter.addWidget(self.dataset_map)
+    self.splitter = QSplitter()
+    
+    self.splitter.addWidget(self.dataset_map)
     vlayout = QVBoxLayout()
     vlayout.addWidget(QLabel('Datasets', objectName='HeaderLabel'))
     vlayout.addWidget(self.dataset_list)
-    widg = QWidget()
-    widg.setLayout(vlayout)
-    splitter.addWidget(widg)
-    layout.addWidget(splitter)
+    self.widg = QWidget()
+    self.widg.setLayout(vlayout)
+    self.splitter.addWidget(self.widg)
+    self.splitter.setCollapsible(0,False)
+    self.splitter.setCollapsible(1,False)
+
+    
+
+    layout.addWidget(self.splitter)
     self.setLayout(layout)
 
+
+    self.splitter.splitterMoved.connect(lambda pos, idx: self.updateListSize())
+  
+  def updateListSize(self):
+    app.datasets.dataChanged.emit(app.datasets.index(0), app.datasets.index(app.datasets.rowCount()))
+    app.gui.DatasetsTab.widg.update()
+    app.gui.DatasetsTab.dataset_list.update()
 
 class SelectedDatasetList(QListView):
 
@@ -43,7 +56,8 @@ class SelectedDatasetList(QListView):
     self.setContextMenuPolicy(Qt.CustomContextMenu)
     self.setSelectionMode(QAbstractItemView.ExtendedSelection)
     self.customContextMenuRequested.connect(self.customMenu)
-    self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+    #self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+    
 
     self.add_action = QAction('Add new dataset')
     self.add_action.setStatusTip('Adds a new blank dataset to the list')
@@ -59,6 +73,15 @@ class SelectedDatasetList(QListView):
     self.action2 = QAction('2: Pactific North American')
     self.action2.setData(2)
     self.climate_actions.append(self.action2)
+
+
+  def paintEvent(self, e):
+    QListView.paintEvent(self, e)
+    if (self.model()) and (self.model().rowCount(self.rootIndex()) > 0):
+      return
+    painter = QtGui.QPainter(self.viewport())
+    painter.drawText(self.rect(), Qt.AlignCenter, 'No datasets in this forecast file')
+    painter.end()
 
   def keyPressEvent(self, event):
     if event.key() == Qt.Key_Delete:

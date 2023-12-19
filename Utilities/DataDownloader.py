@@ -129,9 +129,10 @@ class DownloadRunner(QThread):
           dataset.dataloader.load(dataset, start, datetime.now())
           ], axis=0
         )
-        dataset.data = dataset.data[~dataset.data.index.duplicated(keep='first')]
+        dataset.data = dataset.data[~dataset.data.index.duplicated(keep='last')]
       else:
         dataset.data = dataset.dataloader.load(dataset, start, datetime.now())
+
 
       # Update the dialog with current status
       self.update_prog_text.emit(f'Downloaded {dataset.external_id} {dataset.parameter}')
@@ -141,7 +142,7 @@ class DownloadRunner(QThread):
   def stop(self):
     """Stops the download thread and returns to application"""
     self.threadactive = False
-    self.update_prog_text.emit('Recieved Cancel')
+    self.update_prog_text.emit('received cancel')
     self.terminate()
     self.wait(1000)
 

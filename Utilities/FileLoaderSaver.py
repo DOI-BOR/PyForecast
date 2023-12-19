@@ -49,6 +49,9 @@ def load_file(f):
     len_datasets = pickle.load(f)
     for i in range(len_datasets):
       dataset_dict = pickle.load(f)
+      dataset_dict['raw_unit'] = app.units.get_unit(dataset_dict['raw_unit'])
+      dataset_dict['display_unit'] = app.units.get_unit(dataset_dict['display_unit'])
+      dataset_dict['dataloader'] = app.dataloaders[dataset_dict['dataloader']]['CLASS']()
       dataset_dict['data'] = pd.read_pickle(f, compression={'method':None})
       
       dataset = app.datasets.add_dataset(**dataset_dict)
@@ -111,11 +114,14 @@ def save_to_file(f):
   # Datasets
   pickle.dump(len(app.datasets), f, 4) # num datasets
   for dataset in app.datasets.datasets:
-    d = dataset.__dict__
+    d = dataset.__dict__.copy()
+    d['raw_unit'] = d['raw_unit'].id
+    d['display_unit'] = d['display_unit'].id
+    d['dataloader'] = d['dataloader'].NAME
     pickle.dump({
-      key: d[key]  for key in d.keys() if d != 'data'
+      key: d[key]  for key in d.keys() if key != 'data'
     }, f, 4)
-    dataset.data.to_pickle(f, compression = {'method':None}, protocol=4)
+    dataset.data.to_pickle(f, compression = None, protocol=4)
   
   # Model Configurations
   pickle.dump(len(app.model_configurations), f, 4)

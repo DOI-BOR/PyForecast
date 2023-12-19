@@ -6,13 +6,34 @@ from collections import OrderedDict
 
 app = QApplication.instance()
 
+def blend_trace(trace, obs):
+
+  trace_b = trace
+  for i, t in enumerate(trace_b):
+
+    if i >= 10:
+      break
+
+    trace_b[i] = t*(i/10) + obs[i]*((10-i)/10)
+  
+  # COmpare new trace volume to old
+  new_vol = np.sum(trace_b[:10])
+  old_vol = np.sum(trace[:10])
+  diff = new_vol - old_vol
+
+  # Distribute that difference to the rest of the trace
+  trace_b[10:] = trace_b[10:] + diff/len(trace_b[10:])
+
+  return trace_b
+
+
 class ForecastDisaggregator(object):
 
   def __init__(self, saved_model):
 
     self.model = saved_model
     self.forecasts = self.model.forecasts
-    self.inflow_dataset = self.model.predictand.dataset
+    self.inflow_dataset = self.model.predictand.dataset()
     self.traces = OrderedDict()
 
 
@@ -37,6 +58,14 @@ class ForecastDisaggregator(object):
     # ITerate over years
     for year in years:
 
+      # Get the observation
+      s = datetime(year, start_date.month, start_date.day)
+      e = datetime(year, end_date.month, end_date.day)
+      if e in self.inflow_dataset.data.index:
+        self.observed_inflow = self.inflow_dataset.data.loc[s:e]
+      else:
+        self.observed_inflow = np.array([np.nan for i in pd.date_range(s, e)])
+
       self.traces[year] = OrderedDict()
 
       # Get the testing year
@@ -53,9 +82,9 @@ class ForecastDisaggregator(object):
       training_data_year = training_data_year.values
 
       # iterate over all exceedances
-      exc_list = [int(e) for e in np.arange(start=1.25, stop=100, step=2.5)]
-      for exc, val in self.forecasts.forecasts.loc[(year, slice(None))]['Value'].iteritems():
-        if int(exc*100) not in exc_list:
+      exc_list = [round(i*4)/4 for i  in np.arange(start=1.25, stop=100, step=2.5)]
+      for exc, val in self.forecasts.forecasts.loc[(year, slice(None))]['Value'].items():
+        if exc*100 not in exc_list:
           continue
         self.traces[year][exc] = OrderedDict()
         
@@ -81,19 +110,23 @@ class ForecastDisaggregator(object):
             idx = list(training_years).index(y)
             s = datetime(y, start_date.month, start_date.day)
             e = datetime(y, end_date.month, end_date.day)
-            #trace = self.inflow_dataset.data.loc[s:e]
-            #perf_fcst = training_data_year[idx][-1]
+            trace = self.inflow_dataset.data.loc[s:e]
+            perf_fcst = training_data_year[idx][-1]
 
             # HACKY NCAR THING THAT JORDAN DEMANDED
-            fname = f'C:\\Users\\KFoley\\Downloads\\jordandiagg\\NCAR\{y}0201\\tracemedian\\Buffalo_Bill_Inflows.local.rdf'
-            with open(fname, 'r') as readfile:
-              sd = readfile.readline().split(':')[1].strip()[:10]
-              ed = readfile.readline().split(':')[1].strip()[:10]
-            df = pd.read_csv(fname, skiprows=6, header=None)
-            df = df.set_index(pd.DatetimeIndex(pd.date_range(sd, ed)))
-            trace = df.loc[s:e]
-            perf_fcst = float(trace.sum()*86.4/43560)
+            #fname = f'C:\\Users\\KFoley\\Downloads\\jordandiagg\\NCAR\{y}0201\\tracemedian\\Buffalo_Bill_Inflows.local.rdf'
+            #with open(fname, 'r') as readfile:
+            #  sd = readfile.readline().split(':')[1].strip()[:10]
+            #  ed = readfile.readline().split(':')[1].strip()[:10]
+            #df = pd.read_csv(fname, skiprows=6, header=None)
+            #df = df.set_index(pd.DatetimeIndex(pd.date_range(sd, ed)))
+            #trace = df.loc[s:e]
+            #perf_fcst = float(trace.sum()*86.4/43560)
             trace = trace * (val/perf_fcst)
+
+            # Blend the Trace
+            trace = blend_trace(trace, self.observed_inflow)
+
             self.traces[year][exc][k] = {
               'analog_year': y,
               'weight':analog_year_weight,
@@ -109,10 +142,10 @@ class ForecastDisaggregator(object):
         label = f'EXC:{exc}/{n}/ANLG_YR:{y}'
         labels.append(label)
         data = self.traces[year][exc][n]['trace']
-        data = data.set_axis(pd.DatetimeIndex(pd.date_range(f'{year}-04-01', f'{year}-07-31')))
+        data = data.set_axis(pd.DatetimeIndex(pd.date_range(f'{year}-{start_date:%m-%d}', f'{year}-{end_date:%m-%d}')))
         df = pd.concat([df, data], axis=1)
     df.columns = labels
-    df.to_csv(f'C:/Users/KFoley/Downloads/BBR_DISAGG_NCAR_BLEND_{year}.csv')
+    df.to_csv(f'{app.base_dir}/UserData/BBR_DISAGG_{year}_{self.model.issue_date:%B%d}.csv')
     return self.traces
 
   def PcaDistance(self, testing_data, training_pc, evecs, evals):
@@ -159,8 +192,5 @@ class ForecastDisaggregator(object):
 
 
     return PCS, eigenvalues, eigenvectors
-
-  def Blend(self, obs, forecasts, blend_len, curve_par):
-    return
 
   

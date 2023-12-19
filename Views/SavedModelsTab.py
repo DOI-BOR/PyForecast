@@ -1,15 +1,12 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt, QEvent
+from PyQt5.QtGui import QPainter
 import pyqtgraph as pg
 from Utilities import RichTextDelegate, ToggleSwitch
 from datetime import datetime
-fcst_label = """
-<span style="font-family: 'Courier New', 'Courier', 'Consolas', monospace">
-FORECAST LEGEND: <br>
-<span style="color:#cfb83a">{lc}</span> : &lt;30% of normal<br>
-<span style="color:#00bb00">{mc}</span> : 30% - 70% of normal<br>
-<span style="color:#cc0000">{hc}</span> : &gt;70% of normal<br>
-</span>"""
+
+app = QApplication.instance()
+
 class SavedModelsTab(QWidget):
 
   def __init__(self):
@@ -24,7 +21,7 @@ class SavedModelsTab(QWidget):
   def setUI(self):
 
     self.layout = QHBoxLayout()
-    splitter = QSplitter()
+    self.splitter = QSplitter()
     vlayout = QVBoxLayout()
     vlayout2 = QVBoxLayout()
     hlayout = QHBoxLayout()
@@ -45,14 +42,13 @@ class SavedModelsTab(QWidget):
     vlayout.addWidget(QLabel("Issue Date"))
     vlayout.addWidget(self.issue_combo)
     vlayout.addWidget(self.model_list)
-    vlayout.addWidget(QLabel(fcst_label.format(lc=u'\u25bc', mc=u'\u25a0', hc=u'\u25b2')))
-    widg = QWidget()
-    widg.setLayout(vlayout)
-    splitter.addWidget(widg)
+    self.widg = QWidget()
+    self.widg.setLayout(vlayout)
+    self.splitter.addWidget(self.widg)
 
     h = QHBoxLayout()
     h.addStretch(1)
-    h.addWidget(QLabel("Select Year to view"))
+    h.addWidget(QLabel("<strong>Select Year to view</strong>"))
     h.addWidget(self.year_select)
     h.addWidget(QLabel('|   PDF View'))
     h.addWidget(self.plot_select)
@@ -76,9 +72,15 @@ class SavedModelsTab(QWidget):
     vlayout2.addLayout(hlayout2)
     widg = QWidget()
     widg.setLayout(vlayout2)
-    splitter.addWidget(widg)
-    self.layout.addWidget(splitter)
+    self.splitter.addWidget(widg)
+    self.layout.addWidget(self.splitter)
     self.setLayout(self.layout)
+
+    self.splitter.splitterMoved.connect(lambda pos, idx: self.updateListSize())
+  
+  def updateListSize(self):
+    app.saved_models.dataChanged.emit(app.saved_models.index(0), app.saved_models.index(app.saved_models.rowCount()))
+    app.gui.SavedModelsTab.widg.update()
 
 
 class ModelList(QListView):
@@ -100,7 +102,13 @@ class ModelList(QListView):
     self.remove_action = QAction("Remove model")
     self.remove_action.setStatusTip("Removes the selected model from the file")
     
-
+  def paintEvent(self, e):
+    QListView.paintEvent(self, e)
+    if (self.model()) and (self.model().rowCount(self.rootIndex()) > 0):
+      return
+    painter = QPainter(self.viewport())
+    painter.drawText(self.rect(), Qt.AlignCenter, 'No saved models in this forecast file')
+    painter.end()
 
   def customMenu(self, pos):
     globalpos = self.mapToGlobal(pos)
@@ -144,7 +152,57 @@ class ProbabilityPlots(pg.PlotWidget):
       self.showGrid(True,False,0.85)
       self.getAxis('bottom').setLabel('Target Value')
       self.hideAxis('left')
-      
+    
+    def reframe_to_min_max_normal(self, min_, max_, normal):
+      self.setXRange(min_, max_, padding=0.1)
+      item0 = pg.InfiniteLine(
+        normal,
+        pen=pg.mkPen({'color':'blue', 'width':4}),
+        movable=False
+      )
+      self.addItem(item0)
+      item1 = pg.InfiniteLine(
+        min_,
+        pen=pg.mkPen({'color':'red', 'width':4}),
+        movable=False
+      )
+      self.addItem(item1)
+      item2 = pg.InfiniteLine(
+        max_,
+        pen=pg.mkPen({'color':'red', 'width':4}),
+        movable=False
+      )
+      self.addItem(item2)
+      label0 = f'<span style="margin:5px;font-size:large;background-color: white; border: 1px solid black; padding: 5px"><strong>P.O.R. Median</strong>: {normal:.2f}</span>'
+      textItem0 = pg.TextItem(
+          html=label0,
+          angle=90
+        )
+      textItem0.setZValue(30)
+      self.addItem(textItem0)
+      vr = self.getPlotItem().viewRange()
+      textItem0.setPos(normal,0)
+
+      label1 = f'<span style="margin:5px;font-size:large;background-color: white; border: 1px solid black; padding: 5px"><strong>P.O.R. Min</strong>: {min_:.2f}</span>'
+
+      textItem1 = pg.TextItem(
+          html=label1,
+          angle=90
+        )
+      textItem1.setZValue(30)
+      self.addItem(textItem1)
+      textItem1.setPos(min_, 0)
+
+      label2 = f'<span style="margin:5px;font-size:large;background-color: white; border: 1px solid black; padding: 5px"><strong>P.O.R. Max</strong>: {max_:.2f}</span>'
+
+      textItem2 = pg.TextItem(
+          html=label2,
+          angle=90
+        )
+      textItem2.setZValue(30)
+      self.addItem(textItem2)
+      textItem2.setPos(max_, 0)
+
     def plot_data(self, x, y, color, width=1.5, label=None):
       i = self.plot(x, y, pen=pg.mkPen({'color':color, "width":width}), name=label, antialias=True)
       i.setZValue(30)

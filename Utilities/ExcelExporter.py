@@ -177,7 +177,7 @@ class Exporter:
               val = model.forecasts.get_10_50_90(year)[1]
               saved_models_sheet.write(i+1-skipcount, j, f'{val:0.5g}')
             elif col == "Predictors":
-              p_str = ', '.join([p.dataset.external_id for p in model.predictors]) 
+              p_str = ', '.join([p.dataset().external_id for p in model.predictors]) 
               saved_models_sheet.write(i+1-skipcount, j, p_str)
             elif col == 'Target':
               saved_models_sheet.write(i+1-skipcount, j, model.predictand.__list_form__())

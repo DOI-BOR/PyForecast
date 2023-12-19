@@ -11,32 +11,46 @@ from datetime import datetime
 app = QApplication.instance()
 
 RICH_TEXT = """<style>
-.light {{
-  font-size:small;
-  color: gray;
-}}
-.big {{
-  color: #703878;
-  font-size:large;
-}}
-.bold {{
-  font-weight: bold;
-}}
-.indent {{
-  margin-left:10px;
-}}
-.mono {{
-  font-family: 'Courier New', 'Courier', 'Consolas', monospace;
-}}
+  .title {{
+    font-size: small;
+    background-color: #e0e0e0;
+    font-weight: bold;
+    border: 1px solid black;
+    padding: 5px
+  }}
+  .big {{
+    font-size: large;
+  }}
+  .high {{
+    background-color: skyblue
+  }}
+  .normal {{
+    background-color: aquamarine
+  }}
+  .low {{
+    background-color: pink
+  }}
+  .border_right {{
+    border-right: 1px solid black;
+  }}
+  body {{
+    font-family: arial;
+    font-weight: bold;
+  }}
+  span {{
+    margin: 5px
+  }}
+  table {{
+    margin: 0px;
+    padding: 3px;
+  }}
 </style>
-<strong>{name}</strong>
-<div width="100%" class="big bold">{predictand.period_start:%b-%d} - {predictand.period_end:%b-%d} Forecast</div><br>
-<strong>{regression_model}</strong><br>
-<strong>{predictand_name}</strong> - {predictand.agg_method}<br>
-<strong>Predictors: </strong>{predictor_text}<br>
-<span class="bold">Forecasts</span><br>
-<span class="mono indent">{fcst_text}</span><br>
-{comment:50.50}
+<table width="100%" border="0">
+  <tr><td colspan="2" class="title">Name</td></tr>
+  <tr><td colspan="2" class="big">{name}</td></tr>
+  <tr><td colspan="2" class="title">Recent Forecasts</td></tr>
+  {fcst_text}
+</table>
 """
 
 class Model:
@@ -48,7 +62,7 @@ class Model:
     self.predictors = None
     self.predictand = None
     self.training_period_start = None
-    self.trainign_period_end = None
+    self.training_period_end = None
     self.training_exclude_dates = []
     self.issue_date = None
     self.name = ""
@@ -58,44 +72,43 @@ class Model:
     # Load in all args and kwargs into the dataset definition
     self.guid = str(uuid.uuid4())
     self.__dict__.update(**kwargs)
+
+    
     
 
     return
   
   def __rich_text__(self):
     if self.forecasts.forecasts.empty:
-      fcsts = [('', 'no forecasts yet...'),('',''),('','')]
+      fcsts = [('-', "<td class='big'>no forecasts yet...</td>"),('','<td></td>'),('','<td></td>')]
     else:
-      fcsts = [('', 'no forecasts yet...'),('',''),('','')]
+      fcsts = [('-', "<td class='big'>no forecasts yet...</td>"),('','<td></td>'),('','<td></td>')]
       years = list(self.forecasts.forecasts.index.get_level_values(0).unique())
       years.sort()
       years.reverse()
       for i, year in enumerate(years[:3]):
         _10,_50,_90 = self.forecasts.get_10_50_90(year)
-        low, high = np.quantile(self.predictand.data.values, [0.3, 0.7])
+        low, normal, high = np.quantile(self.predictand.data.values, [0.3, 0.5, 0.7])
         if not _50:
-          sym = 'Unable to generate forecast for this year...'
+          sym = "<td class='big'>Unable to generate forecast for this year...</td>"
         else:
+          sym = f"<td class='big'>{_50:.2f} {self.predictand.unit.id}"
           if _50 <= low:
-            sym = '<span style="color:#cfb83a">{ch} </span>{low:.2f} - {med:.2f} - {high:.2f} [{p.unit.id}]'.format(ch = u'\u25BC', low=_10, med=_50, high=_90, p=self.predictand)
+            sym += f" <span class='low'>&nbsp;({int(100*_50/normal)}% of normal)&nbsp;</span></td>"
           elif _50 >= high:
-            sym = '<span style="color:#cc0000">{ch} </span>{low:.2f} - {med:.2f} - {high:.2f} [{p.unit.id}]'.format(ch = u'\u25B2', low=_10, med=_50, high=_90, p=self.predictand)
+            sym += f" <span class='high'>&nbsp;({int(100*_50/normal)}% of normal)&nbsp;</span></td>"
           else:
-            sym = '<span style="color:#00bb00">{ch} </span>{low:.2f} - {med:.2f} - {high:.2f} [{p.unit.id}]'.format(ch = u'\u25A0', low=_10, med=_50, high=_90, p=self.predictand)
+            sym += f" <span class='normal'>&nbsp;({int(100*_50/normal)}% of normal)&nbsp;</span></td>"
         fcsts[i]=(year, sym)
+      self.normal = normal
 
     fcst_text = ''
     for fcst in fcsts:
-      fcst_text += f'<span class="bold">{fcst[0]}: </span>{fcst[1]}<br>'
+      if fcst[0] != "":
+        fcst_text += f"<tr><td class='big border_right'>{fcst[0]}</td>{fcst[1]}</tr>"
 
-    predictor_text = ''
-    for j, predictor in enumerate(self.predictors):
-      if j != len(self.predictors)-1:
-        predictor_text += f'{predictor.dataset().external_id}, '
-      else:
-        predictor_text += f'{predictor.dataset().external_id}'
 
-    content = RICH_TEXT.format(predictor_text = predictor_text, fcst_text = fcst_text, predictand_name = self.predictand.dataset().external_id, **self.__dict__)
+    content = RICH_TEXT.format(fcst_text = fcst_text, **self.__dict__)
 
     return content
 
@@ -114,7 +127,7 @@ class ForecastList(object):
 
 
   def set_forecasts_1_99(self, year, values):
-    idx = [(year, round(i,2)) for i in np.linspace(0.01, 0.99, 99)]
+    idx = [(year, round(i,4)) for i in np.arange(0.01, 1, 0.0025)]
     data = pd.DataFrame(
       index = pd.MultiIndex.from_tuples(idx, names=('Year', 'Exceedence')),
       columns = ['Value'],
@@ -256,21 +269,31 @@ class SavedModelList(QAbstractListModel):
 
   def remove_model(self, idx):
 
+    
     if isinstance(idx, int):
+      self.beginRemoveRows(QModelIndex(), idx, idx)
       model = self.saved_models.pop(idx)
       self.removeRow(idx)  
+      self.endRemoveRows()
       
     elif isinstance(idx, Model):
       idx = self.saved_models.index(idx)
+      self.beginRemoveRows(QModelIndex(), idx, idx)
       model = self.saved_models.pop(idx)
       self.removeRow(idx)  
+      self.endRemoveRows()
 
-    self.dataChanged.emit(self.index(0), self.index(self.rowCount()-1))
+    self.dataChanged.emit(self.index(0), self.index(self.rowCount()))
     app.SMMV.update_combo_box(None, None)
   
+
   def clear_all(self):
-    for sm in self.saved_models:
+    
+    j=0
+    for i in range(len(self.saved_models)):
+      sm = self.saved_models[i-j]
       self.remove_model(sm)
+      j+=1
     self.dataChanged.emit(self.index(0), self.index(self.rowCount()))
     app.SMMV.update_combo_box(None, None)
 

@@ -3,7 +3,7 @@ import os
 import importlib
 from PyQt5.QtWidgets import QApplication
 from Resources.Dataloaders import FILE_IMPORT, NOAA_CPC, NOAA_NCDC, NRCS_WCC, \
-                                  PDSI_SPI, RCC_ACIS, USBR, USGS_NWIS
+                                  PDSI_SPI, RCC_ACIS, USBR, USGS_NWIS, ALBERTA_WATER
 app = QApplication.instance()
 
 class Dataloaders(OrderedDict):
@@ -21,6 +21,7 @@ class Dataloaders(OrderedDict):
     self['PDSI_SPI'] = {'DESC':PDSI_SPI.Dataloader.DESCRIPTION, 'CLASS':PDSI_SPI.Dataloader}
     self['RCC-ACIS'] = {'DESC':RCC_ACIS.Dataloader.DESCRIPTION, 'CLASS':RCC_ACIS.Dataloader}
     self['USGS_NWIS'] = {'DESC':USGS_NWIS.Dataloader.DESCRIPTION, 'CLASS':USGS_NWIS.Dataloader}
+    self['AB_Loader'] = {'DESC':ALBERTA_WATER.Dataloader.DESCRIPTION, 'CLASS':ALBERTA_WATER.Dataloader}
 
 
   def get_loader_by_name(self, name):

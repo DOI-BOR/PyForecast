@@ -1,9 +1,10 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtWebEngineWidgets import QWebEngineView
-from PyQt5.QtCore import QT_VERSION_STR, Qt, pyqtSignal, QObject
+from PyQt5.QtCore import QT_VERSION_STR, QEvent, Qt, pyqtSignal, QObject
 from PyQt5.QtGui import QIcon
 from Utilities.JsonHooks import DatetimeParser
 from time import time
+import traceback
 import os
 import atexit
 import sys
@@ -29,12 +30,18 @@ class Logger(QObject):
 
     # Open the log file and redirect stdout to a variable
     self.terminal = sys.stdout
-    self.log = open(self.base_dir+'/app_log.txt', 'w')
+    self.log = open(self.base_dir+'/app_log.txt', 'w', encoding='utf-8')
 
     # Close the file on application exit
     atexit.register(self.cleanup)
     
     self.write('Starting PyForecast')
+
+  def logger_excepthook(self, excType, excValue, tb, logger=None):
+    s = list(traceback.format_tb(sys.last_traceback))
+    for ss in s:
+      self.write(ss)
+    self.write(f"Uncaught exception: {excType}: {excValue} \n \n {tb}")
 
   def write(self, msg):
     """Writes the message (message redirected from print(...)) to the 
@@ -48,19 +55,19 @@ class Logger(QObject):
       if msg != '' and msg.isprintable():
 
         # Split up messages longer than seventy characters into multiple lines
-        if len(msg) > 70:
+        if len(msg) > 80:
           c = 0
           while c < len(msg):
-            c += 70
-            if c == 70:
-              m = f"[ {time():.2f} ] \t{msg:70.70}\t·\n"
+            c += 80
+            if c == 80:
+              m = f"[ {time():.2f} ] \t{msg:80.80}\t·\n"
             else:
-              m = f"                 \t{msg[c-70:c]:70.70}\t·\n"
+              m = f"                 \t{msg[c-80:c]:80.80}\t·\n"
             self.terminal.write(m)
             self.log.write(m)
             self.new_log_message.emit(m)
         else:
-          msg = f"[ {time():.2f} ] \t{msg:70.70}\t·\n"
+          msg = f"[ {time():.2f} ] \t{msg:80.80}\t·\n"
           self.terminal.write(msg)
           self.log.write(msg)
           self.new_log_message.emit(msg)
@@ -91,12 +98,14 @@ class PyForecast(QApplication):
   def __init__(self, *args, **kwargs):
     """Constructor
     
-    :keyword arguments
+    :arguments
       file (`str`) - filename to open with the application
     """
 
     # redirect stdout to log
-    sys.stdout = Logger()
+    self.logger = Logger()
+    sys.stdout = self.logger
+    sys.excepthook = self.logger.logger_excepthook
     
     # System-specific settings. Sets Windows scaling
     # settings for High-DPI displays
@@ -115,7 +124,8 @@ class PyForecast(QApplication):
     self.log_message = ''
     self.current_user = os.getlogin()
     self.pid = os.getpid()
-    QApplication.__init__(self, *args, **kwargs)
+    QApplication.__init__(self, *args)
+    self.installEventFilter(self)
     sys.stdout.new_log_message.connect(self.append_log_message)
     with open(self.base_dir + '/Resources/Stylesheets/application_style.qss', 'r') as stylesheet:
       self.setStyleSheet(self.styleSheet() + (stylesheet.read()))
@@ -178,7 +188,7 @@ class PyForecast(QApplication):
 
     # Initialize the Views
     from Views import MainWindow
-    self.gui = MainWindow.MainWindow()
+    self.gui = MainWindow.MainWindow(show=kwargs.get('show', True))
 
     # Instanitate the View Models
     from ModelView import MainWindowMV, DatasetMV
@@ -213,14 +223,26 @@ class PyForecast(QApplication):
     # The gui log-dialog (if it's open).
     self.log_message += msg
     self.new_log_message.emit()
-    self.processEvents()
+    
+
+  def eventFilter(self, object, event):
+
+    if isinstance(object, QComboBox) and event.type() == QEvent.Wheel:
+      return True
+    elif isinstance(object, QDateEdit) and event.type() == QEvent.Wheel:
+      return True
+    else:
+      return QApplication.eventFilter(self, object, event)
   
 
 
 if __name__ == '__main__':
 
+
   # Create the application
   app = PyForecast(sys.argv)
+
+  # TODO: Argparser for runtime options, such as file
 
   # Run the application
   sys.exit(app.exec_())

@@ -20,7 +20,7 @@ class Dataloader(object):
             '&endDT=' + datetime.strftime( date2, '%Y-%m-%d' ) +
             # Specify that we want streamflow
             '&parameterCd=' + dataset.param_code + 
-            # Specify that we want daily means
+            # Specify that we want daily average streamflow
             '&statCd=00003' +
             # Allow all sites
             '&siteStatus=all' )

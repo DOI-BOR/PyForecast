@@ -57,10 +57,37 @@ var layer_group = L.layerGroup()
 var HUC8 = new Object();
 var CLIM_DIV = new Object();
 
+
+// Topojson parser
+L.TopoJSON = L.GeoJSON.extend({
+    addData: function(data) {
+        var geojson, key;
+        if (data.type == 'Topology') {
+            for (key in data.objects) {
+                if (data.objects.hasOwnProperty(key)) {
+                    geojson = topojson.feature(data, data.objects[key]);
+                    L.GeoJSON.prototype.addData.call(this, geojson);
+                }
+            }
+            return this;
+        }
+        L.GeoJSON.prototype.addData.call(this, data);
+        return this;
+    }    
+});
+L.topoJson = function(data, options){
+    return new L.TopoJSON(data, options);
+};
+
+
 // Load the data into the objects
 loadJSON('MapData/HUC8_WGS84.json', function(response) {
     // Parse data into object
     window.HUC8 = JSON.parse(response);
+});
+loadJSON('MapData/hucall.topojson', function(response){
+    // Parse into object
+    window.hucall = JSON.parse(response);
 });
 loadJSON('MapData/CLIMATE_DIVISION_GEOJSON.json', function(response){
     // Parse data into object
@@ -68,7 +95,7 @@ loadJSON('MapData/CLIMATE_DIVISION_GEOJSON.json', function(response){
 });
 
 // Create the LeafLet Layers for the Climate Divisions and the Watersheds
-window.hucLayer = L.geoJSON( window.HUC8, {
+window.hucLayer = L.topoJson( window.hucall, {
     style: {
         pane: "HUCPane",
         fillColor: "#4286f4",
@@ -77,6 +104,12 @@ window.hucLayer = L.geoJSON( window.HUC8, {
         color: "#4286f4", 
         fillOpacity: 0.0
         },
+    filter: function(feature){
+        if (feature.properties.type == '8') {
+            return true;
+        }
+        return false;
+    }
         
 }).addTo(window.map);
 
@@ -244,6 +277,28 @@ function loadDatasetCatalog(geojson_string) {
     }).addTo(map);
     window.layer_group.addLayer(window.USBRLayer);
 
+    // Load Canada Layer
+    window.CanadaLayer = L.geoJSON(point_data, {
+        
+        // Filter for USBR reservoirs
+        filter: function(feature) {
+            if (feature.properties.DatasetType == 'HYDROMETRIC') return true;
+        },
+
+        // Create circle markers
+        pointToLayer: function (feature, latlng) {
+            return L.circleMarker(latlng, {
+                pane: "PointsPane",
+                fillColor: "#ff0000",
+                color: "#000000",
+                weight: 1,
+                radius: 7,
+                fillOpacity: 1
+            })
+        }
+    }).addTo(map);
+    window.layer_group.addLayer(window.CanadaLayer);
+
     // Load USBR Agrimet Sites
     window.USBRAGRIMETLayer = L.geoJSON(point_data, {
         
@@ -287,7 +342,7 @@ function loadDatasetCatalog(geojson_string) {
         }
     });
     window.layer_group.addLayer(window.NCDCLayer);
-    var arr = ["NCDC", "SNOTEL", "SCAN", "AGRIMET", "RESERVOIR", "STREAMGAGE", "SNOWCOURSE"]
+    var arr = ["NCDC", "SNOTEL", "SCAN", "AGRIMET", "RESERVOIR", "STREAMGAGE", "SNOWCOURSE", "HYDROMETRIC"]
     window.otherLayer = L.geoJSON(point_data, {
         
         filter: function(feature) {
@@ -323,7 +378,8 @@ function createPopups() {
                     "SCAN":"#ffcc6f",
                     "RESERVOIR":"#5263fe",
                     "AGRIMET":"#f47251",
-                    "NCDC":"#f5edd0"}
+                    "NCDC":"#f5edd0",
+                    "HYDROMETRIC":"#FF0000"}
     window.hucDict = {};
 
     window.hucLayer.eachLayer( function(sublayer) {
@@ -465,7 +521,7 @@ function createPopups() {
             // Add a button to add the dataset
             //popHTML = popHTML + '<button type="button" onclick="buttonPress()">Add Dataset</button>' + `<p hidden id="data" style="margin:0">${id}~~${name}~~${agency}~~${param}~~${pcode}~~${units}~~${dataloader}</p>` ;
             
-            window.pop = L.popup().setLatLng(e.latlng).setContent(popHTML).addTo(window.map);
+            window.pop = L.popup({closeButton:true}).setLatLng(e.latlng).setContent(popHTML).addTo(window.map);
             
         });
     });
@@ -475,14 +531,14 @@ function createPopups() {
 
         //Try to do drop down checkboxes
         var coordinates = getCenter(e.layer.feature, e);
-        var name = e.layer.feature.properties.NAME;
-        var num = e.layer.feature.properties.HUC8;
-        var id = e.layer.feature.properties.HUC8;
+        var name = e.layer.feature.properties.name;
+        var num = e.layer.feature.properties.id;
+        var id = e.layer.feature.properties.id;
         window.num = num;
 
         // get a list of all the datasets in this huc
 
-        var popHTML = "<strong>HUC8: " + num + "</strong><p><strong>Name: </strong>" + name;
+        var popHTML = "<p><strong>HUC8: " + num + "</strong><br><strong>Name: </strong>" + name + "</p>";
 
         
         /* popHTML = popHTML + `</p><div id="list1_HUC" class="dropdown-check-list" tabindex="100">
@@ -496,12 +552,12 @@ function createPopups() {
         });
         popHTML = popHTML + `</ul></div></br>`; */
         popHTML = popHTML + `<p hidden id="parammeta">${id}~~${name}~~Regional Climate Center~~RCC-ACIS</p>`
-        popHTML = popHTML + `</br><select id='param'>`;
+        popHTML = popHTML + `<select id='param'>`;
         popHTML = popHTML + `<option value='PRISM'>PRISM Temperature & Precipitation</option><option value='NRCC'>NRCC Temperature & Precipitation</option></select></p>`;
         
         
         popHTML = popHTML + '<button type="button" onclick="buttonPress()">Add Datasets</button>' ;
-        window.pop = L.popup().setLatLng(coordinates).setContent(popHTML).addTo(window.map);
+        window.pop = L.popup({closeButton:true}).setLatLng(coordinates).setContent(popHTML).addTo(window.map);
 
         /* var checkList = document.getElementById('list1_HUC');
         var items = document.getElementById('items_HUC');
@@ -536,7 +592,7 @@ function createPopups() {
         var popHTML = popHTML + "<strong>NAME: " + name + "</strong><p><strong>Number: </strong>" + num;
         popHTML = popHTML + `</br><select id='param'><option value='PDSI'>Palmer Drought Severity Index</option><option value='SPEI'>Standardized Precipitation Evapotranspiration Index</option></select></p>`;
         popHTML = popHTML + '<button type="button" onclick="PDSIPress()">Add Drought Index</button>' + `<p hidden id="pdsiNum" style="margin:0">${num}</p>` ;
-        window.pop = L.popup().setLatLng(coordinates).setContent(popHTML).addTo(window.map);
+        window.pop = L.popup({closeButton:false}).setLatLng(coordinates).setContent(popHTML).addTo(window.map);
         
     });
 }
@@ -686,6 +742,7 @@ function createLayerControlOverlay() {
             '<span style="display:inline-block;height:10px;width:10px;border: 1px solid black;border-radius:50%;background:#5263fe"></span>&nbsp;USBR Natural Flow':    window.USBRLayer,
             '<span style="display:inline-block;height:10px;width:10px;border: 1px solid black;border-radius:50%;background:#f47251"></span>&nbsp;USBR AgriMet':         window.USBRAGRIMETLayer,
             '<span style="display:inline-block;height:10px;width:10px;border: 1px solid black;border-radius:50%;background:#f5edd0"></span>&nbsp;NOAA Sites':           window.NCDCLayer,
+            '<span style="display:inline-block;height:10px;width:10px;border: 1px solid black;border-radius:50%;background:#ff0000"></span>&nbsp;Alberta Hydrometric':  window.CanadaLayer,
             '<span style="display:inline-block;height:10px;width:10px;border: 1px solid black;border-radius:50%;background:#AAAAAA"></span>&nbsp;OTHER':                window.otherLayer,
         },
         "Areas":{

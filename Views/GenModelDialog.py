@@ -11,9 +11,14 @@ import pandas as pd
 from Utilities.HydrologyDateTimes import convert_to_water_year
 from jinja2 import Environment, FileSystemLoader
 from inspect import signature
+import sys
 
 app = QApplication.instance()
 
+
+#def trap_exc_during_debug(*args):
+#  print(args)
+#sys.excepthook = trap_exc_during_debug
 
 class PossibleModels(QAbstractTableModel):
 
@@ -22,6 +27,9 @@ class PossibleModels(QAbstractTableModel):
     QAbstractTableModel.__init__(self)
     self.models = []
     self.scorers=scorers
+    self.ins_buf = []
+    self.buf_cnt = 0
+    self.font_ = QFont('Consolas')
   
   def headerData(self, section, orientation, role):
     if role == Qt.DisplayRole:
@@ -40,13 +48,15 @@ class PossibleModels(QAbstractTableModel):
         r = model.regressor
         return QVariant(f'{r.regression_model} / {r.scoring_metric}')
       if index.column() == 1:
-        return QVariant(''.join([u'\u25cf' if b else u'\u25cc' for b in model.genome]))
+        return QVariant(''.join([u'\u25cf' if b else u'\u00B7' for b in model.genome]))
       if index.column() > 1:
         if model.scorer == self.scorers[index.column()-2]:
           return QVariant(f'{model.score:0.6g}')
         else:
           return QVariant('-')
 
+    if role == Qt.FontRole:
+      return self.font_
 
     if role == Qt.UserRole + 1:
       if index.column() == 0:
@@ -67,8 +77,15 @@ class PossibleModels(QAbstractTableModel):
     return 2 + len(self.scorers)
 
   def append(self, model):
-    self.models.append(model)
-    self.insertRow(len(self)-1)
+    if self.buf_cnt < 10:
+      self.ins_buf.append(model)
+      self.buf_cnt += 1
+    else:
+      self.models = self.models + self.ins_buf
+      self.ins_buf = []
+      self.buf_cnt = 0
+      self.insertRows(len(self)-10, 10)
+    #self.insertRow(len(self)-1)
     
   def insertRows(self, position, rows, parent=QModelIndex()):
     self.beginInsertRows(parent, position, position+rows-1)
@@ -76,7 +93,9 @@ class PossibleModels(QAbstractTableModel):
     return True
 
   def refresh(self):
-    
+    # add in any buffered rows
+    self.models = self.models + self.ins_buf
+    self.insertRows(len(self)-len(self.ins_buf), len(self.ins_buf))
     self.dataChanged.emit(self.index(0,0), self.index(len(self)-1, self.columnCount()))
     app.processEvents()
 
@@ -104,12 +123,12 @@ class FilterTable(QSortFilterProxyModel):
 
 class GenModelDialog(QDialog):
 
-  def __init__(self, config=None):
+  def __init__(self, config=None, parent = None):
 
     QDialog.__init__(self)
     self.setUI()
     self.config = config
-
+    self.parent_ = parent
     # Get unique scorers
     scorers = []
     for r in self.config.regressors.regressors:
@@ -122,24 +141,51 @@ class GenModelDialog(QDialog):
     self.model_list.setModel(self.model_list_p)
     self.model_list.setSortingEnabled(True)
     self.model_list.selectionModel().currentRowChanged.connect(self.set_model)
+    
+    # Create progress dialog
+    self.pd = QProgressDialog(
+      "", "Cancel", 0, 100, self.parent_
+    )
+    self.pd.setWindowModality(Qt.WindowModal)
+    self.pd.setWindowTitle('Generating Models')
+    self.pd.setStyleSheet("""QLabel {font-family: Consolas, monospace}
+                          """)
+    self.pd.setValue(0)
+    
+    self.pd.show()
+    
 
     self.mg = ModelGenerator(self.config)
-    self.mg.updateTextSignal.connect(self.prog_text.setText)
-    self.mg.updateProgSignal.connect(self.model_progress_bar.setValue)
+    self.thread_ = QThread()
+    self.thread_.setObjectName('thread_model_gen')
+    self.mg.moveToThread(self.thread_)
+    self.mg.updateTextSignal.connect(self.pd.setLabelText)
+    self.mg.updateProgSignal.connect(self.pd.setValue)
     self.mg.newModelSignal.connect(self.possible_models.append)
-    self.mg.updateTextSignal.connect(lambda x: app.processEvents())
-    self.mg.updateProgSignal.connect(lambda x: app.processEvents())
-    
-    self.mg.finished.connect(self.model_search_finished)
+    self.mg.sig_done.connect(self.stopThread)
+
+    self.pd.canceled.connect(self.mg.abort)
+    self.thread_.finished.connect(self.model_search_finished)
 
     self.save_button.pressed.connect(self.save_model)
-
-    self.mg.start()
+    self.thread_.started.connect(self.mg.work)
     
+    #self.mg.sig_done.connect(lambda b: self.model_search_finished() if b else None)
+    self.mg.sig_done.connect(lambda b: self.prog_text.setText(self.pd.labelText()))
+    self.mg.sig_done.connect(lambda b: self.pd.close())
+    self.thread_.start()
+    #self.mg.work()
+    
+    
+
+  def stopThread(self):
+    self.thread_.quit()
+    self.thread_.wait()
     self.exec()
   
   def closeEvent(self, ev):
-    self.mg.stop()
+    self.mg.abort()
+    #self.mg.stop()
     QDialog.closeEvent(self, ev)
 
     
@@ -149,7 +195,11 @@ class GenModelDialog(QDialog):
     self.possible_models.refresh()
     self.model_progress_bar.setFormat('100%')
     self.model_list.resizeColumnsToContents()
-    
+    self.model_list.horizontalHeader().setStretchLastSection(True)
+    self.sensible_sort_button.setEnabled(True)
+  
+  #def sensible_sort(self):
+
 
   def save_model(self):
     row = self.model_list.selectionModel().selectedIndexes()[0]
@@ -188,6 +238,8 @@ class GenModelDialog(QDialog):
     self.model_progress_bar.setFormat("Finding models...")
     self.model_progress_bar.setMaximum(100)
     self.save_button = QPushButton('Save Model')
+    self.sensible_sort_button = QPushButton('Sensible Sort')
+    self.sensible_sort_button.setEnabled(False)
 
     layout = QVBoxLayout()
     hlayout = QHBoxLayout()
@@ -203,6 +255,10 @@ class GenModelDialog(QDialog):
     layout.addWidget(splitter)
 
     layout.addWidget(self.model_list)
+    hlayout2 = QHBoxLayout()
+    hlayout2.addStretch()
+    hlayout2.addWidget(self.sensible_sort_button)
+    #layout.addLayout(hlayout2)
     layout.addWidget(self.status_bar)
 
     self.status_bar.addWidget(self.model_progress_bar, 1)
@@ -225,6 +281,9 @@ class GenModelDialog(QDialog):
     x_data = df.values[:,:-1]
     predictand_data = df.values[:, -1]
     y_a = predictand_data
+    scorer_args = {
+      'num_predictors':x_data.shape[1]
+    }
 
     y_p_cv, y_a_cv = regression_algorithm.cross_val_predict(x_data, predictand_data)
     y_p = regression_algorithm.predict(x_data)
@@ -245,10 +304,10 @@ class GenModelDialog(QDialog):
     for metric, func in app.scorers.items():
       if metric == model.regressor.scoring_metric:
         scores.append((metric+' Cross Validated', model.score))
-        scores.append((metric, func(y_p, y_a)))
+        scores.append((metric, func(y_p, y_a, **scorer_args)))
       else:
-        scores.append((metric+' Cross Validated', func(y_p_cv, y_a_cv)))
-        scores.append((metric, func(y_p, y_a)))
+        scores.append((metric+' Cross Validated', func(y_p_cv, y_a_cv, **scorer_args)))
+        scores.append((metric, func(y_p, y_a, **scorer_args)))
 
     regression_algorithm.update_params()
     param_dict = regression_algorithm.exposed_params
@@ -258,7 +317,7 @@ class GenModelDialog(QDialog):
     template = environment.get_template("PossibleModelTemplate.html")
     content = template.render(
       model = model,
-      genome =  ''.join([u'\u25cf' if b else u'\u25cc' for b in model.genome]),
+      genome =  ''.join([u'\u25cf' if b else u'\u00B7' for b in model.genome]),
       scores=scores,
       param_dict = param_dict
     )

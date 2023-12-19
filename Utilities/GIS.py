@@ -50,4 +50,8 @@ def excelToGeoJSON(fn):
             return obj.isoformat()
         raise TypeError("Type is not serializable")
     return ("""{"crs":{"type":"name","properties":{"name":"EPSG:4326"}},""" + geojson.dumps(geojson.FeatureCollection(features), allow_nan = True, sort_keys=True, default=json_serial)[1:]).replace('NaN,', '"",')
-  
+
+if __name__ == '__main__':
+    fn = "C:/Users/KFoley/Documents/PyForecastV5/Resources/WebMap/PointDatasets.xlsx"
+    with open("C:/Users/KFoley/Documents/PyForecastV5/Resources/WebMap/map_data.geojson", 'w') as writefile:
+        writefile.write(excelToGeoJSON(fn))

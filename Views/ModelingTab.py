@@ -1,8 +1,10 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt, QDate
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QPainter
 from PyQt5.QtWebEngineWidgets import *
 from Utilities import RichTextDelegate
+
+app = QApplication.instance()
 
 class ModelingTab(QWidget):
 
@@ -20,16 +22,22 @@ class ModelingTab(QWidget):
 
     # LAyout the tab
     layout = QHBoxLayout()
-    widg = QWidget()
+    self.widg = QWidget()
     vlayout = QGridLayout()
     vlayout.addWidget(self.add_conf_button, 0, 0, 1, 1)
     vlayout.addWidget(self.config_list, 1, 0, 1, 4)
-    widg.setLayout(vlayout)
-    splitter = QSplitter()
-    splitter.addWidget(widg)
-    splitter.addWidget(self.config_editor)
-    layout.addWidget(splitter)
+    self.widg.setLayout(vlayout)
+    self.splitter = QSplitter()
+    self.splitter.addWidget(self.widg)
+    self.splitter.addWidget(self.config_editor)
+    layout.addWidget(self.splitter)
     self.setLayout(layout)
+
+    self.splitter.splitterMoved.connect(lambda pos, idx: self.updateListSize())
+  
+  def updateListSize(self):
+    app.model_configurations.dataChanged.emit(app.model_configurations.index(0), app.model_configurations.index(app.model_configurations.rowCount()))
+    app.gui.ModelingTab.widg.update()
     
 class ConfigurationList(QListView):
 
@@ -49,6 +57,13 @@ class ConfigurationList(QListView):
     self.remove_action = QAction("Remove selected configuration")
     self.remove_action.setStatusTip("Removes the selected configuration from the file")
 
+  def paintEvent(self, e):
+    QListView.paintEvent(self, e)
+    if (self.model()) and (self.model().rowCount(self.rootIndex()) > 0):
+      return
+    painter = QPainter(self.viewport())
+    painter.drawText(self.rect(), Qt.AlignCenter, 'No Configurations in this forecast file')
+    painter.end()
 
   def customMenu(self, pos):
     globalpos = self.mapToGlobal(pos)

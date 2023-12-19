@@ -29,6 +29,10 @@ class SettingsDialog(QDialog):
     self.brute_force_under_setting.setSuffix(' Predictors')
     self.search_time_limit_setting = QSpinBox()
     self.search_time_limit_setting.setSuffix(' Minutes')
+    self.max_pc_modes_setting = QDoubleSpinBox()
+    self.max_pc_modes_setting.setMinimum(0.5)
+    self.max_pc_modes_setting.setMaximum(0.99)
+
 
     layout = QFormLayout()
     layout.addRow(QLabel("<strong>Download Settings</strong>"))
@@ -45,7 +49,7 @@ class SettingsDialog(QDialog):
     layout.addRow('Default feature selection algorithm',self.default_feature_selection)
     layout.addRow('Maximum number of predictors to brute force search', self.brute_force_under_setting)
     layout.addRow('Maximum time per regressor to search for models', self.search_time_limit_setting)
-
+    layout.addRow('Maximum cumulative importance for Princ. Comp. retention?', self.max_pc_modes_setting)
     self.setLayout(layout)
 
     self.setSettings()
@@ -63,6 +67,7 @@ class SettingsDialog(QDialog):
     self.default_feature_selection.setCurrentText(app.config['default_feature_selector'])
     self.brute_force_under_setting.setValue(app.config['brute_force_under_no'])
     self.search_time_limit_setting.setValue(app.config['model_search_time_limit'])
+    self.max_pc_modes_setting.setValue(app.config['max_pc_mode_variance'])
 
   def storeSettings(self):
 
@@ -74,6 +79,7 @@ class SettingsDialog(QDialog):
     app.config['default_feature_selector'] = self.default_feature_selection.currentText()
     app.config['brute_force_under_no'] = self.brute_force_under_setting.value()
     app.config['model_search_time_limit'] = self.search_time_limit_setting.value()
+    app.config['max_pc_mode_variance'] = self.max_pc_modes_setting.value()
 
 
     pass

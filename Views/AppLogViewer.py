@@ -14,8 +14,12 @@ class LogViewer(QDialog):
     self.setUI()
     self.log_area.setText(app.log_message)
     self.clear_button.pressed.connect(self.clear_log)
+    self.refr_button.pressed.connect(self.refr)
     app.new_log_message.connect(lambda: self.log_area.setText(app.log_message))
     app.new_log_message.connect(lambda: self.log_area.verticalScrollBar().setValue(self.log_area.verticalScrollBar().maximum()))
+
+  def refr(self):
+    self.log_area.setText(app.log_message)
 
   def clear_log(self):
     app.log_message = ''
@@ -27,9 +31,11 @@ class LogViewer(QDialog):
     self.log_area = QTextEdit(objectName='monospace')
     self.log_area.setReadOnly(True)
     self.clear_button = QPushButton('Clear')
+    self.refr_button = QPushButton('Refresh')
     hlayout = QHBoxLayout()
     hlayout.addStretch(1)
     hlayout.addWidget(self.clear_button)
+    hlayout.addWidget(self.refr_button)
     layout.addWidget(self.log_area)
     layout.addLayout(hlayout)
     self.setLayout(layout)

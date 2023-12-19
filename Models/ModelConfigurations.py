@@ -5,10 +5,15 @@ import pandas as pd
 from Models.Datasets import Dataset
 from Utilities.HydrologyDateTimes import convert_to_water_year
 import pickle
+import numpy as np
 from numpy import nan
 from inspect import signature
 
 app = QApplication.instance()
+
+def ordinaltg(n):
+      return str(n) + {1: 'st', 2: 'nd', 3: 'rd'}.get(4 if 10 <= n % 100 < 20 else n % 10, "th")
+
 
 class ResampledDataset:
 
@@ -49,7 +54,7 @@ class ResampledDataset:
       return app.datasets.get_dataset_by_guid(self.dataset_guid)
     else:
       return Dataset()
-
+  
   def resample(self):
     
     if not self.dataset().data.empty:
@@ -59,8 +64,8 @@ class ResampledDataset:
       dataset = self.dataset()
 
       # reference to raw data for convienence
-      scale, offset = dataset.raw_unit.convert_to(dataset.display_unit)
-      raw = dataset.data*scale + offset
+      #scale, offset = dataset.raw_unit.convert_to(dataset.display_unit)
+      raw = dataset.data#*scale + offset
 
       # get the agg method
       a = app.agg_methods[self.agg_method]
@@ -69,7 +74,8 @@ class ResampledDataset:
       days = (self.period_end - self.period_start).days
 
       # Create the periods
-      tracker = pd.Timestamp(self.period_start)
+      start = self.period_start.replace(year=raw.index[0].year - 1)
+      tracker = pd.Timestamp(start)
       periods = []
       while tracker <= raw.index[-1]:
         periods.append((tracker, tracker + pd.DateOffset(days=days)))
@@ -168,27 +174,71 @@ class ModelConfiguration:
     self.__dict__.update(**kwargs)
 
     return
+  
+  def define_new_predictor(self, **kwargs):
+    p = ResampledDataset(**kwargs)
+    self.predictor_pool.add_predictor(p)
+  
+  def define_new_predictand(self, **kwargs):
+    p = ResampledDataset(**kwargs)
+    self.predictand = p
+  
+  def define_new_regressor(self, **kwargs):
+    r = Regressor(**kwargs)
+    self.regressors.add_regressor(r)
 
   def __simple_target_string__(self):
 
     exclude = len(self.training_exclude_dates) > 0
     exclude_str = '(excluding ' + ','.join(list(map(str, self.training_exclude_dates))) + ')' if exclude else ''
 
-    return  f'<i><strong>{self.name}</strong></i> will create models for a <i><strong>{self.predictand.period_start:%b-%d} through {self.predictand.period_end:%b-%d}</strong></i> forecast ' + \
+    return  f'<span style="font-family:Consolas"><strong>{self.name}</strong> will create models for a <strong>{self.predictand.period_start:%b-%d} through {self.predictand.period_end:%b-%d}</strong> forecast ' + \
             f'targeting <strong>{self.predictand.dataset().__condensed_form__()} {self.predictand.agg_method}</strong> ' + \
-            f'(to be issued on <i><strong>{self.issue_date:%b-%d}</strong></i>). This model will be trained on ' + \
-            f'data from the period <i><strong>{self.training_start_date:%b-%Y} to {self.training_end_date:%b-%Y} {exclude_str}</strong></i>'
+            f'(to be issued on <strong>{self.issue_date:%b-%d}</strong>). This model will be trained on ' + \
+            f'data from the period <strong>{self.training_start_date:%b-%Y} to {self.training_end_date:%b-%Y} {exclude_str}</strong></span>'
 
   def __str__(self):
     return f'<ModelConfiguration {self.guid}>'
 
   def __rich_text__(self):
-    return f""" <span style="color:navy"><strong>Issue date: {self.issue_date:%B %d}</strong></span><br>
-                <strong>Name:</strong> {self.name}<br>
-                {self.predictand.period_start:%b %d} - {self.predictand.period_end:%b %d} {self.predictand.dataset().external_id} {self.predictand.agg_method}<br>
-                <strong>{self.predictor_pool.rowCount()}</strong> total predictors<br>
-                <strong>{len(self.regressors.regressors)}</strong> total regressors<br>
-                {self.comment if len(self.comment)>0 else 'no comment'}"""
+    
+
+
+    r = f"""
+    <style>
+            .small_title {{ 
+                background-color: lightgray;
+                font-weight: bold;
+                color: black;
+                border: 1px solid black;
+            }}
+            .title {{
+              color: blue;
+            }}
+            .var {{
+              font-weight: bold;
+            }}
+            .col1 {{
+              width: 122px
+            }}
+            table,td, tr {{
+                background-color: white;
+                color: #0e0e0e;
+                font-family: Arial;
+                font-size: medium;
+                border-collapse:"collapse";
+                border: 1px solid black;
+                padding:5px;
+            }}
+          </style>
+          <table width="100%">
+            <tr><td class="small_title col1">Configuration Name</td><td class="var title">{self.name}</td></tr>
+            <tr><td class="small_title">Issue Date</td><td class="var">{self.issue_date:%B %d}</td></tr>
+            <tr><td class="small_title">Forecast Target</td><td class="var">{self.predictand.dataset().external_id} | {self.predictand.agg_method} | {self.predictand.period_start:%m/%d} - {self.predictand.period_end:%m/%d}</td></tr>
+          </table>
+    """
+
+    return r
 
 class Regressors(QAbstractTableModel):
 
@@ -306,6 +356,10 @@ class PredictorPool(QAbstractTableModel):
     self.predictors.append(predictor)
     self.insertRow(self.rowCount())
     self.dataChanged.emit(self.index(0, 0), self.index(self.rowCount(), self.columnCount()))
+  
+  def define_new_predictor(self, **kwargs):
+    p = ResampledDataset(**kwargs)
+    self.add_predictor(p)
 
   def delete_predictor(self, idx):
     _ = self.predictors.pop(idx)
@@ -397,15 +451,20 @@ class ModelConfigurations(QAbstractListModel):
     
     idx = self.configurations.index(configuration)
     _ = self.configurations.pop(idx)
+    self.beginRemoveRows(QModelIndex(), idx, idx)
     self.removeRow(idx) 
+    self.endRemoveRows()
     self.dataChanged.emit(self.index(0), self.index(self.rowCount()))  
     
     
     return
   
   def clear_all(self):
-    for config in self.configurations:
+    j=0
+    for i in range(len(self.configurations)):
+      config = self.configurations[i-j]
       self.remove_configuration(config)
+      j+=1
   
   def get_by_id(self, id):
     for config in self.configurations:
@@ -470,6 +529,7 @@ class ModelConfigurations(QAbstractListModel):
       pickle.dump(len(config.regressors), f, 4)
       for regressor in config.regressors:
         pickle.dump(regressor, f, 4)
+
 
 
   def __getitem__(self, index):

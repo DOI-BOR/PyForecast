@@ -102,20 +102,21 @@ class DataModelView:
   def plot_data_for_selection(self, new_selection, _):
     selection = self.dt.dataset_list.selectionModel().selectedRows()
     selected_datasets = [app.datasets[idx.row()] for idx in selection]
-    if len(selected_datasets) < 1:
-      self.dt.data_viewer.clear_all()
-      return
-    df = pd.DataFrame()
-    labels = []
-    unit_list = []
-    for dataset in selected_datasets:
-      unit_list.append(dataset.display_unit.id)
-      labels.append(dataset.__condensed_form__())
-      scale, off = dataset.raw_unit.convert_to(dataset.display_unit)
-      df = pd.concat([df, dataset.data*scale + off], axis=1)
-    df.index = pd.DatetimeIndex(df.index)
-    df.columns = labels
-    self.dt.data_viewer.plot(df, unit_list=unit_list)
+    self.dt.data_viewer.plot(selected_datasets)
+    # if len(selected_datasets) < 1:
+    #   self.dt.data_viewer.clear_all()
+    #   return
+    # df = pd.DataFrame()
+    # labels = []
+    # unit_list = []
+    # for dataset in selected_datasets:
+    #   unit_list.append(dataset.display_unit.id)
+    #   labels.append(dataset.__condensed_form__())
+    #   scale, off = dataset.raw_unit.convert_to(dataset.display_unit)
+    #   df = pd.concat([df, dataset.data*scale + off], axis=1)
+    # df.index = pd.DatetimeIndex(df.index)
+    # df.columns = labels
+    # self.dt.data_viewer.plot(df, unit_list=unit_list)
 
   def download_recent(self):
     if len(app.datasets) < 1:

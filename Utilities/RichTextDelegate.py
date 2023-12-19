@@ -7,6 +7,7 @@ class HTMLDelegate(QStyledItemDelegate):
     def __init__(self, parent=None):
         super().__init__()
         self.doc = QTextDocument(self)
+        self.w = None
 
     def paint(self, painter, option, index):
 
@@ -21,25 +22,24 @@ class HTMLDelegate(QStyledItemDelegate):
         #textOption = QTextOption()
         #textOption.setTextDirection(option.direction)
 
-        doc = QTextDocument()
-        #doc.setDefaultTextOption(textOption)
+        doc = QTextDocument(self)
         doc.setHtml(option.text)
         doc.setDefaultFont(option.font)
         doc.setDocumentMargin(10)
-        #doc.setTextWidth(option.rect.width())
+        doc.setTextWidth(option.rect.width())
+       
         #doc.adjustSize()
         option.text = ''
 
         style.drawControl(QStyle.CE_ItemViewItem, option, painter, option.widget)
         textRect = style.subElementRect(QStyle.SE_ItemViewItemText, option)
-        documentSize = QSize(int(doc.size().width()), int(doc.size().height()))
+        documentSize = QSize(int(option.rect.width()), int(doc.size().height()))
         layoutRect = QStyle.alignedRect(Qt.LayoutDirectionAuto, option.displayAlignment, documentSize, textRect)
 
         painter.save()
 
         painter.translate(layoutRect.topLeft())
         doc.drawContents(painter, QRectF(textRect.translated(-textRect.topLeft())));
-        #painter.drawRect(QRectF(textRect.translated(-textRect.topLeft())))
 
         painter.restore()
 
@@ -49,14 +49,14 @@ class HTMLDelegate(QStyledItemDelegate):
         self.initStyleOption(option, index)
         text = index.data(Qt.UserRole + 3)
         option.text = text
-        if option.text == '':
-            return QStyledItemDelegate.sizeHint(self, option, index)
-        doc = QTextDocument()
+        #if option.text == '':
+        #    return QStyledItemDelegate.sizeHint(self, option, index)
+        doc = QTextDocument(self)
         doc.setHtml(option.text)
         doc.setDefaultFont(option.font)
         doc.setDocumentMargin(10)
-        #sdoc.setTextWidth(option.rect.width())
+        doc.setTextWidth(option.rect.width())
         #doc.adjustSize()
-        return QSize(int(doc.size().width()), int(doc.size().height()))
+        return QSize(int(option.rect.width()), int(doc.size().height()))
 
         

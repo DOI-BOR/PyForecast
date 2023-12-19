@@ -7,12 +7,12 @@ app = QApplication.instance()
 
 class MainWindow(QMainWindow):
 
-  def __init__(self):
+  def __init__(self, *args, **kwargs):
 
     QMainWindow.__init__(self)
 
     # Main window properties
-    self.setWindowTitle('PyForecast')
+    self.setWindowTitle(f'PyForecast V{app.PYCAST_VERSION}')
     self.setWindowIcon(QIcon(app.base_dir + '/Resources/Icons/AppIcon.ico'))
 
     # Initialize the Views
@@ -31,6 +31,9 @@ class MainWindow(QMainWindow):
     # Set up the status bar
     self.status_bar = self.statusBar()
     self.current_file_widg = QLabel('')
+    f = self.current_file_widg.font()
+    f.setLetterSpacing(QFont.PercentageSpacing, 110.)
+    self.current_file_widg.setFont(f)
     self.current_file_widg.setTextFormat(Qt.RichText)
     self.status_bar.insertPermanentWidget(0, self.current_file_widg)
     self.status_bar.setSizeGripEnabled(False)
@@ -111,9 +114,14 @@ class MainWindow(QMainWindow):
 
     width = min(app.config['window_width'], app.desktop().screenGeometry().width())
     height = min(app.config['window_height'], app.desktop().screenGeometry().height())
-    self.resize(width, height)
 
-    self.show()
+    rec = app.desktop().screenGeometry()
+    if kwargs.get('show', True) == True:
+      if (width >= 0.95*rec.width()) and (height >= 0.95*rec.height()):
+        self.showMaximized()
+      else:
+        self.resize(width, height)
+        self.show()
 
   def resizeEvent(self, ev):
     s = ev.size()

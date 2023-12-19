@@ -5,6 +5,7 @@ import pyqtgraph as pg
 from Utilities.TimeSeriesPlot import TimeSeriesPlot
 from Utilities import ColorCycler, HydrologyDateTimes
 import numpy as np
+from Plots.ResampledDataViewer import Plot
 
 app = QApplication.instance()
 
@@ -23,11 +24,10 @@ class DataViewer(QDialog):
     
     self.setUi()
     self.setData(self.dataset)
-    self.data_plot.plot(self.dataset)
+    self.data_plot.plot(self.dataset, self.configuration.predictand)
     
     self.combo_select.setCurrentText(self.dataset.__list_form__())
     self.load_button.pressed.connect(self.combo_changed)
-    #self.combo_select.currentIndexChanged.connect(self.combo_changed)
 
     
 
@@ -35,7 +35,7 @@ class DataViewer(QDialog):
     idx = self.combo_select.currentIndex()
     self.dataset = self.datasets[idx]
     self.setData(self.dataset)
-    self.data_plot.plot(self.dataset)
+    self.data_plot.plot(self.dataset, self.configuration.predictand)
     
 
   def setUi(self):
@@ -45,19 +45,16 @@ class DataViewer(QDialog):
 
     layout = QGridLayout()
 
-    self.save_button = QPushButton('Save')
-    self.save_button.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
     self.load_button = QPushButton('Load')
     self.load_button.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
     self.combo_select = QComboBox()
     self.combo_select.setModel(QStringListModel([d.__list_form__() for d in self.datasets]))
     self.data_grid = QTableWidget()
     
-    self.data_plot = DataPlot(self.configuration)
+    self.data_plot = Plot()
     
     layout.addWidget(self.combo_select, 0, 0, 1, 3)
     layout.addWidget(self.load_button, 0, 3, 1, 1)
-    layout.addWidget(self.save_button, 0, 4, 1, 1)
     splitter = QSplitter()
     splitter.addWidget(self.data_plot)
     splitter.addWidget(self.data_grid)
@@ -72,39 +69,9 @@ class DataViewer(QDialog):
     self.data_grid.setRowCount(len(dataset.data))
     self.data_grid.setColumnCount(2)
     self.data_grid.setHorizontalHeaderLabels(['Water Year', 'Value'])
-    for r, (year, value) in enumerate(dataset.data.iteritems()):
+    for r, (year, value) in enumerate(dataset.data.items()):
       yearItem = QTableWidgetItem(f'{year}')
       valItem = QTableWidgetItem(f'{value:.2f}')
       self.data_grid.setItem(r, 0, yearItem)
       self.data_grid.setItem(r, 1, valItem)
 
-
-class DataPlot(pg.GraphicsLayoutWidget):
-
-  def __init__(self, configuration = None):
-
-    pg.GraphicsLayoutWidget.__init__(self)
-    self.configuration = configuration
-    self.timeseriesplot = TimeSeriesPlot(self, datetimeAxis=False)
-    self.addItem(self.timeseriesplot)
-    self.color_cycler = ColorCycler.ColorCycler()
-    
-
-  def plot(self, dataset):
-
-    dataframe = dataset.data
-    
-    # Plot the data
-    pg.PlotItem.plot(self.timeseriesplot, x=dataframe.index, y=dataframe.values, clear=True, symbol='o', name=dataset.dataset().name, pen=pg.mkPen(self.color_cycler.next()))
-    self.timeseriesplot.getAxis('bottom').setLabel('Year', **{'font-size':'14pt'})
-    self.timeseriesplot.getAxis('left').setLabel(dataset.dataset().parameter, units=dataset.unit.id, **{'font-size':'14pt'})
-
-    return
-    
-
-if __name__ == '__main__':
-  import sys
-  app = QApplication(sys.argv)
-  mw = DataViewer()
-  mw.exec()
-  sys.exit(app.exec())

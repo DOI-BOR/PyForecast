@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt, QStringListModel, QSortFilterProxyModel, QModelIndex
 from PyQt5.QtGui import QIcon
+from Utilities.ToolTipLabel import ToolTipLabel
 from copy import deepcopy
 from operator import attrgetter
 
@@ -73,34 +74,34 @@ class DatasetViewer(QDialog):
     line = QFrame()
     line.setFrameShape(QFrame.HLine)
     layout = QVBoxLayout()
-    label = QLabel('Dataset Description')
+    label = QLabel('<strong>Dataset Description</strong>')
     
     label.setAlignment(Qt.AlignCenter)
     layout.addWidget(label)
     layout.addWidget(line)
     layout2 = QFormLayout()
     layout2.setLabelAlignment(Qt.AlignRight)
-    layout2.addRow('GUID', self.guid_field_readonly)
-    layout2.addRow('ID', self.external_id_field)
+    layout2.addRow(ToolTipLabel('GUID', 'Internal identifier for this dataset'), self.guid_field_readonly)
+    layout2.addRow(ToolTipLabel('ID', "This dataset's <strong>ID</strong>. Dataloaders use this to find and download data"), self.external_id_field)
     layout2.addRow('Name', self.name_field)
     layout2.addRow('Agency', self.agency_field)
     layout2.addRow('Parameter', self.parameter_field)
-    layout2.addRow('Parameter Code', self.param_code_field)
-    layout2.addRow('Raw Units', self.unit_field)
-    layout2.addRow('Display Units', self.display_unit_field)
+    layout2.addRow(ToolTipLabel('Parameter Code', 'This code is used by dataloaders when downloading data'), self.param_code_field)
+    layout2.addRow(ToolTipLabel('Raw Units', 'Data is returned from the dataloader in this unit'), self.unit_field)
+    layout2.addRow(ToolTipLabel('Display Units', 'PyForecast converts the raw units to this unit for display and processing'), self.display_unit_field)
     layout2.addRow('Dataloader', self.dataloader_field)
-    line = QFrame()
-    line.setFrameShape(QFrame.HLine)
-    layout2.addWidget(line)
-    layout2.addRow('Flat-file source?', self.is_file_import)
+    line2 = QFrame()
+    line2.setFrameShape(QFrame.HLine)
+    layout2.addWidget(line2)
+    layout2.addRow(ToolTipLabel('Flat-file source?', "Check this box if you're importing data from a file"), self.is_file_import)
     layout3 = QHBoxLayout()
     layout3.addWidget(self.file_path)
     layout3.addWidget(self.file_select_button)
     layout2.addRow('File path',layout3)
     layout.addLayout(layout2)
-    line = QFrame()
-    line.setFrameShape(QFrame.HLine)
-    layout.addWidget(line)
+    line3 = QFrame()
+    line3.setFrameShape(QFrame.HLine)
+    layout.addWidget(line3)
     layout4 = QHBoxLayout()
     layout4.addWidget(self.save_button)
     layout4.addWidget(self.cancel_button)
@@ -174,7 +175,6 @@ class DatasetViewer(QDialog):
       return QMessageBox.No
 
   def closeEvent(self, event):
-
     if event.spontaneous():
       d = self.gather_dataset()
       ret = self.checkDataset(d)
@@ -183,14 +183,17 @@ class DatasetViewer(QDialog):
       else:
         if self.new:
           self.app.datasets.remove_dataset(guid = self.dataset.guid)
-        QWidget.closeEvent(self, event)
+        self.close()
+        #QWidget.closeEvent(self, event)
     else:
       if self.new:
         self.app.datasets.remove_dataset(guid = self.dataset.guid)
-      QWidget.closeEvent(self, event)
+      self.close()
+      #QWidget.closeEvent(self, event)
     
 
   def save_dataset(self):
+
     self.dataset = self.gather_dataset()
     
     self.old_dataset = self.dataset

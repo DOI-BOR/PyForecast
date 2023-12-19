@@ -9,7 +9,7 @@
 ; 
 
 #define MyAppName "PyForecast"
-#define MyAppVersion "5.0.9"
+#define MyAppVersion "5.0.11"
 #define MyAppPublisher "USBR"
 #define MyAppURL "https://github.com/usbr/PyForecast"
 #define MyAppExeName "PyForecast.exe"
@@ -18,7 +18,7 @@
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application.
 ; Do not use the same AppId value in installers for other applications.
-AppId={{03AAA034-F1FD-45B1-913D-9C27573728A9}
+AppId={03AAA034-F1FD-45B1-913D-9C27573728A9}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}

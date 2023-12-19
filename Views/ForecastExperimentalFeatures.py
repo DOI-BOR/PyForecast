@@ -1,4 +1,5 @@
 from PyQt5.QtWidgets import *
+from PyQt5.QtCore import QDate
 from Utilities import TimeSeriesPlot, ColorCycler
 import pyqtgraph as pg
 
@@ -23,10 +24,25 @@ class ExperimentalFeatures(QWidget):
     disaggTab = QWidget()
     self.tabWidget.addTab(disaggTab, 'Forecast Disaggregation')
 
+    self.sand_year_select = QSpinBox()
+    self.sand_load_button = QPushButton('Load')
+    h = QHBoxLayout()
+    d = QVBoxLayout()
+    self.sand_ta = QPlainTextEdit()
+    h.addWidget(QLabel("Select Forecast Year"))
+    h.addWidget(self.sand_year_select)
+    h.addWidget(self.sand_load_button)
+    h.addStretch(1)
+    d.addLayout(h)
+    d.addWidget(self.sand_ta)
+    forecastUpdateTab.setLayout(d)
+
     self.disagg_year_select = QSpinBox()
     self.disagg_start_edit = QDateEdit()
+    self.disagg_start_edit.setDate(QDate(2020,4,1))
     self.disagg_start_edit.setDisplayFormat('MMMM dd')
     self.disagg_end_edit = QDateEdit()
+    self.disagg_end_edit.setDate(QDate(2020,7,31))
     self.disagg_end_edit.setDisplayFormat('MMMM dd')
     self.disagg_start_btn = QPushButton('Disaggregate')
     self.disagg_table_view_btn = QPushButton('Export to Excel')

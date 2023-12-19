@@ -2,6 +2,9 @@ from PyQt5.QtWidgets import QApplication
 import numpy as np
 from sys import float_info
 from collections import OrderedDict
+from numba import jit
+
+finfo = float_info.epsilon
 
 app = QApplication.instance()
 
@@ -17,7 +20,7 @@ class Regressor:
     )
     
     self.cross_validation = app.cross_validation[cross_validation]
-    self.coef_ = np.full((500,), np.nan)
+    self.coef_ = np.full((500,), np.nan, dtype=np.float64)
 
   def is_positive_corr(self):
 
@@ -43,13 +46,16 @@ class Regressor:
     y_p = np.array([])
     y_a = np.array([])
 
+    if len(y) < 2:
+      return np.full(y.shape, np.nan), y
+
 
     for indices in self.cross_validation.yield_samples(len(y)):
 
       x_train = x[indices]
       y_train = y[indices]
 
-      self.train_model(x_train, y_train)
+      self.coef_ = self.train_model(x_train, y_train)
       
       idx = [not elem for elem in indices]
       x_test = x[idx]
@@ -60,31 +66,33 @@ class Regressor:
       y_a = np.append(y_a, y_test)
     
     # Fit the model as normal
-    self.train_model(x, y)
+    self.coef_ = self.train_model(x, y)
     
     return y_p, y_a
   
-  def train_model(self, x, y):
+  @staticmethod
+  @jit(nopython=True)
+  def train_model(x, y):
     
     n_row = len(y)
     
-    mX = np.column_stack([np.ones(n_row), x])
+    mX = np.column_stack((np.ones(n_row, dtype=np.float64), x))
     
-    if np.linalg.cond(mX) < 1/float_info.epsilon:
+    if np.linalg.cond(mX) < 1/finfo:
       a = mX.T.dot(mX)
       beta  = np.linalg.pinv(a).dot(mX.T).dot(y)
     else:
-      beta = np.full(mX.shape[1], np.nan)
-    self.coef_ = beta
+      beta = np.full(mX.shape[1], np.nan, dtype=np.float64)
+    coef_ = beta
 
-    return
+    return coef_
 
   def predict(self, x):
 
     if x.ndim == 1:
       mX = np.append([1], x)
     else:
-      mX = np.column_stack([np.ones(len(x)), x])
+      mX = np.column_stack((np.ones(len(x)), x))
 
     return mX.dot(self.coef_)
 

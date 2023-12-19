@@ -294,7 +294,7 @@ class ModelConfigurationModelView:
     
     configuration_idx = self.mt.config_list.selectionModel().selectedRows()[0].row()
     config = app.model_configurations[configuration_idx]
-    mv = GenModelDialog.GenModelDialog(config)
+    mv = GenModelDialog.GenModelDialog(config, self.mt)
     
 
   def open_view_data(self, dataset_idx=None):

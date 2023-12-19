@@ -7,7 +7,15 @@
 
 /* Provides a black border around list items in listviews */
 QListView::item{
-  border: 1px solid black
+  border: 2px solid black;
+  border-radius: 4px;
+  background: #ffffff;
+  margin: 4px;
+
+}
+
+QListView {
+  background: #efefef;
 }
 
 /* Changes the color of hovered-over list items */

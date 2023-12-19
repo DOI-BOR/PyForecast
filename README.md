@@ -5,6 +5,7 @@ Version 5 Released January 2023
 Develop and analyze high-performing seasonal streamflow forecasts using PyForecast, developed by Reclamation's MB-ART and CPN Regions. PyForecast takes advantage of multi-threading and multiple processor cores to analyze thousands of forecasts in minutes using cutting-edge statistical techniques.
 
 ## Table of Contents
+  - [Quick Start](#quick-start)
   - [User Manual](#user-manual)
     - [Installation and Updates]()
     - [Software Overview](#software-overview)
@@ -21,6 +22,9 @@ Develop and analyze high-performing seasonal streamflow forecasts using PyForeca
     - [Uncertainty](#uncertainty)
     - [Experimental Features](#experimental-features)
   - [Programming Guide](#programming-guide)
+
+## Quick Start
+
 
 ## User Manual
 
@@ -57,6 +61,9 @@ Double clicking or right clicking and choosing `Open Dataset` on a selected data
 
 Dataset options can be adjusted to retrieve alternative datasets from dataloaders (for example, a user could change the HydroMet parameter in a USBR dataset to retrieve reservoir forebay elevation instead of inflow). Users can also specify the units in which they want to display data. Users can also specify a file where data should be loaded from. 
 
+##### Adding a CSV / Flat File dataset
+To add a dataset from a flat file, right click in the dataset list and choose `Add new dataset`. Fill out the dataset description, and check the box labeled `Flat-file source?`. The `File Path` field is now enabled and you can choose the flat file contianing your data. Note that the only supported file format is a CSV file with 2 columns: The first column contains dates, and the second column contains data. There should be colum headers. 
+
 
 #### Data Tab
 ![Data Tab Picture][DATA_PIC_1]
@@ -68,6 +75,7 @@ Data for selected datasets can be edited by pressing the `Edit Data in Excel` bu
 
 #### Model Configurations Tab
 ![Model Configuration Tab Picture][MODELCONF_PIC_1]
+The Model Configuration Tab allows you to set up 
 #### Saved Models Tab
 ![Datasets Tab Picture][SAVEDMODEL_PIC_1]
 #### File Menu

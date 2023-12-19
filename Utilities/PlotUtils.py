@@ -3,6 +3,7 @@ import pyqtgraph as pg
 from PyQt5.QtCore import *
 from PyQt5.QtGui import QFont
 import numpy as np
+from numba import jit
 
 EQUIVALENCY_LISTS = [
     ["INCHES", "INCH", "IN", "IN.", '"'],
@@ -18,6 +19,7 @@ EQUIVALENCY_LISTS = [
     ['PERCENT', '%', 'PCT', 'PCT.'],
     ['UNITLESS', "-"],
 ]
+
 
 def sameUnits(unit1, unit2):
     """
@@ -62,6 +64,7 @@ def condenseUnits(unitList):
     condensedList = [condensedList[maxCountIdx]] + condensedList[:maxCountIdx] + condensedList[maxCountIdx+1:]
     return condensedList
 
+@jit(nopython=True)
 def takeClosest(myList, myNumber):
     """
     Assumes myList is sorted. Returns closest value to myNumber.

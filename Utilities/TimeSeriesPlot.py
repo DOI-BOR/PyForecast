@@ -137,9 +137,9 @@ class TimeSeriesPlot(pg.PlotItem):
 
       if PlotUtils.sameUnits(self.unit_list[i], condensed[0])[0]:
         if self.no_legend:
-          curve = pg.PlotDataItem(x=x, y=y.values, symbol=marker, symbolBrush=markerBrush, symbolPen = markerPen, pen=pg.mkPen(colors[i], width=1.5 if not self.trace_width else 0.5), connect='finite', stepMode='left')
+          curve = pg.PlotDataItem(x=x, y=y.values, symbol=marker, symbolBrush=markerBrush, symbolPen = markerPen, pen=pg.mkPen(colors[i], width=2 if not self.trace_width else 1), connect='finite', stepMode='left')
         else:
-          curve = pg.PlotDataItem(x=x, y=y.values, symbol=marker, symbolBrush=markerBrush, symbolPen = markerPen, name=col, pen=pg.mkPen(colors[i], width=1.5 if not self.trace_width else 0.5), connect='finite', stepMode='left')
+          curve = pg.PlotDataItem(x=x, y=y.values, symbol=marker, symbolBrush=markerBrush, symbolPen = markerPen, name=col, pen=pg.mkPen(colors[i], width=2 if not self.trace_width else 1), connect='finite', stepMode='left')
         curve.setZValue(10)
         self.plot_assignments.append((curve, 0))
         self.addItem(curve)
@@ -148,9 +148,9 @@ class TimeSeriesPlot(pg.PlotItem):
         #pg.PlotItem.plot(self, x=x, y=dataframe[col].values, name=col, clear=True if i==0 else False, pen=pg.mkPen(colors[i]), connect='finite')
       else:
         if self.no_legend:
-          curve = pg.PlotDataItem(x=x, y=y.values, symbol=marker, symbolBrush=markerBrush, symbolPen = markerPen, pen=pg.mkPen(colors[i], width=1.5 if not self.trace_width else 0.5), connect='finite', stepMode='left')
+          curve = pg.PlotDataItem(x=x, y=y.values, symbol=marker, symbolBrush=markerBrush, symbolPen = markerPen, pen=pg.mkPen(colors[i], width=2 if not self.trace_width else 1), connect='finite', stepMode='left')
         else:
-          curve = pg.PlotDataItem(x=x, y=y.values, symbol=marker, symbolBrush=markerBrush, symbolPen = markerPen, name=col, pen=pg.mkPen(colors[i], width=1.5 if not self.trace_width else 0.5), connect='finite', stepMode='left')
+          curve = pg.PlotDataItem(x=x, y=y.values, symbol=marker, symbolBrush=markerBrush, symbolPen = markerPen, name=col, pen=pg.mkPen(colors[i], width=2 if not self.trace_width else 1), connect='finite', stepMode='left')
         curve.setZValue(10)
         self.viewbox_axis_2.addItem(curve)
         self.plot_assignments.append((curve, 1))

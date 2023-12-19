@@ -8,7 +8,6 @@ from PyQt5.QtWidgets import QApplication
 # Get the global application
 app = QApplication.instance()
 
-
 class Unit:
   """ The Unit class contains a description of a single unit, including its 
   id, name, and its association with the SI base unit. 
