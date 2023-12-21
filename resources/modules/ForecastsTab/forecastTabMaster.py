@@ -102,11 +102,11 @@ class forecastsTab(object):
 
         # Update model run year and table
         ## restrict runnable years to used ones for the model
-        self.forecastsTab.modelYearSpin.setRange(self.forecastsTab.selectedModel.years[0], self.forecastsTab.selectedModel.years[-1])
-        self.forecastsTab.modelYearSpin.setValue(self.forecastsTab.selectedModel.years[-1])
+        #self.forecastsTab.modelYearSpin.setRange(self.forecastsTab.selectedModel.years[0], self.forecastsTab.selectedModel.years[-1])
+        #self.forecastsTab.modelYearSpin.setValue(self.forecastsTab.selectedModel.years[-1])
         ## use years defined as part of the training period
-        self.forecastsTab.modelYearSpin.setRange(self.forecastsTab.selectedModel.trainingDates[0], self.forecastsTab.selectedModel.trainingDates[-1])
-        self.forecastsTab.modelYearSpin.setValue(self.forecastsTab.selectedModel.trainingDates[-1])
+        #self.forecastsTab.modelYearSpin.setRange(self.forecastsTab.selectedModel.trainingDates[0], self.forecastsTab.selectedModel.trainingDates[-1])
+        #self.forecastsTab.modelYearSpin.setValue(self.forecastsTab.selectedModel.trainingDates[-1])
         ## use years with available data
         self.forecastsTab.modelYearSpin.setRange(self.forecastsTab.selectedModel.dataDates[0], self.forecastsTab.selectedModel.dataDates[-1])
         self.forecastsTab.modelYearSpin.setValue(self.forecastsTab.selectedModel.dataDates[-1])

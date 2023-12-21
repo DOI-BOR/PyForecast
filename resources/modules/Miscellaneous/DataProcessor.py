@@ -5,7 +5,7 @@ Description:    The DataProcessor.py script processes daily data into new datase
 """
 
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from dateutil import relativedelta
 import isodate
 import numpy as np
@@ -130,6 +130,11 @@ def resampleDataSet(dailyData, resampleString, resampleMethod, customFunction = 
 
     # Get today's date
     today = datetime.now()
+    if (datetime.now().month >= 10):
+        wyEND = date(datetime.now().year + 1, 9, 30)
+    else:
+        wyEND = date(datetime.now().year, 9, 30)
+    today = datetime.combine(wyEND, datetime.min.time())
 
     # Create a new empty series
     resampleData = pd.Series([], index = pd.DatetimeIndex([]))
@@ -183,7 +188,8 @@ def resampleDataSet(dailyData, resampleString, resampleMethod, customFunction = 
             data.isMostlyThere = len(data) > int(0.95*(idx.right-idx.left).days) # Check to make sure 95% of data is there!
         else:
             data.isMostlyThere = True
-        resampleData.loc[idx.left] = ( func(data) if (idx.right >= firstDate and today >= idx.right and (data.isMostlyThere)) else np.nan )
+        #resampleData.loc[idx.left] = ( func(data) if (idx.right >= firstDate and today >= idx.right and (data.isMostlyThere)) else np.nan )
+        resampleData.loc[idx.left] = (func(data) if (idx.right >= firstDate and (data.isMostlyThere)) else np.nan)
 
     if len(resampleList) == 5:
         shiftStrings = list(resampleList[4])
