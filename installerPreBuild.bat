@@ -9,7 +9,10 @@ echo.
 echo ------------------------------------------------
 
 :: Delete the old directory containing the last build
-echo Deleting old build directory...
+echo Deleting old build directories...
+cd build
+rmdir /s /q "main"
+cd..
 cd dist
 rmdir /s /q "main"
 cd..
@@ -17,12 +20,14 @@ echo.
 
 :: Run pyinstaller to create a new build
 echo Running PyInstaller...
-pyinstaller main.py
+::L03Py38Env\Scripts\activate
+::pyinstaller --paths=L03Py38Env\Lib\site-packages main.py
+pyinstaller main.spec
 echo.
 
 :: Copy required files 
 echo Copying Python modules...
-robocopy venv\Lib\site-packages dist\main /E /XC /XN /XO /NFL /XD __pycache__ *-info tests
+::robocopy L03Py38Env\Lib\site-packages dist\main /E /XC /XN /XO /NFL /XD __pycache__ *-info tests
 echo Copying PyForecast resources...
 robocopy resources dist\main\resources\ /E /XC /XN /XO /NFL /XD __pycache__
 echo.

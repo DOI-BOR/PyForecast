@@ -108,6 +108,12 @@ class MenuBar(QtWidgets.QMenuBar):
         exportMenu.addAction(self.pdfAction)
         exportMenu.addAction(self.databaseAction)
         self.fileMenu.addSeparator()
+        wrapperFuncsMenu = self.fileMenu.addMenu("Wrapper Functions")
+        self.wrapRetrainAction = QtWidgets.QAction("Retrain Forecast Files")
+        wrapperFuncsMenu.addAction(self.wrapRetrainAction)
+        self.wrapForecastAction = QtWidgets.QAction("Run Forecast Files")
+        wrapperFuncsMenu.addAction(self.wrapForecastAction)
+        self.fileMenu.addSeparator()
         self.fileMenu.addAction(self.exitAction)
 
         # Edit Menu

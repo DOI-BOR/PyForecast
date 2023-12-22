@@ -3,28 +3,41 @@
 import resources.application as app
 import os, pickle, datetime, time, warnings, sys, pandas
 warnings.filterwarnings("ignore")
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtCore
 from resources.modules.Miscellaneous.generateModel import Model
 
-if __name__ == '__main__':
+
+def forceUpdate(pyCast, fName, statusMessage):
+    pyCast.setWindowTitle("PyForecast V" + pyCast.softwareVersion + " - " + str(fName))
+    pyCast.resetDatasetTab()
+    pyCast.resetDataTab()
+    pyCast.resetModelCreationTab()
+    pyCast.resetForecastsTab()
+    pyCast.updateStatusMessage(statusMessage)
+
+    qm = QtWidgets.QMessageBox()
+    qm.setText(statusMessage)
+    qm.setStandardButtons(QtWidgets.QMessageBox.Yes)
+    qm.setDefaultButton(QtWidgets.QMessageBox.Yes)
+    QtCore.QTimer.singleShot(2000, lambda: qm.done(0))
+    qm.exec_()
+
+
+def startForecast(pyCast, forecastDIR, forecastWY):
     ######################################################
     # Wrapper script inputs and outputs
-    pathString = r"C:\Users\jrocha\Desktop\_TLWRK_STUFF\Forecasting\06JUN2023"
-    wyInput = 2023
+    pathString = forecastDIR #r"C:\Users\jrocha\Desktop\_TLWRK_STUFF\Forecasting\06JUN2023"
+    wyInput = forecastWY #2023
     outList = []
     outList.append('FILENAME,RUNMESSAGE,PREDICTION,PREDICTIONRANGE[P10],PREDICTIONRANGE[P25],PREDICTIONRANGE[P50],PREDICTIONRANGE[P75],PREDICTIONRANGE[P90],MODELEQUATION,MODELVARIABLES[n-Predictors],XVALUES[n-Predictors]')
 
     ######################################################
     # Start PyForecast in the background
     print('#########################################')
-    print('Starting dummy PyForecast instance in the background...')
     # Begin loading the application
-    dummyApp = QtWidgets.QApplication(sys.argv)
-    pyCast = app.mainWindow()
-    pyCast.hide()
     print('----- OK!')
     print(' ')
-    time.sleep(5)
+    time.sleep(2)
 
     ######################################################
     # Loop through all the forecast files in the input directory
@@ -33,6 +46,7 @@ if __name__ == '__main__':
     forecastFiles = [fn for fn in os.listdir(forecastDirectory) if any(fn.endswith(ext) for ext in forecastExtension)]
     for file in forecastFiles:
         fname = file
+        pyCast.updateStatusMessage('Loading forecast file ' + fname)
         fname = forecastDirectory + "\\" + fname
         outListEntry = file + ","
 
@@ -71,6 +85,8 @@ if __name__ == '__main__':
                 print('WARNING: No forecastsTable in saved forecast file...')
             # with open('resources/temp/user_options.txt', 'w') as writefile:
             #    writefile.write(pickle.load(readfile))
+
+        forceUpdate(pyCast, fname, 'Forecast file loaded!')
         print('----- OK!')
         print(' ')
 
@@ -95,9 +111,9 @@ if __name__ == '__main__':
 
         while pyCast.threadPool.activeThreadCount() > 0:
             print('  still downloading data - active threads=' + str(pyCast.threadPool.activeThreadCount()))
-            time.sleep(5)
+            time.sleep(2)
 
-        time.sleep(5)
+        forceUpdate(pyCast, fname, 'Updated data downloaded!')
         print('----- OK!')
         print(' ')
 
@@ -112,6 +128,7 @@ if __name__ == '__main__':
             ithModel = Model(parent=pyCast,forecastEquationTableEntry=ithModelEntry)
             try:
                 # JR - BREAKPOINT GOES ON THE NEXT LINE
+                forceUpdate(pyCast, fname, 'Generating model...')
                 ithModel.generate() #Regenerate Model
                 if endYear not in ithModel.x.index:
                     print('Forecast cannot be issued -- missing data...')
@@ -120,6 +137,7 @@ if __name__ == '__main__':
                 else:
                     try:
                         # JR - BREAKPOINT GOES ON THE NEXT LINE
+                        forceUpdate(pyCast, fname, 'Generating forecast...')
                         ithModel.predict(ithModel.x.loc[endYear]) #Make a prediction
                         # Build model output strings
                         equationString = ithModel.modelReport[ithModel.modelReport.index("----- MODEL EQUATION -----") + 1]
