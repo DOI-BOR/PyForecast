@@ -293,7 +293,7 @@ class genModelDialog(QDialog):
           retv= msg.exec()
           self.labels[i].setMessage(f'Could not forecast for year: {fcst_year} - Missing data')
           continue
-        x_fcst_year = df.loc[[fcst_year]]
+        x_fcst_year = df.loc[[fcst_year]].iloc[0].iloc[:-1]
         if x_fcst_year.dropna().empty:
           msg = QMessageBox(self)
           msg.setIcon(QMessageBox.Warning)
@@ -304,7 +304,7 @@ class genModelDialog(QDialog):
           retv= msg.exec()
           self.labels[i].setMessage(f'Could not forecast for year: {fcst_year} - Missing data')
           continue
-        x_fcst_year = x_fcst_year.iloc[0].iloc[:-1].values
+        x_fcst_year = x_fcst_year.values
         df = df.loc[convert_to_water_year(model.training_period_start):convert_to_water_year(model.training_period_end)].dropna()
         df = df.drop(model.training_exclude_dates, errors='ignore')
 
