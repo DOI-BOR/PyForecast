@@ -11,7 +11,7 @@ import sys
 import json
 import ctypes
 from platform import platform
-
+import argparse
 
 class Logger(QObject):
   """This is a simple logger class that redirects print statements and 
@@ -124,6 +124,7 @@ class PyForecast(QApplication):
     self.log_message = ''
     self.current_user = os.getlogin()
     self.pid = os.getpid()
+    args = ([args[0][0], '--single-process'],)
     QApplication.__init__(self, *args)
     self.installEventFilter(self)
     sys.stdout.new_log_message.connect(self.append_log_message)
@@ -201,7 +202,7 @@ class PyForecast(QApplication):
     self.SMMV = SavedModelsMV.SavedModelsModelView()
 
     # Open the file if there is one
-    if "file" in kwargs:
+    if kwargs['file'] is not None:
       self.MWMV.OpenFile(None, filename=kwargs['file'])
 
   def write_config(self):
@@ -239,11 +240,16 @@ class PyForecast(QApplication):
 
 if __name__ == '__main__':
 
+  parser = argparse.ArgumentParser(
+    'PyForecast-Version-5', 
+    description="PyForecast is a statistical modeling tool useful in predicting monthly and seasonal inflows and streamflows."
+  )
+  parser.add_argument('-f','--file', help='Provide a file to immediately be opened by PyForecast')
+  args=parser.parse_args()
 
   # Create the application
-  app = PyForecast(sys.argv)
+  app = PyForecast(sys.argv, file=args.file)
 
-  # TODO: Argparser for runtime options, such as file
 
   # Run the application
   sys.exit(app.exec_())
