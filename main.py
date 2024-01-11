@@ -10,7 +10,7 @@ import atexit
 import sys
 import json
 import ctypes
-
+from platform import platform
 
 
 class Logger(QObject):
@@ -20,7 +20,7 @@ class Logger(QObject):
   """
 
   new_log_message = pyqtSignal(str)
-  base_dir = os.path.dirname(__file__)
+  base_dir = os.path.abspath(os.path.dirname(__file__))
 
   def __init__(self):
     """Constructor method
@@ -93,7 +93,7 @@ class PyForecast(QApplication):
   as well as all the models, and regression methods."""
 
   new_log_message = pyqtSignal() # Void signal emitted when a new message is added to the log
-  base_dir = os.path.dirname(__file__) # path to folder where the PyForecast.EXE file lives
+  base_dir = os.path.abspath(os.path.dirname(__file__)) # path to folder where the PyForecast.EXE file lives
 
   def __init__(self, *args, **kwargs):
     """Constructor
@@ -139,7 +139,8 @@ class PyForecast(QApplication):
     
     # Windows specific commands to properly identify PyCast and show it's icon in the taskbar
     myappid = f'USBR.PyForecast.{self.PYCAST_VERSION}'
-    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+    if 'windows' in platform().lower():
+      ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     self.setWindowIcon(QIcon(self.base_dir + '/Resources/Icons/AppIcon.ico'))
 
     # Read the application configuration and load into the application

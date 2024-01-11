@@ -68,12 +68,12 @@ class SMFS:
       self.current_combo_1 = self.current_combo_1 | self.forcings
   
   @staticmethod
-  @jit(nopython=True) 
+  @jit(nopython=True, cache=True)
   def toggle_bit(num, bit_idx):
     return (num ^ (1<<bit_idx))
 
   @staticmethod
-  @jit(nopython=True) 
+  @jit(nopython=True, cache=True)
   def convert_int_to_array(num, num_p):
     return list([bool(num & (1<<n)) for n in range(num_p)])[::-1]
 

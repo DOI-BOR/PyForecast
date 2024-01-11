@@ -49,7 +49,7 @@ class Regressor:
         continue
   
   @staticmethod
-  @jit(nopython=True)
+  @jit(nopython=True, cache=True)
   def to_princ_comps(data):
 
     # Compute the covariance matrix
@@ -109,12 +109,12 @@ class Regressor:
       y_a = np.append(y_a, y_test)
     
     # Fit the model as normal
-    self.coef = self.train_model(PC, y, self.evecs, self.n_pcs, self.std, self.mean)
+    self.coef_ = self.train_model(PC, y, self.evecs, self.n_pcs, self.std, self.mean)
     
     return y_p, y_a
   
   @staticmethod
-  @jit(nopython=True)
+  @jit(nopython=True, cache=True)
   def train_model(x, y, evecs, n_pcs, std, mean):
     
     n_row = len(y)

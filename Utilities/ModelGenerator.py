@@ -5,7 +5,7 @@ from Models.SavedModels import Model
 from itertools import compress
 import pandas as pd
 import numpy as np
-import sys
+#import debugpy
 from time import sleep
 from inspect import signature
 
@@ -39,6 +39,7 @@ class ModelGenerator(QObject):
 
     thread_name = QThread.currentThread().objectName()
     thread_id = int(QThread.currentThreadId())
+    #debugpy.debug_this_thread()
 
     # Check for any predictors that must be postively correlated
     positive_corr = np.array([p.mustBePositive for p in self.config.predictor_pool.predictors])
@@ -102,16 +103,17 @@ class ModelGenerator(QObject):
           #if count%10 == 0:
           past_prog = rr*(100/len(self.config.regressors))
           self.updateProgSignal.emit(int((past_prog+feature_selector.progress)/len(self.config.regressors)))
-          if predictors == -1:
-            
+          if predictors <= 0:
             continue
           bool_index = feature_selector.convert_int_to_array(predictors, feature_selector.num_predictors)
           
-          genome = ''.join([u'\u25cf' if b else u'\u00B7' for b in bool_index])
+          genome = ''.join([u'\u25cf' if b else u'\u00B7' for b in bool_index])          
           genome = f'{genome:40.40}' if len(genome) < 40 else f'{genome:37.37}...'
           #if count%10 == 0:
           #self.updateTextSignal.emit(f'{genome}: Scorer ({regressor.scoring_metric}):             ')
           run_data = df.iloc[:, bool_index + [True]].dropna()
+          if count%10 == 0:
+            app.processEvents()
           if  df.iloc[:, bool_index+[False]].dropna().empty:
             
             continue
@@ -120,6 +122,7 @@ class ModelGenerator(QObject):
           predictand_data = run_data.values[:, -1]
           pos = positive_corr[bool_index]
           y_p, y_a = regression_algorithm.cross_val_predict(x_data, predictand_data)
+          
           if all(np.isnan(y_p)):
             
             continue
@@ -162,7 +165,7 @@ class ModelGenerator(QObject):
             regressor = regressor,
             scorer = regressor.scoring_metric
           )
-          
+
           #if count%10 == 0:
           self.updateTextSignal.emit(f'<b>{regressor.regression_model}</b><br>{genome} Scorer ({regressor.scoring_metric}): {score:+12.5f} ({len(feature_selector.completed):>12}/{feature_selector.num_possible})')
           #self.updateProgSignal.emit(feature_selector.progress/len(self.config.regressors))
@@ -173,7 +176,8 @@ class ModelGenerator(QObject):
             self.newModelSignal.emit(model)
           count += 1
 
-          #sleep(0.003)
+          #if bruteforce:
+          #  sleep(0.01)
         
     self.stop()
 
@@ -183,6 +187,7 @@ class ModelGenerator(QObject):
   def stop(self):
     self.updateTextSignal.emit("Finished")
     self.sig_done.emit(True)
+    self.quit()
 
 
 
