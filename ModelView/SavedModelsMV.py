@@ -8,7 +8,7 @@ from Utilities.ColorCycler import ColorCycler
 from Views import ForecastViewer, ExceedanceViewer
 from scipy.interpolate import InterpolatedUnivariateSpline
 from inspect import signature
-from pathos.multiprocessing import ThreadingPool as Pool
+#from pathos.multiprocessing import ThreadingPool as Pool
 from math import factorial
 
 app = QApplication.instance()
