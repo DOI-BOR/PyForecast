@@ -136,6 +136,11 @@ class PredictorView(QDialog):
 
     # Iterate over the datasets in the file
     for dataset in app.datasets.datasets:
+      print(f'on dataset: {dataset.name}')
+      day_minus_one = self.configuration.issue_date - DateOffset(days=1)
+      # Correct leap day bug
+      if (day_minus_one.month == 2) and (day_minus_one.day == 29):
+        day_minus_one = day_minus_one - DateOffset(days=1)
       if dataset.raw_unit.type.lower() == 'flow':
         predictor = ResampledDataset(
           dataset_guid = dataset.guid,
@@ -143,7 +148,7 @@ class PredictorView(QDialog):
           mustBePositive = False,
           agg_method = 'AVERAGE',
           period_start = boundByWaterYear(self.configuration.issue_date - DateOffset(months=3)),
-          period_end = self.configuration.issue_date - DateOffset(days=1),
+          period_end = day_minus_one,
           preprocessing = 'NONE'
         )
         self.configuration.predictor_pool.add_predictor(predictor)
@@ -155,7 +160,7 @@ class PredictorView(QDialog):
           mustBePositive = False,
           agg_method = 'AVERAGE',
           period_start = boundByWaterYear(self.configuration.issue_date - DateOffset(months=3)),
-          period_end = self.configuration.issue_date - DateOffset(days=1),
+          period_end = day_minus_one,
           preprocessing = 'NONE'
         )
         self.configuration.predictor_pool.add_predictor(predictor)
@@ -167,7 +172,7 @@ class PredictorView(QDialog):
           mustBePositive = False,
           agg_method = 'AVERAGE',
           period_start = boundByWaterYear(self.configuration.issue_date - DateOffset(months=3)),
-          period_end = self.configuration.issue_date - DateOffset(days=1),
+          period_end = day_minus_one,
           preprocessing = 'NONE'
         )
         self.configuration.predictor_pool.add_predictor(predictor)
@@ -179,7 +184,7 @@ class PredictorView(QDialog):
           mustBePositive = False,
           agg_method = 'ACCUMULATION',
           period_start = wys,
-          period_end = self.configuration.issue_date - DateOffset(days=1),
+          period_end = day_minus_one,
           preprocessing = 'NONE'
         )
         self.configuration.predictor_pool.add_predictor(predictor)
@@ -189,7 +194,7 @@ class PredictorView(QDialog):
           mustBePositive = False,
           agg_method = 'ACCUMULATION',
           period_start = boundByWaterYear(self.configuration.issue_date - DateOffset(months=1)),
-          period_end = self.configuration.issue_date - DateOffset(days=1),
+          period_end = day_minus_one,
           preprocessing = 'NONE'
         )
         self.configuration.predictor_pool.add_predictor(predictor)
@@ -201,7 +206,7 @@ class PredictorView(QDialog):
           mustBePositive = False,
           agg_method = 'AVERAGE',
           period_start = boundByWaterYear(self.configuration.issue_date - DateOffset(months=3)),
-          period_end = self.configuration.issue_date - DateOffset(days=1),
+          period_end = day_minus_one,
           preprocessing = 'NONE'
         )
         self.configuration.predictor_pool.add_predictor(predictor)
@@ -213,7 +218,7 @@ class PredictorView(QDialog):
           mustBePositive = True,
           agg_method = 'LAST',
           period_start = boundByWaterYear(self.configuration.issue_date - DateOffset(days=15)),
-          period_end = self.configuration.issue_date - DateOffset(days=0),
+          period_end = day_minus_one,
           preprocessing = 'NONE'
         )
         self.configuration.predictor_pool.add_predictor(predictor)
