@@ -65,6 +65,8 @@ class Model(object):
             idx = list(filter(lambda date: date not in self.excludeYears, data.index))
             if (i == 0 or len(idx) < len(self.dataDates)):
                 self.dataDates = idx
+            else:
+                idx = self.dataDates
             self.x.append(list(data.loc[idx]))  # X-Data
             data = data.loc[self.trainingDates[0]: self.trainingDates[1]]
             idx = list(filter(lambda date: date not in self.excludeYears, data.index))

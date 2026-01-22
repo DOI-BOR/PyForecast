@@ -5,7 +5,7 @@ Description:    The DataProcessor.py script processes daily data into new datase
 """
 
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from dateutil import relativedelta
 import isodate
 import numpy as np
@@ -130,6 +130,11 @@ def resampleDataSet(dailyData, resampleString, resampleMethod, customFunction = 
 
     # Get today's date
     today = datetime.now()
+    if (datetime.now().month >= 10):
+        wyEND = date(datetime.now().year + 1, 9, 30)
+    else:
+        wyEND = date(datetime.now().year, 9, 30)
+    today = datetime.combine(wyEND, datetime.min.time())
 
     # Create a new empty series
     resampleData = pd.Series([], index = pd.DatetimeIndex([]))
@@ -157,10 +162,13 @@ def resampleDataSet(dailyData, resampleString, resampleMethod, customFunction = 
     frequency = isodate.parse_duration(resampleList[3].replace('F', 'P')) # >>> isodate.duration.Duration(0, 0, 0, years=1, months=1)
 
     # Create all the periods
+    periodOffset = isodate.duration.Duration(days=0)
+    if period.days == 0:
+        periodOffset = isodate.duration.Duration(days=-1)
     periods = []
     tracker = startDate
     while tracker <= today: # >>> periods = [(datetime.datetime(1978-10-01), datetime.datetime(1978-11-01))]
-        periods.append((tracker, tracker+period))
+        periods.append((tracker, tracker + period + periodOffset))
         tracker += frequency
 
     # Parse the function
@@ -180,7 +188,8 @@ def resampleDataSet(dailyData, resampleString, resampleMethod, customFunction = 
             data.isMostlyThere = len(data) > int(0.95*(idx.right-idx.left).days) # Check to make sure 95% of data is there!
         else:
             data.isMostlyThere = True
-        resampleData.loc[idx.left] = ( func(data) if (idx.right >= firstDate and today >= idx.right and (data.isMostlyThere)) else np.nan )
+        #resampleData.loc[idx.left] = ( func(data) if (idx.right >= firstDate and today >= idx.right and (data.isMostlyThere)) else np.nan )
+        resampleData.loc[idx.left] = (func(data) if (idx.right >= firstDate and (data.isMostlyThere)) else np.nan)
 
     if len(resampleList) == 5:
         shiftStrings = list(resampleList[4])

@@ -1,0 +1,321 @@
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// PYFORECAST V4 INSTALLER BUILD PROCESS
+///////////////////////////////////////////////////////////////////////////////////////////////////
+1) Install the required packages on the environment that you're using for PyForecast
+	1.1) A list of the interpreter and packages are shown below this is the last setup that I had on my L03 machine.
+
+2) Ensure that you can run the code from source code and that everything is working. The entry point to the code is the main.py file on the top-level directory.
+
+3) Once you are ready to build a new installer, do the following:
+	3.1) Open a command-line window and navigate to the directory where you have the PyForecast source code
+	3.2) Activate the python environment that you are using for PyForecast
+	3.2) Run the installerPreBuild.bat file - sample output is shown below for a succesful run
+	
+4) Confirm that the compiled files are working
+	4.1) On the same command-line window navigate to the /dist/main directory where you have the PyForecast source code and run the main.exe file - this should bring up another command-line window and the PyForecast GUI
+	
+5) Using InnoSetup, run and build the NextFlow.iss file to generate an executable installer in the /Output directory where you have the PyForecast source code.
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// INTERPRETER AND PACKAGES FROM LAST GOOD BUILD
+///////////////////////////////////////////////////////////////////////////////////////////////////
+Interpreter: 				Python 3.8
+
+Packages & versions:
+DateTime 					5.2
+Pillow 						10.1.0
+PyQt5 						5.13
+PyQt5-sip 					4.19.19
+PyQtChart					5.13
+PyQtWebEngine				5.13.0
+altgraph					0.17.4
+attrs						23.1.0
+bitarray					2.8.2
+certifi						2023.11.17
+charset-normalizer			3.3.2
+configparser				5.3.0
+cycler						0.12.1
+et-xmlfile					1.1.0
+fonttools					4.46.0
+fuzzywuzzy					0.18.0
+geojson						3.1.0
+idna						3.6
+importlib-metadata			7.0.0
+isodate						0.6.1
+joblib						1.3.2
+kiwisolver					1.4.5
+lxml						4.9.3
+matplotlib					3.5.3
+numpy						1.21.6
+openpyxl					3.1.2
+packaging					23.2
+pandas						1.1.2
+patsy						0.5.4
+pefile						2023.2.7
+pip							23.3.1
+platformdirs				4.1.0
+pyinstaller					6.2.0
+pyinstaller-hooks-contrib	2023.10
+pyparsing					3.1.1
+pyqtgraph					0.11.1
+python-dateutil				2.8.2
+pytz						2023.3.post1
+pywin32-ctypes				0.2.2
+qtgui						0.0.1
+requests					2.31.0
+requests-file				1.5.1
+requests-toolbelt			1.0.0
+scikit-learn				1.0.2
+scipy						1.7.3
+setuptools					68.2.0
+six							1.16.0
+statsmodels					0.13.5
+staty						1.2.4
+threadpoolctl				3.2.0
+tqdm						4.49.0
+urllib3						2.1.0
+wheel						0.41.2
+xlrd						1.2.0
+zeep						4.2.1
+zipp						3.17.0
+zope.interface				6.1	
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// SAMPLE INSTALLERPREBUILD.BAT OUTPUT
+///////////////////////////////////////////////////////////////////////////////////////////////////
+(L03Py38Env) C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow>installerPreBuild.bat
+------------------------------------------------
+This script contains the required processes that
+need to be completed before the installer can be
+built by InnoSetup.
+
+POC: jrocha@usbr.gov
+
+------------------------------------------------
+Deleting old build directories...
+
+Running PyInstaller...
+442 INFO: PyInstaller: 6.2.0
+442 INFO: Python: 3.8.5
+443 INFO: Platform: Windows-10-10.0.19041-SP0
+449 INFO: Extending PYTHONPATH with paths
+['C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow',
+ 'C:\\Users\\jrocha\\OneDrive - '
+ 'DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\Lib\\site-packages',
+ 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\resources']
+713 INFO: Appending 'datas' from .spec
+754 INFO: checking Analysis
+755 INFO: Building Analysis because Analysis-00.toc is non existent
+755 INFO: Initializing module dependency graph...
+757 INFO: Caching module graph hooks...
+776 INFO: Analyzing base_library.zip ...
+1816 INFO: Loading module hook 'hook-heapq.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+1858 INFO: Loading module hook 'hook-encodings.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+2809 INFO: Loading module hook 'hook-pickle.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+3353 INFO: Caching module dependency graph...
+3461 INFO: Running Analysis Analysis-00.toc
+3461 INFO: Looking for Python shared library...
+3469 INFO: Using Python shared library: C:\Python\Python38\python38.dll
+3470 INFO: Analyzing C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\main.py
+3486 INFO: Loading module hook 'hook-PyQt5.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+3698 INFO: Loading module hook 'hook-platform.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+3722 INFO: Loading module hook 'hook-pandas.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+5797 INFO: Loading module hook 'hook-numpy.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+6238 INFO: Loading module hook 'hook-multiprocessing.util.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+6451 INFO: Loading module hook 'hook-xml.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+6940 INFO: Loading module hook 'hook-difflib.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+7193 INFO: Loading module hook 'hook-sysconfig.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+8020 INFO: Loading module hook 'hook-pytz.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+8287 INFO: Loading module hook 'hook-pkg_resources.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+9803 INFO: Processing pre-safe import module hook distutils from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module\\hook-distutils.py'.
+9804 INFO: Processing pre-find module path hook distutils from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks\\pre_find_module_path\\hook-distutils.py'.
+10331 INFO: Loading module hook 'hook-distutils.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+10444 INFO: Loading module hook 'hook-scipy.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+10542 INFO: Loading module hook 'hook-scipy.linalg.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+10735 INFO: Loading module hook 'hook-scipy.sparse.csgraph.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+11219 INFO: Loading module hook 'hook-matplotlib.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+11746 INFO: Loading module hook 'hook-packaging.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+11792 INFO: Processing pre-safe import module hook gi from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module\\hook-gi.py'.
+11849 INFO: Loading module hook 'hook-PIL.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+11953 INFO: Loading module hook 'hook-PIL.Image.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+12796 INFO: Loading module hook 'hook-PIL.ImageFilter.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+14147 INFO: Loading module hook 'hook-matplotlib.backends.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+14487 INFO: Processing pre-safe import module hook six.moves from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module\\hook-six.moves.py'.
+15780 INFO: Loading module hook 'hook-certifi.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\_pyinstaller_hooks_contrib\\hooks\\stdhooks'...
+19472 INFO: Loading module hook 'hook-pandas.plotting.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+19751 INFO: Loading module hook 'hook-pandas.io.formats.style.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+22437 INFO: Loading module hook 'hook-openpyxl.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\_pyinstaller_hooks_contrib\\hooks\\stdhooks'...
+22653 INFO: Loading module hook 'hook-lxml.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\_pyinstaller_hooks_contrib\\hooks\\stdhooks'...
+23453 INFO: Loading module hook 'hook-xml.etree.cElementTree.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+24639 INFO: Loading module hook 'hook-sqlite3.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+25393 INFO: Loading module hook 'hook-xml.dom.domreg.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+25641 INFO: Loading module hook 'hook-pyqtgraph.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\_pyinstaller_hooks_contrib\\hooks\\stdhooks'...
+650 WARNING: Failed to collect submodules for 'pyqtgraph.opengl' because importing 'pyqtgraph.opengl' raised: ModuleNotFoundError: No module named 'OpenGL'
+26960 INFO: Loading module hook 'hook-PyQt5.uic.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+27279 INFO: Processing pre-find module path hook PyQt5.uic.port_v2 from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks\\pre_find_module_path\\hook-PyQt5.uic.port_v2.py'.
+28471 INFO: Loading module hook 'hook-patsy.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\_pyinstaller_hooks_contrib\\hooks\\stdhooks'...
+29104 INFO: Loading module hook 'hook-statsmodels.tsa.statespace.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\_pyinstaller_hooks_contrib\\hooks\\stdhooks'...
+34774 INFO: Loading module hook 'hook-shelve.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+34926 INFO: Loading module hook 'hook-sklearn.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\_pyinstaller_hooks_contrib\\hooks\\stdhooks'...
+35612 INFO: Loading module hook 'hook-sklearn.utils.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\_pyinstaller_hooks_contrib\\hooks\\stdhooks'...
+35985 INFO: Loading module hook 'hook-sklearn.cluster.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\_pyinstaller_hooks_contrib\\hooks\\stdhooks'...
+35995 INFO: Loading module hook 'hook-sklearn.metrics.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\_pyinstaller_hooks_contrib\\hooks\\stdhooks'...
+36095 INFO: Loading module hook 'hook-sklearn.metrics.cluster.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\_pyinstaller_hooks_contrib\\hooks\\stdhooks'...
+36126 INFO: Loading module hook 'hook-sklearn.metrics.pairwise.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\_pyinstaller_hooks_contrib\\hooks\\stdhooks'...
+36243 INFO: Loading module hook 'hook-sklearn.neighbors.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\_pyinstaller_hooks_contrib\\hooks\\stdhooks'...
+36333 INFO: Loading module hook 'hook-sklearn.linear_model.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\_pyinstaller_hooks_contrib\\hooks\\stdhooks'...
+37212 INFO: Loading module hook 'hook-scipy.io.matlab.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+39146 INFO: Loading module hook 'hook-charset_normalizer.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\_pyinstaller_hooks_contrib\\hooks\\stdhooks'...
+39343 INFO: Analyzing hidden import 'sklearn.neural_network'
+39393 INFO: Analyzing hidden import 'zeep'
+39409 INFO: Loading module hook 'hook-zeep.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\_pyinstaller_hooks_contrib\\hooks\\stdhooks'...
+39694 INFO: Loading module hook 'hook-importlib_metadata.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+40592 INFO: Loading module hook 'hook-platformdirs.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\_pyinstaller_hooks_contrib\\hooks\\stdhooks'...
+40680 INFO: Processing module hooks...
+40681 INFO: Loading module hook 'hook-lxml.etree.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\_pyinstaller_hooks_contrib\\hooks\\stdhooks'...
+40877 INFO: Loading module hook 'hook-lxml.isoschematron.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\_pyinstaller_hooks_contrib\\hooks\\stdhooks'...
+41448 WARNING: Hidden import "sklearn.neighbors._typedefs" not found!
+41463 INFO: Loading module hook 'hook-sklearn.tree.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\_pyinstaller_hooks_contrib\\hooks\\stdhooks'...
+41591 INFO: Loading module hook 'hook-setuptools.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+43595 INFO: Loading module hook 'hook-distutils.util.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+44991 INFO: Loading module hook 'hook-matplotlib.backends.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+44993 INFO: Matplotlib backend selection method: automatic discovery of used backends
+46231 INFO: Trying determine the default backend as first importable candidate from the list: ['Qt5Agg', 'Gtk3Agg', 'TkAgg', 'WxAgg']
+47115 INFO: Selected matplotlib backends: ['Qt5Agg']
+47590 INFO: Loading module hook 'hook-PIL.SpiderImagePlugin.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+48296 INFO: Loading module hook 'hook-PyQt5.QtChart.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+48580 INFO: Loading module hook 'hook-PyQt5.QtCore.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+48888 INFO: Loading module hook 'hook-PyQt5.QtGui.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+49157 INFO: Loading module hook 'hook-PyQt5.QtOpenGL.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+49308 INFO: Loading module hook 'hook-PyQt5.QtSvg.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+49464 INFO: Loading module hook 'hook-PyQt5.QtTest.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+49636 INFO: Loading module hook 'hook-PyQt5.QtWebChannel.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+49782 INFO: Loading module hook 'hook-PyQt5.QtWebEngineWidgets.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+49934 INFO: Loading module hook 'hook-PyQt5.QtWidgets.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+50109 INFO: Loading module hook 'hook-scipy.spatial.transform.rotation.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+50172 INFO: Loading module hook 'hook-scipy.special._ellip_harm_2.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+50173 INFO: Loading module hook 'hook-scipy.special._ufuncs.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+50176 INFO: Loading module hook 'hook-scipy.stats._stats.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+50292 INFO: Loading module hook 'hook-setuptools.msvc.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+51279 INFO: Loading module hook 'hook-setuptools._distutils.command.check.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+51646 INFO: Loading module hook 'hook-lxml.objectify.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\_pyinstaller_hooks_contrib\\hooks\\stdhooks'...
+51649 INFO: Loading module hook 'hook-PyQt5.QtNetwork.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+52047 INFO: Loading module hook 'hook-PyQt5.QtPrintSupport.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+52207 INFO: Loading module hook 'hook-PyQt5.QtQuick.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+52384 INFO: Loading module hook 'hook-PyQt5.QtQuickWidgets.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+52538 INFO: Loading module hook 'hook-PyQt5.QtWebEngineCore.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+52776 INFO: Loading module hook 'hook-PyQt5.QtPositioning.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+52942 INFO: Loading module hook 'hook-PyQt5.QtQml.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+67689 INFO: Looking for ctypes DLLs
+67735 INFO: Analyzing run-time hooks ...
+67751 INFO: Including run-time hook 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_inspect.py'
+67768 INFO: Including run-time hook 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_pkgutil.py'
+67785 INFO: Processing pre-find module path hook _pyi_rth_utils from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks\\pre_find_module_path\\hook-_pyi_rth_utils.py'.
+67798 INFO: Loading module hook 'hook-_pyi_rth_utils.py' from 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks'...
+67800 INFO: Including run-time hook 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_multiprocessing.py'
+67818 INFO: Including run-time hook 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_pkgres.py'
+67833 INFO: Including run-time hook 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_setuptools.py'
+67845 INFO: Including run-time hook 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_mplconfig.py'
+67883 INFO: Including run-time hook 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\_pyinstaller_hooks_contrib\\hooks\\rthooks\\pyi_rth_pyqtgraph_multiprocess.py'
+67895 INFO: Including run-time hook 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_pyqt5.py'
+68018 INFO: Looking for dynamic libraries
+76343 INFO: Extra DLL search directories (AddDllDirectory): ['C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\numpy\\.libs', 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\scipy\\.libs', 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyQt5\\Qt\\bin']
+76343 INFO: Extra DLL search directories (PATH): ['C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyQt5\\Qt\\bin']
+80951 WARNING: Library not found: could not resolve 'Qt53DQuickScene2D.dll', dependency of 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyQt5\\Qt\\qml\\QtQuick\\Scene2D\\qtquickscene2dplugin.dll'.
+80951 WARNING: Library not found: could not resolve 'Qt53DCore.dll', dependency of 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyQt5\\Qt\\qml\\QtQuick\\Scene2D\\qtquickscene2dplugin.dll'.
+80955 WARNING: Library not found: could not resolve 'Qt53DRender.dll', dependency of 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyQt5\\Qt\\qml\\QtQuick\\Scene2D\\qtquickscene2dplugin.dll'.
+80962 WARNING: Library not found: could not resolve 'Qt5MultimediaQuick.dll', dependency of 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyQt5\\Qt\\qml\\QtMultimedia\\declarative_multimedia.dll'.
+80962 WARNING: Library not found: could not resolve 'Qt53DAnimation.dll', dependency of 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyQt5\\Qt\\qml\\QtQuick\\Scene3D\\qtquickscene3dplugin.dll'.
+80963 WARNING: Library not found: could not resolve 'Qt53DCore.dll', dependency of 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyQt5\\Qt\\qml\\QtQuick\\Scene3D\\qtquickscene3dplugin.dll'.
+80964 WARNING: Library not found: could not resolve 'Qt53DRender.dll', dependency of 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyQt5\\Qt\\qml\\QtQuick\\Scene3D\\qtquickscene3dplugin.dll'.
+80964 WARNING: Library not found: could not resolve 'Qt53DInput.dll', dependency of 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyQt5\\Qt\\qml\\QtQuick\\Scene3D\\qtquickscene3dplugin.dll'.
+80965 WARNING: Library not found: could not resolve 'Qt53DLogic.dll', dependency of 'C:\\Users\\jrocha\\OneDrive - DOI\\Documents\\Python\\NextFlow\\L03Py38Env\\lib\\site-packages\\PyQt5\\Qt\\qml\\QtQuick\\Scene3D\\qtquickscene3dplugin.dll'.
+81153 INFO: Warnings written to C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\build\main\warn-main.txt
+81421 INFO: Graph cross-reference written to C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\build\main\xref-main.html
+81631 INFO: checking PYZ
+81631 INFO: Building PYZ because PYZ-00.toc is non existent
+81633 INFO: Building PYZ (ZlibArchive) C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\build\main\PYZ-00.pyz
+84477 INFO: Building PYZ (ZlibArchive) C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\build\main\PYZ-00.pyz completed successfully.
+84542 INFO: checking PKG
+84543 INFO: Building PKG because PKG-00.toc is non existent
+84551 INFO: Building PKG (CArchive) main.pkg
+84614 INFO: Building PKG (CArchive) main.pkg completed successfully.
+84617 INFO: Bootloader C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\L03Py38Env\lib\site-packages\PyInstaller\bootloader\Windows-64bit-intel\run.exe
+84617 INFO: checking EXE
+84618 INFO: Building EXE because EXE-00.toc is non existent
+84626 INFO: Building EXE from EXE-00.toc
+84627 INFO: Copying bootloader EXE to C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\build\main\main.exe
+84792 INFO: Copying icon to EXE
+84896 INFO: Copying 0 resources to EXE
+84896 INFO: Embedding manifest in EXE
+85010 INFO: Appending PKG archive to EXE
+85078 INFO: Fixing EXE headers
+86778 INFO: Building EXE from EXE-00.toc completed successfully.
+86874 INFO: checking COLLECT
+86874 INFO: Building COLLECT because COLLECT-00.toc is non existent
+86878 INFO: Building COLLECT COLLECT-00.toc
+95349 INFO: Building COLLECT COLLECT-00.toc completed successfully.
+
+Copying Python modules...
+Copying PyForecast resources...
+
+-------------------------------------------------------------------------------
+   ROBOCOPY     ::     Robust File Copy for Windows
+-------------------------------------------------------------------------------
+
+  Started : Monday, December 11, 2023 2:24:34 PM
+   Source : C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\
+     Dest : C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\dist\main\resources\
+
+    Files : *.*
+
+ Exc Dirs : __pycache__
+
+  Options : *.* /NFL /S /E /DCOPY:DA /COPY:DAT /XO /XN /XC /R:1000000 /W:30
+
+------------------------------------------------------------------------------
+
+          New Dir          1    C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\
+          New Dir          9    C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\DataLoaders\
+          New Dir          3    C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\GIS\
+          New Dir          2    C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\GIS\MapData\
+          New Dir         16    C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\GraphicalResources\
+          New Dir         16    C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\GraphicalResources\fonts\
+          New Dir         87    C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\GraphicalResources\icons\
+          New Dir          1    C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\GUI\
+          New Dir         13    C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\GUI\CustomWidgets\
+          New Dir          7    C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\GUI\Dialogs\
+          New Dir          2    C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\GUI\stylesheets\
+          New Dir          4    C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\GUI\Tabs\
+          New Dir          6    C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\GUI\WebMap\
+          New Dir          4    C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\GUI\WebMap\leaflet_shades\
+          New Dir          1    C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\GUI\WebMap\leaflet_shades\dist\
+          New Dir          3    C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\GUI\WebMap\leaflet_shades\examples\
+          New Dir          0    C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\GUI\WebMap\leaflet_shades\src\
+          New Dir          1    C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\GUI\WebMap\leaflet_shades\src\css\
+          New Dir          2    C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\GUI\WebMap\leaflet_shades\src\js\
+          New Dir          0    C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\modules\
+          New Dir          3    C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\modules\DatasetTab\
+          New Dir          2    C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\modules\DataTab\
+          New Dir          2    C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\modules\ForecastsTab\
+          New Dir          3    C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\modules\MenuBar\
+          New Dir          9    C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\modules\Miscellaneous\
+          New Dir          6    C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\modules\ModelCreationTab\
+          New Dir          4    C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\modules\ModelCreationTab\FeatureSelectionAlgorithms\
+          New Dir          3    C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\modules\ModelCreationTab\Operations\
+          New Dir          6    C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\modules\ModelCreationTab\PreProcessingAlgorithms\
+          New Dir          6    C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\modules\ModelCreationTab\RegressionAlgorithms\
+          New Dir          6    C:\Users\jrocha\OneDrive - DOI\Documents\Python\NextFlow\resources\temp\
+
+------------------------------------------------------------------------------
+
+               Total    Copied   Skipped  Mismatch    FAILED    Extras
+    Dirs :        48        31        17         0         0         0
+   Files :       228       228         0         0         0         0
+   Bytes :   45.29 m   45.29 m         0         0         0         0
+   Times :   0:00:00   0:00:00                       0:00:00   0:00:00
+
+
+   Speed :            66149016 Bytes/sec.
+   Speed :            3785.077 MegaBytes/min.
+   Ended : Monday, December 11, 2023 2:24:35 PM

@@ -1,11 +1,12 @@
 from resources.modules.Miscellaneous import loggingAndErrors
 from resources.modules.MenuBar import databaseViewer
 from resources.GUI.Dialogs import PreferencesGUI
+from resources.modules.Miscellaneous import RetrainingWrapper, ForecastingWrapper
 from datetime import datetime
 import pickle
 import time
 import webbrowser
-from PyQt5.QtWidgets import QFileDialog, QDialog, QMessageBox
+from PyQt5.QtWidgets import QFileDialog, QDialog, QMessageBox, QInputDialog
 
 class menuBar(object):
     """
@@ -18,6 +19,8 @@ class menuBar(object):
         self.appMenu.saveAction.setShortcut("Ctrl+S")
         self.appMenu.saveAsAction.triggered.connect(lambda: self.saveForecastFile(True))
         self.appMenu.openAction.triggered.connect(self.openForecastFile)
+        self.appMenu.wrapRetrainAction.triggered.connect(self.startRetrainProc)
+        self.appMenu.wrapForecastAction.triggered.connect(self.startForecastProc)
         self.appMenu.openAction.setShortcut("Ctrl+O")
         # Edit menu
         self.appMenu.preferencesAction.triggered.connect(self.openPreferencesGUI)
@@ -26,6 +29,37 @@ class menuBar(object):
         self.appMenu.documentationAction.triggered.connect(self.viewDocumentation)
         self.appMenu.updateAction.triggered.connect(self.viewReleases)
         return
+
+
+    def startRetrainProc(self):
+        dirIN =  QFileDialog.getExistingDirectory(
+            parent=self,
+            caption="Select input/original forecast files directory"
+        )
+        dirOUT = QFileDialog.getExistingDirectory(
+            parent=self,
+            caption="Select output/retrained forecast files directory"
+        )
+        retrainWY, done = QInputDialog.getInt(
+            self,
+            'User Input',
+            'Input Max Retraining WY'
+        )
+        RetrainingWrapper.startRetrain(self, dirIN, dirOUT, retrainWY)
+
+
+    def startForecastProc(self):
+        forecastDIR =  QFileDialog.getExistingDirectory(
+            parent=self,
+            caption="Select forecast files directory to process"
+        )
+        forecastWY, done = QInputDialog.getInt(
+            self,
+            'User Input',
+            'Input Forecasting WY'
+        )
+        ForecastingWrapper.startForecast(self, forecastDIR, forecastWY)
+
 
     def viewDocumentation(self):
         webbrowser.open('https://github.com/usbr/PyForecast/wiki')
