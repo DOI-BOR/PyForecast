@@ -1,7 +1,7 @@
 # SEQUENTIAL MIXED FLOATING SELECTION
 # ITERATES BETWEEN FORWARD AND BACKWARD FLOATING SELECTION
 import copy
-from numpy import Inf, random
+from numpy import inf, random
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QApplication
 from numba import jit
@@ -40,7 +40,7 @@ class BruteForce:
   def convert_int_to_array(num, num_p):
     return list([bool(num & (1<<n)) for n in range(num_p)])[::-1]
   
-  def next(self, last_score=Inf, score_type = 0):
+  def next(self, last_score=inf, score_type = 0):
 
     if not self.running:
       return -1

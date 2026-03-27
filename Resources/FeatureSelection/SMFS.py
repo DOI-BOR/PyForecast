@@ -1,7 +1,7 @@
 # SEQUENTIAL MIXED FLOATING SELECTION
 # ITERATES BETWEEN FORWARD AND BACKWARD FLOATING SELECTION
 import copy
-from numpy import Inf, random, int64
+from numpy import inf, random, int64
 from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtWidgets import QApplication
 from time import time
@@ -27,7 +27,7 @@ class SMFS:
 
     # Keep information about the current predictor combination.
     self.current_combo_1 = copy.deepcopy(self.forcings)
-    self.current_score_1 = Inf
+    self.current_score_1 = inf
     self.combo_1_status = 1     # 1 == ADDING PHASE, 0 == REMOVING PHASE
     self.combo_1_best_idx = None
     self.combo_1_current_idx = 0
@@ -95,16 +95,16 @@ class SMFS:
       self.time = time()
       self.running = True
       if score_type == 0:
-        self.current_score_1 = Inf
+        self.current_score_1 = inf
       else:
-        self.current_score_1 = -Inf
+        self.current_score_1 = -inf
     
     # If there's no 'last_score' set last_score to +/- inf.
     if not last_score:
       if score_type == 0:
-        last_score = Inf
+        last_score = inf
       else:
-        last_score = -Inf
+        last_score = -inf
     
     # Check the elapsed time to see if we need to stop. Also update progress.
     elapsed = time() - self.time
