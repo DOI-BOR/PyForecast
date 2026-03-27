@@ -43,7 +43,7 @@ class Dataloader(object):
     del df['qualifiers']
 
     # Replace missing data with NaN's
-    df['value'].replace(to_replace = '-999999', value = np.nan, inplace = True)
+    df['value'] = df['value'].replace(to_replace = '-999999', value = np.nan)
 
     # Convert to numeric
     df['value'] = pd.to_numeric(df['value'])
