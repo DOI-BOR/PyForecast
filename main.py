@@ -110,6 +110,7 @@ class PyForecast(QApplication):
     # System-specific settings. Sets Windows scaling
     # settings for High-DPI displays
     pyversion = sys.version_info
+    self.PYTHON_VERSION = f'{pyversion.major}.{pyversion.minor}.{pyversion.micro}'
     os.environ['QT_ENABLE_HIGHDPI_SCALING'] = '1'
     QApplication.setHighDpiScaleFactorRoundingPolicy(
       Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
@@ -132,12 +133,12 @@ class PyForecast(QApplication):
       self.setStyleSheet(self.styleSheet() + (stylesheet.read()))
 
     # Print out the various versions of installed software
-    print(f'Using Python Version       {pyversion.major}.{pyversion.minor}.{pyversion.micro}')
-    print(f"Using Qt Version           {QT_VERSION_STR}")
     with open('VERSION.TXT', 'r') as readfile:
       self.PYCAST_VERSION = readfile.read().strip()
-      print(f"Using PyForecast Version   {self.PYCAST_VERSION}")
-    
+    print(f'{'Using Python Version'.ljust(50)}{self.PYTHON_VERSION:<10}')
+    print(f'{'Using Qt Version'.ljust(50)}{QT_VERSION_STR:<10}')
+    print(f'{'Using PyForecast Version'.ljust(50)}{self.PYCAST_VERSION:<10}')
+
     # Windows specific commands to properly identify PyCast and show it's icon in the taskbar
     myappid = f'USBR.PyForecast.{self.PYCAST_VERSION}'
     if 'windows' in platform().lower():
