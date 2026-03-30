@@ -9,7 +9,7 @@ class MainWindow(QMainWindow):
 
   def __init__(self, *args, **kwargs):
 
-    QMainWindow.__init__(self)
+    super(MainWindow, self).__init__(*args)
 
     # Main window properties
     self.setWindowTitle(f'PyForecast V{app.PYCAST_VERSION}')
@@ -123,9 +123,13 @@ class MainWindow(QMainWindow):
         self.resize(width, height)
         self.show()
 
-  def resizeEvent(self, ev):
-    s = ev.size()
+  def resizeEvent(self, event):
+    s = event.size()
     app.config['window_width'] = s.width()
     app.config['window_height'] = s.height()
-    QMainWindow.resizeEvent(self, ev)
+    super().resizeEvent(event)
+
+  def closeEvent(self, event):
+    print("Exiting pyForecast")
+    super().closeEvent(event)
 

@@ -77,7 +77,6 @@ class Logger(QObject):
     """
 
     # Exit message and close log file
-    self.write("Exiting PyForecast")
     self.log.close()
   
   def flush(self):
@@ -101,6 +100,9 @@ class PyForecast(QApplication):
     :arguments
       file (`str`) - filename to open with the application
     """
+
+    # Initialize the parent QApplication
+    super(PyForecast, self).__init__(*args)
 
     # redirect stdout to log
     self.logger = Logger()
@@ -206,6 +208,7 @@ class PyForecast(QApplication):
     if kwargs['file'] is not None:
       self.MWMV.OpenFile(None, filename=kwargs['file'])
 
+
   def write_config(self):
 
     # Copy the contents of the application 
@@ -250,7 +253,6 @@ if __name__ == '__main__':
 
   # Create the application
   app = PyForecast(sys.argv, file=args.file)
-
 
   # Run the application
   sys.exit(app.exec_())
