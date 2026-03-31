@@ -43,7 +43,7 @@ class Dataloader(object):
       f.close()
       self.filedata.seek(0)
       self.filedata = codecs.getreader('utf-8')(self.filedata)
-      data = pd.read_csv(self.filedata, sep='\s+', header=None, dtype={0:str}, names=['index', 'jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'])
+      data = pd.read_csv(self.filedata, sep=r'\s+', header=None, dtype={0:str}, names=['index', 'jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'])
       data['dcode'] = data['index'].apply(lambda v: v[:4])
       data['year'] = data['index'].apply(lambda v: v[6:10])
       data = data[data['dcode'] == climdiv]
