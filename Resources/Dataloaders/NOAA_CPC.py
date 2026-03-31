@@ -14,9 +14,10 @@ class Dataloader(object):
     if dataset.external_id == 'MENSO':
       url = "https://psl.noaa.gov/enso/mei/data/meiv2.data"
       r = requests.get(url, verify=False)
-      df = pd.read_csv(StringIO(r.content.decode('utf-8')), skiprows=1, names=['year','1','2','3','4','5','6','7','8','9','10','11','12'], sep='\s+', engine='python', skipfooter=4, on_bad_lines='skip')
-      #lastRow = df.index[df['year']=='Multivariate'].tolist()[0] -1
-      #df = df[df.index<lastRow]
+      df = pd.read_csv(StringIO(r.content.decode('utf-8')),
+                       skiprows=1,
+                       names=['year','1','2','3','4','5','6','7','8','9','10','11','12'],
+                       sep=r'\s+', engine='python', skipfooter=4, on_bad_lines='skip')
       df = df.melt(id_vars=['year'],var_name='month')
       dates = [str(df['year'][i])+'-'+str(df['month'][i]) for i in df.index]
       df.set_index(pd.DatetimeIndex(pd.to_datetime(dates, format='%Y-%m')), inplace=True)
@@ -45,7 +46,8 @@ class Dataloader(object):
     elif dataset.external_id == 'PNA':
       url = "http://www.cpc.ncep.noaa.gov/products/precip/CWlink/pna/norm.pna.monthly.b5001.current.ascii"
       r = requests.get(url, verify=False)
-      dataMonth = pd.read_csv(StringIO(r.content.decode('utf-8')), names = ['year','month','PNA | Indice'], sep='\s+')
+      dataMonth = pd.read_csv(StringIO(r.content.decode('utf-8')),
+                              names=['year','month','PNA | Indice'], sep=r'\s+')
       dataMonth['day'] = len(dataMonth.index)*[1]
       datetimes = pd.to_datetime(dataMonth[['year','month','day']])
       dataMonth.set_index(pd.DatetimeIndex(datetimes), inplace=True)
