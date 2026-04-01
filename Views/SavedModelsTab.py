@@ -4,6 +4,7 @@ from PyQt5.QtGui import QPainter
 import pyqtgraph as pg
 from Utilities import RichTextDelegate, ToggleSwitch
 from datetime import datetime
+import numpy as np
 
 app = QApplication.instance()
 
@@ -152,7 +153,7 @@ class ProbabilityPlots(pg.PlotWidget):
       self.showGrid(True,False,0.85)
       self.getAxis('bottom').setLabel('Target Value')
       self.hideAxis('left')
-    
+
     def reframe_to_min_max_normal(self, min_, max_, normal):
       self.setXRange(min_, max_, padding=0.1)
       item0 = pg.InfiniteLine(
@@ -206,7 +207,7 @@ class ProbabilityPlots(pg.PlotWidget):
     def plot_data(self, x, y, color, width=1.5, label=None):
       i = self.plot(x, y, pen=pg.mkPen({'color':color, "width":width}), name=label, antialias=True)
       i.setZValue(30)
-      
+
     def plot_vlines(self, values):
 
       # plot regions
@@ -217,12 +218,12 @@ class ProbabilityPlots(pg.PlotWidget):
       )
       _10_90_roi.setZValue(0)
       self.addItem(_10_90_roi)
-      
+
       for i, val in enumerate(values):
 
         item = pg.InfiniteLine(
-          val, 
-          pen=pg.mkPen({'color':'black', 'width':2}), 
+          val,
+          pen=pg.mkPen({'color':'black', 'width':2}),
           movable=False)
 
         self.addItem(item)
@@ -232,9 +233,9 @@ class ProbabilityPlots(pg.PlotWidget):
         )
         textItem.setZValue(30)
         self.addItem(textItem)
-        lr = item.boundingRect()
-        pt1 = pg.Point(lr.left(), 0)
-        pt2 = pg.Point(lr.right(), 0)
-        pt = pt2 * (0.1+0.2*i) + pt1 * (1-(0.1+0.2*i))
-        textItem.setPos(val, pt.x())
-        
+        textItem.setPos(val, 0)
+        for item in self.getPlotItem().items:
+          if isinstance(item, pg.PlotDataItem):
+            x, y = item.getData()
+            textItem.setPos(val, float(np.interp(val, x, y)))
+            break

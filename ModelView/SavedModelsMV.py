@@ -69,14 +69,14 @@ def savitzky_golay(y, window_size, order, deriv=0, rate=1):
     order_range = range(order+1)
     half_window = (window_size -1) // 2
     # precompute coefficients
-    b = np.mat([[k**i for i in order_range] for k in range(-half_window, half_window+1)])
+    b = np.asmatrix([[k**i for i in order_range] for k in range(-half_window, half_window+1)])
     m = np.linalg.pinv(b).A[deriv] * rate**deriv * factorial(deriv)
     # pad the signal at the extremes with
     # values taken from the signal itself
     firstvals = y[0] - np.abs( y[1:half_window+1][::-1] - y[0] )
     lastvals = y[-1] + np.abs(y[-half_window-1:-1][::-1] - y[-1])
-    y = np.concatenate((firstvals, y, lastvals))
-    return np.convolve( m[::-1], y, mode='valid')
+    y1 = np.concatenate((firstvals, y, lastvals))
+    return np.convolve( m[::-1], y1, mode='valid')
 
 class SavedModelsModelView:
 
@@ -138,7 +138,7 @@ class SavedModelsModelView:
         xs = np.linspace(values.min(), values.max(), 1000)
         spl_d = spl.derivative()
         if plot_type == 'pdf':
-          ys = savitzky_golay(spl_d(xs), 63, 4, 0)
+          ys = savitzky_golay(spl_d(xs), window_size=63, order=4)
           self.sm.prob_plot.plot_data(xs, ys, color=cc.next(), label=model.name) 
         else:
           self.sm.prob_plot.plot_data(xs, spl(xs), color=cc.next(), label=model.name)       
@@ -150,7 +150,7 @@ class SavedModelsModelView:
         xs = np.linspace(grouped.min(), grouped.max(), 1000)
         spl_d = spl.derivative()
         if plot_type =='pdf':
-          ys = savitzky_golay(spl_d(xs), 63, 4, 0)
+          ys = savitzky_golay(spl_d(xs), window_size=63, order=4)
           self.sm.prob_plot.plot_data(xs, ys, color=cc.next(), width=3, label='Combined')
         else:
           self.sm.prob_plot.plot_data(xs, spl(xs), color=cc.next(), width=3, label='Combined')
@@ -162,13 +162,12 @@ class SavedModelsModelView:
       self.sm._70_value.setText(vals[3], model.predictand.unit.id)
       self.sm._90_value.setText(vals[4], model.predictand.unit.id)
       self.sm.prob_plot.plot_vlines(vals)
+
     self.sm.prob_plot.reframe_to_min_max_normal(
       model.predictand.data.min(),
       model.predictand.data.max(),
       model.normal
     )
-        
-      
 
 
   def gen_forecast(self):
