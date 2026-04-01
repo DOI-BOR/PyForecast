@@ -219,6 +219,12 @@ class ProbabilityPlots(pg.PlotWidget):
       _10_90_roi.setZValue(0)
       self.addItem(_10_90_roi)
 
+      x, y = None, None
+      for item in self.getPlotItem().items:
+        if isinstance(item, pg.PlotDataItem):
+          x, y = item.getData()
+          break
+
       for i, val in enumerate(values):
 
         item = pg.InfiniteLine(
@@ -233,9 +239,7 @@ class ProbabilityPlots(pg.PlotWidget):
         )
         textItem.setZValue(30)
         self.addItem(textItem)
-        textItem.setPos(val, 0)
-        for item in self.getPlotItem().items:
-          if isinstance(item, pg.PlotDataItem):
-            x, y = item.getData()
-            textItem.setPos(val, float(np.interp(val, x, y)))
-            break
+        if x is not None and y is not None:
+          textItem.setPos(val, float(np.interp(val, x, y)))
+        else:
+          textItem.setPos(val, 0)
