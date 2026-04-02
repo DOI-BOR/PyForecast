@@ -68,7 +68,7 @@ class MainWindow(QMainWindow):
     self.export_option.setStatusTip('Exports the current forecast file to an Excel spreadsheet')
     file_menu.addAction(self.export_option)
 
-    file_menu.addSeparator()
+    view_menu = QMenu('View', self)
 
     toggle_font_option = QMenu('Adjust font size', self)
     self.toggle_font_small = QAction('Small', self)
@@ -83,31 +83,36 @@ class MainWindow(QMainWindow):
     self.toggle_font_large.setStatusTip('Changes the application font size to "large"')
     toggle_font_option.addAction(self.toggle_font_large)
 
-    file_menu.addMenu(toggle_font_option)
-
-    self.edit_units_option = QAction('Edit application units', self)
-    self.edit_units_option.setStatusTip('View, add, and edit the measurement units that PyForecast has access to')
-    file_menu.addAction(self.edit_units_option)
-
-    self.edit_settings_option = QAction('Edit application settings', self)
-    self.edit_settings_option.setStatusTip('Edit the application-wide settings and configuration')
-    file_menu.addAction(self.edit_settings_option)
+    view_menu.addMenu(toggle_font_option)
 
     self.show_log_option = QAction('Show application log', self)
     self.show_log_option.setStatusTip('Open a textbox that views the application log')
-    file_menu.addAction(self.show_log_option)
+    view_menu.addAction(self.show_log_option)
 
-    file_menu.addSeparator()
+    settings_menu = QMenu('Settings', self)
+
+    self.edit_units_option = QAction('Edit application units', self)
+    self.edit_units_option.setStatusTip('View, add, and edit the measurement units that PyForecast has access to')
+    settings_menu.addAction(self.edit_units_option)
+
+    self.edit_settings_option = QAction('Edit application settings', self)
+    self.edit_settings_option.setStatusTip('Edit the application-wide settings and configuration')
+    settings_menu.addAction(self.edit_settings_option)
+
+    help_menu = QMenu('Help', self)
 
     self.documentation_option = QAction('PyForecast documentation', self)
     self.documentation_option.setStatusTip('Opens the PyForecast documentation in a separate window')
-    file_menu.addAction(self.documentation_option)
+    help_menu.addAction(self.documentation_option)
 
     self.check_updates_option = QAction('Check for updates', self)
     self.check_updates_option.setStatusTip('Check the github repository for any software updates')
-    file_menu.addAction(self.check_updates_option)
+    help_menu.addAction(self.check_updates_option)
 
     menu_bar.addMenu(file_menu)
+    menu_bar.addMenu(view_menu)
+    menu_bar.addMenu(settings_menu)
+    menu_bar.addMenu(help_menu)
 
     # Layout and show the Main Window
     self.setCentralWidget(tab_widget)
