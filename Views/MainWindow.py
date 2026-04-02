@@ -12,7 +12,7 @@ class MainWindow(QMainWindow):
     super(MainWindow, self).__init__(*args)
 
     # Main window properties
-    self.setWindowTitle(f'PyForecast V{app.PYCAST_VERSION}')
+    self.setWindowTitle(f'PyForecast v{app.PYCAST_VERSION}')
     self.setWindowIcon(QIcon(app.base_dir + '/Resources/Icons/AppIcon.ico'))
 
     # Initialize the Views
@@ -112,12 +112,12 @@ class MainWindow(QMainWindow):
     # Layout and show the Main Window
     self.setCentralWidget(tab_widget)
 
-    width = min(app.config['window_width'], app.desktop().screenGeometry().width())
-    height = min(app.config['window_height'], app.desktop().screenGeometry().height())
+    width = int(min(app.config['window_width'], app.desktop().screenGeometry().width()))
+    height = int(min(app.config['window_height'], app.desktop().screenGeometry().height()))
 
     rec = app.desktop().screenGeometry()
-    if kwargs.get('show', True) == True:
-      if (width >= 0.95*rec.width()) and (height >= 0.95*rec.height()):
+    if kwargs.get('show', True):
+      if (width >= 0.95*rec.width()) or (height >= 0.95*rec.height()):
         self.showMaximized()
       else:
         self.resize(width, height)
@@ -130,6 +130,7 @@ class MainWindow(QMainWindow):
     super().resizeEvent(event)
 
   def closeEvent(self, event):
-    print("Exiting pyForecast")
+    print("Exiting PyForecast")
+    app.MWMV.log_view.close()
     super().closeEvent(event)
 

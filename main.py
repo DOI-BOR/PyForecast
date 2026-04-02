@@ -48,29 +48,27 @@ class Logger(QObject):
     log file and also prints it to the terminal
     """
 
-    # Write print messages to the log file and the terminal
-    if msg:
+    # Write print messages to the log file and the terminal ensuring
+    # the message is printable
+    if msg.isprintable():
 
-      # Ensure that the message is printable
-      if msg != '' and msg.isprintable():
-
-        # Split up messages longer than seventy characters into multiple lines
-        if len(msg) > 80:
-          c = 0
-          while c < len(msg):
-            c += 80
-            if c == 80:
-              m = f"[ {time():.2f} ] \t{msg:80.80}\t·\n"
-            else:
-              m = f"                 \t{msg[c-80:c]:80.80}\t·\n"
-            self.terminal.write(m)
-            self.log.write(m)
-            self.new_log_message.emit(m)
-        else:
-          msg = f"[ {time():.2f} ] \t{msg:80.80}\t·\n"
-          self.terminal.write(msg)
-          self.log.write(msg)
-          self.new_log_message.emit(msg)
+      # Split up messages longer than seventy characters into multiple lines
+      if len(msg) > 80:
+        c = 0
+        while c < len(msg):
+          c += 80
+          if c == 80:
+            m = f"[ {time():.2f} ] \t{msg:80.80}\t·\n"
+          else:
+            m = f"                 \t{msg[c-80:c]:80.80}\t·\n"
+          self.terminal.write(m)
+          self.log.write(m)
+          self.new_log_message.emit(m)
+      else:
+        msg = f"[ {time():.2f} ] \t{msg:80.80}\t·\n"
+        self.terminal.write(msg)
+        self.log.write(msg)
+        self.new_log_message.emit(msg)
 
   def cleanup(self):
     """Closes the log file and writes an exit statement
@@ -245,10 +243,12 @@ class PyForecast(QApplication):
 if __name__ == '__main__':
 
   parser = argparse.ArgumentParser(
-    'PyForecast-Version-5', 
-    description="PyForecast is a statistical modeling tool useful in predicting monthly and seasonal inflows and streamflows."
+    'PyForecast',
+    description="PyForecast is a statistical modeling tool useful in predicting "
+                "monthly and seasonal inflows and streamflows."
   )
-  parser.add_argument('-f','--file', help='Provide a file to immediately be opened by PyForecast')
+  parser.add_argument('-f','--file',
+                      help='Provide a file to immediately be opened by PyForecast')
   args=parser.parse_args()
 
   # Create the application
