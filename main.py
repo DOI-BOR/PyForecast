@@ -3,7 +3,7 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtCore import QT_VERSION_STR, QEvent, Qt, pyqtSignal, QObject
 from PyQt5.QtGui import QIcon
 from Utilities.JsonHooks import DatetimeParser
-from time import time
+import time
 import traceback
 import os
 import atexit
@@ -58,14 +58,14 @@ class Logger(QObject):
         while c < len(msg):
           c += 80
           if c == 80:
-            m = f"[ {time():.2f} ] \t{msg:80.80}\t·\n"
+            m = f"[ {time.ctime()} ]{''.ljust(4)}{msg:<80.80}·\n"
           else:
-            m = f"                 \t{msg[c-80:c]:80.80}\t·\n"
+            m = f"{''.rjust(32)}{msg[c-80:c]:>80}·\n"
           self.terminal.write(m)
           self.log.write(m)
           self.new_log_message.emit(m)
       else:
-        msg = f"[ {time():.2f} ] \t{msg:80.80}\t·\n"
+        msg = f"[ {time.ctime()} ]{''.ljust(4)}{msg:<80}·\n"
         self.terminal.write(msg)
         self.log.write(msg)
         self.new_log_message.emit(msg)
