@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import *
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QFontDatabase
 
 app = QApplication.instance()
 
@@ -28,7 +28,9 @@ class LogViewer(QDialog):
 
   def setUI(self):
     layout = QVBoxLayout()
-    self.log_area = QTextEdit(objectName='monospace')
+    self.log_area = QTextEdit()
+    font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
+    self.log_area.setCurrentFont(font)
     self.log_area.setReadOnly(True)
     self.clear_button = QPushButton('Clear')
     self.refr_button = QPushButton('Refresh')

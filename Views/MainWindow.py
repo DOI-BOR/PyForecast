@@ -132,5 +132,5 @@ class MainWindow(QMainWindow):
   def closeEvent(self, event):
     print("Exiting PyForecast")
     app.MWMV.log_view.close()
-    super().closeEvent(event)
+    event.accept()
 
