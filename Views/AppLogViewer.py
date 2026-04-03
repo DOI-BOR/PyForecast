@@ -41,4 +41,5 @@ class LogViewer(QDialog):
     layout.addWidget(self.log_area)
     layout.addLayout(hlayout)
     self.setLayout(layout)
-    self.log_area.setMinimumWidth(1100)
+    self.log_area.setMinimumWidth(900)
+    self.log_area.setMinimumHeight(400)

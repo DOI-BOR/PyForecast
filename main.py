@@ -60,7 +60,7 @@ class Logger(QObject):
           if c == 80:
             m = f"[ {time.ctime()} ]{''.ljust(4)}{msg:<80.80}·\n"
           else:
-            m = f"{''.rjust(32)}{msg[c-80:c]:>80}·\n"
+            m = f"{''.rjust(32)}{msg[c-80:c]:<80}·\n"
           self.terminal.write(m)
           self.log.write(m)
           self.new_log_message.emit(m)
