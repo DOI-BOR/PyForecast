@@ -12,16 +12,17 @@ from Models.SavedModels import ForecastList
 
 app = QApplication.instance()
 
+
 def file_version_less_than(v_file, v_check):
-  """Checks if the file version is less than the check version"""
-  current_version_int = int(v_file.replace('.',''))
-  check_version_int = int(v_check.replace('.',''))
-  return current_version_int < check_version_int
+    """Checks if the file version is less than the check version"""
+    current_version_int = int(v_file.replace('.', ''))
+    check_version_int = int(v_check.replace('.', ''))
+    return current_version_int < check_version_int
 
 
 def sqlite_load_forecast(db: Path):
     db = db.with_suffix('.sqlite')
-    if not os.path.isfile(db):
+    if not db.is_file():
         print('Error: Forecast database not found:')
         print(f'{db}')
         return
@@ -29,32 +30,32 @@ def sqlite_load_forecast(db: Path):
     con = None
     cur = None
     try:
-      con = sqlite3.connect(db)
-      cur = con.cursor()
-      cur.row_factory = sqlite3.Row  # allows access by column name
-      cur.execute('PRAGMA foreign_keys = ON')
-      cur.execute('PRAGMA journal_mode = WAL')
+        con = sqlite3.connect(db)
+        cur = con.cursor()
+        cur.row_factory = sqlite3.Row  # allows access by column name
+        cur.execute('PRAGMA foreign_keys = ON')
+        cur.execute('PRAGMA journal_mode = WAL')
 
-      app_info = cur.execute("SELECT * FROM app_info").fetchone()
-      app_version = app_info['app_version']
+        app_info = cur.execute("SELECT * FROM app_info").fetchone()
+        app_version = app_info['app_version']
 
-      # load datasets
-      sqlite_load_datasets(cur)
+        # load datasets
+        sqlite_load_datasets(cur)
 
-      # load model configurations
-      sqlite_load_model_configurations(cur)
+        # load model configurations
+        sqlite_load_model_configurations(cur)
 
-      # load saved models
-      sqlite_load_saved_models(cur)
+        # load saved models
+        sqlite_load_saved_models(cur)
 
     except Exception as e:
         print('Error reading forecast from SQLite database:')
         print(f'{repr(e)}')
 
     finally:
-      if con:
-        cur.close()
-        con.close()
+        if con:
+            cur.close()
+            con.close()
 
 
 def sqlite_load_saved_models(cur: sqlite3.Cursor):
@@ -205,148 +206,150 @@ def sqlite_load_datasets(cur: sqlite3.Cursor):
 
 
 def load_file(f):
+    # Load the file version
+    f_version = pickle.load(f)
 
-  # Load the file version
-  f_version = pickle.load(f)
+    print(f"File version is {f_version}")
 
-  print(f"File version is {f_version}")
+    if file_version_less_than(f_version, '5.0.9'):
 
-  if file_version_less_than(f_version, '5.0.9'):
+        # Handle older versions without unit-changing functionality
+        if file_version_less_than(f_version, '5.0.3'):
 
-    # Handle older versions without unit-changing functionality
-    if file_version_less_than(f_version, '5.0.3'):
-      
-      # Datasets
-      datasets = pickle.load(f)
-      for i in range(len(datasets)):
-        datasets[i].raw_unit = datasets[i].unit
-        datasets[i].display_unit = datasets[i].unit    
-      
+            # Datasets
+            datasets = pickle.load(f)
+            for i in range(len(datasets)):
+                datasets[i].raw_unit = datasets[i].unit
+                datasets[i].display_unit = datasets[i].unit
+
+        else:
+            datasets = pickle.load(f)
+
+        for dataset in datasets:
+            app.datasets.datasets.append(dataset)
+            print(f'Added Dataset: {dataset}')
+            app.datasets.insertRow(app.datasets.rowCount())
+        app.datasets.dataChanged.emit(app.datasets.index(0),
+                                      app.datasets.index(app.datasets.rowCount()))
+
+        app.model_configurations.load_from_file(f)
+        app.saved_models.load_from_file(f)
+
     else:
-      datasets = pickle.load(f)
 
-    for dataset in datasets:
-      app.datasets.datasets.append(dataset)
-      print(f'Added Dataset: {dataset}')
-      app.datasets.insertRow(app.datasets.rowCount())
-    app.datasets.dataChanged.emit(app.datasets.index(0), app.datasets.index(app.datasets.rowCount()))
-    
-    app.model_configurations.load_from_file(f)
-    app.saved_models.load_from_file(f)
-  
-  else:
-    
-    # Datasets
-    len_datasets = pickle.load(f)
-    for i in range(len_datasets):
-      dataset_dict = pickle.load(f)
-      dataset_dict['raw_unit'] = app.units.get_unit(dataset_dict['raw_unit'])
-      dataset_dict['display_unit'] = app.units.get_unit(dataset_dict['display_unit'])
-      dataset_dict['dataloader'] = app.dataloaders[dataset_dict['dataloader']]['CLASS']()
-      dataset_dict['data'] = pd.read_pickle(f, compression={'method':None})
-      
-      app.datasets.add_dataset(**dataset_dict)
+        # Datasets
+        len_datasets = pickle.load(f)
+        for i in range(len_datasets):
+            dataset_dict = pickle.load(f)
+            dataset_dict['raw_unit'] = app.units.get_unit(dataset_dict['raw_unit'])
+            dataset_dict['display_unit'] = app.units.get_unit(
+                dataset_dict['display_unit'])
+            dataset_dict['dataloader'] = app.dataloaders[dataset_dict['dataloader']][
+                'CLASS']()
+            dataset_dict['data'] = pd.read_pickle(f, compression={'method': None})
 
-    # Configurations
-    len_configs = pickle.load(f)
-    for i in range(len_configs):
-      config_dict = pickle.load(f)
-      config_dict['predictand'] = pickle.load(f)
-      len_predictors = pickle.load(f)
-      config_dict['predictor_pool'] = PredictorPool()
-      for j in range(len_predictors):
-        config_dict['predictor_pool'].add_predictor(pickle.load(f))
-      len_regressors = pickle.load(f)
-      config_dict['regressors'] = Regressors()
-      for j in range(len_regressors):
-        config_dict['regressors'].add_regressor(pickle.load(f))
-      app.model_configurations.add_configuration(**config_dict)
+            app.datasets.add_dataset(**dataset_dict)
 
-    # Saved Models
-    num_saved_models = pickle.load(f)
-    for i in range(num_saved_models):
-      guid = pickle.load(f)
-      regression_model = pickle.load(f)
-      cross_validator = pickle.load(f)
-      num_predictors = pickle.load(f)
-      predictor_pool = PredictorPool()
-      for j in range(num_predictors):
-        predictor_pool.add_predictor(pickle.load(f))
-      predictand = pickle.load(f)
-      training_period_start = pickle.load(f)
-      training_period_end = pickle.load(f)
-      training_exclude_dates = pickle.load(f)
-      issue_date = pickle.load(f)
-      name = pickle.load(f)
-      comment = pickle.load(f)
-      forecasts = pickle.load(f)
-      forecast_obj = ForecastList()
-      forecast_obj.forecasts = forecasts
-      app.saved_models.add_model(
-        regression_model = regression_model,
-        cross_validator = cross_validator,
-        predictors = predictor_pool,
-        predictand = predictand,
-        training_period_start = training_period_start,
-        training_period_end = training_period_end,
-        training_exclude_dates = training_exclude_dates,
-        issue_date = issue_date,
-        name = name,
-        comment = comment,
-        guid = guid,
-        forecasts=forecast_obj
-      )
+        # Configurations
+        len_configs = pickle.load(f)
+        for i in range(len_configs):
+            config_dict = pickle.load(f)
+            config_dict['predictand'] = pickle.load(f)
+            len_predictors = pickle.load(f)
+            config_dict['predictor_pool'] = PredictorPool()
+            for j in range(len_predictors):
+                config_dict['predictor_pool'].add_predictor(pickle.load(f))
+            len_regressors = pickle.load(f)
+            config_dict['regressors'] = Regressors()
+            for j in range(len_regressors):
+                config_dict['regressors'].add_regressor(pickle.load(f))
+            app.model_configurations.add_configuration(**config_dict)
+
+        # Saved Models
+        num_saved_models = pickle.load(f)
+        for i in range(num_saved_models):
+            guid = pickle.load(f)
+            regression_model = pickle.load(f)
+            cross_validator = pickle.load(f)
+            num_predictors = pickle.load(f)
+            predictor_pool = PredictorPool()
+            for j in range(num_predictors):
+                predictor_pool.add_predictor(pickle.load(f))
+            predictand = pickle.load(f)
+            training_period_start = pickle.load(f)
+            training_period_end = pickle.load(f)
+            training_exclude_dates = pickle.load(f)
+            issue_date = pickle.load(f)
+            name = pickle.load(f)
+            comment = pickle.load(f)
+            forecasts = pickle.load(f)
+            forecast_obj = ForecastList()
+            forecast_obj.forecasts = forecasts
+            app.saved_models.add_model(
+                regression_model=regression_model,
+                cross_validator=cross_validator,
+                predictors=predictor_pool,
+                predictand=predictand,
+                training_period_start=training_period_start,
+                training_period_end=training_period_end,
+                training_exclude_dates=training_exclude_dates,
+                issue_date=issue_date,
+                name=name,
+                comment=comment,
+                guid=guid,
+                forecasts=forecast_obj
+            )
 
 
 def sqlite_save_forecast(db: Path):
-  # set database name to forecast file name with '.sqlite' extension
-  db = db.with_suffix('.sqlite')
+    # set database name to forecast file name with '.sqlite' extension
+    db = db.with_suffix('.sqlite')
 
-  # if the database exists, back it up
-  db_backup = Path(db.with_suffix('.sqlite.bak'))
-  if db.is_file():
-    db.replace(db_backup)
+    # if the database exists, back it up
+    db_backup = Path(db.with_suffix('.sqlite.bak'))
+    if db.is_file():
+        db.replace(db_backup)
 
-  con = None
-  cur = None
-  try:
-      # create in-memory database connection
-      with sqlite3.connect(':memory:') as con:
-          cur = con.cursor()
-          cur.execute('PRAGMA foreign_keys = ON')
-          cur.execute('PRAGMA journal_mode = WAL')
+    con = None
+    cur = None
+    try:
+        # create in-memory database connection
+        with sqlite3.connect(':memory:') as con:
+            cur = con.cursor()
+            cur.execute('PRAGMA foreign_keys = ON')
+            cur.execute('PRAGMA journal_mode = WAL')
 
-          # create all sqlite tables to store forecast information
-          sqlite_create_tables(cur)
+            # create all sqlite tables to store forecast information
+            sqlite_create_tables(cur)
 
-          # save app_info information
-          cur.execute("INSERT INTO app_info VALUES (?, ?, ?, ?)", (
-              1, app.PYCAST_VERSION, app.PYTHON_VERSION, sqlite3.sqlite_version))
+            # save app_info information
+            cur.execute("INSERT INTO app_info VALUES (?, ?, ?, ?)", (
+                1, app.PYCAST_VERSION, app.PYTHON_VERSION, sqlite3.sqlite_version))
 
-          # save datasets information
-          sqlite_save_datasets(cur)
+            # save datasets information
+            sqlite_save_datasets(cur)
 
-          # save model configurations information
-          sqlite_save_model_configurations(cur)
+            # save model configurations information
+            sqlite_save_model_configurations(cur)
 
-          # save saved models information
-          sqlite_save_saved_models(cur)
+            # save saved models information
+            sqlite_save_saved_models(cur)
 
-      # save in-memory database to disk
-      cur.execute("VACUUM INTO ?", (str(db),))
+        # save in-memory database to disk
+        cur.execute("VACUUM INTO ?", (str(db),))
 
-      # delete database backup if it exists
-      db_backup.unlink(missing_ok=True)
+        # delete database backup if it exists
+        db_backup.unlink(missing_ok=True)
 
-  except Exception as e:
-      print('Error saving forecast to an SQLite database:')
-      print(f'{repr(e)}')
+    except Exception as e:
+        print('Error saving forecast to an SQLite database:')
+        print(f'{repr(e)}')
 
-  finally:
-    # close in-memory connection if it exists
-    if con:
-        cur.close()
-        con.close()
+    finally:
+        # close in-memory connection if it exists
+        if con:
+            cur.close()
+            con.close()
 
 
 def sqlite_save_saved_models(cur: sqlite3.Cursor):
@@ -623,57 +626,55 @@ def sqlite_create_tables(cur: sqlite3.Cursor):
 
 
 def save_to_file(f):
+    pickle.dump(app.PYCAST_VERSION, f, 4)
 
-  pickle.dump(app.PYCAST_VERSION, f, 4)
+    # Datasets
+    pickle.dump(len(app.datasets), f, 4)  # num datasets
+    for dataset in app.datasets.datasets:
+        d = dataset.__dict__.copy()
+        d['raw_unit'] = d['raw_unit'].id
+        d['display_unit'] = d['display_unit'].id
+        d['dataloader'] = d['dataloader'].NAME
+        pickle.dump({
+            key: d[key] for key in d.keys() if key != 'data'
+        }, f, 4)
+        dataset.data.to_pickle(f, compression=None, protocol=4)
 
-  # Datasets
-  pickle.dump(len(app.datasets), f, 4) # num datasets
-  for dataset in app.datasets.datasets:
-    d = dataset.__dict__.copy()
-    d['raw_unit'] = d['raw_unit'].id
-    d['display_unit'] = d['display_unit'].id
-    d['dataloader'] = d['dataloader'].NAME
-    pickle.dump({
-      key: d[key]  for key in d.keys() if key != 'data'
-    }, f, 4)
-    dataset.data.to_pickle(f, compression = None, protocol=4)
-  
-  # Model Configurations
-  pickle.dump(len(app.model_configurations), f, 4)
-  for config in app.model_configurations.configurations:
-      config_dict = {}
-      for (key, value) in config.__dict__.items():
-        if key in config._ok_to_pickle:
-          config_dict[key] = value
-      pickle.dump(config_dict, f, 4)
+    # Model Configurations
+    pickle.dump(len(app.model_configurations), f, 4)
+    for config in app.model_configurations.configurations:
+        config_dict = {}
+        for (key, value) in config.__dict__.items():
+            if key in config._ok_to_pickle:
+                config_dict[key] = value
+        pickle.dump(config_dict, f, 4)
 
-      pickle.dump(config.predictand, f, 4)
-      
-      pickle.dump(len(config.predictor_pool), f, 4)
-      for dataset in config.predictor_pool:
-        pickle.dump(dataset, f, 4)
-      
-      pickle.dump(len(config.regressors), f, 4)
-      for regressor in config.regressors:
-        pickle.dump(regressor, f, 4)
-  
-  # Saved Models
-  pickle.dump(len(app.saved_models), f, 4)
-  for i in range(len(app.saved_models)):
-    model = app.saved_models[i]
-    pickle.dump(model.guid, f, 4)
-    pickle.dump(model.regression_model, f, 4)
-    pickle.dump(model.cross_validator,f ,4)
-    pickle.dump(len(model.predictors), f, 4)
-    for p in model.predictors:
-      pickle.dump(p, f, 4)
-    pickle.dump(model.predictand, f, 4)
-    pickle.dump(model.training_period_start, f, 4)
-    pickle.dump(model.training_period_end, f, 4)
-    pickle.dump(model.training_exclude_dates, f, 4)
-    pickle.dump(model.issue_date, f, 4)
-    pickle.dump(model.name, f, 4)
-    pickle.dump(model.comment, f, 4)
-    pickle.dump(model.forecasts.forecasts, f, 4)
-  #app.saved_models.save_to_file(f)
+        pickle.dump(config.predictand, f, 4)
 
+        pickle.dump(len(config.predictor_pool), f, 4)
+        for dataset in config.predictor_pool:
+            pickle.dump(dataset, f, 4)
+
+        pickle.dump(len(config.regressors), f, 4)
+        for regressor in config.regressors:
+            pickle.dump(regressor, f, 4)
+
+    # Saved Models
+    pickle.dump(len(app.saved_models), f, 4)
+    for i in range(len(app.saved_models)):
+        model = app.saved_models[i]
+        pickle.dump(model.guid, f, 4)
+        pickle.dump(model.regression_model, f, 4)
+        pickle.dump(model.cross_validator, f, 4)
+        pickle.dump(len(model.predictors), f, 4)
+        for p in model.predictors:
+            pickle.dump(p, f, 4)
+        pickle.dump(model.predictand, f, 4)
+        pickle.dump(model.training_period_start, f, 4)
+        pickle.dump(model.training_period_end, f, 4)
+        pickle.dump(model.training_exclude_dates, f, 4)
+        pickle.dump(model.issue_date, f, 4)
+        pickle.dump(model.name, f, 4)
+        pickle.dump(model.comment, f, 4)
+        pickle.dump(model.forecasts.forecasts, f, 4)
+    #app.saved_models.save_to_file(f)
