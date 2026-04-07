@@ -1,150 +1,143 @@
-from PyQt5.QtWidgets import QApplication
-import numpy as np
-from sys import float_info
 from collections import OrderedDict
+from sys import float_info
+
+import numpy as np
+from PyQt5.QtWidgets import QApplication
 from numba import jit
 
 app = QApplication.instance()
 finfo = float_info.epsilon
 
+
 class Regressor:
 
-  def __init__(self, cross_validation = None):
+    def __init__(self, cross_validation=None):
 
-    self.exposed_params = OrderedDict(
-      [
-        ('Intercept', None),
-        ('Coefficients', None),
-        ('# of Princ. Comps', None)
-      ]
-    )
-    
-    self.pc_retain = app.config['max_pc_mode_variance']
-    
-    self.cross_validation = app.cross_validation[cross_validation]
-    self.coef_ = np.full((500,), np.nan)
+        self.exposed_params = OrderedDict(
+            [
+                ('Intercept', None),
+                ('Coefficients', None),
+                ('# of Princ. Comps', None)
+            ]
+        )
 
-  def is_positive_corr(self):
+        self.pc_retain = app.config['max_pc_mode_variance']
 
-    return np.array([True if c>=0 else False for c in self.coef_[1:]])
-  
-  def update_params(self):
+        self.cross_validation = app.cross_validation[cross_validation]
+        self.coef_ = np.full((500,), np.nan)
 
-    for param_key in self.exposed_params.keys():
+    def is_positive_corr(self):
 
-      if param_key == 'Intercept':
+        return np.array([True if c >= 0 else False for c in self.coef_[1:]])
 
-        self.exposed_params[param_key] = self.coef_[0]
-        continue
+    def update_params(self):
 
-      if param_key == 'Coefficients':
+        for param_key in self.exposed_params.keys():
 
-        coef = self.coef_[~np.isnan(self.coef_)]
-        self.exposed_params[param_key] = coef[1:]
-        continue
-      
-      if param_key == '# of Princ. Comps':
+            if param_key == 'Intercept':
+                self.exposed_params[param_key] = self.coef_[0]
+                continue
 
-        self.exposed_params[param_key] = self.n_pcs
-        continue
-  
-  @staticmethod
-  @jit(nopython=True, cache=True)
-  def to_princ_comps(data):
+            if param_key == 'Coefficients':
+                coef = self.coef_[~np.isnan(self.coef_)]
+                self.exposed_params[param_key] = coef[1:]
+                continue
 
-    # Compute the covariance matrix
-    cov = np.cov(data, rowvar = False, ddof = 1)
+            if param_key == '# of Princ. Comps':
+                self.exposed_params[param_key] = self.n_pcs
+                continue
 
-    # Compute the eigenvalues and eigenvectors
-    eigenvalues, eigenvectors = np.linalg.eigh(cov)
+    @staticmethod
+    @jit(nopython=True, cache=True)
+    def to_princ_comps(data):
 
-    # Sort the eigenvalues in decreasing order
-    idx = np.argsort(eigenvalues)[::-1]
-    eigenvectors = eigenvectors[:, idx]
-    eigenvalues = eigenvalues[idx]
+        # Compute the covariance matrix
+        cov = np.cov(data, rowvar=False, ddof=1)
 
-    # Transform and return the parameters
-    return np.dot(data, eigenvectors), eigenvalues, eigenvectors
+        # Compute the eigenvalues and eigenvectors
+        eigenvalues, eigenvectors = np.linalg.eigh(cov)
 
-  
-  def cross_val_predict(self, x, y):
+        # Sort the eigenvalues in decreasing order
+        idx = np.argsort(eigenvalues)[::-1]
+        eigenvectors = eigenvectors[:, idx]
+        eigenvalues = eigenvalues[idx]
 
-    y_p = np.array([])
-    y_a = np.array([])
+        # Transform and return the parameters
+        return np.dot(data, eigenvectors), eigenvalues, eigenvectors
 
-    if x.shape[1] < 2:
-      y_p = np.full(y.shape, np.nan)
-      y_a = y
-      return y_p, y_a
-    
-    self.mean = np.nanmean(x, axis=0, dtype=np.float64)
-    self.std = np.nanstd(x, axis=0, ddof=1)
-    if any(np.isnan(self.std)):
-      return np.full(y.shape, np.nan), y
-    if not all(self.std): 
-      return np.full(y.shape, np.nan), y
-    x_std = (x-self.mean)/self.std
+    def cross_val_predict(self, x, y):
 
+        y_p = np.array([])
+        y_a = np.array([])
 
-    PC, self.evals, self.evecs = self.to_princ_comps(x_std)
-    cum_var = np.cumsum(self.evals)/PC.shape[1]
-    self.n_pcs = np.where(cum_var >= self.pc_retain)[0][0] + 1
-    PC = PC[:, :self.n_pcs]
+        if x.shape[1] < 2:
+            y_p = np.full(y.shape, np.nan)
+            y_a = y
+            return y_p, y_a
 
-    # Find the best
+        self.mean = np.nanmean(x, axis=0, dtype=np.float64)
+        self.std = np.nanstd(x, axis=0, ddof=1)
+        if any(np.isnan(self.std)):
+            return np.full(y.shape, np.nan), y
+        if not all(self.std):
+            return np.full(y.shape, np.nan), y
+        x_std = (x - self.mean) / self.std
 
-    for indices in self.cross_validation.yield_samples(len(y)):
+        PC, self.evals, self.evecs = self.to_princ_comps(x_std)
+        cum_var = np.cumsum(self.evals) / PC.shape[1]
+        self.n_pcs = np.where(cum_var >= self.pc_retain)[0][0] + 1
+        PC = PC[:, :self.n_pcs]
 
-      x_train = PC[indices]
-      y_train = y[indices]
+        # Find the best
 
-      self.coef_ =self.train_model(x_train, y_train, self.evecs, self.n_pcs, self.std, self.mean)
-      
-      idx = [not elem for elem in indices]
-      x_test = x[idx]
-      y_test = y[idx]
-      y_p_cv = self.predict(x_test)
-      
-      y_p = np.append(y_p, y_p_cv)
-      y_a = np.append(y_a, y_test)
-    
-    # Fit the model as normal
-    self.coef_ = self.train_model(PC, y, self.evecs, self.n_pcs, self.std, self.mean)
-    
-    return y_p, y_a
-  
-  @staticmethod
-  @jit(nopython=True, cache=True)
-  def train_model(x, y, evecs, n_pcs, std, mean):
-    
-    n_row = len(y)
-    ones = np.ones(n_row, dtype=np.float64)
-    mX = np.column_stack((ones, x))
-    if np.linalg.cond(mX) < 1/finfo:
-      beta  = np.linalg.pinv(mX.T.dot(mX)).dot(mX.T).dot(y)
-    else:
-      beta = np.full(mX.shape[1], np.nan)
+        for indices in self.cross_validation.yield_samples(len(y)):
+            x_train = PC[indices]
+            y_train = y[indices]
 
-    # Convert coefficients to real space
-    coef_ = np.array([0]*len(evecs), dtype=np.float64)
-    for ithVec in range(0, len(evecs)):
-      for ithPC in range(0, n_pcs):
-        coef_[ithVec] = coef_[ithVec] + (evecs[ithVec][ithPC] * beta[1+ithPC])/std[ithVec]
-    intercept = beta[0] - np.dot(mean, coef_)
-    coef_ = np.append(intercept, coef_)
-    #coef_ = np.array([intercept] + coef_)
-    return coef_
+            self.coef_ = self.train_model(x_train, y_train, self.evecs, self.n_pcs,
+                                          self.std, self.mean)
 
-  def predict(self, x):
+            idx = [not elem for elem in indices]
+            x_test = x[idx]
+            y_test = y[idx]
+            y_p_cv = self.predict(x_test)
 
-    if x.ndim == 1:
-      mX = np.append([1], x)
-    else:
-      mX = np.column_stack((np.ones(len(x)), x))
+            y_p = np.append(y_p, y_p_cv)
+            y_a = np.append(y_a, y_test)
 
-    return mX.dot(self.coef_)
-  
-  
+        # Fit the model as normal
+        self.coef_ = self.train_model(PC, y, self.evecs, self.n_pcs, self.std, self.mean)
 
+        return y_p, y_a
 
-  
+    @staticmethod
+    @jit(nopython=True, cache=True)
+    def train_model(x, y, evecs, n_pcs, std, mean):
+
+        n_row = len(y)
+        ones = np.ones(n_row, dtype=np.float64)
+        mX = np.column_stack((ones, x))
+        if np.linalg.cond(mX) < 1 / finfo:
+            beta = np.linalg.pinv(mX.T.dot(mX)).dot(mX.T).dot(y)
+        else:
+            beta = np.full(mX.shape[1], np.nan)
+
+        # Convert coefficients to real space
+        coef_ = np.array([0] * len(evecs), dtype=np.float64)
+        for ithVec in range(0, len(evecs)):
+            for ithPC in range(0, n_pcs):
+                coef_[ithVec] = coef_[ithVec] + (
+                            evecs[ithVec][ithPC] * beta[1 + ithPC]) / std[ithVec]
+        intercept = beta[0] - np.dot(mean, coef_)
+        coef_ = np.append(intercept, coef_)
+        # coef_ = np.array([intercept] + coef_)
+        return coef_
+
+    def predict(self, x):
+
+        if x.ndim == 1:
+            mX = np.append([1], x)
+        else:
+            mX = np.column_stack((np.ones(len(x)), x))
+
+        return mX.dot(self.coef_)

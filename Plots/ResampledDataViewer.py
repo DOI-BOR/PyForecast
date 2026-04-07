@@ -1,19 +1,15 @@
+from scipy.stats import linregress
+
 from Plots.Common import pg, BarItem, ScatterItem, CurveItem
 from Utilities.ColorCycler import ColorCycler
-from Utilities import DateAxis
-import pandas as pd
-import numpy as np
-from scipy.stats import linregress
-from PyQt5.QtCore import QPoint
 
 
 class Plot(pg.GraphicsLayoutWidget):
 
-    
     def __init__(self):
 
         pg.GraphicsLayoutWidget.__init__(self)
-        
+
         # Initialize the upper and lower plots
         self.upper_plot = self.addPlot(row=0, col=0, rowspan=3, colspan=2)
         self.upper_plot.setMenuEnabled(False)
@@ -28,7 +24,8 @@ class Plot(pg.GraphicsLayoutWidget):
         self.lower_plot.getAxis('left').setLabel('Fcst Target')
         self.lower_plot.getAxis('bottom').setLabel('Dataset')
 
-        self.lower_label = self.addLabel(text='No dataset selected', row=3, col=1, rowspan=6, colspan=1)
+        self.lower_label = self.addLabel(text='No dataset selected', row=3, col=1,
+                                         rowspan=6, colspan=1)
 
         # SET MINIMUM ROW SIZE FOR ROWS
         _ = [self.ci.layout.setRowMinimumHeight(i, 30) for i in range(9)]
@@ -42,31 +39,32 @@ class Plot(pg.GraphicsLayoutWidget):
         self.lower_items_line = CurveItem(color_cycler.col, fillLevel=None)
 
     def clear_all(self):
-        
+
         self.upper_plot.clear()
         self.lower_plot.clear()
-        
+
         return
 
     def plot(self, dataset, target_dataset):
-    
+
         self.clear_all()
-        
+
         # Compute statistics between the target and the dataset
         common_idx = dataset.data.index.intersection(target_dataset.data.index)
         data_1 = dataset.data.loc[common_idx]
         data_2 = target_dataset.data.loc[common_idx]
         stats = linregress(data_1.values.flatten(), data_2.values.flatten())
-        statsLine_y = [stats.slope*min(data_1) + stats.intercept, stats.slope*max(data_1) + stats.intercept]
+        statsLine_y = [stats.slope * min(data_1) + stats.intercept,
+                       stats.slope * max(data_1) + stats.intercept]
         statsLine_x = [min(data_1), max(data_1)]
 
-
         self.upper_items_bar.setOpts(**{
-            'x':data_1.index,
-            'height':data_1.values.flatten()
+            'x': data_1.index,
+            'height': data_1.values.flatten()
         })
 
-        self.lower_items_sct.setData(x=data_1.values.flatten(), y=data_2.values.flatten())
+        self.lower_items_sct.setData(x=data_1.values.flatten(),
+                                     y=data_2.values.flatten())
         self.lower_items_line.setData(x=statsLine_x, y=statsLine_y)
 
         self.upper_plot.addItem(self.upper_items_bar)
@@ -87,7 +85,5 @@ class Plot(pg.GraphicsLayoutWidget):
             <span style="font-weight:bold">P-val:</span> {stats.pvalue:0.2f}<br>
             {flavor_text}
         </div> """)
-    
+
         return
-
-

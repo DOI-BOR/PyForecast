@@ -2,10 +2,7 @@ from PyQt5.QtCore import QPropertyAnimation, QRectF, QSize, Qt, pyqtProperty
 from PyQt5.QtGui import QPainter, QColor
 from PyQt5.QtWidgets import (
     QAbstractButton,
-    QApplication,
-    QHBoxLayout,
     QSizePolicy,
-    QWidget,
 )
 
 
@@ -41,7 +38,7 @@ class Switch(QAbstractButton):
                 False: highlighttext,
             }
             self._text_color = {
-                True:  highlighttext,
+                True: highlighttext,
                 False: dark,
             }
             self._thumb_text = {

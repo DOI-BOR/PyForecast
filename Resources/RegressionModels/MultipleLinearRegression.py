@@ -1,100 +1,95 @@
-from PyQt5.QtWidgets import QApplication
-import numpy as np
-from sys import float_info
 from collections import OrderedDict
+from sys import float_info
+
+import numpy as np
+from PyQt5.QtWidgets import QApplication
 from numba import jit
 
 finfo = float_info.epsilon
 
 app = QApplication.instance()
 
+
 class Regressor:
 
-  def __init__(self, cross_validation = None):
+    def __init__(self, cross_validation=None):
 
-    self.exposed_params = OrderedDict(
-      [
-        ('Intercept', None),
-        ('Coefficients', None)
-      ]
-    )
-    
-    self.cross_validation = app.cross_validation[cross_validation]
-    self.coef_ = np.full((500,), np.nan, dtype=np.float64)
+        self.exposed_params = OrderedDict(
+            [
+                ('Intercept', None),
+                ('Coefficients', None)
+            ]
+        )
 
-  def is_positive_corr(self):
+        self.cross_validation = app.cross_validation[cross_validation]
+        self.coef_ = np.full((500,), np.nan, dtype=np.float64)
 
-    return np.array([True if c>=0 else False for c in self.coef_[1:]])
-  
-  def update_params(self):
+    def is_positive_corr(self):
 
-    for param_key in self.exposed_params.keys():
+        return np.array([True if c >= 0 else False for c in self.coef_[1:]])
 
-      if param_key == 'Intercept':
+    def update_params(self):
 
-        self.exposed_params[param_key] = self.coef_[0]
-        continue
+        for param_key in self.exposed_params.keys():
 
-      if param_key == 'Coefficients':
+            if param_key == 'Intercept':
+                self.exposed_params[param_key] = self.coef_[0]
+                continue
 
-        coef = self.coef_[~np.isnan(self.coef_)]
-        self.exposed_params[param_key] = coef[1:]
-        continue
+            if param_key == 'Coefficients':
+                coef = self.coef_[~np.isnan(self.coef_)]
+                self.exposed_params[param_key] = coef[1:]
+                continue
 
-  def cross_val_predict(self, x, y):
+    def cross_val_predict(self, x, y):
 
-    y_p = np.array([])
-    y_a = np.array([])
+        y_p = np.array([])
+        y_a = np.array([])
 
-    if len(y) < 2:
-      return np.full(y.shape, np.nan), y
+        if len(y) < 2:
+            return np.full(y.shape, np.nan), y
 
+        for indices in self.cross_validation.yield_samples(len(y)):
+            x_train = x[indices]
+            y_train = y[indices]
 
-    for indices in self.cross_validation.yield_samples(len(y)):
+            self.coef_ = self.train_model(x_train, y_train)
 
-      x_train = x[indices]
-      y_train = y[indices]
+            idx = [not elem for elem in indices]
+            x_test = x[idx]
+            y_test = y[idx]
+            y_p_cv = self.predict(x_test)
 
-      self.coef_ = self.train_model(x_train, y_train)
-      
-      idx = [not elem for elem in indices]
-      x_test = x[idx]
-      y_test = y[idx]
-      y_p_cv = self.predict(x_test)
-      
-      y_p = np.append(y_p, y_p_cv)
-      y_a = np.append(y_a, y_test)
-    
-    # Fit the model as normal
-    self.coef_ = self.train_model(x, y)
-    
-    return y_p, y_a
-  
-  @staticmethod
-  @jit(nopython=True)
-  def train_model(x, y):
-    
-    n_row = len(y)
-    
-    mX = np.column_stack((np.ones(n_row, dtype=np.float64), x))
-    
-    if np.linalg.cond(mX) < 1/finfo:
-      a = mX.T.dot(mX)
-      beta  = np.linalg.pinv(a).dot(mX.T).dot(y)
-    else:
-      beta = np.full(mX.shape[1], np.nan, dtype=np.float64)
-    coef_ = beta
+            y_p = np.append(y_p, y_p_cv)
+            y_a = np.append(y_a, y_test)
 
-    return coef_
+        # Fit the model as normal
+        self.coef_ = self.train_model(x, y)
 
-  def predict(self, x):
+        return y_p, y_a
 
-    if x.ndim == 1:
-      mX = np.append([1], x)
-    else:
-      mX = np.column_stack((np.ones(len(x)), x))
+    @staticmethod
+    @jit(nopython=True)
+    def train_model(x, y):
 
-    return mX.dot(self.coef_)
+        n_row = len(y)
 
+        mX = np.column_stack((np.ones(n_row, dtype=np.float64), x))
 
-  
+        if np.linalg.cond(mX) < 1 / finfo:
+            a = mX.T.dot(mX)
+            beta = np.linalg.pinv(a).dot(mX.T).dot(y)
+        else:
+            beta = np.full(mX.shape[1], np.nan, dtype=np.float64)
+        coef_ = beta
+
+        return coef_
+
+    def predict(self, x):
+
+        if x.ndim == 1:
+            mX = np.append([1], x)
+        else:
+            mX = np.column_stack((np.ones(len(x)), x))
+
+        return mX.dot(self.coef_)

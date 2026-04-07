@@ -1,11 +1,12 @@
-import os
 import pickle
 import sqlite3
 import uuid
-import pandas as pd
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+
+import pandas as pd
 from PyQt5.QtWidgets import QApplication
+
 from Models.ModelConfigurations import (PredictorPool, Regressor, Regressors,
                                         ResampledDataset)
 from Models.SavedModels import ForecastList
@@ -677,4 +678,4 @@ def save_to_file(f):
         pickle.dump(model.name, f, 4)
         pickle.dump(model.comment, f, 4)
         pickle.dump(model.forecasts.forecasts, f, 4)
-    #app.saved_models.save_to_file(f)
+    # app.saved_models.save_to_file(f)

@@ -1,21 +1,23 @@
 from bisect import bisect_left
+
+import numpy as np
 import pyqtgraph as pg
 from PyQt5.QtCore import *
 from PyQt5.QtGui import QFont
-import numpy as np
 from numba import jit
 
 EQUIVALENCY_LISTS = [
     ["INCHES", "INCH", "IN", "IN.", '"'],
     ["METERS", "METER", "M"],
-    ["CENTIMETERS","CENTIMETER", "CM"],
+    ["CENTIMETERS", "CENTIMETER", "CM"],
     ['FEET', 'FOOT', 'FT', 'FT.', "'"],
     ['CFS', 'CUBIC FEET PER SECOND', 'FT3/S', 'FT3/SEC'],
     ["CMS", "CUBIC METERS PER SECOND", "CM/S", "M3/SEC", "M3/S"],
     ['MCM', 'MILLION CUBIC METERS', 'M3M'],
     ['ACRE-FEET', 'AF', 'AC-FT', 'ACRE-FT'],
     ['KAF', 'THOUSAND ACRE-FEET', 'KAC-FT', 'THOUSAND ACRE-FT'],
-    ['DEGREES', 'DEGF', 'DEG. FAHRENHEIT', 'DEGC', 'DEGREES FAHRENHEIT', 'DEGREES CELCIUS', 'DEG FAHRENHEIT', 'DEG CELCIUS', 'DEG. CELCIUS'],
+    ['DEGREES', 'DEGF', 'DEG. FAHRENHEIT', 'DEGC', 'DEGREES FAHRENHEIT',
+     'DEGREES CELCIUS', 'DEG FAHRENHEIT', 'DEG CELCIUS', 'DEG. CELCIUS'],
     ['PERCENT', '%', 'PCT', 'PCT.'],
     ['UNITLESS', "-"],
 ]
@@ -37,6 +39,7 @@ def sameUnits(unit1, unit2):
         return True, unit1
     return False, unit2
 
+
 def condenseUnits(unitList):
     """
     Removes duplicate units from a list of units
@@ -54,15 +57,17 @@ def condenseUnits(unitList):
         condensedList.append(unit_simplified)
         equiv_list = [sameUnits(unit_simplified, i) for i in unitList[1:]]
         counts.append(np.count_nonzero(equiv_list))
-        j=0
+        j = 0
         for i, res in enumerate(equiv_list):
             if res[0]:
-                unitList.pop(i+1-j)
+                unitList.pop(i + 1 - j)
                 j += 1
         unitList.pop(0)
     maxCountIdx = counts.index(max(counts))
-    condensedList = [condensedList[maxCountIdx]] + condensedList[:maxCountIdx] + condensedList[maxCountIdx+1:]
+    condensedList = [condensedList[maxCountIdx]] + condensedList[
+        :maxCountIdx] + condensedList[maxCountIdx + 1:]
     return condensedList
+
 
 @jit(nopython=True)
 def takeClosest(myList, myNumber):
@@ -78,13 +83,14 @@ def takeClosest(myList, myNumber):
     if pos == 0:
         return myList[0], pos
     if pos == len(myList):
-        return myList[-1], pos-1
+        return myList[-1], pos - 1
     before = myList[pos - 1]
     after = myList[pos]
     if after - myNumber < myNumber - before:
-        return after, pos-1
+        return after, pos - 1
     else:
         return before, pos
+
 
 class TimeSeriesLegend(pg.LegendItem):
     """
@@ -136,10 +142,10 @@ class TimeSeriesLegend(pg.LegendItem):
 
         self.setGeometry(0, 0, width + 60, height)
 
+
 class barGraphSample(pg.GraphicsWidget):
 
     def __init__(self, item):
-
         pg.GraphicsWidget.__init__(self)
         self.item = item
 

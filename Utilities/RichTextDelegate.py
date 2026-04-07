@@ -1,7 +1,7 @@
 from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
-import sys
+from PyQt5.QtWidgets import *
+
 
 class HTMLDelegate(QStyledItemDelegate):
     def __init__(self, parent=None):
@@ -10,7 +10,6 @@ class HTMLDelegate(QStyledItemDelegate):
         self.w = None
 
     def paint(self, painter, option, index):
-
         option = QStyleOptionViewItem(option)
         self.initStyleOption(option, index)
         text = index.data(Qt.UserRole + 3)
@@ -18,23 +17,24 @@ class HTMLDelegate(QStyledItemDelegate):
 
         style = QApplication.style() if option.widget is None \
             else option.widget.style()
-        
-        #textOption = QTextOption()
-        #textOption.setTextDirection(option.direction)
+
+        # textOption = QTextOption()
+        # textOption.setTextDirection(option.direction)
 
         doc = QTextDocument(self)
         doc.setHtml(option.text)
         doc.setDefaultFont(option.font)
         doc.setDocumentMargin(10)
         doc.setTextWidth(option.rect.width())
-       
-        #doc.adjustSize()
+
+        # doc.adjustSize()
         option.text = ''
 
         style.drawControl(QStyle.CE_ItemViewItem, option, painter, option.widget)
         textRect = style.subElementRect(QStyle.SE_ItemViewItemText, option)
         documentSize = QSize(int(option.rect.width()), int(doc.size().height()))
-        layoutRect = QStyle.alignedRect(Qt.LayoutDirectionAuto, option.displayAlignment, documentSize, textRect)
+        layoutRect = QStyle.alignedRect(Qt.LayoutDirectionAuto, option.displayAlignment,
+                                        documentSize, textRect)
 
         painter.save()
 
@@ -43,20 +43,17 @@ class HTMLDelegate(QStyledItemDelegate):
 
         painter.restore()
 
-
     def sizeHint(self, option, index):
         option = QStyleOptionViewItem(option)
         self.initStyleOption(option, index)
         text = index.data(Qt.UserRole + 3)
         option.text = text
-        #if option.text == '':
+        # if option.text == '':
         #    return QStyledItemDelegate.sizeHint(self, option, index)
         doc = QTextDocument(self)
         doc.setHtml(option.text)
         doc.setDefaultFont(option.font)
         doc.setDocumentMargin(10)
         doc.setTextWidth(option.rect.width())
-        #doc.adjustSize()
+        # doc.adjustSize()
         return QSize(int(option.rect.width()), int(doc.size().height()))
-
-        

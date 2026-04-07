@@ -1,6 +1,7 @@
+from datetime import datetime, timedelta
+
 import numpy
 from pyqtgraph import AxisItem, mkColor
-from datetime import datetime, timedelta
 
 
 class DateAxisItem(AxisItem):
@@ -13,7 +14,7 @@ class DateAxisItem(AxisItem):
     It provides a  :meth:`attachToPlotItem` method to add it to a given
     PlotItem
     """
-    
+
     # Max width in pixels reserved for each label in axis
     _pxLabelWidth = 80
     _epoch = datetime.fromtimestamp(0)
@@ -23,7 +24,6 @@ class DateAxisItem(AxisItem):
         self._oldAxis = None
         self.setPen(mkColor('#292929'))
         self.setTextPen(mkColor('#292929'))
-        
 
     def tickValues(self, minVal, maxVal, size):
         """
@@ -32,9 +32,8 @@ class DateAxisItem(AxisItem):
         rounding in a decimal base
         """
 
-        maxMajSteps = int(size/self._pxLabelWidth)
+        maxMajSteps = int(size / self._pxLabelWidth)
 
-        
         dt1 = self._epoch + timedelta(seconds=int(minVal))
         dt2 = self._epoch + timedelta(seconds=int(maxVal))
 
