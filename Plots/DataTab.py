@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from PySide6.QtCore import QPoint
+from PySide6.QtCore import Qt, QPoint
 
 from Plots.Common import pg, CurveItem, ScatterItem, TimeSeriesLegend, takeClosest
 from Utilities import DateAxis
@@ -29,7 +29,12 @@ class Plot(pg.GraphicsLayoutWidget):
         self.lower_x_axis.attachToPlotItem(self.lower_plot)
 
         # Set up draggable slider region
-        self.region = pg.LinearRegionItem(brush=pg.mkBrush(100, 100, 100, 50))
+        self.region = pg.LinearRegionItem(
+            brush=pg.mkBrush(100, 100, 100, 25)
+        )
+        self.region.setCursor(Qt.CursorShape.PointingHandCursor)
+        for line in self.region.lines:
+            line.setCursor(Qt.CursorShape.SizeHorCursor)
         self.lower_plot.addItem(self.region)
         self.region.setZValue(10)
 
@@ -63,7 +68,7 @@ class Plot(pg.GraphicsLayoutWidget):
         self.region.setZValue(10)
         newRegion = self.region.getRegion()
         if not any(np.isinf(newRegion)):
-            self.upper_plot.getViewBox().setXRange(*self.region.getRegion(), padding=0)
+            self.upper_plot.setXRange(*newRegion, padding=0)
             for i in range(len(self.upper_plot.items)):
                 self.upper_plot.items[i].viewRangeChanged()
 
@@ -191,8 +196,8 @@ class Plot(pg.GraphicsLayoutWidget):
                 self.legend.addItem(self.upper_items_crv[i], name)
                 self.upper_plot.addItem(self.crv_hover_points[i])
 
-            min_x = min(np.nanmin(x_vals)[0], min_x)
-            max_x = max(np.nanmax(x_vals)[0], max_x)
+            min_x = min(np.nanmin(x_vals), min_x)
+            max_x = max(np.nanmax(x_vals), max_x)
 
         self.region.setRegion([min_x, max_x])
         self.region.setBounds([min_x, max_x])
@@ -203,7 +208,7 @@ class Plot(pg.GraphicsLayoutWidget):
                                                  **{'font-weight': 'bold',
                                                     'font-size': 'x-large',
                                                     'font-family': 'Arial'})
-        self.upper_plot.getAxis('left').setGrid(185)
+        self.upper_plot.getAxis('left').setGrid(0.25)
         self.upper_plot.getAxis('left').setZValue(-1)
-        self.upper_plot.getAxis('bottom').setGrid(185)
+        self.upper_plot.getAxis('bottom').setGrid(0.25)
         self.upper_plot.getAxis('bottom').setZValue(-1)
