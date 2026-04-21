@@ -1,5 +1,4 @@
 import argparse
-import ctypes
 import json
 import os
 import sys
@@ -34,11 +33,11 @@ class Logger(QObject):
 
         self.write('Starting PyForecast')
 
-    def logger_excepthook(self, excType, excValue, tb, logger=None):
+    def logger_excepthook(self, etype, evalue, tb):
         s = list(traceback.format_tb(sys.last_traceback))
         for ss in s:
             self.write(ss)
-        self.write(f"Uncaught exception: {excType}: {excValue} \n \n {tb}")
+        self.write(f"Uncaught exception: {etype}: {evalue} \n \n {tb}")
 
     def write(self, msg):
         """Writes the message (message redirected from print(...)) to the
@@ -130,21 +129,21 @@ class PyForecast(QApplication):
         self.setApplicationVersion(self.PYCAST_VERSION)
         self.setApplicationDisplayName(f'PyForecast v{self.PYCAST_VERSION}')
 
-        # Windows specific commands to properly identify PyCast and show
-        # its icon in the taskbar
-        myappid = f'USBR.PyForecast.{self.PYCAST_VERSION}'
-        if sys.platform == 'win32':
-            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+        # Set window icon in the taskbar and any other windows
         self.icon= QIcon(
             str(self.base_dir.joinpath('Resources', 'Icons', 'AppIcon.ico')))
         self.setWindowIcon(self.icon)
 
         # Read the application configuration and load into the application
         with open(self.base_dir.joinpath('settings.conf'), 'r') as settings:
-            self.settings = json.load(settings, object_hook=DatetimeParser)
+            settings = json.load(settings, object_hook=DatetimeParser)
 
-        # Set up the current file name
-        self.current_file = Path(self.settings['last_dir']).joinpath(self.settings['new_filename'])
+        # Set up the current settings and file name
+        self.settings = settings
+        self.current_file = Path().joinpath(
+            self.settings['last_dir'],
+            self.settings['new_filename']
+        )
 
         # Initialize the Core Models
         from Models import Datasets, ModelConfigurations, SavedModels, Units
@@ -203,7 +202,8 @@ class PyForecast(QApplication):
         with open(self.base_dir.joinpath('settings.conf'), 'w') as settings:
             json.dump(self.settings, settings, indent=4, default=str)
 
-    def delete_temp_files(self):
+    @staticmethod
+    def delete_temp_files():
 
         # delete all temporary files from the current directory
         for fn in os.listdir():
@@ -217,15 +217,13 @@ class PyForecast(QApplication):
         self.log_message += msg
         self.new_log_message.emit()
 
-    def eventFilter(self, object, event):
+    def eventFilter(self, filter_object, filter_event):
 
-        if isinstance(object, QComboBox) and event.type() == QEvent.Type.Wheel:
-            return True
-        elif isinstance(object, QDateEdit) and event.type() == QEvent.Type.Wheel:
-            return True
-        else:
-            return QApplication.eventFilter(self, object, event)
+        if filter_event.type() == QEvent.Type.Wheel:
+            if isinstance(filter_object, (QComboBox, QDateEdit)):
+                return True
 
+        return QObject.eventFilter(self, filter_object, filter_event)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -235,11 +233,11 @@ if __name__ == '__main__':
     )
     parser.add_argument('-f', '--file',
                         help='Provide a file to immediately be opened by PyForecast')
-    args = parser.parse_args()
+    params = parser.parse_args()
 
     # Create the application
     QQuickWindow.setGraphicsApi(QSGRendererInterface.GraphicsApi.OpenGL)
-    app = PyForecast(sys.argv, file=args.file)
+    app = PyForecast(sys.argv, file=params.file)
 
     # Run the application
     sys.exit(app.exec())

@@ -1,11 +1,8 @@
-import os
-
-from PySide6.QtCore import  Qt
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QGuiApplication, QFont, QAction, QIcon
 from PySide6.QtWidgets import (QMainWindow, QApplication, QTabWidget, QLabel,
                                QMenu)
 
-from main import Logger
 from . import DatasetsTab, DataTab, ModelingTab, SavedModelsTab
 
 app = QApplication.instance()
