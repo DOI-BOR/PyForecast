@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 import numpy
-from pyqtgraph import AxisItem, mkColor
+from pyqtgraph import AxisItem, mkPen
 
 
 class DateAxisItem(AxisItem):
@@ -22,8 +22,8 @@ class DateAxisItem(AxisItem):
     def __init__(self, *args, **kwargs):
         AxisItem.__init__(self, *args, **kwargs)
         self._oldAxis = None
-        self.setPen(mkColor('#292929'))
-        self.setTextPen(mkColor('#292929'))
+        self.setPen(mkPen('#292929'))
+        self.setTextPen(mkPen('#292929'))
 
     def tickValues(self, minVal, maxVal, size):
         """

@@ -12,7 +12,7 @@ class TimeSliderPlot(pg.PlotItem):
         self.parent = parent
         pg.PlotItem.__init__(self)
         self.setMenuEnabled(False)
-        self.setMouseEnabled(x=False, y=False)
+        self.getViewBox().setMouseEnabled(x=False, y=False)
 
         b_axis = DateAxis.DateAxisItem(orientation='bottom')
         b_axis.attachToPlotItem(self)
@@ -22,8 +22,8 @@ class TimeSliderPlot(pg.PlotItem):
         self.addItem(self.region)
 
     def updateViews(self):
-        self.viewbox_axis_2.setGeometry(self.vb.sceneBoundingRect())
-        self.viewbox_axis_2.linkedViewChanged(self.vb, self.viewbox_axis_2.XAxis)
+        self.getViewBox().setGeometry(self.vb.sceneBoundingRect())
+        self.getViewBox().linkedViewChanged(self.vb, self.getViewBox().XAxis)
 
     def plot(self, data, colors):
         if isinstance(data, pd.DataFrame):
@@ -47,10 +47,16 @@ class TimeSliderPlot(pg.PlotItem):
             pg.PlotItem.plot(self, x=x, y=dataframe[col].values,
                              clear=True if i == 0 else False, pen=pg.mkPen(colors[i]))
 
-        self.setLimits(xMin=np.nanmin(x), xMax=np.nanmax(x), yMin=dataframe.min().min(),
-                       yMax=dataframe.max().max())
-        self.setRange(xRange=(np.nanmin(x), np.nanmax(x)),
-                      yRange=(dataframe.min().min(), dataframe.max().max()))
+        self.getViewBox().setLimits(
+            xMin=np.nanmin(x),
+            xMax=np.nanmax(x),
+            yMin=dataframe.min().min(),
+            yMax=dataframe.max().max()
+        )
+        self.getViewBox().setRange(
+            xRange=(np.nanmin(x), np.nanmax(x)),
+            yRange=(dataframe.min().min(), dataframe.max().max())
+        )
 
         self.region.setRegion([np.nanmin(x), np.nanmax(x)])
         self.region.setBounds([np.nanmin(x), np.nanmax(x)])

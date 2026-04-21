@@ -2,9 +2,9 @@ import os
 import time
 from pathlib import Path
 
-from PyQt5.QtCore import QCoreApplication, QUrl
-from PyQt5.QtGui import QDesktopServices
-from PyQt5.QtWidgets import *
+from PySide6.QtCore import QCoreApplication, QUrl
+from PySide6.QtGui import QDesktopServices
+from PySide6.QtWidgets import QApplication, QMessageBox, QFileDialog
 
 from Utilities import ExcelExporter, Updater, FileLoaderSaver
 from Views import UnitsEditor, SettingsDialog, AppLogViewer
@@ -16,7 +16,7 @@ app = QApplication.instance()
 class MainWindowModelView:
     """The MainWindowModelView object controls all the 'File Menu' functionality,
     connecting the file menu and it's various dialogs to the application variables
-    such as app.config, app.units.
+    such as app.settings, app.units.
     """
 
     def __init__(self):
@@ -32,9 +32,9 @@ class MainWindowModelView:
         self.mw.file_save_option.triggered.connect(self.SaveFile)
         self.mw.file_save_as_option.triggered.connect(self.SaveFileAs)
         self.mw.export_option.triggered.connect(self.ExportFile)
-        self.mw.toggle_font_small.triggered.connect(lambda x: self.ChangeFont('small'))
-        self.mw.toggle_font_medium.triggered.connect(lambda x: self.ChangeFont('medium'))
-        self.mw.toggle_font_large.triggered.connect(lambda x: self.ChangeFont('large'))
+        self.mw.toggle_font_small.triggered.connect(lambda: self.ChangeFont('small'))
+        self.mw.toggle_font_medium.triggered.connect(lambda: self.ChangeFont('medium'))
+        self.mw.toggle_font_large.triggered.connect(lambda: self.ChangeFont('large'))
         self.mw.edit_units_option.triggered.connect(self.EditUnits)
         self.mw.edit_settings_option.triggered.connect(self.EditApplicationSettings)
         self.mw.documentation_option.triggered.connect(self.OpenDocs)
@@ -42,11 +42,10 @@ class MainWindowModelView:
         self.mw.show_log_option.triggered.connect(self.ShowLog)
 
         # initialize the application font-size from the configuration file
-        self.ChangeFont(app.config['application_font_size'])
+        self.ChangeFont(app.settings['application_font_size'])
 
         # Set the current file name in the status bar
-        app.gui.current_file_widg.setText(
-            f'<strong>File</strong>: {app.current_file}   ')
+        app.gui.current_file_widg.setText(f'<strong>File</strong>: {app.current_file}')
 
     def NewFile(self, _, Prompt=True):
         """Prompts the user if they want to save the current file, and opens a new
@@ -55,17 +54,19 @@ class MainWindowModelView:
         """
 
         if Prompt:
-            ret = QMessageBox.question(app.gui, 'Save changes?',
-                                       f"You're about to open a new file. \n\nSave changes to:\n{app.current_file}?")
-            if ret == QMessageBox.Yes:
+            ret = QMessageBox.question(
+                app.gui,
+                'Save changes?',
+                f"You're about to open a new file. \n\n"
+                f"Save changes to:\n{app.current_file}?")
+            if ret == QMessageBox.StandardButton.Yes:
                 self.SaveFile()
 
         # Clear all the models
         self.clear_models()
 
-        app.current_file = app.config['last_dir'] + '/' + app.config['new_filename']
-        app.gui.current_file_widg.setText(
-            f'<strong>File</strong>: {app.current_file}   ')
+        app.current_file = Path(app.settings['last_dir']).joinpath(app.settings['new_filename'])
+        app.gui.current_file_widg.setText(f'<strong>File</strong>: {app.current_file}')
 
         # Redraw the entire app
         for w in app.topLevelWidgets():
@@ -81,8 +82,11 @@ class MainWindowModelView:
 
         # Open a QFIleDialog if the there is no filename specified
         if not filename:
-            filename, _ = QFileDialog.getOpenFileName(app.gui, "Open Forecast",
-                                                      app.config['last_dir'], '*.fcst')
+            filename, _ = QFileDialog.getOpenFileName(
+                app.gui,
+                "Open Forecast",
+                app.settings['last_dir'], '*.fcst'
+            )
 
         # Ensure that the file is a pyforecast file
         if '.fcst' in str(filename):
@@ -90,23 +94,22 @@ class MainWindowModelView:
             self.clear_models()
             app.processEvents()
 
-            start = time.perf_counter()
-            FileLoaderSaver.sqlite_load_forecast(Path(filename))
-            end = time.perf_counter()
-            print(f"Opened the sqlite forecast in {end - start:.2f} seconds.")
-
             # start = time.perf_counter()
-            # # Open the file and use the file-loader function to read the data into the application
-            # with open(str(filename), 'rb') as read_file:
-            #   FileLoaderSaver.load_file(read_file)
+            # FileLoaderSaver.sqlite_load_forecast(Path(filename))
             # end = time.perf_counter()
-            # print(f"Opened the pickle forecast in {end - start:.2f} seconds.")
+            # print(f"Opened the sqlite forecast in {end - start:.2f} seconds.")
+
+            start = time.perf_counter()
+            # Open the file and use the file-loader function to read the data into the application
+            with open(str(filename), 'rb') as read_file:
+              FileLoaderSaver.load_file(read_file)
+            end = time.perf_counter()
+            print(f"Opened the pickle forecast in {end - start:.2f} seconds.")
 
             # Update the application configuration and current file name
-            app.current_file = filename
-            app.gui.current_file_widg.setText(
-                f'<strong>File</strong>: {app.current_file}   ')
-            app.config['last_dir'] = os.path.dirname(app.current_file)
+            app.current_file = Path(filename)
+            app.gui.current_file_widg.setText(f'<strong>File</strong>: {app.current_file}')
+            app.settings['last_dir'] = os.path.dirname(app.current_file)
             print(f"Successfully opened the file: {app.current_file}")
 
         return
@@ -114,15 +117,15 @@ class MainWindowModelView:
     def SaveFile(self, _=None):
         """Saves the forecast to the forecast file (set in app.current_file)"""
 
-        # If the filename is the 'default' file name from app.config, we should
+        # If the filename is the 'default' file name from app.settings, we should
         # ask the user if they want to specify a file name first.
-        if os.path.basename(app.current_file) == app.config['new_filename']:
+        if app.current_file.name == app.settings['new_filename']:
             if not _:
                 self.SaveFileAs(None)
                 return
 
         start = time.perf_counter()
-        FileLoaderSaver.sqlite_save_forecast(Path(app.current_file))
+        FileLoaderSaver.sqlite_save_forecast(app.current_file)
         end = time.perf_counter()
         print(f"Saved the sqlite forecast in {end - start:.2f} seconds.")
 
@@ -134,11 +137,10 @@ class MainWindowModelView:
         print(f"Saved the pickle forecast in {end - start:.2f} seconds.")
 
         # Update the application with the file name and update the config.
-        app.gui.status_bar.showMessage(f'File [{app.current_file}] saved successfully!',
-                                       3000)
-        app.gui.current_file_widg.setText(
-            f'<strong>File</strong>: {app.current_file}   ')
-        app.config['last_dir'] = os.path.dirname(app.current_file)
+        app.gui.status_bar.showMessage(
+            f'File [{app.current_file}] saved successfully!', 3000)
+        app.gui.current_file_widg.setText(f'<strong>File</strong>: {app.current_file}')
+        app.settings['last_dir'] = os.path.dirname(app.current_file)
         print(f"Successfully saved the file: {app.current_file}")
 
         return
@@ -149,13 +151,15 @@ class MainWindowModelView:
         """
 
         # Get a file name using the QFileDialog
-        filename, _ = QFileDialog.getSaveFileName(app.gui, "Open Forecast",
-                                                  app.config['last_dir'], '*.fcst')
+        filename, _ = QFileDialog.getSaveFileName(
+            app.gui,
+            "Open Forecast",
+            app.settings['last_dir'], '*.fcst')
 
         # Check that filename is valid
         if filename != '':
             # Set the current file name in the app and save the file
-            app.current_file = filename
+            app.current_file = Path(filename)
             self.SaveFile(0)
 
         return
@@ -175,24 +179,26 @@ class MainWindowModelView:
         """
 
         # Create an instance of the ExcelExporter writer
-        writer = ExcelExporter.Exporter()
+        exporter = ExcelExporter.Exporter()
 
         # Update the status bar
         app.gui.status_bar.showMessage('Exporting to Excel...')
         app.processEvents()
 
         # Export the file
-        fn = writer.export()
+        fn = exporter.export()
 
         # Update the status bar
         app.gui.status_bar.showMessage('')
         app.processEvents()
 
         # Prompt the user to see if they want to open the excel file
-        ret = QMessageBox.question(app.gui, 'Export successful',
-                                   f'Successfully exported the file to:\n\n{fn}\n\nOpen the file?')
-        if ret == QMessageBox.Yes:
-            os.system(f'start EXCEL.EXE "{fn}"')
+        ret = QMessageBox.question(
+            app.gui,
+            'Export successful',
+            f'Successfully exported the file to:\n\n{fn}\n\nOpen the file?')
+        if ret == QMessageBox.StandardButton.Yes:
+            os.startfile(fn)
             app.gui.status_bar.showMessage('Opening excel file...', 3000)
 
         return
@@ -201,23 +207,29 @@ class MainWindowModelView:
         """Changes the application wide font size and modifies the configuration file"""
 
         # Change the configuration file
-        app.config['application_font_size'] = size
+        app.settings['application_font_size'] = size
 
         # Set the application stylesheet based on the selected size
         if size == 'small':
 
             app.setStyleSheet(
-                app.styleSheet() + 'QWidget {font-size:9pt; font-family:"Arial"} QWidget#HeaderLabel {font-size:12pt} ')
+                app.styleSheet() + 'QWidget {font-size:9pt; font-family:"Arial"}'
+                                   ' QWidget#HeaderLabel {font-size:12pt}'
+            )
 
         elif size == 'medium':
 
             app.setStyleSheet(
-                app.styleSheet() + 'QWidget {font-size:13pt; font-family:"Arial"} QWidget#HeaderLabel {font-size:16pt}')
+                app.styleSheet() + 'QWidget {font-size:12pt; font-family:"Arial"}'
+                                   ' QWidget#HeaderLabel {font-size:15pt}'
+            )
 
         elif size == 'large':
 
             app.setStyleSheet(
-                app.styleSheet() + 'QWidget {font-size:15pt; font-family:"Arial"} QWidget#HeaderLabel {font-size:18pt}')
+                app.styleSheet() + 'QWidget {font-size:15pt; font-family:"Arial"}'
+                                   ' QWidget#HeaderLabel {font-size:18pt}'
+            )
 
         return
 

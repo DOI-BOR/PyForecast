@@ -1,6 +1,6 @@
 # SEQUENTIAL MIXED FLOATING SELECTION
 # ITERATES BETWEEN FORWARD AND BACKWARD FLOATING SELECTION
-from PyQt5.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication
 from numba import jit
 from numpy import inf
 

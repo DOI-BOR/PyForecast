@@ -2,8 +2,9 @@ import time
 from datetime import datetime
 
 import pandas as pd
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
+from PySide6.QtCore import QThread, Signal
+from PySide6.QtWidgets import (QApplication, QDialog, QPushButton, QProgressBar,
+                               QPlainTextEdit, QVBoxLayout, QLabel)
 
 # Get the global application
 app = QApplication.instance()
@@ -25,7 +26,7 @@ class DataDownloaderDialog(QDialog):
 
         # Determine the start date based on the all_data parameter
         if all_data:
-            self.startDate = app.config['default_data_download_start']
+            self.startDate = app.settings['default_data_download_start']
         else:
             self.startDate = None
 
@@ -84,8 +85,8 @@ class DataDownloaderDialog(QDialog):
 
 
 class DownloadRunner(QThread):
-    update_prog_bar = pyqtSignal(float)
-    update_prog_text = pyqtSignal(str)
+    update_prog_bar = Signal(float)
+    update_prog_text = Signal(str)
 
     def __init__(self, start_time=None, datasets=None):
         """Constructor
@@ -116,7 +117,7 @@ class DownloadRunner(QThread):
             # set the start time for 'get recent' downloads
             if not self.start_time:
                 start = dataset.data.index[-1] \
-                        - pd.DateOffset(days=app.config['default_recent_data_lookback'])
+                        - pd.DateOffset(days=app.settings['default_recent_data_lookback'])
                 self.recent = True
             else:
                 start = self.start_time

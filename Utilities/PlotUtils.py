@@ -2,8 +2,8 @@ from bisect import bisect_left
 
 import numpy as np
 import pyqtgraph as pg
-from PyQt5.QtCore import *
-from PyQt5.QtGui import QFont
+from PySide6.QtCore import QRectF
+from PySide6.QtGui import QFont
 from numba import jit
 
 EQUIVALENCY_LISTS = [

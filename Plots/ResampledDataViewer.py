@@ -11,21 +11,26 @@ class Plot(pg.GraphicsLayoutWidget):
         pg.GraphicsLayoutWidget.__init__(self)
 
         # Initialize the upper and lower plots
-        self.upper_plot = self.addPlot(row=0, col=0, rowspan=3, colspan=2)
+        self.upper_plot = self.ci.addPlot(row=0, col=0, rowspan=3, colspan=2)
         self.upper_plot.setMenuEnabled(False)
         self.upper_plot.setTitle('<strong>Data</strong>')
         self.upper_plot.getAxis('left').setLabel('Value')
         self.upper_plot.getAxis('bottom').setLabel('Year')
 
-        self.lower_plot = self.addPlot(row=3, col=0, rowspan=6, colspan=1)
+        self.lower_plot = self.ci.addPlot(row=3, col=0, rowspan=6, colspan=1)
         self.lower_plot.setMenuEnabled(False)
         self.lower_plot.setMouseEnabled(x=False, y=False)
         self.lower_plot.setTitle('<strong>Correlation w/ Forecast Target</strong>')
         self.lower_plot.getAxis('left').setLabel('Fcst Target')
         self.lower_plot.getAxis('bottom').setLabel('Dataset')
 
-        self.lower_label = self.addLabel(text='No dataset selected', row=3, col=1,
-                                         rowspan=6, colspan=1)
+        self.lower_label = self.ci.addLabel(
+            text='No dataset selected',
+            row=3,
+            col=1,
+            rowspan=6,
+            colspan=1
+        )
 
         # SET MINIMUM ROW SIZE FOR ROWS
         _ = [self.ci.layout.setRowMinimumHeight(i, 30) for i in range(9)]

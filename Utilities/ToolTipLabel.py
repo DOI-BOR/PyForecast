@@ -1,7 +1,11 @@
-import qtawesome as qta
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
+import sys
 
+import qtawesome as qta
+from PySide6.QtCore import QSize
+from PySide6.QtWidgets import (QApplication, QWidget, QLabel, QHBoxLayout,
+                               QProxyStyle, QStyle)
+
+app = QApplication.instance()
 
 class ToolTipLabel(QLabel):
 
@@ -48,14 +52,6 @@ class proxyStyle(QProxyStyle):
 
 
 if __name__ == '__main__':
-    import sys
-    import os
-
-    os.environ['QT_ENABLE_HIGHDPI_SCALING'] = '1'
-    QApplication.setHighDpiScaleFactorRoundingPolicy(
-        Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
-    )
-    app = QApplication(sys.argv)
     app.setStyleSheet("""QLabel {font-size: 24px}""")
 
     w = ToolTipLabel('Hello World', '<strong>This</strong> is an example')

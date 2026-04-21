@@ -1,8 +1,8 @@
 """
 """
 
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import QApplication
+from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex
+from PySide6.QtWidgets import QApplication
 
 # Get the global application
 app = QApplication.instance()
@@ -44,18 +44,22 @@ class Unit:
         return
 
     def convert_to(self, new_unit):
-        """returns a scale and multiplier for converting to the new unit
+        """
+        returns a scale and multiplier for converting to the new unit
         """
         if new_unit.si_id != self.si_id:
             raise Exception(f"Error: impossible to convert {self} to {new_unit}")
 
-        return self.si_scale / new_unit.si_scale, \
-               (self.si_offset - new_unit.si_offset) / new_unit.si_scale
+        return (self.si_scale / new_unit.si_scale,
+                (self.si_offset - new_unit.si_offset) / new_unit.si_scale)
 
     def to_dict(self):
         return {
-            'id': self.id, 'name': self.name, 'si_id': self.si_id,
-            'si_scale': self.si_scale, 'si_offset': self.si_offset
+            'id': self.id,
+            'name': self.name,
+            'si_id': self.si_id,
+            'si_scale': self.si_scale,
+            'si_offset': self.si_offset
         }
 
     def __eq__(self, other_unit):
@@ -68,8 +72,8 @@ class Unit:
         return f'({self.type}) {self.id} - {self.name}'
 
     def __repr__(self):
-        return f'<Unit id="{self.id}", name={self.name}, si_id="{self.si_id}", ' \
-            + f'si_scale={self.si_scale:.5f}, si_offset={self.si_offset:.5f}/> '
+        return (f'<Unit id="{self.id}", name={self.name}, si_id="{self.si_id}",'
+                f' si_scale={self.si_scale:.5f}, si_offset={self.si_offset:.5f}/> ')
 
 
 class Units(QAbstractTableModel):
@@ -90,9 +94,9 @@ class Units(QAbstractTableModel):
 
         # Load the units from the application configuration into
         # the units list.
-        for unit in app.config['default_units']:
+        for unit in app.settings['default_units']:
             self.add_unit(False, **unit)
-        for unit in app.config['user_units']:
+        for unit in app.settings['user_units']:
             self.add_unit(False, **unit)
 
     def data(self, index, role):
@@ -108,20 +112,20 @@ class Units(QAbstractTableModel):
             if col != 6:
                 return
         if row >= self.rowCount():
-            return QVariant()
+            return
 
         # Get the unit associated with the row
         unit = self.units[row]
 
         # Return the combo-box string if col == 6
-        if col == 6 and role == Qt.DisplayRole:
+        if col == 6 and role == Qt.ItemDataRole.DisplayRole:
             return unit.__list_form__()
 
         # return the data as requested.
-        if role == Qt.UserRole + 1:
+        if role == Qt.ItemDataRole.UserRole + 1:
             return unit
-        if role == Qt.DisplayRole:
-            return QVariant(getattr(unit, self.attrs[col]))
+        if role == Qt.ItemDataRole.DisplayRole:
+            return getattr(unit, self.attrs[col])
 
     # Row count returns the number of units in the list
     def rowCount(self, index=QModelIndex()):
@@ -133,11 +137,16 @@ class Units(QAbstractTableModel):
 
     # returns the header data for views that require a header
     def headerData(self, section, orientation, role):
-        if role == Qt.DisplayRole:
-            if orientation == Qt.Horizontal:
+        if role == Qt.ItemDataRole.DisplayRole:
+            if orientation == Qt.Orientation.Horizontal:
                 return [
-                    'ID', 'Name', 'Associated SI Unit',
-                    'SI Scale', 'SI Offset', 'Type', ''][section]
+                    'ID',
+                    'Name',
+                    'Associated SI Unit',
+                    'SI Scale',
+                    'SI Offset',
+                    'Type', ''
+                ][section]
             else:
                 return str(section + 1)
 
@@ -157,9 +166,9 @@ class Units(QAbstractTableModel):
         # Add new unit to list
         self.units.append(new_unit)
 
-        # generate an entry in the config if the unit is a user-defined unit
+        # generate an entry in the settings if the unit is a user-defined unit
         if user_added:
-            app.config['user_units'].append(new_unit.to_dict())
+            app.settings['user_units'].append(new_unit.to_dict())
 
         # Update any views
         self.dataChanged.emit(self.index(0, 0), self.index(self.rowCount(), 6))
@@ -170,7 +179,7 @@ class Units(QAbstractTableModel):
         """Removes the unit from the unit-list and updates
         any views.
         """
-
+        unit = None
         if isinstance(args[0], Unit):
 
             unit = args[0]
@@ -182,9 +191,9 @@ class Units(QAbstractTableModel):
             idx = args[0]
             unit = self.units.pop(idx)
 
-        for i, user_unit in enumerate(app.config['user_units']):
+        for i, user_unit in enumerate(app.settings['user_units']):
             if unit.id == user_unit['id']:
-                removed_unit = app.config['user_units'].pop(i)
+                removed_unit = app.settings['user_units'].pop(i)
 
         self.dataChanged.emit(self.index(0, 0), self.index(self.rowCount(), 6))
 

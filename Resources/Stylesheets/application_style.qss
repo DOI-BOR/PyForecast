@@ -1,31 +1,42 @@
 
 /* Sets widgets on the status bar to have a right and left margin */
-/*QStatusBar QWidget{
-  margin-right: 10px;
-  margin-left: 10px;
-}*/
+QStatusBar QWidget {
+    margin-right: 10px;
+    margin-left: 10px;
+}
 
 /* Provides a black border around list items in listviews */
-QListView::item{
-  border: 2px solid black;
-  border-radius: 4px;
-  background: #ffffff;
-  margin: 4px;
-
+QListView::item {
+    border: 2px solid black;
+    border-radius: 8px;
+    background: #ffffff;
+    margin: 4px;
 }
 
 QListView {
-  background: #efefef;
+    background: #efefef;
 }
 
 /* Changes the color of hovered-over list items */
-QListView::item:hover{
-  background: #adffe4;
+QListView::item:hover {
+    background: #adffe4;
 }
 
 /* changes the color of selected list items */
-QListView::item:selected{
-  background:#ffe7b0;
+QListView::item:selected:active {
+    color: black;
+    background: #ffe7b0;
 }
 
-QWidget#monospace {font-family:"Consolas"}
+QWidget#monospace {
+    font-family:"Consolas"
+}
+
+QTableView::item:hover {
+    background: #adffe4;
+}
+
+QTableView::item:selected:active {
+    color: black;
+    background: #ffe7b0;
+}

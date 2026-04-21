@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from PyQt5.QtCore import QPoint
+from PySide6.QtCore import QPoint
 
 from Plots.Common import pg, CurveItem, ScatterItem, TimeSeriesLegend, takeClosest
 from Utilities import DateAxis
@@ -14,12 +14,13 @@ class Plot(pg.GraphicsLayoutWidget):
         pg.GraphicsLayoutWidget.__init__(self)
 
         # Initialize the upper and lower plots
-        self.upper_plot = self.addPlot(row=0, col=0, rowspan=8, colspan=1)
+        self.upper_plot = self.ci.addPlot(row=0, col=0, rowspan=8, colspan=1)
         self.upper_plot.setMenuEnabled(False)
 
-        self.lower_plot = self.addPlot(row=8, col=0, rowspan=1, colspan=1)
+        self.lower_plot = self.ci.addPlot(row=8, col=0, rowspan=1, colspan=1)
         self.lower_plot.setMenuEnabled(False)
         self.lower_plot.setMouseEnabled(x=False, y=False)
+
 
         # Set up Axes
         self.upper_x_axis = DateAxis.DateAxisItem(orientation='bottom')
@@ -29,8 +30,8 @@ class Plot(pg.GraphicsLayoutWidget):
 
         # Set up draggable slider region
         self.region = pg.LinearRegionItem(brush=pg.mkBrush(100, 100, 100, 50))
-        self.region.setZValue(10)
         self.lower_plot.addItem(self.region)
+        self.region.setZValue(10)
 
         # Intialize the data items
         color_cycler = ColorCycler()
@@ -62,7 +63,7 @@ class Plot(pg.GraphicsLayoutWidget):
         self.region.setZValue(10)
         newRegion = self.region.getRegion()
         if not any(np.isinf(newRegion)):
-            self.upper_plot.setXRange(*self.region.getRegion(), padding=0)
+            self.upper_plot.getViewBox().setXRange(*self.region.getRegion(), padding=0)
             for i in range(len(self.upper_plot.items)):
                 self.upper_plot.items[i].viewRangeChanged()
 
@@ -98,19 +99,29 @@ class Plot(pg.GraphicsLayoutWidget):
                 y_data = y_data[mask]
                 closest_x, closest_idx = takeClosest(x_data, idx)
                 y = y_data[closest_idx]
-                self.legend.items[i - h_cnt][1].setText(item.name().replace('-----',
-                                                                            f'<span style="color:red">{y:,.2f}</span>'.replace(
-                                                                                'nan',
-                                                                                '-----')))
+                self.legend.items[i - h_cnt][1].setText(
+                    item.name().replace(
+                        '-----',
+                        f'<span style="color:red">{y:,.2f}</span>'.replace(
+                            'nan',
+                            '-----'
+                        )
+                    )
+                )
 
             else:
 
                 closest_x, closest_idx = takeClosest(item.getData()[0], idx)
                 y = item.getData()[1][closest_idx]
-                self.legend.items[i - h_cnt][1].setText(item.name().replace('-----',
-                                                                            f'<span style="color:red">{y:,.2f}</span>'.replace(
-                                                                                'nan',
-                                                                                '-----')))
+                self.legend.items[i - h_cnt][1].setText(
+                    item.name().replace(
+                        '-----',
+                        f'<span style="color:red">{y:,.2f}</span>'.replace(
+                            'nan',
+                            '-----'
+                        )
+                    )
+                )
                 if item in self.upper_items_crv:
                     if not np.isnan(closest_x):
                         if not np.isnan(y):
@@ -180,8 +191,8 @@ class Plot(pg.GraphicsLayoutWidget):
                 self.legend.addItem(self.upper_items_crv[i], name)
                 self.upper_plot.addItem(self.crv_hover_points[i])
 
-            min_x = min(np.nanmin(x_vals), min_x)
-            max_x = max(np.nanmax(x_vals), max_x)
+            min_x = min(np.nanmin(x_vals)[0], min_x)
+            max_x = max(np.nanmax(x_vals)[0], max_x)
 
         self.region.setRegion([min_x, max_x])
         self.region.setBounds([min_x, max_x])

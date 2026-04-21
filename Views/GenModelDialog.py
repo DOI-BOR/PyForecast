@@ -1,12 +1,17 @@
+import sys
 from datetime import datetime
 from inspect import signature
 
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
-from PyQt5.QtCore import *
-from PyQt5.QtGui import QFont, QIcon
-from PyQt5.QtWidgets import *
+from PySide6.QtCore import (Qt, QModelIndex, QSortFilterProxyModel,
+                            QAbstractTableModel, QThread)
+from PySide6.QtGui import QFont
+from PySide6.QtWidgets import (QApplication, QDialog, QProgressDialog, QStatusBar,
+                               QTableView, QAbstractItemView, QTextEdit, QLabel,
+                               QProgressBar, QPushButton, QVBoxLayout, QHBoxLayout,
+                               QSplitter)
 from jinja2 import Environment, FileSystemLoader
 
 from Models.SavedModels import Model
@@ -16,10 +21,6 @@ from Utilities.Scatterplot import ScatterPlot
 
 app = QApplication.instance()
 
-
-# def trap_exc_during_debug(*args):
-#  print(args)
-# sys.excepthook = trap_exc_during_debug
 
 class PossibleModels(QAbstractTableModel):
 
@@ -33,45 +34,44 @@ class PossibleModels(QAbstractTableModel):
         self.font_ = QFont('Consolas')
 
     def headerData(self, section, orientation, role):
-        if role == Qt.DisplayRole:
-            if section == 0 and orientation == Qt.Horizontal:
+        if (role == Qt.ItemDataRole.DisplayRole
+                and orientation == Qt.Orientation.Horizontal):
+            if section == 0:
                 return 'Algorithm'
-            if section == 1 and orientation == Qt.Horizontal:
+            if section == 1:
                 return 'Genome'
-            if section > 1 and orientation == Qt.Horizontal:
+            if section > 1:
                 return f'Score ({self.scorers[section - 2]})'
-        return QVariant()
 
     def data(self, index, role):
         model = self.models[index.row()]
-        if role == Qt.DisplayRole:
+        if role == Qt.ItemDataRole.DisplayRole:
             if index.column() == 0:
                 r = model.regressor
-                return QVariant(f'{r.regression_model} / {r.scoring_metric}')
+                return f'{r.regression_model} / {r.scoring_metric}'
             if index.column() == 1:
-                return QVariant(
-                    ''.join([u'\u25cf' if b else u'\u00B7' for b in model.genome]))
+                return ''.join([u'\u25cf' if b else u'\u00B7' for b in model.genome])
             if index.column() > 1:
                 if model.scorer == self.scorers[index.column() - 2]:
-                    return QVariant(f'{model.score:0.6g}')
+                    return f'{model.score:0.6g}'
                 else:
-                    return QVariant('-')
+                    return '-'
 
-        if role == Qt.FontRole:
+        if role == Qt.ItemDataRole.FontRole:
             return self.font_
 
-        if role == Qt.UserRole + 1:
+        if role == Qt.ItemDataRole.UserRole + 1:
             if index.column() == 0:
-                return self.data(index, role=Qt.DisplayRole)
+                return self.data(index, role=Qt.ItemDataRole.DisplayRole)
             if index.column() == 1:
-                return QVariant(sum(
-                    v << i for i, v in enumerate(self.models[index.row()].genome[::-1])))
+                return sum(v << i for i, v in enumerate(self.models[index.row()].genome[::-1]))
             if index.column() > 1:
                 if model.scorer == self.scorers[index.column() - 2]:
-                    return QVariant(model.score)
+                    return model.score
                 else:
-                    return QVariant(np.nan)
-        return QVariant()
+                    return np.nan
+
+        return QAbstractTableModel.data(self, index, role)
 
     def rowCount(self, parent=QModelIndex()):
         return len(self)
@@ -88,7 +88,6 @@ class PossibleModels(QAbstractTableModel):
             self.ins_buf = []
             self.buf_cnt = 0
             self.insertRows(len(self) - 10, 10)
-        # self.insertRow(len(self)-1)
 
     def insertRows(self, position, rows, parent=QModelIndex()):
         self.beginInsertRows(parent, position, position + rows - 1)
@@ -114,12 +113,12 @@ class FilterTable(QSortFilterProxyModel):
 
     def __init__(self):
         QSortFilterProxyModel.__init__(self)
-        self.setSortRole(Qt.UserRole + 1)
+        self.setSortRole(Qt.ItemDataRole.UserRole + 1)
 
     def lessThan(self, left, right):
         if left.column() == right.column():
-            left_data = left.data(Qt.UserRole + 1)
-            right_data = right.data(Qt.UserRole + 1)
+            left_data = left.data(Qt.ItemDataRole.UserRole + 1)
+            right_data = right.data(Qt.ItemDataRole.UserRole + 1)
             return left_data < right_data
         return QSortFilterProxyModel.lessThan(self, left, right)
 
@@ -146,13 +145,10 @@ class GenModelDialog(QDialog):
         self.model_list.selectionModel().currentRowChanged.connect(self.set_model)
 
         # Create progress dialog
-        self.pd = QProgressDialog(
-            "", "Cancel", 0, 100, self.parent_
-        )
-        self.pd.setWindowModality(Qt.WindowModal)
+        self.pd = QProgressDialog("", "Cancel", 0, 100, self.parent_)
+        self.pd.setWindowModality(Qt.WindowModality.WindowModal)
         self.pd.setWindowTitle('Generating Models')
-        self.pd.setStyleSheet("""QLabel {font-family: Consolas, monospace}
-                          """)
+        self.pd.setStyleSheet("""QLabel {font-family: Consolas, monospace}""")
         self.pd.setValue(0)
 
         self.pd.show()
@@ -172,21 +168,24 @@ class GenModelDialog(QDialog):
         self.save_button.pressed.connect(self.save_model)
         self.thread_.started.connect(self.mg.work)
 
-        # self.mg.sig_done.connect(lambda b: self.model_search_finished() if b else None)
-        self.mg.sig_done.connect(lambda b: self.prog_text.setText(self.pd.labelText()))
-        self.mg.sig_done.connect(lambda b: self.pd.close())
+        self.mg.sig_done.connect(
+            lambda:
+            self.prog_text.setText(self.pd.labelText())
+        )
+        self.mg.sig_done.connect(
+            lambda:
+            self.pd.close()
+        )
         self.thread_.start()
-        # self.mg.work()
 
     def stopThread(self):
         self.thread_.quit()
         self.thread_.wait()
         self.exec()
 
-    def closeEvent(self, ev):
+    def closeEvent(self, event):
         self.mg.abort()
-        # self.mg.stop()
-        QDialog.closeEvent(self, ev)
+        event.accept()
 
     def model_search_finished(self):
         print("Finished model search")
@@ -220,17 +219,21 @@ class GenModelDialog(QDialog):
     def setUI(self):
 
         self.setWindowTitle('Generated Models')
-        self.setWindowIcon(QIcon(app.base_dir + '/Resources/Icons/AppIcon.ico'))
+        self.setWindowIcon(app.icon)
 
-        self.status_bar = QStatusBar(objectName='monospace')
+        status_bar = QStatusBar()
+        status_bar.setObjectName('monospace')
+        self.status_bar = QStatusBar(status_bar)
         self.model_list = QTableView()
-        self.model_list.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.model_list.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.model_list.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.model_list.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.model_plots = ModelPlots()
         self.model_info = QTextEdit()
         self.model_info.setReadOnly(True)
         self.model_info.setMinimumWidth(400)
-        self.prog_text = QLabel(objectName='monospace')
+        label = QLabel()
+        label.setObjectName('monospace')
+        self.prog_text = QLabel(label)
         self.model_progress_bar = QProgressBar()
         self.model_progress_bar.setFormat("Finding models...")
         self.model_progress_bar.setMaximum(100)
@@ -255,7 +258,6 @@ class GenModelDialog(QDialog):
         hlayout2 = QHBoxLayout()
         hlayout2.addStretch()
         hlayout2.addWidget(self.sensible_sort_button)
-        # layout.addLayout(hlayout2)
         layout.addWidget(self.status_bar)
 
         self.status_bar.addWidget(self.model_progress_bar, 1)
@@ -315,7 +317,7 @@ class GenModelDialog(QDialog):
 
         self.model_plots.plot_model_data(y_a, y_p, years, units=model.predictand.unit.id)
         environment = Environment(
-            loader=FileSystemLoader(app.base_dir + '/Resources/templates/'))
+            loader=FileSystemLoader(app.base_dir.joinpath('Resources', 'templates')))
         template = environment.get_template("PossibleModelTemplate.html")
         content = template.render(
             model=model,
@@ -374,14 +376,16 @@ class ModelPlots(pg.GraphicsLayoutWidget):
 
         self.ep.plot([years[0] - 1, years[-1] + 1], [0, 0],
                      pen=pg.mkPen({'color': '#FF0000', "width": 2.5}))
-        self.ep.setRange(xRange=(years[0] - 1, years[-1] + 1),
-                         yRange=(-1.1 * np.max(np.abs(actual - predicted)),
-                                 1.1 * np.max(np.abs(actual - predicted))))
+        self.ep.getViewBox().setRange(
+            xRange=(years[0] - 1, years[-1] + 1),
+            yRange=(
+                -1.1 * np.max(np.abs(actual - predicted)),
+                1.1 * np.max(np.abs(actual - predicted))
+            )
+        )
 
 
 if __name__ == '__main__':
-    import sys
-
     app = QApplication(sys.argv)
     t = GenModelDialog()
     t.show()

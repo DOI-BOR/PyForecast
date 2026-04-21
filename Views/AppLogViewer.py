@@ -1,5 +1,5 @@
-from PyQt5.QtGui import QIcon, QFontDatabase
-from PyQt5.QtWidgets import *
+from PySide6.QtWidgets import (QApplication, QDialog, QVBoxLayout, QHBoxLayout,
+                               QTextEdit, QPushButton)
 
 app = QApplication.instance()
 
@@ -10,14 +10,21 @@ class LogViewer(QDialog):
         QDialog.__init__(self)
         self.setModal(False)
         self.setWindowTitle('Application Log')
-        self.setWindowIcon(QIcon(app.base_dir + '/Resources/Icons/AppIcon.ico'))
+        self.setWindowIcon(app.icon)
         self.setUI()
         self.log_area.setText(app.log_message)
         self.clear_button.pressed.connect(self.clear_log)
         self.refr_button.pressed.connect(self.refr)
-        app.new_log_message.connect(lambda: self.log_area.setText(app.log_message))
-        app.new_log_message.connect(lambda: self.log_area.verticalScrollBar().setValue(
-            self.log_area.verticalScrollBar().maximum()))
+        app.new_log_message.connect(
+            lambda:
+            self.log_area.setText(app.log_message)
+        )
+        app.new_log_message.connect(
+            lambda:
+            self.log_area.verticalScrollBar().setValue(
+                self.log_area.verticalScrollBar().maximum()
+            )
+        )
 
     def refr(self):
         self.log_area.setText(app.log_message)
@@ -30,8 +37,7 @@ class LogViewer(QDialog):
     def setUI(self):
         layout = QVBoxLayout()
         self.log_area = QTextEdit()
-        font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
-        self.log_area.setCurrentFont(font)
+        self.log_area.setObjectName('monospace')
         self.log_area.setReadOnly(True)
         self.clear_button = QPushButton('Clear')
         self.refr_button = QPushButton('Refresh')
@@ -42,5 +48,5 @@ class LogViewer(QDialog):
         layout.addWidget(self.log_area)
         layout.addLayout(hlayout)
         self.setLayout(layout)
-        self.log_area.setMinimumWidth(900)
+        self.log_area.setMinimumWidth(1100)
         self.log_area.setMinimumHeight(400)

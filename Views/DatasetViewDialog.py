@@ -1,9 +1,11 @@
+import sys
 from copy import deepcopy
 from operator import attrgetter
 
-from PyQt5.QtCore import Qt, QStringListModel, QSortFilterProxyModel, QModelIndex
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import *
+from PySide6.QtCore import Qt, QStringListModel, QSortFilterProxyModel, QModelIndex
+from PySide6.QtWidgets import (QApplication, QDialog, QLineEdit, QComboBox, QCheckBox,
+                               QPushButton, QStyle, QLabel, QFrame, QVBoxLayout,
+                               QHBoxLayout, QFormLayout, QFileDialog, QMessageBox)
 
 from Utilities.ToolTipLabel import ToolTipLabel
 
@@ -22,9 +24,9 @@ class UnitFilterModel(QSortFilterProxyModel):
 
     def filterAcceptsRow(self, sourceRow, sourceParent=QModelIndex()):
         idx = self.sourceModel().index(sourceRow, 5)
-        source_unit_type = self.sourceModel().data(idx, Qt.DisplayRole)
+        source_unit_type = self.sourceModel().data(idx, Qt.ItemDataRole.DisplayRole)
 
-        if source_unit_type.value() == self.filterString:
+        if source_unit_type == self.filterString:
             return True
         else:
             return False
@@ -36,7 +38,7 @@ class DatasetViewer(QDialog):
 
         QDialog.__init__(self)
         self.setWindowTitle('View Dataset')
-        self.setWindowIcon(QIcon(app.base_dir + '/Resources/Icons/AppIcon.ico'))
+        self.setWindowIcon(app.icon)
         self.app = app
         self.guid = dataset_guid
         self.new = new
@@ -60,7 +62,8 @@ class DatasetViewer(QDialog):
         self.display_unit_field.setModelColumn(6)
         self.dataloader_field = QComboBox()
         self.dataloader_field.setModel(
-            QStringListModel(list(self.app.dataloaders.keys())))
+            QStringListModel(list(self.app.dataloaders.keys()))
+        )
 
         self.unit_field.currentIndexChanged.connect(self.updateUnits)
 
@@ -70,7 +73,9 @@ class DatasetViewer(QDialog):
         self.file_path.setReadOnly(True)
         self.file_path.setEnabled(False)
         self.file_select_button = QPushButton(
-            self.style().standardIcon(QStyle.SP_DirIcon), '')
+            self.style().standardIcon(QStyle.StandardPixmap.SP_DirIcon),
+            ''
+        )
         self.file_select_button.setEnabled(False)
         self.file_validation_label = QLabel()
 
@@ -80,51 +85,77 @@ class DatasetViewer(QDialog):
 
         # Set up the form
         line = QFrame()
-        line.setFrameShape(QFrame.HLine)
+        line.setFrameShape(QFrame.Shape.HLine)
         layout = QVBoxLayout()
         label = QLabel('<strong>Dataset Description</strong>')
 
-        label.setAlignment(Qt.AlignCenter)
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(label)
         layout.addWidget(line)
         layout2 = QFormLayout()
-        layout2.setLabelAlignment(Qt.AlignRight)
-        layout2.addRow(ToolTipLabel('GUID', 'Internal identifier for this dataset'),
-                       self.guid_field_readonly)
-        layout2.addRow(ToolTipLabel('ID',
-                                    "This dataset's <strong>ID</strong>. Dataloaders use this to find and download data"),
-                       self.external_id_field)
+        layout2.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
+        layout2.addRow(
+            ToolTipLabel(
+                'GUID',
+                'Internal identifier for this dataset'
+            ),
+            self.guid_field_readonly
+        )
+        layout2.addRow(
+            ToolTipLabel(
+                'ID',
+                "This dataset's <strong>ID</strong>. Dataloaders use this"
+                " to find and download data"
+            ),
+            self.external_id_field)
         layout2.addRow('Name', self.name_field)
         layout2.addRow('Agency', self.agency_field)
         layout2.addRow('Parameter', self.parameter_field)
-        layout2.addRow(ToolTipLabel('Parameter Code',
-                                    'This code is used by dataloaders when downloading data'),
-                       self.param_code_field)
-        layout2.addRow(ToolTipLabel('Raw Units',
-                                    'Data is returned from the dataloader in this unit'),
-                       self.unit_field)
-        layout2.addRow(ToolTipLabel('Display Units',
-                                    'PyForecast converts the raw units to this unit for display and processing'),
-                       self.display_unit_field)
+        layout2.addRow(
+            ToolTipLabel(
+                'Parameter Code',
+                'This code is used by dataloaders when downloading data'
+            ),
+            self.param_code_field
+        )
+        layout2.addRow(
+            ToolTipLabel(
+                'Raw Units',
+                'Data is returned from the dataloader in this unit'
+            ),
+            self.unit_field
+        )
+        layout2.addRow(
+            ToolTipLabel(
+                'Display Units',
+                'PyForecast converts the raw units to this unit for'
+                ' display and processing'
+            ),
+            self.display_unit_field
+        )
         layout2.addRow('Dataloader', self.dataloader_field)
         line2 = QFrame()
-        line2.setFrameShape(QFrame.HLine)
+        line2.setFrameShape(QFrame.Shape.HLine)
         layout2.addWidget(line2)
-        layout2.addRow(ToolTipLabel('Flat-file source?',
-                                    "Check this box if you're importing data from a file"),
-                       self.is_file_import)
+        layout2.addRow(
+            ToolTipLabel(
+                'Flat-file source?',
+                "Check this box if you're importing data from a file"
+            ),
+            self.is_file_import
+        )
         layout3 = QHBoxLayout()
         layout3.addWidget(self.file_path)
         layout3.addWidget(self.file_select_button)
         layout2.addRow('File path', layout3)
         layout.addLayout(layout2)
         line3 = QFrame()
-        line3.setFrameShape(QFrame.HLine)
+        line3.setFrameShape(QFrame.Shape.HLine)
         layout.addWidget(line3)
         layout4 = QHBoxLayout()
+        layout4.addStretch(1)
         layout4.addWidget(self.save_button)
         layout4.addWidget(self.cancel_button)
-        layout4.addStretch(1)
         layout.addLayout(layout4)
 
         self.is_file_import.toggled.connect(lambda c: self.file_import_toggled(c))
@@ -144,12 +175,14 @@ class DatasetViewer(QDialog):
         self.unitFilterModel.setFilterString(new_unit.type)
 
     def file_select(self):
-        fn, _filter = QFileDialog.getOpenFileName(self, 'Select Flat File',
-                                                  self.app.config['last_dir'],
-                                                  'Flat-File Files (*.csv  *.xlsx)')
+        fn, _filter = QFileDialog.getOpenFileName(
+            self,
+            'Select Flat File',
+            self.app.settings['last_dir'],
+            'Flat-File Files (*.csv  *.xlsx)'
+        )
         if fn:
-            if fn != '':
-                self.file_path.setText(fn)
+            self.file_path.setText(fn)
 
     def file_import_toggled(self, checkstate):
 
@@ -170,10 +203,10 @@ class DatasetViewer(QDialog):
         dataset.agency = self.agency_field.text().strip()
         dataset.parameter = self.parameter_field.text().strip()
         dataset.param_code = self.param_code_field.text().strip()
-        dataset.raw_unit = self.unit_field.currentData(Qt.UserRole + 1)
-        dataset.display_unit = self.display_unit_field.currentData(Qt.UserRole + 1)
-        dataset.dataloader = self.app.dataloaders[self.dataloader_field.currentText()][
-            'CLASS']()
+        dataset.raw_unit = self.unit_field.currentData(Qt.ItemDataRole.UserRole + 1)
+        dataset.display_unit = self.display_unit_field.currentData(Qt.ItemDataRole.UserRole + 1)
+        dataset.dataloader = self.app.dataloaders[
+            self.dataloader_field.currentText()]['CLASS']()
         dataset.is_file_import = self.is_file_import.isChecked()
         if dataset.is_file_import:
             dataset.dataloader = self.app.dataloaders['Flat File Import']['CLASS']()
@@ -193,28 +226,30 @@ class DatasetViewer(QDialog):
                 diffs.append((attr, old, new))
         if len(diffs) > 0:
             diff_string = ',\n'.join([f'{a[0]}: "{a[1]}" -> "{a[2]}"' for a in diffs])
-            ret = QMessageBox.question(self, 'Unsaved Changes',
-                                       f"You have made changes to the dataset. Changes include:\n\n{diff_string}\n\nSave those changes?")
+            ret = QMessageBox.question(
+                self,
+                'Unsaved Changes',
+                "You have made changes to the dataset. Changes"
+                f" include:\n\n{diff_string}\n\nSave those changes?"
+            )
             return ret
         else:
-            return QMessageBox.No
+            return QMessageBox.StandardButton.No
 
     def closeEvent(self, event):
         if event.spontaneous():
             d = self.gather_dataset()
             ret = self.checkDataset(d)
-            if ret == QMessageBox.Yes:
+            if ret == QMessageBox.StandardButton.Yes:
                 self.save_dataset()
             else:
                 if self.new:
                     self.app.datasets.remove_dataset(guid=self.dataset.guid)
                 self.close()
-                # QWidget.closeEvent(self, event)
         else:
             if self.new:
                 self.app.datasets.remove_dataset(guid=self.dataset.guid)
             self.close()
-            # QWidget.closeEvent(self, event)
 
     def save_dataset(self):
 
@@ -257,8 +292,6 @@ class DatasetViewer(QDialog):
 
 
 if __name__ == '__main__':
-    import sys
-
     app = QApplication(sys.argv)
     mw = DatasetViewer(app)
     mw.show()

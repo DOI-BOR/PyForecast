@@ -2,7 +2,7 @@ from collections import OrderedDict
 from sys import float_info
 
 import numpy as np
-from PyQt5.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication
 from numba import jit
 
 finfo = float_info.epsilon

@@ -5,7 +5,7 @@ from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
-from PyQt5.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication
 
 from Models.ModelConfigurations import (PredictorPool, Regressor, Regressors,
                                         ResampledDataset)
@@ -113,7 +113,7 @@ def sqlite_load_saved_models(cur: sqlite3.Cursor):
             values.append(datarow['value'])
         forecast_list.forecasts = pd.DataFrame(
             index=pd.MultiIndex.from_arrays([years, exceedences],
-                                            names=['Year', 'Exceedence']),
+                                            names=['Year', 'Exceedance']),
             data=values, columns=['Value'])
         sm_dict['forecast'] = forecast_list
 
@@ -398,7 +398,7 @@ def sqlite_save_saved_models(cur: sqlite3.Cursor):
 
         forecast = saved_model.forecasts.forecasts
         year = forecast.index.get_level_values('Year').values.flatten()
-        exc = forecast.index.get_level_values('Exceedence').values.flatten()
+        exc = forecast.index.get_level_values('Exceedance').values.flatten()
         value = forecast.values.flatten()
         data = [[saved_model.guid, x, y, z]
                 for x, y, z in

@@ -2,19 +2,21 @@ from io import StringIO
 
 import numpy as np
 import pandas as pd
-import requests
+import urllib3
 
 
 class Dataloader(object):
     NAME = "NOAA-CPC"
-    DESCRIPTION = "USBR Missouri Basin HydroMet System. Requires a valid HydroMet Site ID and Parameter Code."
+    DESCRIPTION = ("USBR Missouri Basin HydroMet System. Requires a valid "
+                   "HydroMet Site ID and Parameter Code.")
 
     def load(self, dataset, date1, date2):
 
+        http = urllib3.PoolManager()
         if dataset.external_id == 'MENSO':
             url = "https://psl.noaa.gov/enso/mei/data/meiv2.data"
-            r = requests.get(url, verify=False)
-            df = pd.read_csv(StringIO(r.content.decode('utf-8')),
+            r = http.request('GET', url)
+            df = pd.read_csv(StringIO(r.data.decode('utf-8')),
                              skiprows=1,
                              names=['year', '1', '2', '3', '4', '5', '6', '7', '8', '9',
                                     '10', '11', '12'],
@@ -48,8 +50,8 @@ class Dataloader(object):
 
         elif dataset.external_id == 'PNA':
             url = "http://www.cpc.ncep.noaa.gov/products/precip/CWlink/pna/norm.pna.monthly.b5001.current.ascii"
-            r = requests.get(url, verify=False)
-            dataMonth = pd.read_csv(StringIO(r.content.decode('utf-8')),
+            r = http.request('GET', url)
+            dataMonth = pd.read_csv(StringIO(r.data.decode('utf-8')),
                                     names=['year', 'month', 'PNA | Indice'], sep=r'\s+')
             dataMonth['day'] = len(dataMonth.index) * [1]
             datetimes = pd.to_datetime(dataMonth[['year', 'month', 'day']])

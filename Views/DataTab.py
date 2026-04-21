@@ -1,8 +1,10 @@
 import numpy as np
 import pyqtgraph as pg
-from PyQt5 import QtGui
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import *
+from PySide6.QtGui import QAction, QPainter
+from PySide6.QtCore import Qt, QPoint
+from PySide6.QtWidgets import (QApplication, QWidget, QPushButton, QSplitter,
+                               QHBoxLayout, QVBoxLayout, QListView, QAbstractItemView,
+                               QMenu)
 
 from Plots import DataTab as DTP
 from Utilities import RichTextDelegate, ColorCycler, TimeSeriesPlot, TimeSeriesSlider
@@ -21,7 +23,8 @@ class DataTab(QWidget):
 
         self.data_all_button = QPushButton('Download all data')
         self.data_all_button.setStatusTip(
-            f'Downloads all the data for all datasets in the forecast file (from {app.config["default_data_download_start"]:%Y-%m-%d} until now)')
+            f'Downloads all the data for all datasets in the forecast file '
+            f'(from {app.settings["default_data_download_start"]:%Y-%m-%d} until now)')
         self.data_update_button = QPushButton('Download recent data')
         self.data_update_button.setStatusTip(
             f'Downloads only recent data for all datasets in the forecast file')
@@ -33,11 +36,11 @@ class DataTab(QWidget):
         self.dataset_list = SelectedDatasetList()
 
         # Create the data viewer
-        self.data_viewer = DTP.Plot()  # DataViewer()
+        self.data_viewer = DTP.Plot()
 
         # Layout the Tab
         layout = QHBoxLayout()
-        self.splitter = QSplitter()
+
         layout2 = QVBoxLayout()
         layout2.addWidget(self.data_all_button)
         layout2.addWidget(self.data_update_button)
@@ -45,12 +48,16 @@ class DataTab(QWidget):
         layout2.addWidget(self.edit_data_excel_button)
         self.w = QWidget()
         self.w.setLayout(layout2)
+        self.splitter = QSplitter()
         self.splitter.addWidget(self.w)
         self.splitter.addWidget(self.data_viewer)
+        self.splitter.setCollapsible(0, False)
+        self.splitter.setCollapsible(1, False)
+
         layout.addWidget(self.splitter)
         self.setLayout(layout)
 
-        self.splitter.splitterMoved.connect(lambda pos, idx: self.updateListSize())
+        self.splitter.splitterMoved.connect(lambda: self.updateListSize())
 
     def updateListSize(self):
         app.datasets.dataChanged.emit(app.datasets.index(0),
@@ -87,8 +94,10 @@ class DataViewer(pg.GraphicsLayoutWidget):
         self.timesliderplot.region.setZValue(10)
         newRegion = self.timesliderplot.region.getRegion()
         if not any(np.isinf(newRegion)):
-            self.timeseriesplot.setXRange(*self.timesliderplot.region.getRegion(),
-                                          padding=0)
+            self.timeseriesplot.getViewBox().setXRange(
+                *self.timesliderplot.region.getRegion(),
+                padding=0
+            )
             for i in range(len(self.timeseriesplot.items)):
                 self.timeseriesplot.items[i].viewRangeChanged()
 
@@ -120,44 +129,23 @@ class SelectedDatasetList(QListView):
         QListView.__init__(self)
         self.setMinimumWidth(300)
         self.setItemDelegate(RichTextDelegate.HTMLDelegate())
-        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setSizeAdjustPolicy(QListView.SizeAdjustPolicy.AdjustToContents)
 
         self.download_all_one_shot_action = QAction('Download all data for selection')
         self.download_all_one_shot_action.setStatusTip(
-            'Downloads all the data for datasets in the selection')
-        self.download_all_one_shot_action = QAction('Download all data for selection')
-        self.download_all_one_shot_action.setStatusTip(
-            'Downloads all the data for datasets in the selection')
+            'Downloads all the data for datasets in the selection'
+        )
 
     def paintEvent(self, e):
         QListView.paintEvent(self, e)
         if (self.model()) and (self.model().rowCount(self.rootIndex()) > 0):
             return
-        painter = QtGui.QPainter(self.viewport())
-        painter.drawText(self.rect(), Qt.AlignCenter,
-                         'No datasets in this forecast file')
+        painter = QPainter(self.viewport())
+        painter.drawText(
+            self.rect(),
+            Qt.AlignmentFlag.AlignCenter,
+            'No datasets in this forecast file'
+        )
         painter.end()
-
-    def customMenu(self, pos):
-        globalpos = self.mapToGlobal(pos)
-        menu = QMenu()
-
-        menu.addAction(self.download_all_one_shot_action)
-        menu.addAction(self.download_recent_one_shot_action)
-
-        index = self.indexAt(pos)
-        selected = self.selectedIndexes()
-
-        if not index.isValid():
-            self.view_action.setEnabled(False)
-            self.add_action.setEnabled(True)
-            self.remove_action.setEnabled(False)
-        elif len(selected) > 1:
-            self.view_action.setEnabled(False)
-            self.remove_action.setEnabled(True)
-            self.add_action.setEnabled(False)
-        else:
-            self.view_action.setEnabled(True)
-            self.remove_action.setEnabled(True)
-            self.add_action.setEnabled(False)
-        menu.exec_(globalpos)

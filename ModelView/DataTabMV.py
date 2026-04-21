@@ -1,9 +1,9 @@
 import os
-import subprocess
 import time
 
 import pandas as pd
-from PyQt5.QtWidgets import *
+from PySide6.QtWidgets import (QApplication, QVBoxLayout, QHBoxLayout, QMessageBox,
+                               QDialog, QLabel, QPushButton)
 
 from Utilities.DataDownloader import DataDownloaderDialog
 
@@ -27,8 +27,12 @@ class DataModelView:
     def edit_data_excel(self):
 
         if len(app.datasets) < 1:
-            QMessageBox.information(self.dt, 'No datasets',
-                                    'You do not have any selected datasets in this file. Add a dataset to download data.')
+            QMessageBox.information(
+                self.dt,
+                'No datasets',
+                'You do not have any selected datasets in this file.'
+                ' Add a dataset to download data.'
+            )
             return
 
         d = QDialog(self.dt)
@@ -59,10 +63,9 @@ class DataModelView:
         df.columns = names
 
         # Write Excel fle
-        fn1 = app.base_dir + f'/temp_{len(os.listdir())}.xlsx'
-        fn = fn1
+        fn = app.base_dir.joinpath(f'temp_{len(os.listdir())}.xlsx')
         writer = pd.ExcelWriter(fn, engine='xlsxwriter')
-        df.to_excel(writer, 'Data')
+        df.to_excel(writer, sheet_name='Data')
 
         workbook = writer.book
         fmt = workbook.add_format({'text_wrap': True})
@@ -70,16 +73,14 @@ class DataModelView:
         sheet.set_row(0, height=40)
         sheet.set_column("A:A", width=20)
         sheet.set_column('B:AZ', width=20, cell_format=fmt)
-        # for col in range(len(df.columns)):
-        #   sheet.set_cell_format(0, col+1, fmt)
-        writer.save()
-        del writer
+        writer.close()
 
         lab.setText(
-            "Your data is opening in excel. Save and close the excel documents when you're done editing.")
+            "Your data is opening in excel. Save and close the excel"
+            " documents when you're done editing."
+        )
 
-        proc = subprocess.Popen(args=['start', 'EXCEL.EXE', fn], stdout=subprocess.PIPE,
-                                shell=True)
+        os.startfile(fn)
         time.sleep(1)
 
         ll.addLayout(h)
@@ -107,69 +108,67 @@ class DataModelView:
         selection = self.dt.dataset_list.selectionModel().selectedRows()
         selected_datasets = [app.datasets[idx.row()] for idx in selection]
         self.dt.data_viewer.plot(selected_datasets)
-        # if len(selected_datasets) < 1:
-        #   self.dt.data_viewer.clear_all()
-        #   return
-        # df = pd.DataFrame()
-        # labels = []
-        # unit_list = []
-        # for dataset in selected_datasets:
-        #   unit_list.append(dataset.display_unit.id)
-        #   labels.append(dataset.__condensed_form__())
-        #   scale, off = dataset.raw_unit.convert_to(dataset.display_unit)
-        #   df = pd.concat([df, dataset.data*scale + off], axis=1)
-        # df.index = pd.DatetimeIndex(df.index)
-        # df.columns = labels
-        # self.dt.data_viewer.plot(df, unit_list=unit_list)
 
     def download_recent(self):
         if len(app.datasets) < 1:
-            QMessageBox.information(self.dt, 'No datasets',
-                                    'You do not have any selected datasets in this file. Add a dataset to download data.')
+            QMessageBox.information(
+                self.dt,
+                'No datasets',
+                'You do not have any selected datasets in this file.'
+                ' Add a dataset to download data.'
+            )
             return
         selection = [app.datasets[idx.row()] for idx in
                      self.dt.dataset_list.selectionModel().selection().indexes()]
         if len(selection) > 0:
             msgbox = QMessageBox()
-            msgbox.setIcon(QMessageBox.Question)
+            msgbox.setIcon(QMessageBox.Icon.Question)
             msgbox.setWindowTitle('Download for selection?')
             msgbox.setText(
                 'Download only selected datasets ("Selected") or all datasets ("All")')
-            msgbox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-            buttonY = msgbox.button(QMessageBox.Yes)
+            msgbox.setStandardButtons(
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            buttonY = msgbox.button(QMessageBox.StandardButton.Yes)
             buttonY.setText('Selected')
-            buttonN = msgbox.button(QMessageBox.No)
+            buttonN = msgbox.button(QMessageBox.StandardButton.No)
             buttonN.setText('All')
             msgbox.exec_()
             ret = msgbox.clickedButton()
             if ret == buttonN:
                 selection = None
 
-        dd = DataDownloaderDialog(all_data=False, selection=selection)
+        DataDownloaderDialog(all_data=False, selection=selection)
 
     def download_all(self):
         """
         Downloads all the data for all objects
         """
         if len(app.datasets) < 1:
-            QMessageBox.information(self.dt, 'No datasets',
-                                    'You do not have any selected datasets in this file. Add a dataset to download data.')
+            QMessageBox.information(
+                self.dt,
+                'No datasets',
+                'You do not have any selected datasets in this file.'
+                ' Add a dataset to download data.'
+            )
             return
         selection = [app.datasets[idx.row()] for idx in
                      self.dt.dataset_list.selectionModel().selection().indexes()]
         if len(selection) > 0:
             msgbox = QMessageBox()
-            msgbox.setIcon(QMessageBox.Question)
+            msgbox.setIcon(QMessageBox.Icon.Question)
             msgbox.setWindowTitle('Download for selection?')
             msgbox.setText(
-                'Download only selected datasets ("Selected") or all datasets ("All")')
-            msgbox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-            buttonY = msgbox.button(QMessageBox.Yes)
+                'Download only selected datasets ("Selected") or all datasets ("All")'
+            )
+            msgbox.setStandardButtons(
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            buttonY = msgbox.button(QMessageBox.StandardButton.Yes)
             buttonY.setText('Selected')
-            buttonN = msgbox.button(QMessageBox.No)
+            buttonN = msgbox.button(QMessageBox.StandardButton.No)
             buttonN.setText('All')
             msgbox.exec_()
             ret = msgbox.clickedButton()
             if ret == buttonN:
                 selection = None
-        dd = DataDownloaderDialog(all_data=True, selection=selection)
+        DataDownloaderDialog(all_data=True, selection=selection)

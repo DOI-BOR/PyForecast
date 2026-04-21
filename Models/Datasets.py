@@ -15,8 +15,8 @@ displays those datasets in lists and drop-down views.
 from uuid import uuid4
 
 import pandas as pd
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import QApplication
+from PySide6.QtCore import Qt, QAbstractListModel, QModelIndex
+from PySide6.QtWidgets import QApplication
 
 from Models.Units import Unit
 
@@ -24,7 +24,7 @@ from Models.Units import Unit
 app = QApplication.instance()
 
 # Rich Text for Rich-Text formatted listviews
-DATASET_LIST_RICH_TEXT = """
+RICH_TEXT = """
   <style>
   
   .big {{
@@ -52,8 +52,6 @@ DATASET_LIST_RICH_TEXT = """
   <tr><td width="120" class="bold">Parameter:</td><td>{parameter}</td></tr>
   <tr><td width="120" class="bold">Unit:</td><td>{display_unit.name}</td></tr>
   </table>
- 
-  
 """
 
 
@@ -162,7 +160,7 @@ class Dataset:
 
         self.name2 = f'<span style="color:{color(self)}">' + self.name2 + '</span>'
 
-        return DATASET_LIST_RICH_TEXT.format(**self.__dict__)
+        return RICH_TEXT.format(**self.__dict__)
 
     def __export_form__(self):
         """
@@ -199,16 +197,16 @@ class Datasets(QAbstractListModel):
     """
     Datasets Class
 
-    This class is a subclass of a QT5.QAbstractListModel which
+    This class is a subclass of a QtCore.QAbstractListModel which
     stores Dataset objects in a structured model that can
-    be directly accessed by QT5 views such as listviews or
+    be directly accessed by Qt views such as listviews or
     tableviews.
     """
 
     # Define model roles
-    id_role = Qt.UserRole + 1  # Returns the dataset GUID
-    obj_role = Qt.UserRole + 2  # Returns the dataset object
-    rich_text_role = Qt.UserRole + 3
+    id_role = Qt.ItemDataRole.UserRole + 1  # Returns the dataset GUID
+    obj_role = Qt.ItemDataRole.UserRole + 2  # Returns the dataset object
+    rich_text_role = Qt.ItemDataRole.UserRole + 3
 
     def __init__(self):
 
@@ -226,20 +224,21 @@ class Datasets(QAbstractListModel):
         self.datasets = []
         QAbstractListModel.__init__(self)
 
-    def data(self, index, role=Qt.DisplayRole):
+    def data(self, index=QModelIndex(), role=Qt.ItemDataRole.DisplayRole):
         """Retrieves data from the model, given an index and role"""
-        row = index.row()
-        dataset = self.datasets[row]
-        if role == self.id_role:
-            return dataset.guid
-        if role == self.obj_role:
-            return dataset
-        if role == Qt.DisplayRole:
-            return dataset.__condensed_form__()
-        if role == self.rich_text_role:
-            return dataset.__rich_text__()
+        if index.isValid():
+            dataset = self.datasets[index.row()]
+            if role == self.id_role:
+                return dataset.guid
 
-        return QVariant()
+            if role == self.obj_role:
+                return dataset
+
+            if role == self.rich_text_role:
+                return dataset.__rich_text__()
+
+            if role == Qt.ItemDataRole.DisplayRole:
+                return dataset.__condensed_form__()
 
     def rowCount(self, parent=QModelIndex()):
         """Returns the number of datasets in the model"""
@@ -285,7 +284,6 @@ class Datasets(QAbstractListModel):
         add_dataset adds a new dataset to the model. all "kwargs" are
         passed to the Dataset Object before the dataset is added.
         """
-
         if not 'raw_unit' in kwargs:
             kwargs['raw_unit'] = app.units.get_unit('-')
             kwargs['display_unit'] = app.units.get_unit('-')

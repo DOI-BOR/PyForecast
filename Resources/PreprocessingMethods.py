@@ -6,7 +6,7 @@ import numpy as np
 def minmax(s):
     min_ = np.nanmin(s)
     max_ = np.nanmax(s)
-    range_ = max_ - min_
+    range_ = np.subtract(max_, min_)
     return (s - min_) / range_, min_, max_
 
 

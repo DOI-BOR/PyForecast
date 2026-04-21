@@ -1,6 +1,10 @@
-from PyQt5.QtCore import Qt, QDate
-from PyQt5.QtGui import QPainter
-from PyQt5.QtWidgets import *
+from PySide6.QtCore import Qt, QDate, QPoint
+from PySide6.QtGui import QAction, QPainter
+from PySide6.QtWidgets import (QApplication, QWidget, QPushButton, QHBoxLayout,
+                               QVBoxLayout, QGridLayout, QSplitter, QListView,
+                               QAbstractItemView, QMenu, QScrollArea, QLabel,
+                               QLineEdit, QDateEdit, QCheckBox, QTextEdit, QComboBox,
+                               QTableView, QFormLayout, QFrame)
 
 from Utilities import RichTextDelegate
 
@@ -15,13 +19,14 @@ class ModelingTab(QWidget):
         # Create the model configuration list
         self.add_conf_button = QPushButton('Add Configuration')
         self.add_conf_button.setStatusTip(
-            "Add a new configuration to this file. PyForecast uses configurations to search for viable models")
+            "Add a new configuration to this file. PyForecast uses "
+            "configurations to search for viable models")
         self.config_list = ConfigurationList()
 
         # Create the configuration editor
         self.config_editor = ConfigurationEditor()
 
-        # LAyout the tab
+        # Layout the tab
         layout = QHBoxLayout()
         self.widg = QWidget()
         vlayout = QGridLayout()
@@ -31,15 +36,19 @@ class ModelingTab(QWidget):
         self.splitter = QSplitter()
         self.splitter.addWidget(self.widg)
         self.splitter.addWidget(self.config_editor)
+        self.splitter.setCollapsible(0, False)
+        self.splitter.setCollapsible(1, False)
+
         layout.addWidget(self.splitter)
         self.setLayout(layout)
 
-        self.splitter.splitterMoved.connect(lambda pos, idx: self.updateListSize())
+        self.splitter.splitterMoved.connect(lambda: self.updateListSize())
 
     def updateListSize(self):
-        app.model_configurations.dataChanged.emit(app.model_configurations.index(0),
-                                                  app.model_configurations.index(
-                                                      app.model_configurations.rowCount()))
+        app.model_configurations.dataChanged.emit(
+            app.model_configurations.index(0),
+            app.model_configurations.index(app.model_configurations.rowCount())
+        )
         app.gui.ModelingTab.widg.update()
 
 
@@ -50,13 +59,15 @@ class ConfigurationList(QListView):
         QListView.__init__(self)
         self.setMinimumWidth(300)
         self.setItemDelegate(RichTextDelegate.HTMLDelegate())
-        self.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.setSizeAdjustPolicy(QListView.SizeAdjustPolicy.AdjustToContents)
         self.customContextMenuRequested.connect(self.customMenu)
 
         self.add_action = QAction('Add a new configuration')
         self.add_action.setStatusTip(
-            "Add a new configuration to this file. PyForecast uses configurations to search for viable models")
+            "Add a new configuration to this file. PyForecast uses "
+            "configurations to search for viable models")
         self.duplicate_action = QAction("Duplicate selected configuration")
         self.duplicate_action.setStatusTip(
             "Create a new configuration, duplicating the selected configuration")
@@ -69,19 +80,22 @@ class ConfigurationList(QListView):
         if (self.model()) and (self.model().rowCount(self.rootIndex()) > 0):
             return
         painter = QPainter(self.viewport())
-        painter.drawText(self.rect(), Qt.AlignCenter,
-                         'No Configurations in this forecast file')
+        painter.drawText(
+            self.rect(),
+            Qt.AlignmentFlag.AlignCenter,
+            'No Configurations in this forecast file'
+        )
         painter.end()
 
-    def customMenu(self, pos):
-        globalpos = self.mapToGlobal(pos)
+    def customMenu(self, point: QPoint):
+        global_point = self.mapToGlobal(point)
         menu = QMenu()
 
         menu.addAction(self.add_action)
         menu.addAction(self.duplicate_action)
         menu.addAction(self.remove_action)
 
-        index = self.indexAt(pos)
+        index = self.indexAt(point)
         selected = self.selectedIndexes()
 
         if not index.isValid():
@@ -92,7 +106,7 @@ class ConfigurationList(QListView):
             self.add_action.setEnabled(False)
             self.duplicate_action.setEnabled(True)
             self.remove_action.setEnabled(True)
-        menu.exec_(globalpos)
+        menu.exec_(global_point)
 
 
 class ConfigurationEditor(QWidget):
@@ -157,8 +171,8 @@ class ConfigurationEditor(QWidget):
             'Open the forecast target data in a new window for viewing/editing')
 
         self.predictor_list = QTableView()
-        self.predictor_list.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.predictor_list.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.predictor_list.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.predictor_list.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.predictor_list.horizontalHeader().setVisible(True)
         self.predictor_count = QLabel(
             'There are <strong>0</strong> predictors in this configuration')
@@ -170,8 +184,8 @@ class ConfigurationEditor(QWidget):
             'Open the predictor data in a new window for viewing/editing')
 
         self.regressor_list = QTableView()
-        self.regressor_list.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.regressor_list.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.regressor_list.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.regressor_list.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.regressor_list.horizontalHeader().setVisible(True)
         self.regressor_count = QLabel(
             'There are <strong>0</strong> regressors in this configuration')
@@ -181,8 +195,9 @@ class ConfigurationEditor(QWidget):
 
         # layout the form
         layout = QFormLayout()
-        layout.addRow(
-            QLabel('<strong>Model Information</strong>', objectName='HeaderLabel'))
+        label = QLabel('<strong>Model Information</strong>')
+        label.setObjectName('HeaderLabel')
+        layout.addRow(label)
         layout.addRow(self.summary_field)
         layout.addRow('Configuration Name', self.name_field)
         layout.addRow('Forecast Issue Date', self.issue_date_field)
@@ -200,12 +215,13 @@ class ConfigurationEditor(QWidget):
         layout.addRow(hlayout)
         layout.addRow('Model Comments', self.comment_field)
         frame = QFrame()
-        frame.setFrameShape(QFrame.HLine)
+        frame.setFrameShape(QFrame.Shape.HLine)
         frame.setLineWidth(2)
         layout.addRow(frame)
 
-        layout.addRow(QLabel('<strong>Forecast Target Information</strong>',
-                             objectName='HeaderLabel'))
+        label = QLabel('<strong>Forecast Target Information</strong>')
+        label.setObjectName('HeaderLabel')
+        layout.addRow(label)
         layout.addRow("Target Dataset", self.predictand_field)
         layout.addRow("Target Aggregation Method", self.predictand_method_field)
         hlayout = QHBoxLayout()
@@ -222,11 +238,13 @@ class ConfigurationEditor(QWidget):
         hlayout.addWidget(self.view_predictand_data_button)
         layout.addRow(hlayout)
         frame = QFrame()
-        frame.setFrameShape(QFrame.HLine)
+        frame.setFrameShape(QFrame.Shape.HLine)
         frame.setLineWidth(2)
         layout.addRow(frame)
 
-        layout.addRow(QLabel("<strong>Predictors</strong>", objectName='HeaderLabel'))
+        label = QLabel('<strong>Predictors</strong>')
+        label.setObjectName('HeaderLabel')
+        layout.addRow(label)
         hlayout = QHBoxLayout()
         hlayout.addWidget(self.predictor_count)
         hlayout.addStretch(1)
@@ -235,11 +253,13 @@ class ConfigurationEditor(QWidget):
         layout.addRow(hlayout)
         layout.addRow(self.predictor_list)
         frame = QFrame()
-        frame.setFrameShape(QFrame.HLine)
+        frame.setFrameShape(QFrame.Shape.HLine)
         frame.setLineWidth(2)
         layout.addRow(frame)
 
-        layout.addRow(QLabel("<strong>Regressors</strong>", objectName='HeaderLabel'))
+        label = QLabel('<strong>Regressors</strong>')
+        label.setObjectName('HeaderLabel')
+        layout.addRow(label)
         hlayout = QHBoxLayout()
         hlayout.addWidget(self.regressor_count)
         hlayout.addStretch(1)

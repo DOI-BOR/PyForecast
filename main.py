@@ -1,16 +1,16 @@
 import argparse
-import atexit
 import ctypes
 import json
 import os
 import sys
 import time
 import traceback
-from platform import platform
+from pathlib import Path
 
-from PyQt5.QtCore import QT_VERSION_STR, QEvent, Qt, pyqtSignal, QObject
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import *
+from PySide6.QtCore import qVersion, QEvent, Signal, QObject
+from PySide6.QtGui import QIcon
+from PySide6.QtQuick import QQuickWindow, QSGRendererInterface
+from PySide6.QtWidgets import QApplication, QComboBox, QDateEdit
 
 from Utilities.JsonHooks import DatetimeParser
 
@@ -21,21 +21,16 @@ class Logger(QObject):
     messages to the terminal.
     """
 
-    new_log_message = pyqtSignal(str)
-    base_dir = os.path.abspath(os.path.dirname(__file__))
+    new_log_message = Signal(str)
+    base_dir = Path(__file__).parent.absolute()
 
     def __init__(self):
-        """Constructor method
-        """
-
+        """Constructor method """
         QObject.__init__(self)
 
         # Open the log file and redirect stdout to a variable
         self.terminal = sys.stdout
-        self.log = open(self.base_dir + '/app_log.txt', 'w', encoding='utf-8')
-
-        # Close the file on application exit
-        atexit.register(self.cleanup)
+        self.log = open(self.base_dir.joinpath('app_log.txt'), 'w', encoding='utf-8')
 
         self.write('Starting PyForecast')
 
@@ -50,11 +45,9 @@ class Logger(QObject):
         log file and also prints it to the terminal
         """
 
-        # Write print messages to the log file and the terminal ensuring
-        # the message is printable
+        # Write printable messages to the terminal
         if msg.isprintable():
-
-            # Split up messages longer than seventy characters into multiple lines
+            # Split up messages longer than 80 characters into multiple lines
             if len(msg) > 80:
                 c = 0
                 while c < len(msg):
@@ -73,14 +66,10 @@ class Logger(QObject):
                 self.new_log_message.emit(msg)
 
     def cleanup(self):
-        """Closes the log file and writes an exit statement
-        """
-
-        # Exit message and close log file
+        # Close the log file
         self.log.close()
 
     def flush(self):
-
         # This function is needed for logger to function.
         pass
 
@@ -91,9 +80,14 @@ class PyForecast(QApplication):
     settings, stylesheets, version number, current user and filename,
     as well as all the models, and regression methods."""
 
-    new_log_message = pyqtSignal()  # Void signal emitted when a new message is added to the log
-    base_dir = os.path.abspath(
-        os.path.dirname(__file__))  # path to folder where the PyForecast.EXE file lives
+    # Void signal emitted when a new message is added to the log
+    new_log_message = Signal()
+
+    # path to folder where the PyForecast.exe file lives
+    base_dir = Path(__file__).parent.absolute()
+
+    # icon used in the application
+    icon = ''
 
     def __init__(self, *args, **kwargs):
         """Constructor
@@ -103,60 +97,54 @@ class PyForecast(QApplication):
         """
 
         # Initialize the parent QApplication
-        super(PyForecast, self).__init__(*args)
+        QApplication.__init__(self, *args, **kwargs)
 
         # redirect stdout to log
         self.logger = Logger()
         sys.stdout = self.logger
         sys.excepthook = self.logger.logger_excepthook
 
-        # System-specific settings. Sets Windows scaling
-        # settings for High-DPI displays
-        pyversion = sys.version_info
-        self.PYTHON_VERSION = f'{pyversion.major}.{pyversion.minor}.{pyversion.micro}'
-        os.environ['QT_ENABLE_HIGHDPI_SCALING'] = '1'
-        QApplication.setHighDpiScaleFactorRoundingPolicy(
-            Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
-        )
-
-        # Delete all temporary files on exit
-        atexit.register(self.delete_temp_files)
-
         # Initialize the application. Reads the version file,
         # the current user, the stylesheet, and initializes the application
-        self.setAttribute(Qt.AA_ShareOpenGLContexts)
         self.log_message = ''
         self.current_user = os.getlogin()
         self.pid = os.getpid()
-        args = ([args[0][0], '--single-process'],)
-        QApplication.__init__(self, *args)
         self.installEventFilter(self)
         sys.stdout.new_log_message.connect(self.append_log_message)
-        with open(self.base_dir + '/Resources/Stylesheets/application_style.qss',
-                  'r') as stylesheet:
-            self.setStyleSheet(self.styleSheet() + (stylesheet.read()))
+        stylesheet = self.base_dir.joinpath(
+            'Resources', 'Stylesheets', 'application_style.qss')
+        with open(stylesheet, 'r') as s:
+            self.setStyleSheet(self.styleSheet() + (s.read()))
 
         # Print out the various versions of installed software
-        with open('VERSION.TXT', 'r') as readfile:
+        pyversion = sys.version_info
+        self.PYTHON_VERSION = f'{pyversion.major}.{pyversion.minor}.{pyversion.micro}'
+        with open('version.txt', 'r') as readfile:
             self.PYCAST_VERSION = readfile.read().strip()
         print(f'{'Using Python Version'.ljust(50)}{self.PYTHON_VERSION:<10}')
-        print(f'{'Using Qt Version'.ljust(50)}{QT_VERSION_STR:<10}')
+        print(f'{'Using PySide Qt Version'.ljust(50)}{qVersion():<10}')
         print(f'{'Using PyForecast Version'.ljust(50)}{self.PYCAST_VERSION:<10}')
 
-        # Windows specific commands to properly identify PyCast and show it's icon in the taskbar
+        # Setup Application information
+        self.setApplicationName(f'PyForecast v{self.PYCAST_VERSION}')
+        self.setApplicationVersion(self.PYCAST_VERSION)
+        self.setApplicationDisplayName(f'PyForecast v{self.PYCAST_VERSION}')
+
+        # Windows specific commands to properly identify PyCast and show
+        # its icon in the taskbar
         myappid = f'USBR.PyForecast.{self.PYCAST_VERSION}'
-        if 'windows' in platform().lower():
+        if sys.platform == 'win32':
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-        self.setWindowIcon(QIcon(self.base_dir + '/Resources/Icons/AppIcon.ico'))
+        self.icon= QIcon(
+            str(self.base_dir.joinpath('Resources', 'Icons', 'AppIcon.ico')))
+        self.setWindowIcon(self.icon)
 
         # Read the application configuration and load into the application
-        with open(self.base_dir + '/settings.conf', 'r') as config_file:
-            self.config = json.load(config_file, object_hook=DatetimeParser)
-        atexit.register(self.write_config)
+        with open(self.base_dir.joinpath('settings.conf'), 'r') as settings:
+            self.settings = json.load(settings, object_hook=DatetimeParser)
 
         # Set up the current file name
-        self.current_file = self.config['last_dir'] + '/' \
-                            + self.config['new_filename']
+        self.current_file = Path(self.settings['last_dir']).joinpath(self.settings['new_filename'])
 
         # Initialize the Core Models
         from Models import Datasets, ModelConfigurations, SavedModels, Units
@@ -195,7 +183,7 @@ class PyForecast(QApplication):
 
         # Initialize the Views
         from Views import MainWindow
-        self.gui = MainWindow.MainWindow(show=kwargs.get('show', True))
+        self.gui = MainWindow.MainWindow(show=True)
 
         # Instanitate the View Models
         from ModelView import MainWindowMV, DatasetMV
@@ -207,15 +195,13 @@ class PyForecast(QApplication):
         self.SMMV = SavedModelsMV.SavedModelsModelView()
 
         # Open the file if there is one
-        if kwargs['file'] is not None:
+        if kwargs['file']:
             self.MWMV.OpenFile(None, filename=kwargs['file'])
 
-    def write_config(self):
-
-        # Copy the contents of the application
-        # configuration into the config file
-        with open(self.base_dir + '/settings.conf', 'w') as configfile:
-            json.dump(self.config, configfile, indent=4, default=str)
+    def write_settings(self):
+        # Copy the contents of the application configuration into the settings file
+        with open(self.base_dir.joinpath('settings.conf'), 'w') as settings:
+            json.dump(self.settings, settings, indent=4, default=str)
 
     def delete_temp_files(self):
 
@@ -233,9 +219,9 @@ class PyForecast(QApplication):
 
     def eventFilter(self, object, event):
 
-        if isinstance(object, QComboBox) and event.type() == QEvent.Wheel:
+        if isinstance(object, QComboBox) and event.type() == QEvent.Type.Wheel:
             return True
-        elif isinstance(object, QDateEdit) and event.type() == QEvent.Wheel:
+        elif isinstance(object, QDateEdit) and event.type() == QEvent.Type.Wheel:
             return True
         else:
             return QApplication.eventFilter(self, object, event)
@@ -252,7 +238,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Create the application
+    QQuickWindow.setGraphicsApi(QSGRendererInterface.GraphicsApi.OpenGL)
     app = PyForecast(sys.argv, file=args.file)
 
     # Run the application
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

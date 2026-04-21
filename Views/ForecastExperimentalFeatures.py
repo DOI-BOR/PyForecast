@@ -1,6 +1,8 @@
 import pyqtgraph as pg
-from PyQt5.QtCore import QDate
-from PyQt5.QtWidgets import *
+from PySide6.QtCore import QDate
+from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout,
+                               QTabWidget, QPushButton, QSpinBox, QPlainTextEdit,
+                               QLabel, QDateEdit)
 
 from Utilities import TimeSeriesPlot, ColorCycler
 

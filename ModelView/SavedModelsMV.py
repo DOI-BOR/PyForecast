@@ -1,12 +1,12 @@
 from datetime import datetime
 from inspect import signature
-# from pathos.multiprocessing import ThreadingPool as Pool
 from math import factorial
 
 import numpy as np
 import pandas as pd
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
+from PySide6.QtCore import Qt, Signal, QSortFilterProxyModel
+from PySide6.QtWidgets import (QApplication, QDialog, QMessageBox, QVBoxLayout,
+                               QPushButton, QLineEdit, QScrollArea, QWidget, QLabel)
 from scipy.interpolate import InterpolatedUnivariateSpline
 
 from Utilities.ColorCycler import ColorCycler
@@ -90,7 +90,7 @@ class SavedModelsModelView:
         self.grouped = pd.DataFrame([])
         self.forecast_proxy_model = QSortFilterProxyModel()
         self.forecast_proxy_model.setSourceModel(app.saved_models)
-        self.forecast_proxy_model.setFilterRole(Qt.UserRole + 2)
+        self.forecast_proxy_model.setFilterRole(Qt.ItemDataRole.UserRole + 2)
         self.sm.model_list.setModel(self.forecast_proxy_model)
         app.saved_models.dataChanged.connect(self.update_combo_box)
         self.sm.issue_combo.currentIndexChanged.connect(self.change_dates)
@@ -101,8 +101,13 @@ class SavedModelsModelView:
         self.sm.model_list.doubleClicked.connect(self.open_model)
         self.sm.model_list.selectionModel().selectionChanged.connect(self.plot_forecast)
         self.sm.year_select.valueChanged.connect(
-            lambda i: self.plot_forecast(None, None))
-        self.sm.plot_select.clicked.connect(lambda b: self.plot_forecast(None, None))
+            lambda:
+            self.plot_forecast(None, None)
+        )
+        self.sm.plot_select.clicked.connect(
+            lambda:
+            self.plot_forecast(None, None)
+        )
         self.sm.export_values_button.pressed.connect(self.view_exceedances)
 
     def view_exceedances(self):
@@ -127,10 +132,12 @@ class SavedModelsModelView:
         df = None
         self.sm.prob_plot.clear()
         cc = ColorCycler()
+        model = None
         for idx in real_idx:
             model = app.saved_models[idx.row()]
-            self.sm.prob_plot.setLabel('bottom',
-                                       f'{model.predictand.dataset().parameter} [{model.predictand.unit.id}]')
+            self.sm.prob_plot.setLabel(
+                'bottom',
+                f'{model.predictand.dataset().parameter} [{model.predictand.unit.id}]')
             if year in model.forecasts.forecasts.index.get_level_values(0):
                 values = model.forecasts.forecasts.loc[(year, slice(None))]
                 if df is not None:
@@ -138,33 +145,33 @@ class SavedModelsModelView:
                 else:
                     df = pd.concat([values], axis=1)
                 values = values['Value']
-                spl = InterpolatedUnivariateSpline(values.values, list(values.index),
-                                                   k=3)
+                spl = InterpolatedUnivariateSpline(
+                    values.values, list(values.index), k=3)
 
                 xs = np.linspace(values.min(), values.max(), 1000)
                 spl_d = spl.derivative()
                 if plot_type == 'pdf':
                     ys = savitzky_golay(spl_d(xs), window_size=63, order=4)
-                    self.sm.prob_plot.plot_data(xs, ys, color=cc.next(),
-                                                label=model.name)
+                    self.sm.prob_plot.plot_data(
+                        xs, ys, color=cc.next(), label=model.name)
                 else:
-                    self.sm.prob_plot.plot_data(xs, spl(xs), color=cc.next(),
-                                                label=model.name)
+                    self.sm.prob_plot.plot_data(
+                        xs, spl(xs), color=cc.next(), label=model.name)
 
         grouped = df.mean(axis=1)
         if not grouped.empty:
             if len(real_idx) > 1:
-                spl = InterpolatedUnivariateSpline(grouped.values, list(grouped.index),
-                                                   k=3)
+                spl = InterpolatedUnivariateSpline(
+                    grouped.values, list(grouped.index), k=3)
                 xs = np.linspace(grouped.min(), grouped.max(), 1000)
                 spl_d = spl.derivative()
                 if plot_type == 'pdf':
                     ys = savitzky_golay(spl_d(xs), window_size=63, order=4)
-                    self.sm.prob_plot.plot_data(xs, ys, color=cc.next(), width=3,
-                                                label='Combined')
+                    self.sm.prob_plot.plot_data(
+                        xs, ys, color=cc.next(), width=3, label='Combined')
                 else:
-                    self.sm.prob_plot.plot_data(xs, spl(xs), color=cc.next(), width=3,
-                                                label='Combined')
+                    self.sm.prob_plot.plot_data(
+                        xs, spl(xs), color=cc.next(), width=3, label='Combined')
             self.grouped = grouped
             vals = grouped.loc[[0.1, 0.3, 0.5, 0.7, 0.9]].values
             self.sm._10_value.setText(vals[0], model.predictand.unit.id)
@@ -235,7 +242,7 @@ class SavedModelsModelView:
 
 
 class genModelDialog(QDialog):
-    last_year = pyqtSignal(int)
+    last_year = Signal(int)
 
     def __init__(self, idx_list):
 
@@ -248,9 +255,9 @@ class genModelDialog(QDialog):
         self.year_ = 2000
         self.setMinimumWidth(500)
 
-    def closeEvent(self, a0):
+    def closeEvent(self, event):
         self.finish()
-        QDialog.closeEvent(self, a0)
+        event.accept()
 
     def resample_all_data(self, model):
         for predictor in model.predictors:
@@ -293,11 +300,11 @@ class genModelDialog(QDialog):
                 df = pd.concat([df, model.predictand.data], axis=1).sort_index()
                 if fcst_year not in df.index:
                     msg = QMessageBox(self)
-                    msg.setIcon(QMessageBox.Warning)
+                    msg.setIcon(QMessageBox.Icon.Warning)
                     msg.setText(
                         'We do not have all the data yet for year: ' + str(fcst_year))
                     msg.setWindowTitle('Error in Generating Forecast')
-                    msg.setStandardButtons(QMessageBox.Ok)
+                    msg.setStandardButtons(QMessageBox.StandardButton.Ok)
 
                     retv = msg.exec()
                     self.labels[i].setMessage(
@@ -306,11 +313,11 @@ class genModelDialog(QDialog):
                 x_fcst_year = df.loc[[fcst_year]].iloc[0].iloc[:-1]
                 if x_fcst_year.dropna().empty:
                     msg = QMessageBox(self)
-                    msg.setIcon(QMessageBox.Warning)
+                    msg.setIcon(QMessageBox.Icon.Warning)
                     msg.setText(
                         'We do not have all the data yet for year: ' + str(fcst_year))
                     msg.setWindowTitle('Error in Generating Forecast')
-                    msg.setStandardButtons(QMessageBox.Ok)
+                    msg.setStandardButtons(QMessageBox.StandardButton.Ok)
 
                     retv = msg.exec()
                     self.labels[i].setMessage(
@@ -344,9 +351,8 @@ class genModelDialog(QDialog):
                     train_idxs = np.random.choice(range(n), size=n, replace=True)
                     val_idxs = np.array(
                         [idx for idx in range(n) if idx not in train_idxs])
-                    _, _ = regression_algorithm.cross_val_predict(x_data[train_idxs, :],
-                                                                  predictand_data[
-                                                                      train_idxs])
+                    _, _ = regression_algorithm.cross_val_predict(
+                        x_data[train_idxs, :], predictand_data[train_idxs])
                     preds = regression_algorithm.predict(x_data[val_idxs])
                     validation_residuals.append(predictand_data[val_idxs] - preds)
                     bootstrap_predictions[b] = regression_algorithm.predict(x_fcst_year)
@@ -358,10 +364,10 @@ class genModelDialog(QDialog):
                 forecast = regression_algorithm.predict(x_fcst_year)
                 train_residuals = predictand_data - predictions
 
-                validation_residuals = np.percentile(validation_residuals,
-                                                     q=np.arange(100), method='linear')
-                train_residuals = np.percentile(train_residuals, q=np.arange(100),
-                                                method='linear')
+                validation_residuals = np.percentile(
+                    validation_residuals, q=np.arange(100), method='linear')
+                train_residuals = np.percentile(
+                    train_residuals, q=np.arange(100), method='linear')
 
                 no_information_error = np.mean(np.abs(
                     np.random.permutation(predictand_data) - np.random.permutation(
@@ -371,8 +377,7 @@ class genModelDialog(QDialog):
                 no_information_val = np.abs(no_information_error - train_residuals)
                 relative_overfitting_rate = np.mean(generalisation / no_information_val)
                 weight = .632 / (1 - .368 * relative_overfitting_rate)
-                residuals = (
-                                        1 - weight) * train_residuals + weight * validation_residuals
+                residuals = (1 - weight) * train_residuals + weight * validation_residuals
                 C = np.array([m + o for m in bootstrap_predictions for o in residuals])
                 qs = np.arange(1, 100, 0.25)
                 percentiles = np.percentile(C, q=qs) + forecast
@@ -381,7 +386,6 @@ class genModelDialog(QDialog):
                     'INV_' + model.predictand.preprocessing]
                 if len(signature(method).parameters) > 1:
                     percentiles = method(percentiles, **model.predictand.params)
-
                 else:
                     percentiles = method(percentiles)
 

@@ -3,8 +3,8 @@ from inspect import signature
 from uuid import uuid4
 
 import pandas as pd
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import QApplication
+from PySide6.QtCore import Qt, QModelIndex, QAbstractTableModel, QAbstractListModel
+from PySide6.QtWidgets import QApplication
 from numpy import nan
 
 from Models.Datasets import Dataset
@@ -201,7 +201,7 @@ class ModelConfiguration:
 
     def __rich_text__(self):
         r = f"""
-    <style>
+            <style>
             .small_title {{ 
                 background-color: lightgray;
                 font-weight: bold;
@@ -246,14 +246,15 @@ class Regressors(QAbstractTableModel):
 
     def headerData(self, section, orientation, role):
         if section >= 0:
-            if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+            if (orientation == Qt.Orientation.Horizontal
+                    and role == Qt.ItemDataRole.DisplayRole):
                 if section == 0:
                     return "Regression Algorithm"
                 if section == 1:
                     return "Scoring Metrics"
 
     def data(self, index, role):
-        if role == Qt.DisplayRole:
+        if role == Qt.ItemDataRole.DisplayRole:
             row = index.row()
             column = index.column()
             if row >= 0 and column >= 0:
@@ -262,7 +263,6 @@ class Regressors(QAbstractTableModel):
                     return r.regression_model
                 if column == 1:
                     return r.scoring_metric
-        return QVariant()
 
     def rowCount(self, parent=QModelIndex()):
         return len(self)
@@ -313,7 +313,8 @@ class PredictorPool(QAbstractTableModel):
 
     def headerData(self, section, orientation, role):
         if section >= 0:
-            if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+            if (orientation == Qt.Orientation.Horizontal
+                    and role == Qt.ItemDataRole.DisplayRole):
                 if section == 0:
                     return "Name"
                 if section == 1:
@@ -326,19 +327,18 @@ class PredictorPool(QAbstractTableModel):
                     return "Preprocessing"
                 if section == 5:
                     return "Forced?"
-        return QAbstractTableModel.headerData(self, section, orientation, role)
 
-    def data(self, index, role=Qt.DisplayRole):
+    def data(self, index, role=Qt.ItemDataRole.DisplayRole):
 
         row = index.row()
         col = index.column()
 
         if row < 0 or col < 0:
-            return QVariant()
+            return
 
         predictor = self.predictors[row]
 
-        if role == Qt.DisplayRole:
+        if role == Qt.ItemDataRole.DisplayRole:
             if col == 0:
                 return predictor.dataset().__condensed_form__()
             if col == 1:
@@ -355,8 +355,10 @@ class PredictorPool(QAbstractTableModel):
     def add_predictor(self, predictor=None):
         self.predictors.append(predictor)
         self.insertRow(self.rowCount())
-        self.dataChanged.emit(self.index(0, 0),
-                              self.index(self.rowCount(), self.columnCount()))
+        self.dataChanged.emit(
+            self.index(0, 0),
+            self.index(self.rowCount(), self.columnCount())
+        )
 
     def define_new_predictor(self, **kwargs):
         p = ResampledDataset(**kwargs)
@@ -388,8 +390,10 @@ class PredictorPool(QAbstractTableModel):
 
     def __setitem__(self, idx, predictor):
         self.predictors[idx] = predictor
-        self.dataChanged.emit(self.index(0, 0),
-                              self.index(self.rowCount(), self.columnCount()))
+        self.dataChanged.emit(
+            self.index(0, 0),
+            self.index(self.rowCount(), self.columnCount())
+        )
 
     def __getitem__(self, idx):
         return self.predictors[idx]
@@ -403,10 +407,10 @@ class PredictorPool(QAbstractTableModel):
 
 class ModelConfigurations(QAbstractListModel):
     # Define model roles
-    id_role = Qt.UserRole + 1  # Returns the configuration GUID
-    obj_role = Qt.UserRole + 2  # Returns the configuration object
-    rich_text_role = Qt.UserRole + 3
-    simple_str_role = Qt.UserRole + 4
+    id_role = Qt.ItemDataRole.UserRole + 1  # Returns the configuration GUID
+    obj_role = Qt.ItemDataRole.UserRole + 2  # Returns the configuration object
+    rich_text_role = Qt.ItemDataRole.UserRole + 3
+    simple_str_role = Qt.ItemDataRole.UserRole + 4
 
     def __init__(self):
 
@@ -415,20 +419,17 @@ class ModelConfigurations(QAbstractListModel):
 
         return
 
-    def data(self, index, role=Qt.DisplayRole):
+    def data(self, index=QModelIndex(), role=Qt.ItemDataRole.DisplayRole):
+        if index.isValid():
+            configuration = self.configurations[index.row()]
+            if role == self.obj_role:
+                return configuration
 
-        row = index.row()
-        configuration = self.configurations[row]
-        if role == self.obj_role:
-            return configuration
+            if role == self.rich_text_role:
+                return configuration.__rich_text__()
 
-        if role == self.rich_text_role:
-            return configuration.__rich_text__()
-
-        if role == self.simple_str_role:
-            return configuration.__simple_target_string__()
-
-        return
+            if role == self.simple_str_role:
+                return configuration.__simple_target_string__()
 
     def rowCount(self, parent=QModelIndex()):
         return len(self.configurations)

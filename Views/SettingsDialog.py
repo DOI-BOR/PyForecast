@@ -1,8 +1,8 @@
 from datetime import datetime
 
-from PyQt5.QtCore import QStringListModel, QDate
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import *
+from PySide6.QtCore import QStringListModel, QDate
+from PySide6.QtWidgets import (QApplication, QDialog, QDateEdit, QSpinBox, QComboBox,
+                               QDoubleSpinBox, QFormLayout, QLabel, QFrame)
 
 # Get the global application
 app = QApplication.instance()
@@ -12,15 +12,17 @@ class SettingsDialog(QDialog):
     def __init__(self):
         QDialog.__init__(self)
         self.setWindowTitle('Application Settings')
-        self.setWindowIcon(QIcon(app.base_dir + '/Resources/Icons/AppIcon.ico'))
+        self.setWindowIcon(app.icon)
 
         self.download_start_setting = QDateEdit()
         self.download_start_setting.setStatusTip(
-            'Choosing the "Download All" button will download data from this date until now')
+            'Choosing the "Download All" button will download data from this '
+            'date until now')
         self.download_start_setting.setDisplayFormat('yyyy-MMM-d')
         self.download_recent_lookback_setting = QSpinBox()
         self.download_recent_lookback_setting.setStatusTip(
-            'Choosing the "Download Recent" button will download data from the datasets last datapoint minus this many days')
+            'Choosing the "Download Recent" button will download data from the '
+            'datasets last datapoint minus this many days')
         self.download_recent_lookback_setting.setSuffix(' Days')
         self.model_training_duration_setting = QSpinBox()
         self.model_training_duration_setting.setSuffix(' Years')
@@ -45,7 +47,7 @@ class SettingsDialog(QDialog):
                       self.download_recent_lookback_setting)
 
         frame = QFrame()
-        frame.setFrameShape(QFrame.HLine)
+        frame.setFrameShape(QFrame.Shape.HLine)
         frame.setLineWidth(2)
 
         layout.addRow(QLabel('<strong>Model Configuration</strong>'))
@@ -65,39 +67,43 @@ class SettingsDialog(QDialog):
 
         self.setSettings()
 
-    def closeEvent(self, a0):
+    def closeEvent(self, event):
         self.storeSettings()
-        QDialog.closeEvent(self, a0)
+        event.accept()
 
     def setSettings(self):
         self.download_start_setting.setDate(
-            QDate(app.config['default_data_download_start']))
+            QDate(app.settings['default_data_download_start']))
         self.download_recent_lookback_setting.setValue(
-            app.config['default_recent_data_lookback'])
+            app.settings['default_recent_data_lookback'])
         self.model_training_duration_setting.setValue(
-            app.config['default_model_training_duration'])
+            app.settings['default_model_training_duration'])
         self.default_cross_validation_setting.setCurrentText(
-            app.config['default_cross_validation'])
+            app.settings['default_cross_validation'])
         self.default_feature_selection.setCurrentText(
-            app.config['default_feature_selector'])
-        self.brute_force_under_setting.setValue(app.config['brute_force_under_no'])
-        self.search_time_limit_setting.setValue(app.config['model_search_time_limit'])
-        self.max_pc_modes_setting.setValue(app.config['max_pc_mode_variance'])
+            app.settings['default_feature_selector'])
+        self.brute_force_under_setting.setValue(
+            app.settings['brute_force_under_no'])
+        self.search_time_limit_setting.setValue(
+            app.settings['model_search_time_limit'])
+        self.max_pc_modes_setting.setValue(
+            app.settings['max_pc_mode_variance'])
 
     def storeSettings(self):
-        date = self.download_start_setting.date().toPyDate()
-        app.config['default_data_download_start'] = datetime(date.year, date.month,
-                                                             date.day)
-        app.config[
-            'default_recent_data_lookback'] = self.download_recent_lookback_setting.value()
-        app.config[
-            'default_model_training_duration'] = self.model_training_duration_setting.value()
-        app.config[
-            'default_cross_validation'] = self.default_cross_validation_setting.currentText()
-        app.config[
-            'default_feature_selector'] = self.default_feature_selection.currentText()
-        app.config['brute_force_under_no'] = self.brute_force_under_setting.value()
-        app.config['model_search_time_limit'] = self.search_time_limit_setting.value()
-        app.config['max_pc_mode_variance'] = self.max_pc_modes_setting.value()
-
-        pass
+        date = self.download_start_setting.date().toPython()
+        app.settings['default_data_download_start'] = (
+            datetime(date.year, date.month, date.day))
+        app.settings['default_recent_data_lookback'] = (
+            self.download_recent_lookback_setting.value())
+        app.settings['default_model_training_duration'] = (
+            self.model_training_duration_setting.value())
+        app.settings['default_cross_validation'] = (
+            self.default_cross_validation_setting.currentText())
+        app.settings['default_feature_selector'] = (
+            self.default_feature_selection.currentText())
+        app.settings['brute_force_under_no'] = (
+            self.brute_force_under_setting.value())
+        app.settings['model_search_time_limit'] = (
+            self.search_time_limit_setting.value())
+        app.settings['max_pc_mode_variance'] = (
+            self.max_pc_modes_setting.value())

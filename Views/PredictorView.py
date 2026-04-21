@@ -1,6 +1,10 @@
-from PyQt5.QtCore import QDate, QStringListModel, QModelIndex, QSortFilterProxyModel, Qt
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import *
+import sys
+
+from PySide6.QtCore import Qt, QDate, QStringListModel, QModelIndex, QSortFilterProxyModel
+from PySide6.QtWidgets import (QApplication, QDialog, QAbstractItemView, QMessageBox,
+                               QPushButton, QSizePolicy, QTableView, QComboBox,
+                               QDateEdit, QCheckBox, QFrame, QFormLayout, QLabel,
+                               QHBoxLayout, QGridLayout)
 from pandas import DateOffset
 
 from Models.ModelConfigurations import ResampledDataset
@@ -23,8 +27,8 @@ class MethodFilterModel(QSortFilterProxyModel):
         self.invalidateFilter()
 
     def filterAcceptsRow(self, sourceRow, sourceParent=QModelIndex()):
-        idx = self.sourceModel().index(sourceRow)
-        source_method = self.sourceModel().data(idx, Qt.DisplayRole)
+        idx = self.sourceModel().index(sourceRow, 0)
+        source_method = self.sourceModel().data(idx, Qt.ItemDataRole.DisplayRole)
         if self.filterString == 'flow':
             if self.dataset.display_unit.id == 'cfs':
                 if 'MCM' in source_method:
@@ -57,26 +61,25 @@ class UnitFilterModel(QSortFilterProxyModel):
 
     def filterAcceptsRow(self, sourceRow, sourceParent=QModelIndex()):
         idx = self.sourceModel().index(sourceRow, 5)
-        source_unit_type = self.sourceModel().data(idx, Qt.DisplayRole)
+        source_unit_type = self.sourceModel().data(idx, Qt.ItemDataRole.DisplayRole)
         idx2 = self.sourceModel().index(sourceRow, 0)
-        source_unit_id = self.sourceModel().data(idx2, Qt.DisplayRole)
+        source_unit_id = self.sourceModel().data(idx2, Qt.ItemDataRole.DisplayRole)
 
         if 'MCM' in self.method:
-            if source_unit_id.value() == 'mcm':
+            if source_unit_id == 'mcm':
                 return True
             else:
                 return False
         elif 'KAF' in self.method:
-            if source_unit_id.value() == 'kaf':
+            if source_unit_id == 'kaf':
                 return True
             else:
                 return False
         else:
-            if source_unit_type.value() == self.filterString:
+            if source_unit_type == self.filterString:
                 return True
             else:
                 return False
-
 
 class PredictorView(QDialog):
 
@@ -91,24 +94,29 @@ class PredictorView(QDialog):
         self.filter_units_model.setSourceModel(app.units)
 
         self.selected_configuration = selected_configuration
-        self.configuration = app.model_configurations.get_by_id(
-            self.selected_configuration)
+        self.configuration = (
+            app.model_configurations.get_by_id(self.selected_configuration)
+        )
         self.current_idx = -1
         self.setUI()
 
         self.predictor_field.currentIndexChanged.connect(
-            lambda idx: self.updateMethodUnits('predictor'))
+            lambda: self.updateMethodUnits('predictor')
+        )
         self.predictor_method_field.currentIndexChanged.connect(
-            lambda idx: self.updateMethodUnits('method'))
+            lambda: self.updateMethodUnits('method')
+        )
 
         self.predictor_grid.setModel(self.configuration.predictor_pool)
         self.new_button.pressed.connect(self.new_predictor)
         self.delete_all_button.pressed.connect(self.delete_all)
         self.auto_gen_button.pressed.connect(self.autogen)
         self.configuration.predictor_pool.dataChanged.connect(
-            lambda idx1, idx2: self.predictor_grid.resizeColumnsToContents())
+            lambda: self.predictor_grid.resizeColumnsToContents()
+        )
         self.predictor_grid.selectionModel().currentChanged.connect(
-            lambda new, old: self.setPredictor(new.row()))
+            lambda x: self.setPredictor(x.row())
+        )
         self.save_predictor_button.pressed.connect(self.savePredictor)
         self.delete_button.pressed.connect(self.delPredictor)
         if len(self.configuration.predictor_pool) > 0:
@@ -118,18 +126,19 @@ class PredictorView(QDialog):
         dataset = app.datasets[self.predictor_field.currentIndex()]
         if type_ == 'predictor':
             self.filter_method_model.setFilterString(dataset)
-            self.filter_units_model.setFilterString(dataset,
-                                                    self.predictor_method_field.currentText())
+            self.filter_units_model.setFilterString(
+                dataset, self.predictor_method_field.currentText()
+            )
             self.predictor_unit_field.setCurrentText(
-                dataset.display_unit.__list_form__())
+                dataset.display_unit.__list_form__()
+            )
         elif type_ == 'method':
             method = self.predictor_method_field.currentText()
             self.filter_units_model.setFilterString(dataset, method)
             if not ('MCM' in method) and not ('KAF' in method):
                 self.predictor_unit_field.setCurrentText(
-                    dataset.display_unit.__list_form__())
-        else:
-            return
+                    dataset.display_unit.__list_form__()
+                )
 
     def autogen(self):
 
@@ -239,8 +248,10 @@ class PredictorView(QDialog):
 
         if len(non_generated_predictors) > 0:
             s = '\n\n'.join([d.__repr__() for d in non_generated_predictors])
-            ret = QMessageBox.information(self, 'Unsupported Datasets',
-                                          f"The following datasets had no predictors genereated:\n\n {s}")
+            QMessageBox.information(
+                self,
+                'Unsupported Datasets',
+                f"The following datasets had no predictors genereated:\n\n {s}")
 
         return
 
@@ -269,21 +280,29 @@ class PredictorView(QDialog):
     def setUI(self):
 
         self.setWindowTitle('Predictors')
-        self.setWindowIcon(QIcon(app.base_dir + '/Resources/Icons/AppIcon.ico'))
+        self.setWindowIcon(app.icon)
 
         self.auto_gen_button = QPushButton("Auto Generate")
-        self.auto_gen_button.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+        self.auto_gen_button.setSizePolicy(QSizePolicy.Policy.Maximum,
+                                           QSizePolicy.Policy.Maximum)
         self.delete_button = QPushButton('Delete Selected')
-        self.delete_button.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+        self.delete_button.setSizePolicy(QSizePolicy.Policy.Maximum,
+                                         QSizePolicy.Policy.Maximum)
         self.delete_all_button = QPushButton('Delete All')
-        self.delete_all_button.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+        self.delete_all_button.setSizePolicy(QSizePolicy.Policy.Maximum,
+                                             QSizePolicy.Policy.Maximum)
         self.predictor_grid = QTableView()
         self.predictor_grid.horizontalHeader().setVisible(True)
-        self.predictor_grid.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.predictor_grid.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.predictor_grid.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
+        self.predictor_grid.setSelectionMode(
+            QAbstractItemView.SelectionMode.SingleSelection
+        )
 
         self.new_button = QPushButton("Add new predictor")
-        self.new_button.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+        self.new_button.setSizePolicy(QSizePolicy.Policy.Maximum,
+                                      QSizePolicy.Policy.Maximum)
 
         self.predictor_field = QComboBox()
         self.predictor_field.setModel(app.datasets)
@@ -294,9 +313,10 @@ class PredictorView(QDialog):
         self.predictor_period_end_field = QDateEdit()
         self.predictor_period_end_field.setDisplayFormat('MMM dd')
         self.predictor_preprocessing_field = QComboBox()
-        self.predictor_preprocessing_field.setModel(QStringListModel(list(
-            filter(lambda i: not i.startswith('INV'),
-                   app.preprocessing_methods.keys()))))
+        self.predictor_preprocessing_field.setModel(
+            QStringListModel(list(filter(lambda i: not i.startswith('INV'),
+                                         app.preprocessing_methods.keys())))
+        )
         self.predictor_unit_field = QComboBox()
         self.predictor_unit_field.setModel(self.filter_units_model)
         self.predictor_unit_field.setModelColumn(6)
@@ -305,7 +325,7 @@ class PredictorView(QDialog):
         self.predictor_force_box = QCheckBox()
 
         self.predictor_widg = QFrame()
-        self.predictor_widg.setFrameStyle(QFrame.Box)
+        self.predictor_widg.setFrameStyle(QFrame.Shape.Box)
         self.predictor_widg.setLineWidth(2)
         qlayout = QFormLayout()
         qlayout.addRow(QLabel("Edit Predictor"))
@@ -322,7 +342,8 @@ class PredictorView(QDialog):
         qlayout.addRow("Predictor Unit", self.predictor_unit_field)
         qlayout.addRow(
             "Enforce positive correlation between predictor and forecast target?",
-            self.predictor_positive_box)
+            self.predictor_positive_box
+        )
         hlayout = QHBoxLayout()
         hlayout.addStretch(1)
         qlayout.addRow("Force predictor to be in all models?", self.predictor_force_box)
@@ -351,12 +372,14 @@ class PredictorView(QDialog):
         self.predictor_widg.setEnabled(True)
 
         idx = self.predictor_unit_field.currentIndex()
-        idx = self.filter_units_model.mapToSource(self.filter_units_model.index(idx, 0))
+        idx = self.filter_units_model.mapToSource(
+            self.filter_units_model.index(idx, 0)
+        )
 
         predictor = ResampledDataset(
             dataset_guid=app.datasets[self.predictor_field.currentIndex()].guid,
-            period_start=self.predictor_period_start_field.date().toPyDate(),
-            period_end=self.predictor_period_end_field.date().toPyDate(),
+            period_start=self.predictor_period_start_field.date().toPython(),
+            period_end=self.predictor_period_end_field.date().toPython(),
             preprocessing=self.predictor_preprocessing_field.currentText(),
             unit=app.units[idx.row()],
             agg_method=self.predictor_method_field.currentText(),
@@ -381,8 +404,6 @@ class PredictorView(QDialog):
 
 
 if __name__ == '__main__':
-    import sys
-
     app = QApplication(sys.argv)
     mw = PredictorView()
     mw.exec_()

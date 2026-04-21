@@ -3,15 +3,16 @@ import uuid
 
 import numpy as np
 import pandas as pd
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
+from PySide6.QtCore import Qt, QAbstractListModel, QModelIndex
+from PySide6.QtWidgets import QApplication
 
 from Models.ModelConfigurations import ResampledDataset
 
 # Get the global application
 app = QApplication.instance()
 
-RICH_TEXT = """<style>
+RICH_TEXT = """
+<style>
   .title {{
     font-size: small;
     background-color: #e0e0e0;
@@ -122,7 +123,7 @@ class ForecastList(object):
             index=pd.MultiIndex(
                 levels=[[], []],
                 codes=[[], []],
-                names=['Year', 'Exceedence']
+                names=['Year', 'Exceedance']
             ),
             columns=['Value']
         )
@@ -130,7 +131,7 @@ class ForecastList(object):
     def set_forecasts_1_99(self, year, values):
         idx = [(year, round(i, 4)) for i in np.arange(0.01, 1, 0.0025)]
         data = pd.DataFrame(
-            index=pd.MultiIndex.from_tuples(idx, names=('Year', 'Exceedence')),
+            index=pd.MultiIndex.from_tuples(idx, names=('Year', 'Exceedance')),
             columns=['Value'],
             data=values
         )
@@ -168,9 +169,9 @@ class ForecastList(object):
 
 
 class SavedModelList(QAbstractListModel):
-    dataRole = Qt.UserRole + 1
-    filterRole = Qt.UserRole + 2
-    richTextRole = Qt.UserRole + 3
+    dataRole = Qt.ItemDataRole.UserRole + 1
+    filterRole = Qt.ItemDataRole.UserRole + 2
+    richTextRole = Qt.ItemDataRole.UserRole + 3
 
     def __init__(self):
         QAbstractListModel.__init__(self)
@@ -187,19 +188,20 @@ class SavedModelList(QAbstractListModel):
         years.sort()
         return list(set(years))
 
-    def data(self, index=QModelIndex(), role=Qt.DisplayRole):
+    def data(self, index=QModelIndex(), role=Qt.ItemDataRole.DisplayRole):
         if index.isValid():
             model = self.saved_models[index.row()]
-
             if role == self.dataRole:
                 return model
+
             if role == self.filterRole:
                 return model.issue_date.strftime("%B %d")
-            if role == Qt.DisplayRole:
+
+            if role == Qt.ItemDataRole.DisplayRole:
                 return model.guid
+
             if role == self.richTextRole:
                 return model.__rich_text__()
-        return QVariant()
 
     def save_to_file(self, f):
         pickle.dump(len(self), f, 4)

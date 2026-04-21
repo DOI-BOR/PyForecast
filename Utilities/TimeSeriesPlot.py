@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
-from PyQt5.QtCore import *
+from PySide6.QtCore import QPoint
 
 from Utilities import DateAxis, PlotUtils
 
@@ -114,10 +114,16 @@ class TimeSeriesPlot(pg.PlotItem):
 
         condensed = PlotUtils.condenseUnits([u for u in self.unit_list])
 
-        self.setLimits(xMin=np.nanmin(x), xMax=np.nanmax(x), yMin=dataframe.min().min(),
-                       yMax=dataframe.max().max())
-        self.setRange(xRange=(np.nanmin(x), np.nanmax(x)),
-                      yRange=(dataframe.min().min(), dataframe.max().max()))
+        self.getViewBox().setLimits(
+            xMin=np.nanmin(x),
+            xMax=np.nanmax(x),
+            yMin=dataframe.min().min(),
+            yMax=dataframe.max().max()
+        )
+        self.getViewBox().setRange(
+            xRange=(np.nanmin(x), np.nanmax(x)),
+            yRange=(dataframe.min().min(), dataframe.max().max())
+        )
 
         self.hoverPoints = []
 
@@ -132,49 +138,86 @@ class TimeSeriesPlot(pg.PlotItem):
             markerPen = pg.mkPen(colors[i])
             markerBrush = pg.mkBrush(colors[i])
             if not self.no_hover:
-                point = pg.ScatterPlotItem(symbol='o', brush=markerBrush, pen=markerPen,
-                                           size=10, pxMode=True)
+                point = pg.ScatterPlotItem(
+                    symbol='o',
+                    brush=markerBrush,
+                    pen=markerPen,
+                    size=10,
+                    pxMode=True
+                )
                 self.hoverPoints.append(point)
 
             if PlotUtils.sameUnits(self.unit_list[i], condensed[0])[0]:
                 if self.no_legend:
-                    curve = pg.PlotDataItem(x=x, y=y.values, symbol=marker,
-                                            symbolBrush=markerBrush, symbolPen=markerPen,
-                                            pen=pg.mkPen(colors[i],
-                                                         width=2 if not self.trace_width else 1),
-                                            connect='finite', stepMode='left')
+                    curve = pg.PlotDataItem(
+                        x=x,
+                        y=y.values,
+                        symbol=marker,
+                        symbolBrush=markerBrush,
+                        symbolPen=markerPen,
+                        pen=pg.mkPen(
+                            colors[i],
+                            width=2 if not self.trace_width else 1
+                        ),
+                        connect='finite',
+                        stepMode='left'
+                    )
                 else:
-                    curve = pg.PlotDataItem(x=x, y=y.values, symbol=marker,
-                                            symbolBrush=markerBrush, symbolPen=markerPen,
-                                            name=col, pen=pg.mkPen(colors[i],
-                                                                   width=2 if not self.trace_width else 1),
-                                            connect='finite', stepMode='left')
+                    curve = pg.PlotDataItem(
+                        x=x,
+                        y=y.values,
+                        symbol=marker,
+                        symbolBrush=markerBrush,
+                        symbolPen=markerPen,
+                        name=col,
+                        pen=pg.mkPen(
+                            colors[i],
+                            width=2 if not self.trace_width else 1
+                        ),
+                        connect='finite',
+                        stepMode='left'
+                    )
                 curve.setZValue(10)
                 self.plot_assignments.append((curve, 0))
                 self.addItem(curve)
                 self.addItem(point)
 
-                # pg.PlotItem.plot(self, x=x, y=dataframe[col].values, name=col, clear=True if i==0 else False, pen=pg.mkPen(colors[i]), connect='finite')
             else:
                 if self.no_legend:
-                    curve = pg.PlotDataItem(x=x, y=y.values, symbol=marker,
-                                            symbolBrush=markerBrush, symbolPen=markerPen,
-                                            pen=pg.mkPen(colors[i],
-                                                         width=2 if not self.trace_width else 1),
-                                            connect='finite', stepMode='left')
+                    curve = pg.PlotDataItem(
+                        x=x,
+                        y=y.values,
+                        symbol=marker,
+                        symbolBrush=markerBrush,
+                        symbolPen=markerPen,
+                        pen=pg.mkPen(
+                            colors[i],
+                            width=2 if not self.trace_width else 1
+                        ),
+                        connect='finite',
+                        stepMode='left'
+                    )
                 else:
-                    curve = pg.PlotDataItem(x=x, y=y.values, symbol=marker,
-                                            symbolBrush=markerBrush, symbolPen=markerPen,
-                                            name=col, pen=pg.mkPen(colors[i],
-                                                                   width=2 if not self.trace_width else 1),
-                                            connect='finite', stepMode='left')
+                    curve = pg.PlotDataItem(
+                        x=x,
+                        y=y.values,
+                        symbol=marker,
+                        symbolBrush=markerBrush,
+                        symbolPen=markerPen,
+                        name=col,
+                        pen=pg.mkPen(
+                            colors[i],
+                            width=2 if not self.trace_width else 1
+                        ),
+                        connect='finite',
+                        stepMode='left'
+                    )
                 curve.setZValue(10)
                 self.viewbox_axis_2.addItem(curve)
                 self.plot_assignments.append((curve, 1))
                 if not self.no_legend:
                     self.legend.addItem(curve, col)
                 self.viewbox_axis_2.addItem(point)
-                # pg.PlotItem.plot(self.viewbox_axis_2, x=x, y=dataframe[col].values, name=col, clear=True if i==0 else False, pen=pg.mkPen(colors[i]), connect='finite')
 
         self.getAxis('left').setLabel(condensed[0])
         self.getAxis('right').setLabel(' '.join(condensed[1:]))

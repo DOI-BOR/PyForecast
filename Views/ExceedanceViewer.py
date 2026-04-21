@@ -1,7 +1,8 @@
 import os
 from datetime import datetime
 
-from PyQt5.QtWidgets import *
+from PySide6.QtWidgets import (QApplication, QDialog, QTableWidgetItem,
+                               QVBoxLayout, QTableWidget, QPushButton)
 
 app = QApplication.instance()
 
@@ -9,8 +10,8 @@ app = QApplication.instance()
 class ExceedanceViewer(QDialog):
 
     def __init__(self, exceedances):
-        self.exceedances = exceedances
         QDialog.__init__(self)
+        self.exceedances = exceedances
         self.setUI()
         self.excButton.pressed.connect(self.open_in_excel)
 
@@ -21,10 +22,12 @@ class ExceedanceViewer(QDialog):
             self.excTable.setItem(i, 1, valItem)
 
     def open_in_excel(self):
-        fname = app.base_dir + f'/UserData/{datetime.now():%Y%b%d_%H%M%S}_EXCEED.csv'
+        fname = app.base_dir.joinpath(
+            'UserData', f'{datetime.now():%Y%b%d_%H%M%S}_exceedance.csv')
+        fname.parent.mkdir(parents=True, exist_ok=True)
 
-        self.exceedances.to_csv(fname)
-        os.system(f"start EXCEL.EXE {fname}")
+        self.exceedances.to_csv(fname, float_format='%.4f', header=['Value'])
+        os.startfile(fname)
 
     def setUI(self):
         layout = QVBoxLayout()

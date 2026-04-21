@@ -1,6 +1,7 @@
-from PyQt5.QtCore import QStringListModel
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import *
+from PySide6.QtCore import QStringListModel, Qt
+from PySide6.QtWidgets import (QApplication, QDialog, QPushButton, QTableView,
+                               QAbstractItemView, QComboBox, QFrame, QFormLayout,
+                               QLabel, QHBoxLayout, QGridLayout)
 
 from Models.ModelConfigurations import Regressor
 
@@ -12,8 +13,9 @@ class RegressorView(QDialog):
     def __init__(self, selected_configuration=None):
         QDialog.__init__(self)
         self.selected_configuration = selected_configuration
-        self.configuration = app.model_configurations.get_by_id(
-            self.selected_configuration)
+        self.configuration = (
+            app.model_configurations.get_by_id(self.selected_configuration)
+        )
         self.current_idx = -1
         self.setUI()
         self.regressor_select.setModel(QStringListModel(list(app.regressors.keys())))
@@ -26,9 +28,14 @@ class RegressorView(QDialog):
 
         self.delete_all_button.pressed.connect(self.delete_all)
         self.configuration.regressors.dataChanged.connect(
-            lambda idx1, idx2: self.regressor_grid.resizeColumnsToContents())
+            lambda: self.regressor_grid.resizeColumnsToContents()
+        )
         self.regressor_grid.selectionModel().currentChanged.connect(
-            lambda new, old: self.setRegressor(new.row()))
+            lambda x: self.setRegressor(x.row())
+        )
+
+    def flags(self):
+        return Qt.ItemFlag.NoItemFlags
 
     def delete_all(self):
         for i in range(len(self.configuration.regressors)):
@@ -38,22 +45,27 @@ class RegressorView(QDialog):
     def add_regressor(self):
         regressor = Regressor(
             regression_model=list(app.regressors.keys())[0],
-            cross_validation=app.config['default_cross_validation'],
-            feature_selection=app.config['default_feature_selector'],
+            cross_validation=app.settings['default_cross_validation'],
+            feature_selection=app.settings['default_feature_selector'],
             scoring_metric=list(app.scorers.keys())[0],
         )
         self.configuration.regressors.add_regressor(regressor)
 
     def setUI(self):
         self.setWindowTitle('Regressors')
-        self.setWindowIcon(QIcon(app.base_dir + '/Resources/Icons/AppIcon.ico'))
+        self.setWindowIcon(app.icon)
 
         self.delete_all_button = QPushButton('Delete All')
         self.delete_button = QPushButton("Delete Selected")
         self.regressor_grid = QTableView()
-        self.regressor_grid.setSelectionBehavior(QAbstractItemView.SelectRows)
-
         self.regressor_grid.horizontalHeader().setVisible(True)
+        self.regressor_grid.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
+        self.regressor_grid.setSelectionMode(
+            QAbstractItemView.SelectionMode.SingleSelection
+        )
+
         self.new_button = QPushButton("Add new Regressor")
 
         self.regressor_select = QComboBox()
@@ -62,7 +74,7 @@ class RegressorView(QDialog):
         self.regressor_save_btn = QPushButton("Save")
 
         self.regressor_widg = QFrame()
-        self.regressor_widg.setFrameStyle(QFrame.Box)
+        self.regressor_widg.setFrameStyle(QFrame.Shape.Box)
         self.regressor_widg.setLineWidth(2)
         qlayout = QFormLayout()
         qlayout.addRow(QLabel("Edit Regressor"))

@@ -1,9 +1,10 @@
-import subprocess
+import os
 import time
 
 import requests
-from PyQt5.QtGui import QTextCursor
-from PyQt5.QtWidgets import *
+from PySide6.QtGui import QTextCursor
+from PySide6.QtWidgets import (QApplication, QDialog, QVBoxLayout, QHBoxLayout,
+                               QPushButton, QTextEdit)
 
 app = QApplication.instance()
 
@@ -63,7 +64,7 @@ class UpdaterDialog(QDialog):
 
         self.progress_text.append('Downloading Update')
         app.processEvents()
-        with open(app.base_dir + '/update_file.exe', 'wb') as f:
+        with open(app.base_dir.joinpath('update_file.exe'), 'wb') as f:
             response = requests.get(self.file_name, stream=True, verify=False)
             dl = 0
             for data in response.iter_content(chunk_size=4096):
@@ -72,10 +73,12 @@ class UpdaterDialog(QDialog):
                 done = int(50 * dl / self.total_download_size)
                 self.progress_text.setFocus()
                 cursor = self.progress_text.textCursor()
-                self.progress_text.moveCursor(QTextCursor.End, QTextCursor.MoveAnchor)
-                self.progress_text.moveCursor(QTextCursor.StartOfLine,
-                                              QTextCursor.MoveAnchor)
-                self.progress_text.moveCursor(QTextCursor.End, QTextCursor.KeepAnchor)
+                self.progress_text.moveCursor(QTextCursor.MoveOperation.End,
+                                              QTextCursor.MoveMode.MoveAnchor)
+                self.progress_text.moveCursor(QTextCursor.MoveOperation.StartOfLine,
+                                              QTextCursor.MoveMode.MoveAnchor)
+                self.progress_text.moveCursor(QTextCursor.MoveOperation.End,
+                                              QTextCursor.MoveMode.KeepAnchor)
                 self.progress_text.textCursor().removeSelectedText()
                 self.progress_text.textCursor().deletePreviousChar()
                 self.progress_text.setTextCursor(cursor)
@@ -85,8 +88,7 @@ class UpdaterDialog(QDialog):
 
         self.progress_text.append('Download Completed. Updating now.')
         time.sleep(1)
-        subprocess.Popen([f"{app.base_dir + '/update_file.exe'}"],
-                         start_new_session=True)
+        os.startfile(f"{app.base_dir.joinpath('update_file.exe')}")
         app.quit()
 
     def setUI(self):
@@ -95,7 +97,8 @@ class UpdaterDialog(QDialog):
         self.setMinimumHeight(500)
         layout = QVBoxLayout()
         self.update_button = QPushButton('Update')
-        self.progress_text = QTextEdit(objectName='monospace')
+        self.progress_text = QTextEdit()
+        self.progress_text.setObjectName('monospace')
 
         layout.addWidget(self.progress_text)
         hlayout = QHBoxLayout()

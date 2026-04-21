@@ -5,9 +5,13 @@ from inspect import signature
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
-from PyQt5.QtCore import *
-from PyQt5.QtGui import QIcon, QPicture, QPainter
-from PyQt5.QtWidgets import *
+from PySide6.QtCore import Qt, QDate, QRectF
+from PySide6.QtGui import QPicture, QPainter
+from PySide6.QtWidgets import (QApplication, QLineEdit, QTextEdit, QSizePolicy,
+                               QDialog, QWidget, QTableWidgetItem, QTabWidget,
+                               QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton,
+                               QLabel, QFormLayout, QFrame, QTableWidget,
+                               QAbstractItemView, QSplitter, QSpinBox)
 
 from Utilities import Scatterplot, ForecastDisaggregator
 from Utilities.HydrologyDateTimes import convert_to_water_year, current_water_year
@@ -29,7 +33,7 @@ class readOnlyLineEdit(QLineEdit):
 class resizingTextEdit(QTextEdit):
     def __init__(self):
         QTextEdit.__init__(self)
-        self.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+        self.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
 
     def setText(self, a0):
         QTextEdit.setText(self, a0)
@@ -41,15 +45,15 @@ class ForecastViewer(QDialog):
 
         QDialog.__init__(self)
         self.setWindowTitle('Forecast Viewer')
-        self.setWindowIcon(QIcon(app.base_dir + '/Resources/Icons/AppIcon.ico'))
+        self.setWindowIcon(app.icon)
         self.fcst_idx = fcst_idx
         self.model = app.saved_models[fcst_idx.row()]
-        self.min_forecast_year = self.model.forecasts.forecasts.index.get_level_values(
-            0).min()
-        self.max_forecast_year = self.model.forecasts.forecasts.index.get_level_values(
-            0).max()
-        self.regression_algorithm = app.regressors[self.model.regression_model](
-            cross_validation=self.model.cross_validator)
+        self.min_forecast_year = (
+            self.model.forecasts.forecasts.index.get_level_values(0).min())
+        self.max_forecast_year = (
+            self.model.forecasts.forecasts.index.get_level_values(0).max())
+        self.regression_algorithm = (
+            app.regressors[self.model.regression_model](cross_validation=self.model.cross_validator))
         self.setUI2()
         self.setForecast()
         self.forecast_year_select.valueChanged.connect(self.plot_forecast_for_view)
@@ -207,8 +211,8 @@ class ForecastViewer(QDialog):
             'num_predictors': x_data.shape[1]
         }
 
-        y_p_cv, y_a_cv = self.regression_algorithm.cross_val_predict(x_data,
-                                                                     predictand_data)
+        y_p_cv, y_a_cv = self.regression_algorithm.cross_val_predict(
+            x_data, predictand_data)
         y_p = self.regression_algorithm.predict(x_data)
 
         method = app.preprocessing_methods['INV_' + self.model.predictand.preprocessing]
@@ -241,10 +245,10 @@ class ForecastViewer(QDialog):
             scorer = app.scorers[key]
             widg.setText(f'{scorer(y_p, y_a, **scorer_args):.5g}')
 
-        self.model_plots.plot_model_data(y_a, y_p, years,
-                                         units=self.model.predictand.unit.id)
-        self.model_plots_ft.plot_model_data(y_a, y_p, years,
-                                            units=self.model.predictand.unit.id)
+        self.model_plots.plot_model_data(
+            y_a, y_p, years, units=self.model.predictand.unit.id)
+        self.model_plots_ft.plot_model_data(
+            y_a, y_p, years, units=self.model.predictand.unit.id)
 
         col_names = ['Year', 'Actual', 'Model Fit', 'Error', 'Forecast']
         self.model_fit_table.setColumnCount(5)
@@ -325,7 +329,9 @@ class ForecastViewer(QDialog):
 
         self.model_plots = ModelPlots()
 
-        layout.addWidget(QLabel("Model Overview", objectName="HeaderLabel"), 0, 0, 1, 2)
+        label = QLabel("Model Overview")
+        label.setObjectName('HeaderLabel')
+        layout.addWidget(label, 0, 0, 1, 2)
         flayout = QFormLayout()
         flayout.addRow('Name', self.name_edit)
         flayout.addRow('Comments', self.comment_edit)
@@ -334,7 +340,7 @@ class ForecastViewer(QDialog):
         flayout.addRow('Training Data', self.training_line)
         flayout.addRow('Issue Date', self.issue_line)
         frame = QFrame()
-        frame.setFrameShape(QFrame.HLine)
+        frame.setFrameShape(QFrame.Shape.HLine)
         frame.setLineWidth(2)
         flayout.addRow(frame)
         flayout.addRow(QLabel('Target Info'))
@@ -344,7 +350,7 @@ class ForecastViewer(QDialog):
         flayout.addRow(QLabel("Aggregation"), self.target_aggregation_line)
         flayout.addRow(QLabel("Preprocessing"), self.target_preprocessing_line)
         frame = QFrame()
-        frame.setFrameShape(QFrame.HLine)
+        frame.setFrameShape(QFrame.Shape.HLine)
         frame.setLineWidth(2)
         flayout.addRow(frame)
 
@@ -377,9 +383,9 @@ class ForecastViewer(QDialog):
             self.model_params[param].setReadOnly(True)
 
         layout2 = QGridLayout()
-        layout2.addWidget(
-            QLabel("Forecast Target and Predictors", objectName='HeaderLabel'), 0, 0, 1,
-            2)
+        label = QLabel('Forecast Target and Predictors')
+        label.setObjectName('HeaderLabel')
+        layout2.addWidget(label, 0, 0, 1,2)
         flayout2 = QFormLayout()
         flayout2.addRow(QLabel('Target Info'))
         flayout2.addRow(QLabel("Dataset"), self.target_name_line_2)
@@ -388,7 +394,7 @@ class ForecastViewer(QDialog):
         flayout2.addRow(QLabel("Aggregation"), self.target_aggregation_line_2)
         flayout2.addRow(QLabel("Preprocessing"), self.target_preprocessing_line_2)
         frame = QFrame()
-        frame.setFrameShape(QFrame.HLine)
+        frame.setFrameShape(QFrame.Shape.HLine)
         frame.setLineWidth(2)
         flayout2.addRow(frame)
         flayout2.addRow(QLabel("Model Parameters"))
@@ -403,8 +409,10 @@ class ForecastViewer(QDialog):
 
         # FORECASTS TAB
         self.model_fit_table = QTableWidget()
-        self.model_fit_table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.model_fit_table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.model_fit_table.setSizePolicy(QSizePolicy.Policy.Expanding,
+                                           QSizePolicy.Policy.Expanding)
+        self.model_fit_table.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows)
         self.model_plots_ft = ModelPlots()
         self.view_exceedance_button = QPushButton("View Forecast Exceedance")
         self.forecast_year_select = QSpinBox()
@@ -423,7 +431,7 @@ class ForecastViewer(QDialog):
         self.forecast_90.setReadOnly(True)
 
         layout3 = QHBoxLayout()
-        splitter = QSplitter(Qt.Horizontal)
+        splitter = QSplitter(Qt.Orientation.Horizontal)
         vboxLayout = QVBoxLayout()
         vboxLayout.addWidget(QLabel("Model Fit Information"))
         vboxLayout.addWidget(self.model_fit_table)
@@ -573,18 +581,6 @@ class ModelPlots(pg.GraphicsLayoutWidget):
                           name2='Predicted')
         self.tp.setLabel('left', f'Forecast [{units}]')
 
-        # self.tp.setRange(xRange=(years[0]-1, years[-1]+1), yRange=(0.9*min(min(predicted), min(actual)),1.1*max(max(predicted), max(actual))))
-
-
-# class RectItem(pg.QtGui.QGraphicsRectItem):
-#     def __init__(self, topLeft, bottomRight):
-#         width = bottomRight[0] - topLeft[0]
-#         height = topLeft[1] - bottomRight[1]
-#         pg.QtGui.QGraphicsRectItem.__init__(self, topLeft[0], topLeft[1], width, height)
-#         self.setPos(topLeft[0], topLeft[1])
-#         self.setZValue(30)
-#         self.setPen(pg.mkPen('k'))
-#         self.setBrush(pg.mkBrush('r'))
 
 class RectItem(pg.GraphicsObject):
     def __init__(self, topLeft, bottomRight):

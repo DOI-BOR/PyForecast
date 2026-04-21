@@ -1,8 +1,10 @@
 from copy import deepcopy
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QDoubleValidator, QIcon
-from PyQt5.QtWidgets import *
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QDoubleValidator, QAction
+from PySide6.QtWidgets import (QApplication, QDialog, QVBoxLayout, QTableView,
+                               QHeaderView, QAbstractItemView, QLabel, QHBoxLayout,
+                               QLineEdit, QPushButton, QFrame, QMessageBox)
 
 # Get the global application
 app = QApplication.instance()
@@ -14,17 +16,17 @@ class UnitsEditor(QDialog):
 
         QDialog.__init__(self)
         self.setWindowTitle('Edit PyForecast Units')
-        self.setWindowIcon(QIcon(app.base_dir + '/Resources/Icons/AppIcon.ico'))
+        self.setWindowIcon(app.icon)
 
         self.old_units = deepcopy(app.units.units)
 
         self.units_table = QTableView(self)
         self.units_table.setModel(app.units)
         self.units_table.horizontalHeader().setStretchLastSection(True)
-        self.units_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.units_table.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.units_table.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.units_table.setContextMenuPolicy(Qt.ActionsContextMenu)
+        self.units_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.units_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.units_table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.units_table.setContextMenuPolicy(Qt.ContextMenuPolicy.ActionsContextMenu)
         self.units_table.setColumnHidden(6, True)
 
         self.remove_action = QAction('Remove Unit')
@@ -59,7 +61,7 @@ class UnitsEditor(QDialog):
         layout.addLayout(layout3)
 
         hline = QFrame()
-        hline.setFrameShape(QFrame.HLine)
+        hline.setFrameShape(QFrame.Shape.HLine)
         layout.addWidget(hline)
 
         layout2 = QHBoxLayout()
@@ -86,17 +88,18 @@ class UnitsEditor(QDialog):
         self.exec()
 
     def closeEvent(self, event):
-
         new = [u.id for u in app.units.units]
         if new != [u.id for u in self.old_units]:
-            ret = QMessageBox.question(self, 'Unsaved Changes',
-                                       'You have made changes to the units list. Save those changes?')
-            if ret == QMessageBox.Yes:
+            ret = QMessageBox.question(
+                self,
+                'Unsaved Changes',
+                'You have made changes to the units list. Save those changes?')
+            if ret == QMessageBox.StandardButton.Yes:
                 QDialog.closeEvent(self, event)
             else:
                 self.cancel_list()
         else:
-            QDialog.closeEvent(self, event)
+            event.accept()
 
     def save_list(self):
 
@@ -114,6 +117,7 @@ class UnitsEditor(QDialog):
 
     def remove_unit(self, _):
 
+        idx = 0
         selected_idx = set([i.row() for i in self.units_table.selectedIndexes()])
         if len(selected_idx) > 0:
             idx = selected_idx.pop()

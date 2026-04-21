@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from PyQt5.QtCore import QStringListModel, QDate, Qt, QSortFilterProxyModel, QModelIndex
-from PyQt5.QtWidgets import *
+from PySide6.QtCore import QStringListModel, QDate, Qt, QSortFilterProxyModel, QModelIndex
+from PySide6.QtWidgets import QApplication, QMessageBox
 
 import Utilities.HydrologyDateTimes as hdt
 from Models.ModelConfigurations import ResampledDataset, Regressor
@@ -24,8 +24,8 @@ class MethodFilterModel(QSortFilterProxyModel):
         self.invalidateFilter()
 
     def filterAcceptsRow(self, sourceRow, sourceParent=QModelIndex()):
-        idx = self.sourceModel().index(sourceRow)
-        source_method = self.sourceModel().data(idx, Qt.DisplayRole)
+        idx = self.sourceModel().index(sourceRow, 0)
+        source_method = self.sourceModel().data(idx, Qt.ItemDataRole.DisplayRole)
         if self.filterString == 'flow':
             if self.dataset.display_unit.id == 'cfs':
                 if 'MCM' in source_method:
@@ -58,22 +58,22 @@ class UnitFilterModel(QSortFilterProxyModel):
 
     def filterAcceptsRow(self, sourceRow, sourceParent=QModelIndex()):
         idx = self.sourceModel().index(sourceRow, 5)
-        source_unit_type = self.sourceModel().data(idx, Qt.DisplayRole)
+        source_unit_type = self.sourceModel().data(idx, Qt.ItemDataRole.DisplayRole)
         idx2 = self.sourceModel().index(sourceRow, 0)
-        source_unit_id = self.sourceModel().data(idx2, Qt.DisplayRole)
+        source_unit_id = self.sourceModel().data(idx2, Qt.ItemDataRole.DisplayRole)
 
         if 'MCM' in self.method:
-            if source_unit_id.value() == 'mcm':
+            if source_unit_id == 'mcm':
                 return True
             else:
                 return False
         elif 'KAF' in self.method:
-            if source_unit_id.value() == 'kaf':
+            if source_unit_id == 'kaf':
                 return True
             else:
                 return False
         else:
-            if source_unit_type.value() == self.filterString:
+            if source_unit_type == self.filterString:
                 return True
             else:
                 return False
@@ -94,11 +94,12 @@ class ModelConfigurationModelView:
         self.filter_units_model = UnitFilterModel()
         self.filter_units_model.setSourceModel(app.units)
 
-        # COnnect views with models
+        # Connect views with models
         self.mt.config_editor.predictand_method_field.setModel(self.filter_method_model)
-        self.mt.config_editor.predictand_preprocessing_field.setModel(QStringListModel(
-            list(filter(lambda x: not x.startswith('INV_'),
-                        app.preprocessing_methods.keys()))))
+        self.mt.config_editor.predictand_preprocessing_field.setModel(
+            QStringListModel(list(filter(lambda x: not x.startswith('INV_'),
+                                         app.preprocessing_methods.keys())))
+        )
         self.mt.config_editor.predictand_field.setModel(app.datasets)
 
         self.mt.config_editor.predictand_unit_field.setModel(self.filter_units_model)
@@ -106,23 +107,28 @@ class ModelConfigurationModelView:
         self.mt.add_conf_button.pressed.connect(self.new_configuration)
         self.mt.config_list.add_action.triggered.connect(self.new_configuration)
         self.mt.config_list.selectionModel().currentChanged.connect(
-            lambda sel, desel: self.set_configuration(sel.row()))
+            lambda x: self.set_configuration(x.row())
+        )
         self.mt.config_editor.save_button.pressed.connect(self.store_configuration)
         self.mt.config_editor.predictor_add_button.pressed.connect(
-            self.open_predictor_view)
+            self.open_predictor_view
+        )
         self.mt.config_editor.regressor_add_button.pressed.connect(
-            self.open_regressor_view)
+            self.open_regressor_view
+        )
         self.mt.config_editor.view_predictand_data_button.pressed.connect(
-            lambda: self.open_view_data(-1))
+            lambda: self.open_view_data(-1)
+        )
         self.mt.config_editor.view_predictor_data_button.pressed.connect(
-            lambda: self.open_view_data(None))
+            lambda: self.open_view_data(None)
+        )
         self.mt.config_editor.run_button.pressed.connect(self.gen_button_pressed)
         self.mt.config_editor.predictand_field.currentIndexChanged.connect(
-            lambda idx: self.update_predictand_info(idx, 'predictand'))
+            lambda idx: self.update_predictand_info(idx, 'predictand')
+        )
         self.mt.config_editor.predictand_method_field.currentIndexChanged.connect(
-            lambda idx: self.update_predictand_info(idx, 'method'))
-        # self.mt.config_editor.predictand_method_field.currentTextChanged.connect(lambda text: self.mt.config_editor.predictand_unit_field.setCurrentText(app.units.get_unit('kaf').__list_form__()) if 'KAF' in text else None)
-        # self.mt.config_editor.predictand_method_field.currentTextChanged.connect(lambda text: self.mt.config_editor.predictand_unit_field.setCurrentText(app.units.get_unit('mcm').__list_form__()) if 'MCM' in text else None)
+            lambda idx: self.update_predictand_info(idx, 'method')
+        )
         self.mt.config_list.remove_action.triggered.connect(self.delete_conf)
         self.mt.config_list.duplicate_action.triggered.connect(self.duplicate_conf)
 
@@ -182,8 +188,11 @@ class ModelConfigurationModelView:
 
         # Ensure that we have at least one dataset in the file
         if len(app.datasets) < 1:
-            msg = QMessageBox.information(self.mt, 'Not enough data',
-                                          'You must add at least one dataset to create a new configuration')
+            QMessageBox.information(
+                self.mt,
+                'Not enough data',
+                'You must add at least one dataset to create a new configuration'
+            )
             return
         rowcount = app.model_configurations.rowCount()
         app.model_configurations.add_configuration(
@@ -217,22 +226,29 @@ class ModelConfigurationModelView:
         if len(configuration.training_exclude_dates) > 0:
             self.ce.exclude_check.setChecked(True)
             self.ce.exclude_years_field.setText(
-                ', '.join(configuration.training_exclude_dates))
+                ', '.join(configuration.training_exclude_dates)
+            )
         self.ce.comment_field.setText(configuration.comment)
 
         # Set the predictand
         self.ce.predictand_field.setCurrentText(
-            configuration.predictand.dataset().__condensed_form__())
+            configuration.predictand.dataset().__condensed_form__()
+        )
         self.ce.predictand_preprocessing_field.setCurrentText(
-            configuration.predictand.preprocessing)
+            configuration.predictand.preprocessing
+        )
         self.ce.predictand_method_field.setCurrentText(
-            configuration.predictand.agg_method)
+            configuration.predictand.agg_method
+        )
         self.ce.predictand_period_start_field.setDate(
-            QDate(configuration.predictand.period_start))
+            QDate(configuration.predictand.period_start)
+        )
         self.ce.predictand_period_end_field.setDate(
-            QDate(configuration.predictand.period_end))
+            QDate(configuration.predictand.period_end)
+        )
         self.ce.predictand_unit_field.setCurrentText(
-            configuration.predictand.unit.__list_form__())
+            configuration.predictand.unit.__list_form__()
+        )
 
         # Set the predictors
         pl = self.ce.predictor_list
@@ -240,7 +256,9 @@ class ModelConfigurationModelView:
         pl.resizeColumnsToContents()
         pl.horizontalHeader().setStretchLastSection(True)
         self.ce.predictor_count.setText(
-            f'There are <strong>{len(configuration.predictor_pool)}</strong> predictors in this configuration')
+            f'There are <strong>{len(configuration.predictor_pool)}'
+            f'</strong> predictors in this configuration'
+        )
 
         # Set the regressors
         r = self.ce.regressor_list
@@ -248,25 +266,33 @@ class ModelConfigurationModelView:
         r.resizeColumnsToContents()
         r.horizontalHeader().setStretchLastSection(True)
         self.ce.regressor_count.setText(
-            f'There are <strong>{len(configuration.regressors)}</strong> regressors in this configuration')
+            f'There are <strong>{len(configuration.regressors)}'
+            f'</strong> regressors in this configuration'
+        )
 
         configuration.predictor_pool.dataChanged.connect(
-            lambda idx1, idx2: self.ce.predictor_list.resizeColumnsToContents())
-        configuration.predictor_pool.dataChanged.connect(lambda idx1,
-                                                                idx2: self.ce.predictor_list.horizontalHeader().setStretchLastSection(
-            True))
+            lambda: self.ce.predictor_list.resizeColumnsToContents())
+
         configuration.predictor_pool.dataChanged.connect(
-            lambda idx1, idx2: self.ce.predictor_count.setText(
-                f'There are <strong>{len(configuration.predictor_pool)}</strong> predictors in this configuration'))
+            lambda: self.ce.predictor_list.horizontalHeader().setStretchLastSection(True)
+        )
+        configuration.predictor_pool.dataChanged.connect(
+            lambda: self.ce.predictor_count.setText(
+                f'There are <strong>{len(configuration.predictor_pool)}'
+                f'</strong> predictors in this configuration')
+        )
 
         configuration.regressors.dataChanged.connect(
-            lambda idx1, idx2: self.ce.regressor_list.resizeColumnsToContents())
-        configuration.regressors.dataChanged.connect(lambda idx1,
-                                                            idx2: self.ce.regressor_list.horizontalHeader().setStretchLastSection(
-            True))
+            lambda: self.ce.regressor_list.resizeColumnsToContents()
+        )
         configuration.regressors.dataChanged.connect(
-            lambda idx1, idx2: self.ce.regressor_count.setText(
-                f'There are <strong>{len(configuration.regressors)}</strong> regressors in this configuration'))
+            lambda: self.ce.regressor_list.horizontalHeader().setStretchLastSection(True)
+        )
+        configuration.regressors.dataChanged.connect(
+            lambda: self.ce.regressor_count.setText(
+                f'There are <strong>{len(configuration.regressors)}'
+                f'</strong> regressors in this configuration')
+        )
 
         self.ce.setEnabled(True)
         self.ce.deselect_all()
@@ -276,48 +302,62 @@ class ModelConfigurationModelView:
 
         if type_ == 'predictand':
             self.filter_method_model.setFilterString(dataset)
-            self.filter_units_model.setFilterString(dataset,
-                                                    self.ce.predictand_method_field.currentText())
+            self.filter_units_model.setFilterString(
+                dataset, self.ce.predictand_method_field.currentText()
+            )
             self.ce.predictand_unit_field.setCurrentText(
-                dataset.display_unit.__list_form__())
+                dataset.display_unit.__list_form__()
+            )
         elif type_ == 'method':
             method = self.ce.predictand_method_field.currentText()
             self.filter_units_model.setFilterString(dataset, method)
             if not ('MCM' in method) and not ('KAF' in method):
                 self.ce.predictand_unit_field.setCurrentText(
-                    dataset.display_unit.__list_form__())
-        else:
-            return
+                    dataset.display_unit.__list_form__()
+                )
 
     def store_configuration(self, configuration_idx=None):
         if not configuration_idx:
-            configuration_idx = self.mt.config_list.selectionModel().selectedRows()[
-                0].row()
+            configuration_idx = (
+                self.mt.config_list.selectionModel().selectedRows()[0].row()
+            )
         config = app.model_configurations[configuration_idx]
 
         # Store the metadata
         config.name = self.ce.name_field.text()
         config.comment = self.ce.comment_field.toPlainText()
-        config.issue_date = self.ce.issue_date_field.date().toPyDate()
-        config.training_start_date = self.ce.training_start_field.date().toPyDate()
-        config.training_end_date = self.ce.training_end_field.date().toPyDate()
+        config.issue_date = self.ce.issue_date_field.date().toPython()
+        config.training_start_date = self.ce.training_start_field.date().toPython()
+        config.training_end_date = self.ce.training_end_field.date().toPython()
         if self.ce.exclude_check.isChecked():
-            config.training_exclude_dates = list(map(lambda y: int(y.strip()),
-                                                     self.ce.exclude_years_field.text().split(
-                                                         ',')))
+            config.training_exclude_dates = (
+                list(map(lambda y: int(y.strip()),
+                         self.ce.exclude_years_field.text().split(',')))
+            )
         else:
             config.training_exclude_dates = []
 
         # Predictand
         idx = self.ce.predictand_field.currentIndex()
-        config.predictand.dataset_guid = app.datasets.data(app.datasets.index(idx),
-                                                           Qt.UserRole + 2).guid
-        config.predictand.preprocessing = self.ce.predictand_preprocessing_field.currentText()
-        config.predictand.agg_method = self.ce.predictand_method_field.currentText()
-        config.predictand.period_start = self.ce.predictand_period_start_field.date().toPyDate()
-        config.predictand.period_end = self.ce.predictand_period_end_field.date().toPyDate()
+        config.predictand.dataset_guid = (
+            app.datasets.data(app.datasets.index(idx), Qt.ItemDataRole.UserRole + 2).guid
+        )
+        config.predictand.preprocessing = (
+            self.ce.predictand_preprocessing_field.currentText()
+        )
+        config.predictand.agg_method = (
+            self.ce.predictand_method_field.currentText()
+        )
+        config.predictand.period_start = (
+            self.ce.predictand_period_start_field.date().toPython()
+        )
+        config.predictand.period_end = (
+            self.ce.predictand_period_end_field.date().toPython()
+        )
         idx = self.ce.predictand_unit_field.currentIndex()
-        idx = self.filter_units_model.mapToSource(self.filter_units_model.index(idx, 0))
+        idx = self.filter_units_model.mapToSource(
+            self.filter_units_model.index(idx, 0)
+        )
         config.predictand.unit = app.units[idx.row()]
 
         app.model_configurations[configuration_idx] = config
@@ -327,7 +367,7 @@ class ModelConfigurationModelView:
 
         configuration_idx = self.mt.config_list.selectionModel().selectedRows()[0].row()
         config = app.model_configurations[configuration_idx]
-        mv = GenModelDialog.GenModelDialog(config, self.mt)
+        GenModelDialog.GenModelDialog(config, self.mt)
 
     def open_view_data(self, dataset_idx=None):
 
@@ -352,5 +392,5 @@ class ModelConfigurationModelView:
     def open_regressor_view(self):
         conf = self.mt.config_list.selectionModel().currentIndex().row()
         conf_id = app.model_configurations[conf].guid
-        pv = RegressorView.RegressorView(conf_id)
-        pv.exec()
+        rv = RegressorView.RegressorView(conf_id)
+        rv.exec()

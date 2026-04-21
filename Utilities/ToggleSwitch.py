@@ -1,16 +1,13 @@
-from PyQt5.QtCore import QPropertyAnimation, QRectF, QSize, Qt, pyqtProperty
-from PyQt5.QtGui import QPainter, QColor
-from PyQt5.QtWidgets import (
-    QAbstractButton,
-    QSizePolicy,
-)
+from PySide6.QtCore import QPropertyAnimation, QRectF, QSize, Qt, Property
+from PySide6.QtGui import QPainter, QColor
+from PySide6.QtWidgets import QAbstractButton, QSizePolicy
 
 
 class Switch(QAbstractButton):
     def __init__(self, parent=None, track_radius=10, thumb_radius=8):
-        super().__init__(parent=parent)
+        QAbstractButton.__init__(self, parent=parent)
         self.setCheckable(True)
-        self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
 
         self._track_radius = track_radius
         self._thumb_radius = thumb_radius
@@ -65,14 +62,14 @@ class Switch(QAbstractButton):
             }
             self._track_opacity = 1
 
-    @pyqtProperty(int)
-    def offset(self):
+    def getOffset(self):
         return self._offset
 
-    @offset.setter
-    def offset(self, value):
+    def setOffset(self, value):
         self._offset = value
         self.update()
+
+    offset = Property(int, getOffset, setOffset)
 
     def sizeHint(self):  # pylint: disable=invalid-name
         return QSize(
@@ -91,8 +88,8 @@ class Switch(QAbstractButton):
     def paintEvent(self, event):  # pylint: disable=invalid-name, unused-argument
         p = QPainter(self)
         p.save()
-        p.setRenderHint(QPainter.Antialiasing, True)
-        p.setPen(Qt.NoPen)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        p.setPen(Qt.PenStyle.NoPen)
         track_opacity = self._track_opacity
         thumb_opacity = 1.0
         text_opacity = 1.0
@@ -136,14 +133,14 @@ class Switch(QAbstractButton):
                 2 * self._thumb_radius,
                 2 * self._thumb_radius,
             ),
-            Qt.AlignCenter,
+            Qt.AlignmentFlag.AlignCenter,
             self._thumb_text[self.isChecked()],
         )
         p.restore()
 
     def mouseReleaseEvent(self, event):  # pylint: disable=invalid-name
         super().mouseReleaseEvent(event)
-        if event.button() == Qt.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             anim = QPropertyAnimation(self, b'offset', self)
             anim.setDuration(120)
             anim.setStartValue(self.offset)
@@ -151,5 +148,5 @@ class Switch(QAbstractButton):
             anim.start()
 
     def enterEvent(self, event):  # pylint: disable=invalid-name
-        self.setCursor(Qt.PointingHandCursor)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
         super().enterEvent(event)

@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import *
+from PySide6.QtWidgets import QApplication, QMessageBox
 
 from Views import DatasetViewDialog
 
@@ -16,14 +16,15 @@ class DatasetModelView:
         self.dt = app.gui.DatasetsTab
 
         # Load the web_map
-        with open(app.base_dir + '/Resources/WebMap/map_data.geojson', 'r') as r:
+        gjson = app.base_dir.joinpath('Resources', 'WebMap', 'map_data.geojson')
+        with open(gjson, 'r') as r:
             geojson = r.read()
 
-        # connect javascript console messages from the web map to the application
-        # self.dt.dataset_map.page.loadFinished.connect(lambda x: self.dt.dataset_map.page.runJavaScript(f"loadDatasetCatalog({geojson})"))
-        self.dt.dataset_map.page.loadFinished.connect(
-            lambda: self.dt.dataset_map.page.runJavaScript(
-                f"loadDatasetCatalog({geojson})"))
+        # connect JavaScript console messages from the web map to the application
+        self.dt.dataset_map.loadFinished.connect(
+            lambda:
+            self.dt.dataset_map.page.runJavaScript(f'loadDatasetCatalog({geojson})')
+        )
         self.dt.dataset_map.page.java_msg_signal.connect(self.add_dataset_from_map)
 
         # List view context menu actions
@@ -31,9 +32,13 @@ class DatasetModelView:
         self.dt.dataset_list.remove_action.triggered.connect(self.remove_dataset)
         self.dt.dataset_list.add_action.triggered.connect(self.add_blank_dataset)
         self.dt.dataset_list.action1.triggered.connect(
-            lambda: self.add_climate_dataset(self.dt.dataset_list.action1.data()))
+            lambda:
+            self.add_climate_dataset(self.dt.dataset_list.action1.data())
+        )
         self.dt.dataset_list.action2.triggered.connect(
-            lambda: self.add_climate_dataset(self.dt.dataset_list.action2.data()))
+            lambda:
+            self.add_climate_dataset(self.dt.dataset_list.action2.data())
+        )
 
         # Double click event
         self.dt.dataset_list.doubleClicked.connect(self.view_dataset)
@@ -45,6 +50,7 @@ class DatasetModelView:
 
     def add_climate_dataset(self, idx):
 
+        dataset = None
         if idx == 1:
             dataset = app.datasets.add_dataset(
                 external_id='MENSO',
@@ -67,8 +73,10 @@ class DatasetModelView:
                 dataloader=app.dataloaders.get_loader_by_name('NOAA-CPC')['CLASS']()
             )
         if not dataset:
-            ret = QMessageBox.information(self.dt, 'Dataset duplicate',
-                                          'Dataset is already in dataset list.')
+            QMessageBox.information(
+                self.dt,
+                'Dataset duplicate',
+                'Dataset is already in dataset list.')
         self.dt.dataset_list.scrollToBottom()
 
     def add_dataset_from_map(self, msg):
@@ -92,24 +100,27 @@ class DatasetModelView:
             dataloader=app.dataloaders.get_loader_by_name(dloader)['CLASS']()
         )
         if not dataset:
-            ret = QMessageBox.information(self.dt, 'Dataset duplicate',
-                                          'Dataset is already in dataset list.')
+            QMessageBox.information(
+                self.dt,
+                'Dataset duplicate',
+                'Dataset is already in dataset list.')
         self.dt.dataset_list.scrollToBottom()
 
-    def view_dataset(self, checked):
+    def view_dataset(self):
 
         if len(self.dt.dataset_list.selectedIndexes()) > 1:
-            m = QMessageBox("Please select only one dataset to view")
+            m = QMessageBox()
+            m.setText('Please select only one dataset to view')
             m.exec()
             return
 
         idx = self.dt.dataset_list.selectedIndexes()[0]
         dataset = app.datasets[idx.row()]
-        dv = DatasetViewDialog.DatasetViewer(app, dataset.guid)
+        DatasetViewDialog.DatasetViewer(app, dataset.guid)
 
         return
 
-    def remove_dataset(self, checked):
+    def remove_dataset(self):
 
         for i, idx in enumerate(self.dt.dataset_list.selectedIndexes()):
             dataset = app.datasets[idx.row() - i]
@@ -117,9 +128,9 @@ class DatasetModelView:
 
         return
 
-    def add_blank_dataset(self, checked):
+    def add_blank_dataset(self):
 
         new_dataset = app.datasets.add_dataset()
-        dv = DatasetViewDialog.DatasetViewer(app, new_dataset.guid, new=True)
+        DatasetViewDialog.DatasetViewer(app, new_dataset.guid, new=True)
 
         return

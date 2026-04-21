@@ -3,7 +3,7 @@ from datetime import datetime
 
 import numpy as np
 import pandas as pd
-from PyQt5.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication
 
 app = QApplication.instance()
 
@@ -69,7 +69,7 @@ class ForecastDisaggregator(object):
             self.traces[year] = OrderedDict()
 
             # Get the testing year
-            testing_data = training_data.loc[year].values
+            testing_data = training_data.loc[year].values.copy()
 
             # Remove the forecast year from the training_data
             training_data_year = training_data.loc[~training_data.index.isin([year])]
@@ -95,13 +95,18 @@ class ForecastDisaggregator(object):
 
                 # Convert the training data to PCA space
                 training_PCA, eigenvals, eigenvecs = self.PCA(training_data_year.copy())
-                distance_vector = self.PcaDistance(testing_data, training_PCA, eigenvecs,
-                                                   eigenvals)
+                distance_vector = self.PcaDistance(
+                    testing_data,
+                    training_PCA,
+                    eigenvecs,
+                    eigenvals
+                )
 
                 # Sort the distance vector and the year list
-                training_years_sorted = [x for _, x in
-                                         sorted(zip(distance_vector, training_years),
-                                                reverse=True)]
+                training_years_sorted = [
+                    x for _,
+                    x in sorted(zip(distance_vector, training_years), reverse=True)
+                ]
                 distance_vector.sort(reverse=True)
 
                 # Compute the traces
@@ -118,15 +123,6 @@ class ForecastDisaggregator(object):
                         trace = self.inflow_dataset.data.loc[s:e]
                         perf_fcst = training_data_year[idx][-1]
 
-                        # HACKY NCAR THING THAT JORDAN DEMANDED
-                        # fname = f'C:\\Users\\KFoley\\Downloads\\jordandiagg\\NCAR\{y}0201\\tracemedian\\Buffalo_Bill_Inflows.local.rdf'
-                        # with open(fname, 'r') as readfile:
-                        #  sd = readfile.readline().split(':')[1].strip()[:10]
-                        #  ed = readfile.readline().split(':')[1].strip()[:10]
-                        # df = pd.read_csv(fname, skiprows=6, header=None)
-                        # df = df.set_index(pd.DatetimeIndex(pd.date_range(sd, ed)))
-                        # trace = df.loc[s:e]
-                        # perf_fcst = float(trace.sum()*86.4/43560)
                         trace = trace * (val / perf_fcst)
 
                         # Blend the Trace
@@ -152,8 +148,10 @@ class ForecastDisaggregator(object):
                                   f'{year}-{end_date:%m-%d}')))
                 df = pd.concat([df, data], axis=1)
         df.columns = labels
-        df.to_csv(
-            f'{app.base_dir}/UserData/BBR_DISAGG_{year}_{self.model.issue_date:%B%d}.csv')
+        df.to_csv(app.base_dir.joinpath(
+            'UserData',
+            f'BBR_DISAGG_{year}_{self.model.issue_date:%B%d}.csv')
+        )
         return self.traces
 
     def PcaDistance(self, testing_data, training_pc, evecs, evals):

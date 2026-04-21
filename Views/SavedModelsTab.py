@@ -2,9 +2,11 @@ from datetime import datetime
 
 import numpy as np
 import pyqtgraph as pg
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPainter
-from PyQt5.QtWidgets import *
+from PySide6.QtCore import Qt, QPoint
+from PySide6.QtGui import QAction, QPainter
+from PySide6.QtWidgets import (QApplication, QWidget, QHBoxLayout, QVBoxLayout,
+                               QSplitter, QComboBox, QPushButton, QSpinBox, QLabel,
+                               QListView, QAbstractItemView, QMenu, QLineEdit)
 
 from Utilities import RichTextDelegate, ToggleSwitch
 
@@ -57,8 +59,9 @@ class SavedModelsTab(QWidget):
         h.addWidget(QLabel("CDF View"))
         vlayout2.addLayout(h)
         vlayout2.addWidget(self.prob_plot)
-        vlayout2.addWidget(
-            QLabel('<strong>Forecast Exceedances</strong>', objectName='HeaderLabel'))
+        label = QLabel('<strong>Forecast Exceedances</strong>')
+        label.setObjectName('HeaderLabel')
+        vlayout2.addWidget(label)
         hlayout.addWidget(QLabel('90%'))
         hlayout.addWidget(self._10_value)
         hlayout.addWidget(QLabel('70%'))
@@ -76,28 +79,33 @@ class SavedModelsTab(QWidget):
         widg = QWidget()
         widg.setLayout(vlayout2)
         self.splitter.addWidget(widg)
+        self.splitter.setCollapsible(0, False)
+        self.splitter.setCollapsible(1, False)
+
         self.layout.addWidget(self.splitter)
         self.setLayout(self.layout)
 
         self.splitter.splitterMoved.connect(lambda pos, idx: self.updateListSize())
 
     def updateListSize(self):
-        app.saved_models.dataChanged.emit(app.saved_models.index(0),
-                                          app.saved_models.index(
-                                              app.saved_models.rowCount()))
+        app.saved_models.dataChanged.emit(
+            app.saved_models.index(0),
+            app.saved_models.index(app.saved_models.rowCount())
+        )
         app.gui.SavedModelsTab.widg.update()
 
 
 class ModelList(QListView):
 
-    def __init__(self, app=None):
+    def __init__(self):
 
         QListView.__init__(self)
-        self.app = app
         self.setMinimumWidth(300)
         self.setItemDelegate(RichTextDelegate.HTMLDelegate())
-        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setSizeAdjustPolicy(QListView.SizeAdjustPolicy.AdjustToContents)
         self.customContextMenuRequested.connect(self.customMenu)
 
         self.generate_forecast_action = QAction('Generate Forecasts')
@@ -114,19 +122,22 @@ class ModelList(QListView):
         if (self.model()) and (self.model().rowCount(self.rootIndex()) > 0):
             return
         painter = QPainter(self.viewport())
-        painter.drawText(self.rect(), Qt.AlignCenter,
-                         'No saved models in this forecast file')
+        painter.drawText(
+            self.rect(),
+            Qt.AlignmentFlag.AlignCenter,
+            'No saved models in this forecast file'
+        )
         painter.end()
 
-    def customMenu(self, pos):
-        globalpos = self.mapToGlobal(pos)
+    def customMenu(self, point: QPoint):
+        global_point = self.mapToGlobal(point)
         menu = QMenu()
 
         menu.addAction(self.generate_forecast_action)
         menu.addAction(self.open_action)
         menu.addAction(self.remove_action)
 
-        index = self.indexAt(pos)
+        index = self.indexAt(point)
         selected = self.selectedIndexes()
 
         if not index.isValid():
@@ -141,7 +152,7 @@ class ModelList(QListView):
             self.open_action.setEnabled(False)
             self.generate_forecast_action.setEnabled(True)
             self.remove_action.setEnabled(True)
-        menu.exec_(globalpos)
+        menu.exec_(global_point)
 
 
 class valueLabel(QLineEdit):
@@ -150,8 +161,8 @@ class valueLabel(QLineEdit):
         self.setReadOnly(True)
 
     def setText(self, value, units):
-        value = f'{value:.2f} {units}'
-        QLineEdit.setText(self, value)
+        label = f'{value:.2f} {units}'
+        QLineEdit.setText(self, label)
 
 
 class ProbabilityPlots(pg.PlotWidget):
@@ -163,7 +174,7 @@ class ProbabilityPlots(pg.PlotWidget):
         self.hideAxis('left')
 
     def reframe_to_min_max_normal(self, min_, max_, normal):
-        self.setXRange(min_, max_, padding=0.1)
+        self.getViewBox().setXRange(min_, max_, padding=0.1)
         item0 = pg.InfiniteLine(
             normal,
             pen=pg.mkPen({'color': 'blue', 'width': 4}),

@@ -1,9 +1,9 @@
-import os
-
-from PyQt5 import QtGui
-from PyQt5.QtCore import Qt, pyqtSignal, QUrl
-from PyQt5.QtWebEngineWidgets import *
-from PyQt5.QtWidgets import *
+from PySide6.QtGui import QAction, QPainter, QDesktopServices
+from PySide6.QtCore import Qt, Signal, QUrl, QPoint
+from PySide6.QtWebEngineWidgets import QWebEngineView
+from PySide6.QtWebEngineCore import QWebEnginePage, QWebEngineSettings
+from PySide6.QtWidgets import (QApplication, QMenu, QWidget, QHBoxLayout, QVBoxLayout,
+                               QSplitter, QLabel, QListView, QAbstractItemView)
 
 from Utilities import RichTextDelegate
 
@@ -23,22 +23,24 @@ class DatasetsTab(QWidget):
 
         # Layout the Tab
         layout = QHBoxLayout()
-        self.splitter = QSplitter()
 
-        self.splitter.addWidget(self.dataset_map)
         vlayout = QVBoxLayout()
-        vlayout.addWidget(QLabel('Datasets', objectName='HeaderLabel'))
+        label = QLabel('Datasets')
+        label.setObjectName('HeaderLabel')
+        vlayout.addWidget(label)
         vlayout.addWidget(self.dataset_list)
         self.widg = QWidget()
         self.widg.setLayout(vlayout)
+        self.splitter = QSplitter()
+        self.splitter.addWidget(self.dataset_map)
         self.splitter.addWidget(self.widg)
         self.splitter.setCollapsible(0, False)
         self.splitter.setCollapsible(1, False)
 
         layout.addWidget(self.splitter)
-        self.setLayout(layout)
+        QWidget.setLayout(self, layout)
 
-        self.splitter.splitterMoved.connect(lambda pos, idx: self.updateListSize())
+        self.splitter.splitterMoved.connect(lambda: self.updateListSize())
 
     def updateListSize(self):
         app.datasets.dataChanged.emit(app.datasets.index(0),
@@ -54,18 +56,24 @@ class SelectedDatasetList(QListView):
         QListView.__init__(self)
         self.setMinimumWidth(300)
         self.setItemDelegate(RichTextDelegate.HTMLDelegate())
-        self.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setSizeAdjustPolicy(QListView.SizeAdjustPolicy.AdjustToContents)
         self.customContextMenuRequested.connect(self.customMenu)
-        # self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
 
         self.add_action = QAction('Add new dataset')
-        self.add_action.setStatusTip('Adds a new blank dataset to the list')
+        self.add_action.setStatusTip(
+            'Adds a new blank dataset to the list'
+        )
         self.remove_action = QAction('Remove dataset(s)')
-        self.remove_action.setStatusTip('Removes the selected dataset from the list')
+        self.remove_action.setStatusTip(
+            'Removes the selected dataset from the list'
+        )
         self.view_action = QAction('Open dataset')
         self.view_action.setStatusTip(
-            'Opens the dataset in a new window for viewing and editing')
+            'Opens the dataset in a new window for viewing and editing'
+        )
 
         self.climate_actions = []
         self.action1 = QAction('1: Multivariate Enso')
@@ -79,18 +87,21 @@ class SelectedDatasetList(QListView):
         QListView.paintEvent(self, e)
         if (self.model()) and (self.model().rowCount(self.rootIndex()) > 0):
             return
-        painter = QtGui.QPainter(self.viewport())
-        painter.drawText(self.rect(), Qt.AlignCenter,
-                         'No datasets in this forecast file')
+        painter = QPainter(self.viewport())
+        painter.drawText(
+            self.rect(),
+            Qt.AlignmentFlag.AlignCenter,
+            'No datasets in this forecast file'
+        )
         painter.end()
 
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Delete:
+        if event.key() == Qt.Key.Key_Delete:
             self.remove_action.trigger()
         return super().keyPressEvent(event)
 
-    def customMenu(self, pos):
-        globalpos = self.mapToGlobal(pos)
+    def customMenu(self, point: QPoint):
+        global_point = self.mapToGlobal(point)
         menu = QMenu()
 
         menu.addAction(self.view_action)
@@ -101,7 +112,7 @@ class SelectedDatasetList(QListView):
         for action in self.climate_actions:
             idx_menu.addAction(action)
 
-        index = self.indexAt(pos)
+        index = self.indexAt(point)
         selected = self.selectedIndexes()
 
         if not index.isValid():
@@ -120,33 +131,47 @@ class SelectedDatasetList(QListView):
             self.add_action.setEnabled(False)
             list(map(lambda x: x.setEnabled(True), self.climate_actions))
 
-        menu.exec_(globalpos)
+        menu.exec_(global_point)
 
 
 class DatasetMap(QWebEngineView):
 
     def __init__(self):
         QWebEngineView.__init__(self)
-        self.settings().setAttribute(QWebEngineSettings.LocalContentCanAccessRemoteUrls,
-                                     True)
         self.page = WebMapPage()
-        url = QUrl.fromLocalFile(
-            os.path.abspath(app.base_dir + '/Resources/WebMap/WebMap.html'))
         self.setPage(self.page)
-        self.load(url)
-        self.setContextMenuPolicy(Qt.NoContextMenu)
+        self.loadProgress.connect(
+            lambda x:
+            print(f'Loading basemap ... {x:}%')
+        )
+        self.loadFinished.connect(
+            lambda ok:
+            print(f"Loading basemap ... {'Success' if {ok} else 'Failed'}")
+        )
+        self.load(
+            QUrl.fromLocalFile(
+                app.base_dir.joinpath('Resources', 'WebMap', 'WebMap.html')
+            )
+        )
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
         self.setMinimumSize(300, 300)
+        self.layout()
 
 
 class WebMapPage(QWebEnginePage):
-    java_msg_signal = pyqtSignal(str)
+    java_msg_signal = Signal(str)
 
     def __init__(self):
         QWebEnginePage.__init__(self)
 
+        self.settings().setAttribute(
+            QWebEngineSettings.WebAttribute.LocalContentCanAccessRemoteUrls,
+            True
+        )
+
     def acceptNavigationRequest(self, url, _type, isMainFrame):
-        if _type == QWebEnginePage.NavigationTypeLinkClicked:
-            QtGui.QDesktopServices.openUrl(url)
+        if _type == QWebEnginePage.NavigationType.NavigationTypeLinkClicked:
+            QDesktopServices.openUrl(url)
             return False
         else:
             return True

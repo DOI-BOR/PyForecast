@@ -1,6 +1,7 @@
-from PyQt5.QtCore import *
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import *
+from PySide6.QtCore import QStringListModel
+from PySide6.QtWidgets import (QApplication, QDialog, QGridLayout, QPushButton,
+                               QSizePolicy, QComboBox, QTableWidget, QSplitter,
+                               QTableWidgetItem)
 
 from Plots.ResampledDataViewer import Plot
 from Utilities import HydrologyDateTimes
@@ -13,14 +14,15 @@ class DataViewer(QDialog):
     def __init__(self, configuration_idx=None, dataset_idx=None):
 
         QDialog.__init__(self)
+
         self.configuration = app.model_configurations[configuration_idx]
         if dataset_idx == -1:
             self.dataset = self.configuration.predictand
         else:
             self.dataset = self.configuration.predictor_pool[dataset_idx]
 
-        self.datasets = [self.configuration.predictand] + [p for p in
-                                                           self.configuration.predictor_pool.predictors]
+        self.datasets = ([self.configuration.predictand]
+                         + [p for p in self.configuration.predictor_pool.predictors])
 
         self.setUi()
         self.setData(self.dataset)
@@ -38,12 +40,13 @@ class DataViewer(QDialog):
     def setUi(self):
 
         self.setWindowTitle('Dataset Viewer')
-        self.setWindowIcon(QIcon(app.base_dir + '/Resources/Icons/AppIcon.ico'))
+        self.setWindowIcon(app.icon)
 
         layout = QGridLayout()
 
         self.load_button = QPushButton('Load')
-        self.load_button.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+        self.load_button.setSizePolicy(QSizePolicy.Policy.Maximum,
+                                       QSizePolicy.Policy.Maximum)
         self.combo_select = QComboBox()
         self.combo_select.setModel(
             QStringListModel([d.__list_form__() for d in self.datasets]))

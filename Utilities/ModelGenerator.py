@@ -4,8 +4,8 @@ from itertools import compress
 
 import numpy as np
 import pandas as pd
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import QApplication
+from PySide6.QtCore import QObject, Signal, QThread
+from PySide6.QtWidgets import QApplication
 
 from Models.SavedModels import Model
 from Utilities.HydrologyDateTimes import convert_to_water_year
@@ -21,10 +21,10 @@ def trap_exc_during_debug(*args):
 # sys.excepthook = trap_exc_during_debug
 
 class ModelGenerator(QObject):
-    updateProgSignal = pyqtSignal(int)
-    updateTextSignal = pyqtSignal(str)
-    newModelSignal = pyqtSignal(object)
-    sig_done = pyqtSignal(bool)
+    updateProgSignal = Signal(int)
+    updateTextSignal = Signal(str)
+    newModelSignal = Signal(object)
+    sig_done = Signal(bool)
 
     def __init__(self, selected_configuration=None, external_list=None, id=None):
 
@@ -90,8 +90,8 @@ class ModelGenerator(QObject):
             # Check if we can brute force or not
             num_forced = sum([p.forced for p in self.config.predictor_pool.predictors])
             num_empty = np.sum(df.isnull().all())
-            if len(self.config.predictor_pool) - num_forced - num_empty <= app.config[
-                'brute_force_under_no']:
+            if (len(self.config.predictor_pool) - num_forced - num_empty
+                    <= app.settings['brute_force_under_no']):
                 bruteforce = True
                 self.updateTextSignal.emit(
                     'Small number of predictors. Using <strong>Brute Force</strong> Feature Selection')
@@ -109,7 +109,7 @@ class ModelGenerator(QObject):
                 f'Starting feature selection with feature selector: {feature_selector_name}')
             count = 0
             score_type = 1 if regressor.scoring_metric in ['R2', 'ADJ R2'] else 0
-            score = np.Inf if score_type == 0 else -np.Inf
+            score = np.inf if score_type == 0 else -np.inf
             while feature_selector.running or count == 0:
 
                 if self.__abort:
@@ -208,4 +208,4 @@ class ModelGenerator(QObject):
     def stop(self):
         self.updateTextSignal.emit("Finished")
         self.sig_done.emit(True)
-        self.quit()
+        self.thread().quit()

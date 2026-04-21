@@ -2,48 +2,55 @@
 // Script Name:     WebMap2.js
 // Script Author:   Kevin Foley, 
 //
-// Description:     'WebMap2.js' is the javascript portion of a web map application used
+// Description:     'WebMap2.js' is the JavaScript portion of a web map application used
 //                  to select stations and datasets in the PyForecast application. This
-//                  script uses the MapboxGL javascript API to map GeoJSON files located
+//                  script uses the MapboxGL JavaScript API to map GeoJSON files located
 //                  in the GIS folder
 
 
-
-// Startup Variables
-var rect1 = null;
-var hucList = null;
-var loaded = false;
-
-//window.legend = false;
-
-
-
 // Define Basemaps
-var grayMap = L.tileLayer('http://{s}.tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png', {
-    maxZoom: 18,
-    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'});
-var terrainMap =  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
-	attribution: 'Tiles &copy; Esri'});
-var streetMap =  L.tileLayer('https://{s}.tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png', {
-	maxZoom: 18,
-    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'});
-var imageryMap = L.tileLayer('https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}', {
-    maxZoom: 18,    
-    attribution: 'U.S. Geologic Survey'});
+var grayMap = L.tileLayer(
+    'http://{s}.tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png',
+    {
+        maxZoom: 18,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }
+);
+var terrainMap =  L.tileLayer(
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+    {
+        attribution: 'Tiles &copy; Esri'
+    }
 
+);
+var streetMap =  L.tileLayer('https://{s}.tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png',
+    {
+        maxZoom: 18,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }
+);
+var imageryMap = L.tileLayer(
+    'https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}',
+    {
+        maxZoom: 18,
+        attribution: 'U.S. Geologic Survey'
+    }
+);
 
 // Create an initial map using the terrain basemap
+// Set map centered on the U.S. at zoom level 7
 var map = L.map('map',
     {zoomControl: true,
     editable: true,
-    layers: [terrainMap]}).setView([ 43, -113], 7); // Set up a map centered on the U.S. at zoom level 4
-
+    layers: [terrainMap]}).setView([43, -113], 7);
 
 // Store the basemaps in a dict
-var baseMaps = {'Terrain': terrainMap,
-                'Grayscale': grayMap, 
-                'Streets': streetMap,
-                'Satellite': imageryMap};
+var baseMaps= {
+    'Terrain': terrainMap,
+    'Grayscale': grayMap,
+    'Streets': streetMap,
+    'Satellite': imageryMap
+};
 
 // Create map panes
 map.createPane("HUCPane")
@@ -53,16 +60,11 @@ map.createPane("PointsPane")
 // Create a layer group
 var layer_group = L.layerGroup()
 
-// Create objects for watersheds and climate divisions
-var HUC8 = new Object();
-var CLIM_DIV = new Object();
-
-
 // Topojson parser
 L.TopoJSON = L.GeoJSON.extend({
     addData: function(data) {
         var geojson, key;
-        if (data.type == 'Topology') {
+        if (data.type === 'Topology') {
             for (key in data.objects) {
                 if (data.objects.hasOwnProperty(key)) {
                     geojson = topojson.feature(data, data.objects[key]);
@@ -79,90 +81,16 @@ L.topoJson = function(data, options){
     return new L.TopoJSON(data, options);
 };
 
-
-// Load the data into the objects
-loadJSON('MapData/HUC8_WGS84.json', function(response) {
-    // Parse data into object
-    window.HUC8 = JSON.parse(response);
-});
-loadJSON('MapData/hucall.topojson', function(response){
-    // Parse into object
-    window.hucall = JSON.parse(response);
-});
-loadJSON('MapData/CLIMATE_DIVISION_GEOJSON.json', function(response){
-    // Parse data into object
-    window.CLIM_DIV = JSON.parse(response);
-});
-
-// Create the LeafLet Layers for the Climate Divisions and the Watersheds
-window.hucLayer = L.topoJson( window.hucall, {
-    style: {
-        pane: "HUCPane",
-        fillColor: "#4286f4",
-        weight: 1,
-        opacity: .8, 
-        color: "#4286f4", 
-        fillOpacity: 0.0
-        },
-    filter: function(feature){
-        if (feature.properties.type == '8') {
-            return true;
-        }
-        return false;
-    }
-        
-}).addTo(window.map);
-
-window.hucLayer.eachLayer(function(layer) {
-    layer.on("mouseover", function(e) {
-        e.target.setStyle({
-            color:"#4872ff",
-            weight:3,
-            opacity: .8,
-        });
-    });
-    layer.on("mouseout", function(e){
-        window.hucLayer.resetStyle(e.target);
-    });
-
-})
+// load all local layers
+loadAllJSON()
 
 
-window.climLayer = L.geoJSON( window.CLIM_DIV, {
-    style: {
-        pane: "HUCPane",
-        fillColor: "#f5bb3d",
-        weight: 1,
-        opacity: 0.8,
-        color: "#f5bb3d",
-        fillOpacity: 0,
-    },
-    
-});
-
-window.climLayer.eachLayer(function(layer) {
-    layer.on("mouseover", function(e) {
-        e.target.setStyle({
-            color:"#e4ba0e",
-            weight:3,
-            opacity: .8,
-        });
-    });
-    layer.on("mouseout", function(e){
-        window.climLayer.resetStyle(e.target);
-    });
-
-})
-
-
-
-// FUNCTIONS
-//
+// FUNCTIONS //
 
 // Function to load raw geojson from the PyForecast application into the map. 
 //      Reads the 'geojson_string' (which is actually an object)
 //      into the web map as a set of layers.
-function loadDatasetCatalog(geojson_string) {
+async function loadDatasetCatalog(geojson_string) {
 
     // load json
     point_data = geojson_string;
@@ -172,7 +100,7 @@ function loadDatasetCatalog(geojson_string) {
 
         // Filter for streamgages
         filter: function(feature) {
-            if (feature.properties.DatasetType == 'STREAMGAGE') return true;
+            if (feature.properties.DatasetType === 'STREAMGAGE') return true;
         },
 
         // Create Circle markers
@@ -194,7 +122,7 @@ function loadDatasetCatalog(geojson_string) {
         
         // Filter for SNOTEL sites
         filter: function(feature) {
-            if (feature.properties.DatasetType == 'SNOTEL') return true;
+            if (feature.properties.DatasetType === 'SNOTEL') return true;
         },
 
         // Create circle markers
@@ -216,7 +144,7 @@ function loadDatasetCatalog(geojson_string) {
         
         // Filter for Snow Course Sites
         filter: function(feature) {
-            if (feature.properties.DatasetType == 'SNOWCOURSE') return true;
+            if (feature.properties.DatasetType === 'SNOWCOURSE') return true;
         },
 
         // Create circle markers
@@ -238,7 +166,7 @@ function loadDatasetCatalog(geojson_string) {
         
         // Filter for SCAN Sites
         filter: function(feature) {
-            if (feature.properties.DatasetType == 'SCAN') return true;
+            if (feature.properties.DatasetType === 'SCAN') return true;
         },
 
         // Create circle markers
@@ -260,7 +188,7 @@ function loadDatasetCatalog(geojson_string) {
         
         // Filter for USBR reservoirs
         filter: function(feature) {
-            if (feature.properties.DatasetType == 'RESERVOIR') return true;
+            if (feature.properties.DatasetType === 'RESERVOIR') return true;
         },
 
         // Create circle markers
@@ -282,7 +210,7 @@ function loadDatasetCatalog(geojson_string) {
         
         // Filter for USBR reservoirs
         filter: function(feature) {
-            if (feature.properties.DatasetType == 'HYDROMETRIC') return true;
+            if (feature.properties.DatasetType === 'HYDROMETRIC') return true;
         },
 
         // Create circle markers
@@ -304,7 +232,7 @@ function loadDatasetCatalog(geojson_string) {
         
         // Filter for USBR AGRIMET
         filter: function(feature) {
-            if (feature.properties.DatasetType == 'AGRIMET') return true;
+            if (feature.properties.DatasetType === 'AGRIMET') return true;
         },
 
         // Create Circle Markers
@@ -326,7 +254,7 @@ function loadDatasetCatalog(geojson_string) {
         
         // Filter for NCDC
         filter: function(feature) {
-            if (feature.properties.DatasetType == 'NCDC') return true;
+            if (feature.properties.DatasetType === 'NCDC') return true;
         },
 
         // Create Circle Markers
@@ -346,7 +274,7 @@ function loadDatasetCatalog(geojson_string) {
     window.otherLayer = L.geoJSON(point_data, {
         
         filter: function(feature) {
-            if (arr.includes(feature.properties.DatasetType)) {return false} else {return true};
+            return !arr.includes(feature.properties.DatasetType);
         },
         pointToLayer: function (feature, latlng) {
             return L.circleMarker(latlng, {
@@ -372,20 +300,22 @@ function loadDatasetCatalog(geojson_string) {
 // Creates Popup windows when users click on circle markers and
 // area polygons. Creates the 'add dataset' buttons
 function createPopups() {
-    var colorDict = {"STREAMGAGE":"#23ff27",
-                    "SNOTEL":"#4cffed",
-                    "SNOWCOURSE":"#00beff",
-                    "SCAN":"#ffcc6f",
-                    "RESERVOIR":"#5263fe",
-                    "AGRIMET":"#f47251",
-                    "NCDC":"#f5edd0",
-                    "HYDROMETRIC":"#FF0000"}
-    window.hucDict = {};
+    var colorDict = {
+        "STREAMGAGE":"#23ff27",
+        "SNOTEL":"#4cffed",
+        "SNOWCOURSE":"#00beff",
+        "SCAN":"#ffcc6f",
+        "RESERVOIR":"#5263fe",
+        "AGRIMET":"#f47251",
+        "NCDC":"#f5edd0",
+        "HYDROMETRIC":"#FF0000"
+    }
 
+    window.hucDict = {};
     window.hucLayer.eachLayer( function(sublayer) {
         var huc = sublayer.feature.properties.HUC8;
-        if (window.hucDict[huc] == undefined) {
-            window.hucDict[huc] = new Object;
+        if (window.hucDict[huc] === undefined) {
+            window.hucDict[huc] = {};
             window.hucDict[huc].ids = Array();
             window.hucDict[huc].colors = Array();
             window.hucDict[huc].names = Array();
@@ -405,8 +335,8 @@ function createPopups() {
             var name = sublayer.feature.properties.DatasetName;
             var param = sublayer.feature.properties.DatasetParameter;
 
-            if (window.hucDict[huc] == undefined) {
-                window.hucDict[huc] = new Object;
+            if (window.hucDict[huc] === undefined) {
+                window.hucDict[huc] = {};
                 window.hucDict[huc].ids = Array();
                 window.hucDict[huc].names = Array();
                 window.hucDict[huc].colors = Array();
@@ -425,9 +355,15 @@ function createPopups() {
                     } else {
                         window.hucDict[huc].colors.push("#AAAAAA");
                     }
-                    
-                    if (name.length > 15) {var name2 = name.substr(0,15)+'...'} else {var name2 = name};
-                    if (params[idx].length > 10) {var param2 = params[idx].substr(0,10) + '...'} else {var param2 = params[idx]};
+
+                    var name2 = name;
+                    var param2 = params[idx];
+                    if (name2.length > 15) {
+                        name2 = name2.substring(0,15)+'...'
+                    }
+                    if (param2.length > 10) {
+                        param2 = param2.substring(0,10) + '...'
+                    }
     
                     window.hucDict[huc].names.push('[' +name2 + ']' + param2)
                 })
@@ -438,8 +374,14 @@ function createPopups() {
                 } else {
                     window.hucDict[huc].colors.push("#AAAAAA");
                 }
-                if (name.length > 15) {var name2 = name.substr(0,15)+'...'} else {var name2 = name};
-                if (param.length > 10) {var param2 = param.substr(0,10) + '...'} else {var param2 = param};
+                var name2 = name;
+                var param2 = param;
+                if (name2.length > 15) {
+                    name2 = name2.substring(0,15)+'...'
+                }
+                if (param2.length > 10) {
+                    param2 = param2.substring(0,10) + '...'
+                }
     
                 window.hucDict[huc].names.push('[' +name2 + ']' + param2)
             }
@@ -500,19 +442,18 @@ function createPopups() {
                 var por = sdate.getFullYear() + ' - ' + edate.getFullYear();
                 popHTML = popHTML + `</br><strong>POR:</strong> ${por}`
                 popHTML = popHTML + `<p hidden id="param">${id}~~${name}~~${agency}~~${dataloader}~~${param}~~${pcode}~~${units}</p>`
-            };
+            }
 
             // Create links to websites if applicable
-            if (agency == 'USGS') {
-                var url = "https://waterdata.usgs.gov/nwis/inventory/?site_no="+id;
-                popHTML = popHTML + `</br><a href = ${url}>Website</a></p>`
-            } else if (agency == 'NRCS' && typ == 'SNOTEL') {
-                var url = "https://wcc.sc.egov.usda.gov/nwcc/site?sitenum="+id;
-                popHTML = popHTML + `</br><a href = ${url}>Website</a></p>`
+            var url;
+            if (agency === 'USGS') {
+                url = "https://waterdata.usgs.gov/nwis/inventory/?site_no="+id;
+            } else if (agency === 'NRCS' && typ === 'SNOTEL') {
+                url = "https://wcc.sc.egov.usda.gov/nwcc/site?sitenum="+id;
             } else {
-                var url = 'No Website';
-                popHTML = popHTML + `</p>`
-            };
+                url = 'No Website';
+            }
+            popHTML = popHTML + `</br><a href = ${url}>Website</a></p>`
 
             // Add a button to add the dataset
             popHTML = popHTML + '<button type="button" onclick="buttonPress()">Add Dataset</button>'
@@ -537,7 +478,6 @@ function createPopups() {
         window.num = num;
 
         // get a list of all the datasets in this huc
-
         var popHTML = "<p><strong>HUC8: " + num + "</strong><br><strong>Name: </strong>" + name + "</p>";
 
         
@@ -559,27 +499,6 @@ function createPopups() {
         popHTML = popHTML + '<button type="button" onclick="buttonPress()">Add Datasets</button>' ;
         window.pop = L.popup({closeButton:true}).setLatLng(coordinates).setContent(popHTML).addTo(window.map);
 
-        /* var checkList = document.getElementById('list1_HUC');
-        var items = document.getElementById('items_HUC');
-                checkList.getElementsByClassName('anchor_HUC')[0].onclick = function (evt) {
-                    if (items.classList.contains('visible')){
-                        items.classList.remove('visible');
-                        items.style.display = "none";
-                    }
-                    
-                    else{
-                        items.classList.add('visible');
-                        items.style.display = "block";
-                    }
-                    
-                    
-                }
-
-                items.onblur = function(evt) {
-                    items.classList.remove('visible');
-                } */
-
-        
     });
 
     // Create popups for climate division layer
@@ -589,27 +508,26 @@ function createPopups() {
         var name = e.layer.feature.properties.NAME;
         var num = e.layer.feature.properties.CLIMDIV;
         var popHTML = `<p hidden id="meta-name">${name}</p>`
-        var popHTML = popHTML + "<strong>NAME: " + name + "</strong><p><strong>Number: </strong>" + num;
+        popHTML = popHTML + "<strong>NAME: " + name + "</strong><p><strong>Number: </strong>" + num;
         popHTML = popHTML + `</br><select id='param'><option value='PDSI'>Palmer Drought Severity Index</option><option value='SPEI'>Standardized Precipitation Evapotranspiration Index</option></select></p>`;
         popHTML = popHTML + '<button type="button" onclick="PDSIPress()">Add Drought Index</button>' + `<p hidden id="pdsiNum" style="margin:0">${num}</p>` ;
         window.pop = L.popup({closeButton:false}).setLatLng(coordinates).setContent(popHTML).addTo(window.map);
-        
+
     });
 }
 
 function hucSelectAll(){
     var selectAllBox = document.getElementById("SELECT_ALL");
+    var items = document.getElementsByClassName("HUC_SELECT");
     if (selectAllBox.checked) {
-        var items = document.getElementsByClassName("HUC_SELECT");
         for(i=0; i<items.length; i++){
-            if (items[i].id != 'SELECT_ALL'){
+            if (items[i].id !== 'SELECT_ALL'){
                 items[i].checked = true;
             }
         }
     } else {
-        var items = document.getElementsByClassName("HUC_SELECT");
         for(i=0; i<items.length; i++){
-            if (items[i].id != 'SELECT_ALL'){
+            if (items[i].id !== 'SELECT_ALL'){
                 items[i].checked = false;
             }
         }
@@ -618,13 +536,16 @@ function hucSelectAll(){
 
 function createLayerControlOverlay() {
     // Creates a layer control using the grouped overlay add-on to Leaflet
-    window.NEXRADLayer =  new L.tileLayer.wms("http://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi", {
+    window.NEXRADLayer =  new L.tileLayer.wms(
+        "http://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi",
+        {
             layers: 'nexrad-n0r',
             format: 'image/png',
             opacity: 0.8,
             transparent: true,
             attribution: "Weather data &copy; 2015 IEM Nexrad"
-            });
+        }
+    );
     SWE_URL = "https://climate.arizona.edu/Maps/SNODAS_SWE_a/{yr}_{mo}_{dy}_SNODAS_SWE_a/{z}/{x}/{y}.png";
     dt = new Date();
     dt = new Date(dt - 7*60*60*1000);
@@ -634,12 +555,15 @@ function createLayerControlOverlay() {
     if (mo.length < 2) {mo = "0" + mo;}
     if (dy.length < 2) {dy = "0" + dy;}
     SWE_URL = SWE_URL.replace('{yr}',yr).replace('{mo}',mo).replace('{dy}',dy)
-    window.SWELayer = L.tileLayer.wms(SWE_URL, {
-        format: 'image/png',
-        transparent: true,
-        opacity: 0.8,
-        attribution: 'Map data from the <a target="_blank" rel="noreferrer" href="https://www.nohrsc.noaa.gov/">National Operational Hydrologic Remote Sensing Center</a>.  Tiles created by <a target="_blank" rel="noreferrer" href="mailto:broxtopd@email.arizona.edu>Patrick Broxton"</a>.'
-    });
+    window.SWELayer = L.tileLayer.wms(
+        SWE_URL,
+        {
+            format: 'image/png',
+            transparent: true,
+            opacity: 0.8,
+            attribution: 'Map data from the <a target="_blank" rel="noreferrer" href="https://www.nohrsc.noaa.gov/">National Operational Hydrologic Remote Sensing Center</a>.  Tiles created by <a target="_blank" rel="noreferrer" href="mailto:broxtopd@email.arizona.edu>Patrick Broxton"</a>.'
+        }
+    );
     window.QPFLayer7Day = L.esri.featureLayer({
         url:"https://idpgis.ncep.noaa.gov/arcgis/rest/services/NWS_Forecasts_Guidance_Warnings/wpc_qpf/MapServer/11",
     });
@@ -651,12 +575,9 @@ function createLayerControlOverlay() {
         url:"https://idpgis.ncep.noaa.gov/arcgis/rest/services/NWS_Forecasts_Guidance_Warnings/wpc_qpf/MapServer/9",
     });
 
-   
-
     window.emptyLayer = L.tileLayer("").addTo(window.map);
     window.hucNone = L.tileLayer("");
     
-
     window.QPFLayer7Day.setStyle(QPFStyle);
     window.QPFLayer6Hour.setStyle(QPFStyle);
     window.QPFLayer3Day.setStyle(QPFStyle);
@@ -728,10 +649,6 @@ function createLayerControlOverlay() {
     })
 
 
-    
-
-
-
     // Create Grouped Overlays
     var groupedOverlays = {
         "Stations":{
@@ -767,11 +684,11 @@ function createLayerControlOverlay() {
     };
 
     L.control.groupedLayers(baseMaps, groupedOverlays, layer_control_options).addTo(window.map);
-};
+}
 
 
 function reorderLayer(layer) {
-    // Reorders the QPF layer so the the 
+    // Reorders the QPF layer so the
     // higher precip values are always on top
     var sublayers = Array();
     layer.eachFeature(function(sublayer){
@@ -785,9 +702,6 @@ function reorderLayer(layer) {
         //layer.resetStyle(feature.id)
         //layer.setFeatureStyle(feature.id, QPFStyle);
     });
-    //layer.resetStyle();
-    //;
-
 }
 
 // Function to update the POR in the popup 
@@ -801,8 +715,7 @@ function updatePOR() {
     var y2 = new Date(edates[idx]);
     var por = y1.getFullYear() + ' - ' + y2.getFullYear();
     document.getElementById('por').innerHTML = `POR: ${por}`;
-    //document.getElementById()
-};
+}
 
 // Function to print a formatted message to the console 
 // when users click the 'Add Dataset' button on sites
@@ -810,13 +723,13 @@ function buttonPress(grid_param=null) {
     
     data = document.getElementById('param')
 
-    if (data.nodeName.toUpperCase() == 'P') {
+    if (data.nodeName.toUpperCase() === 'P') {
         id = data.innerHTML;
         console.log('ID:'+id);
     } else {
         selected = data.options[data.selectedIndex];
 
-        if (selected.value == 'PRISM') {
+        if (selected.value === 'PRISM') {
             id = document.getElementById('parammeta').innerHTML;
             if (grid_param == null) {
                 param = 'Precipitation';
@@ -833,7 +746,7 @@ function buttonPress(grid_param=null) {
                 console.log('ID:'+id);
             }
             
-        } else if (selected.value == 'NRCC') {
+        } else if (selected.value === 'NRCC') {
             id = document.getElementById('parammeta').innerHTML;
             if (grid_param == null) {
                 param = 'Precipitation';
@@ -859,20 +772,10 @@ function buttonPress(grid_param=null) {
             console.log('ID:'+id);
         }
 
-    };
+    }
 
-    // var id = document.getElementById('data').innerHTML;
-    // if (id.includes('|')) {
-    //     var idx = document.getElementById('param').selectedIndex;
-    //     id = id.split('|');
-    //     id = id[idx];
-    //     console.log('ID:'+id);
-    // } else {
-    //     console.log('ID:'+id);
-    // };
-    // close the popup
-    window.pop._close();
-};
+    window.pop.close();
+}
 
 // Function to print a formatted message to the console 
 // when users click the 'Add Dataset' button on watersheds
@@ -884,13 +787,13 @@ function HUCPress() {
     for (i=0; i<parameterList.length; i++) {
         item = parameterList[i];
         if (item.checked){
-            if (item.id != "SELECT_ALL"){
+            if (item.id !== "SELECT_ALL"){
             datasetList.push(item.id);
             }
         }
     }
     datasetList.forEach(function(dataset){
-        if (dataset == 'PRISM') {
+        if (dataset === 'PRISM') {
             //console.log("HUC:" + window.num + ":PARAM:" + dataset);
             msg = msg + "~~~HUC:" + window.num + ":PARAM:" + dataset;
         } else {
@@ -901,7 +804,7 @@ function HUCPress() {
     console.log(msg);
 
     // close the popup
-    window.pop._close();
+    window.pop.close();
 }
 
 // Function to print a formatted message to the console 
@@ -915,7 +818,7 @@ function PDSIPress() {
     id = `ID:${id}~~${name}~~Desert Research Institute~~PDSI_SPI~~${param}~~${option}~~-`
     console.log(id);
     // close the popup
-    window.pop._close();
+    window.pop.close();
 }
 
 // Function to move the map to the specified location
@@ -929,7 +832,6 @@ function enableHUCSelect() {
     // Make sure the huc layer is active and the PDSI layer is not
     window.map.removeLayer(window.climLayer);
     window.map.addLayer(window.hucLayer);
-
 
     // Create a list to store selected HUCS
     window.hucList = [];
@@ -978,7 +880,7 @@ function enableHUCSelect() {
             }
         });
     });
-};
+}
 
 // Function to return a list of HUCs to the application and 
 function getSelectedHUCs() {
@@ -1011,17 +913,15 @@ function getSelectedHUCs() {
             popHTML = popHTML + `</br><select id='param'>`;
             popHTML = popHTML + `<option value='PRISM'>PRISM Temperature & Precipitation</option><option value='NRCC'>NRCC Temperature & Precipitation</option></select></p>`;
             popHTML = popHTML + '<button type="button" onclick="HUCPress()">Add Temp/Precip</button>' + `<p hidden id="hucNum" style="margin:0">${num}</p>` ;
-            var pop = L.popup().setLatLng(coordinates).setContent(popHTML).addTo(window.map);
+            L.popup().setLatLng(coordinates).setContent(popHTML).addTo(window.map);
         })
     
     });
     
-    
-
     // Return the HUC List
     return window.hucList;
 
-};
+}
 
 // Function to enable drawable rectangle on map
 function enableBBSelect() {
@@ -1066,17 +966,15 @@ function getCenter(feat, ev) {
     var lats = 0;
     var longs = 0;
     var count = 0;
-    for (i = 0; i < feat.geometry.coordinates[0].length; i++) {
+    for (let i = 0; i < feat.geometry.coordinates[0].length; i++) {
         var lt = feat.geometry.coordinates[0][i][1];
         var ln = feat.geometry.coordinates[0][i][0];
-        if (isNaN(lt) == false && isNaN(ln) == false) {
-            
+        if (isNaN(lt) && isNaN(ln)) {
             lats += lt;
             longs += ln;
             count += 1;
         }
-        
-    };
+    }
     var meanLat = lats / count;
     var meanLong = longs / count;
     var coords = [meanLat, meanLong];
@@ -1085,22 +983,85 @@ function getCenter(feat, ev) {
     }
     
     return coords;
-};
+}
 
-// Function to load local JSON file
-function loadJSON(filename, callback) {   
+// Function to load local JSON file into a Promise
+function loadJSON(filename) {
+    return fetch(filename)
+    .then(response => response.json())
+    .then(data => {return data;})
+    .catch(error => console.error('Error: ', error));
+}
 
-    var xobj = new XMLHttpRequest();
-    xobj.overrideMimeType("application/json");
-    xobj.open('GET', filename, false); // Replace 'my_data' with the path to your file
-    xobj.onreadystatechange = function () {
-          if (xobj.status == "0") {
-            // Required use of an anonymous callback as .open will NOT return a value but simply returns undefined in asynchronous mode
-            callback(xobj.responseText);
-          }
-    };
-    xobj.send(null);  
-};
+async function loadAllJSON() {
+    await Promise.all(
+        [
+            loadHucAll(),
+            loadClimateDivision(),
+        ]
+    );
+}
+
+// Load the data into the objects
+async function loadHucAll() {
+    loadJSON('MapData/hucall.topojson').then(data => {
+        window.hucLayer = L.topoJson(data, {
+            style: {
+                pane: "HUCPane",
+                fillColor: "#4286f4",
+                weight: 1,
+                opacity: .8,
+                color: "#4286f4",
+                fillOpacity: 0.0
+            },
+            filter: function(feature){
+                return feature.properties.type === '8';
+            }
+
+        }).addTo(window.map);
+
+        window.hucLayer.eachLayer(function(layer) {
+            layer.on("mouseover", function(e) {
+                e.target.setStyle({
+                    color:"#4872ff",
+                    weight:3,
+                    opacity: .8,
+                });
+            });
+            layer.on("mouseout", function(e){
+                window.hucLayer.resetStyle(e.target);
+            });
+        })
+    });
+}
+
+async function loadClimateDivision() {
+    loadJSON('MapData/CLIMATE_DIVISION_GEOJSON.json').then(data => {
+        window.climLayer = L.topoJson(data, {
+            style: {
+                pane: "HUCPane",
+                fillColor: "#f5bb3d",
+                weight: 1,
+                opacity: 0.8,
+                color: "#f5bb3d",
+                fillOpacity: 0,
+            },
+        });
+
+        window.climLayer.eachLayer(function(layer) {
+            layer.on("mouseover", function(e) {
+                e.target.setStyle({
+                    color:"#e4ba0e",
+                    weight:3,
+                    opacity: .8,
+                });
+            });
+            layer.on("mouseout", function(e){
+                window.climLayer.resetStyle(e.target);
+            });
+        })
+    });
+}
 
 var NEXRADMap = {
     levels: [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75],
@@ -1117,21 +1078,16 @@ var SNODASMap = {
     colors: ['#ffffff', '#f7fdfd', '#dbfffb', '#bfd0f6', '#6167bc', '#5b40b7', '#731cc1', '#af2dd4', '#e24fdb', '#ef70c2', '#e99eba', '#fae3dd']
 };
 
-function highlightLegend(){
-    return
-}
-
 function addLegend(layer) {
     // Adds a legend for the overlay raster layer
 
     // Check if empty layer
-    if (layer == window.emptyLayer) {
+    if (layer === window.emptyLayer) {
         L.DomUtil.remove(window.divElem);
         window.map.removeControl(window.legend);
         return
     }
 
-    
     // Delete any old legends
     if (typeof window.legend != "undefined") {
         L.DomUtil.remove(window.divElem);
@@ -1146,27 +1102,26 @@ function addLegend(layer) {
         if ([window.QPFLayer3Day, window.QPFLayer6Hour, window.QPFLayer7Day].includes(layer)) {
             cmap = window.QPFMap;
             title = 'Accumulated Precip (inches)';
-        } else if (layer == window.SWELayer) {
+        } else if (layer === window.SWELayer) {
             cmap = window.SNODASMap;
             title = 'Snow Water Equiv. (inches)';
         } else {
             cmap = window.NEXRADMap;
             title = 'Base Reflectivity (dBz)';
-        };
+        }
+
         // Create the legend
-        
-        
-        labels = ['<strong style="font-family: Open Sans, Arial">'+title+"</strong><br>"];
+        labels = ['<strong style="font-family: Open Sans, Arial,sans-serif">'+title+"</strong><br>"];
         categories = cmap.levels;
         colors = cmap.colors;
 
-        for (var i=0; i < categories.length; i++) {
+        for (let i = 0; i < categories.length; i++) {
             labels.push(
                 '<h5>'+padCenter(categories[i].toString(), 5, '&nbsp;')+'</h5>'
             );
-            }
+        }
         labels.push('<br>');
-        for (var i=0; i < categories.length; i++) {
+        for (let i = 0; i < categories.length; i++) {
             labels.push(
                 '<i id="legend_' + categories[i] + '" style="background:' + colors[i] + '"></i>'
             );
@@ -1197,9 +1152,11 @@ function pad(pad, str, padLeft) {
     } else {
       return (str + pad).substring(0, pad.length);
     }
-  }
+}
 
 function QPFStyle(feature){
+    var color1 = "#00FF00";
+    var width1 = 0;
     switch(feature.properties.qpf) {
         case 20:
           color1 = "#ffc0b7";
@@ -1273,16 +1230,15 @@ function QPFStyle(feature){
           color1 = "#7fff00";
           width1 = 0;
           break;
-
-
         default:
             color1 = "#00FF00";
             width1 = 0;
             break;
-      }
+    }
     return {
       fillColor: color1,
       width: 1,
       fillOpacity: 0.63,
       stroke: false,
-    };};
+    };
+}

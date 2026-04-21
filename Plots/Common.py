@@ -2,16 +2,18 @@ from bisect import bisect_left
 
 import numpy as np
 import pyqtgraph as pg
-from PyQt5.QtGui import QColor
+from PySide6.QtGui import QColor
 
 # Plotting configuration
-pg.setConfigOptions(**{
-    'leftButtonPan': False,
-    'foreground': '#222222',
-    'background': '#fffefc',
-    'antialias': True,
-    'useOpenGL': True}
-                    )
+pg.setConfigOptions(
+    **{
+        'leftButtonPan': False,
+        'foreground': '#222222',
+        'background': '#fffefc',
+        'antialias': True,
+        'useOpenGL': True
+    }
+)
 
 
 class CurveItem(pg.PlotCurveItem):
@@ -91,15 +93,15 @@ class TimeSeriesLegend(pg.LegendItem):
     def addItem(self, item, name):
 
         # Instantiate a Label Item using the supplied Name
-        label = pg.graphicsItems.LegendItem.LabelItem(name, justify='left')
+        label = pg.LabelItem(name, justify='left')
         label.setAttr('bold', True)
 
         # Create the sample image to place next to the legend Item
-        if isinstance(item, pg.graphicsItems.LegendItem.ItemSample):
+        if isinstance(item, pg.ItemSample):
             sample = item
             sample.setFixedWidth(20)
         else:
-            sample = pg.graphicsItems.LegendItem.ItemSample(item)
+            sample = pg.ItemSample(item)
             sample.setFixedWidth(20)
 
         # Add the item to the legend and update the size
@@ -109,8 +111,6 @@ class TimeSeriesLegend(pg.LegendItem):
         self.layout.addItem(label, row, 1)
         self.updateSize()
 
-    # def clear(self):
-    #    self.__init__(size = self.size, offset=self.offset)
 
     def updateSize(self):
 
@@ -121,7 +121,7 @@ class TimeSeriesLegend(pg.LegendItem):
         width = 0
 
         for sample, label in self.items:
-            height += max(sample.boundingRect().height(), label.height()) + 3
+            height += max(int(sample.boundingRect().height()), label.height()) + 3
             width = max(width, sample.boundingRect().width() + label.width())
 
         self.setGeometry(0, 0, width + 60, height)

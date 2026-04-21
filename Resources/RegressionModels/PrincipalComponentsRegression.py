@@ -2,7 +2,7 @@ from collections import OrderedDict
 from sys import float_info
 
 import numpy as np
-from PyQt5.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication
 from numba import jit
 
 app = QApplication.instance()
@@ -21,7 +21,7 @@ class Regressor:
             ]
         )
 
-        self.pc_retain = app.config['max_pc_mode_variance']
+        self.pc_retain = app.settings['max_pc_mode_variance']
 
         self.cross_validation = app.cross_validation[cross_validation]
         self.coef_ = np.full((500,), np.nan)

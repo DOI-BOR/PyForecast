@@ -1,6 +1,6 @@
 from collections import OrderedDict
 
-from PyQt5.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication
 
 from Resources.Dataloaders import FILE_IMPORT, NOAA_CPC, NOAA_NCDC, NRCS_WCC, \
     PDSI_SPI, RCC_ACIS, USBR, USGS_NWIS, ALBERTA_WATER

@@ -60,7 +60,7 @@ button:hover {
   color: #000000,
 } */
 .mapboxgl-popup-content {
-  color: balck;
+  color: black;
   background-color: white;
   border-color: rgb(0, 115, 150);
   box-shadow: 2px 2px 2px rgb(52,34,94);

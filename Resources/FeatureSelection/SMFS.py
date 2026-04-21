@@ -3,7 +3,7 @@
 import copy
 from time import time
 
-from PyQt5.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication
 from numba import jit
 from numpy import inf, random, int64
 
@@ -39,7 +39,7 @@ class SMFS:
         self.running = False
 
         # Feature selection timer.
-        self.timeout_minutes = app.config['model_search_time_limit']
+        self.timeout_minutes = app.settings['model_search_time_limit']
         self.timeout_seconds = self.timeout_minutes * 60
         self.timer_incs = list(
             range(int(self.timeout_seconds / 10), self.timeout_seconds,
