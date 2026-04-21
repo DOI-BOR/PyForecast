@@ -149,8 +149,10 @@ class Plot(pg.GraphicsLayoutWidget):
             self.upper_items_sct[i].clear()
             self.lower_items_crv[i].clear()
 
-    def plot(self, datasets=[]):
+    def plot(self, datasets=None):
 
+        if datasets is None:
+            datasets = []
         self.clear_all()
 
         min_x = np.inf
@@ -196,8 +198,8 @@ class Plot(pg.GraphicsLayoutWidget):
                 self.legend.addItem(self.upper_items_crv[i], name)
                 self.upper_plot.addItem(self.crv_hover_points[i])
 
-            min_x = min(np.nanmin(x_vals), min_x)
-            max_x = max(np.nanmax(x_vals), max_x)
+            min_x = min(float(np.nanmin(x_vals)), min_x)
+            max_x = max(float(np.nanmax(x_vals)), max_x)
 
         self.region.setRegion([min_x, max_x])
         self.region.setBounds([min_x, max_x])
