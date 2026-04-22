@@ -1,9 +1,10 @@
 from PySide6.QtCore import QStringListModel, Qt
 from PySide6.QtWidgets import (QApplication, QDialog, QPushButton, QTableView,
-                               QAbstractItemView, QComboBox, QFrame, QFormLayout,
-                               QLabel, QHBoxLayout, QGridLayout)
+                               QAbstractItemView, QFrame, QFormLayout, QLabel,
+                               QHBoxLayout, QGridLayout)
 
 from Models.ModelConfigurations import Regressor
+from Utilities.ZzQWidgets import ZzQComboBox
 
 app = QApplication.instance()
 
@@ -68,8 +69,8 @@ class RegressorView(QDialog):
 
         self.new_button = QPushButton("Add new Regressor")
 
-        self.regressor_select = QComboBox()
-        self.scoring_metric = QComboBox()
+        self.regressor_select = ZzQComboBox()
+        self.scoring_metric = ZzQComboBox()
 
         self.regressor_save_btn = QPushButton("Save")
 

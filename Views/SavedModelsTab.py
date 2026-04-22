@@ -5,10 +5,11 @@ import pyqtgraph as pg
 from PySide6.QtCore import Qt, QPoint
 from PySide6.QtGui import QAction, QPainter
 from PySide6.QtWidgets import (QApplication, QWidget, QHBoxLayout, QVBoxLayout,
-                               QSplitter, QComboBox, QPushButton, QSpinBox, QLabel,
-                               QListView, QAbstractItemView, QMenu, QLineEdit)
+                               QSplitter,QPushButton, QSpinBox, QLabel, QListView,
+                               QAbstractItemView, QMenu, QLineEdit)
 
 from Utilities import RichTextDelegate, ToggleSwitch
+from Utilities.ZzQWidgets import ZzQComboBox
 
 app = QApplication.instance()
 
@@ -31,7 +32,7 @@ class SavedModelsTab(QWidget):
         hlayout = QHBoxLayout()
         hlayout2 = QHBoxLayout()
 
-        self.issue_combo = QComboBox()
+        self.issue_combo = ZzQComboBox()
         self.model_list = ModelList()
         self.year_select = QSpinBox()
         self.plot_select = ToggleSwitch.Switch(thumb_radius=11, track_radius=8)

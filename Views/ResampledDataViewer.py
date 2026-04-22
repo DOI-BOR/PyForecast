@@ -1,10 +1,10 @@
 from PySide6.QtCore import QStringListModel
 from PySide6.QtWidgets import (QApplication, QDialog, QGridLayout, QPushButton,
-                               QSizePolicy, QComboBox, QTableWidget, QSplitter,
-                               QTableWidgetItem)
+                               QSizePolicy, QTableWidget, QSplitter, QTableWidgetItem)
 
 from Plots.ResampledDataViewer import Plot
-from Utilities import HydrologyDateTimes
+from Utilities.HydrologyDateTimes import convert_to_water_year
+from Utilities.ZzQWidgets import ZzQComboBox
 
 app = QApplication.instance()
 
@@ -47,9 +47,10 @@ class DataViewer(QDialog):
         self.load_button = QPushButton('Load')
         self.load_button.setSizePolicy(QSizePolicy.Policy.Maximum,
                                        QSizePolicy.Policy.Maximum)
-        self.combo_select = QComboBox()
+        self.combo_select = ZzQComboBox()
         self.combo_select.setModel(
-            QStringListModel([d.__list_form__() for d in self.datasets]))
+            QStringListModel([d.__list_form__() for d in self.datasets])
+        )
         self.data_grid = QTableWidget()
 
         self.data_plot = Plot()
@@ -66,9 +67,10 @@ class DataViewer(QDialog):
     def setData(self, dataset):
 
         dataset.resample()
-        dataset.data = dataset.data.loc[HydrologyDateTimes.convert_to_water_year(
-            self.configuration.training_start_date):HydrologyDateTimes.convert_to_water_year(
-            self.configuration.training_end_date)]
+        dataset.data = dataset.data.loc[
+            convert_to_water_year(self.configuration.training_start_date)
+            :convert_to_water_year(self.configuration.training_end_date)
+        ]
         self.data_grid.setRowCount(len(dataset.data))
         self.data_grid.setColumnCount(2)
         self.data_grid.setHorizontalHeaderLabels(['Water Year', 'Value'])

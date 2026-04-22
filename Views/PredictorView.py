@@ -2,13 +2,13 @@ import sys
 
 from PySide6.QtCore import Qt, QDate, QStringListModel, QModelIndex, QSortFilterProxyModel
 from PySide6.QtWidgets import (QApplication, QDialog, QAbstractItemView, QMessageBox,
-                               QPushButton, QSizePolicy, QTableView, QComboBox,
-                               QDateEdit, QCheckBox, QFrame, QFormLayout, QLabel,
-                               QHBoxLayout, QGridLayout)
+                               QPushButton, QSizePolicy, QTableView, QCheckBox, QFrame,
+                               QFormLayout, QLabel, QHBoxLayout, QGridLayout)
 from pandas import DateOffset
 
 from Models.ModelConfigurations import ResampledDataset
 from Utilities.HydrologyDateTimes import water_year_start_date
+from Utilities.ZzQWidgets import ZzQDateEdit, ZzQComboBox
 
 app = QApplication.instance()
 
@@ -304,20 +304,20 @@ class PredictorView(QDialog):
         self.new_button.setSizePolicy(QSizePolicy.Policy.Maximum,
                                       QSizePolicy.Policy.Maximum)
 
-        self.predictor_field = QComboBox()
+        self.predictor_field = ZzQComboBox()
         self.predictor_field.setModel(app.datasets)
-        self.predictor_method_field = QComboBox()
+        self.predictor_method_field = ZzQComboBox()
         self.predictor_method_field.setModel(self.filter_method_model)
-        self.predictor_period_start_field = QDateEdit()
+        self.predictor_period_start_field = ZzQDateEdit()
         self.predictor_period_start_field.setDisplayFormat('MMM dd')
-        self.predictor_period_end_field = QDateEdit()
+        self.predictor_period_end_field = ZzQDateEdit()
         self.predictor_period_end_field.setDisplayFormat('MMM dd')
-        self.predictor_preprocessing_field = QComboBox()
+        self.predictor_preprocessing_field = ZzQComboBox()
         self.predictor_preprocessing_field.setModel(
             QStringListModel(list(filter(lambda i: not i.startswith('INV'),
                                          app.preprocessing_methods.keys())))
         )
-        self.predictor_unit_field = QComboBox()
+        self.predictor_unit_field = ZzQComboBox()
         self.predictor_unit_field.setModel(self.filter_units_model)
         self.predictor_unit_field.setModelColumn(6)
         self.predictor_positive_box = QCheckBox()

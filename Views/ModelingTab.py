@@ -3,10 +3,11 @@ from PySide6.QtGui import QAction, QPainter
 from PySide6.QtWidgets import (QApplication, QWidget, QPushButton, QHBoxLayout,
                                QVBoxLayout, QGridLayout, QSplitter, QListView,
                                QAbstractItemView, QMenu, QScrollArea, QLabel,
-                               QLineEdit, QDateEdit, QCheckBox, QTextEdit, QComboBox,
-                               QTableView, QFormLayout, QFrame)
+                               QLineEdit, QCheckBox, QTextEdit, QTableView,
+                               QFormLayout, QFrame)
 
 from Utilities import RichTextDelegate
+from Utilities.ZzQWidgets import ZzQDateEdit, ZzQComboBox
 
 app = QApplication.instance()
 
@@ -133,15 +134,15 @@ class ConfigurationEditor(QWidget):
         # Set up the fields
         self.name_field = QLineEdit()
         self.name_field.setStatusTip('Give this configuration a unique name')
-        self.issue_date_field = QDateEdit()
+        self.issue_date_field = ZzQDateEdit()
         self.issue_date_field.setDisplayFormat('MMMM dd')
         self.issue_date_field.setStatusTip(
             'What month and day will the forecasts from this model be issued')
-        self.training_start_field = QDateEdit()
+        self.training_start_field = ZzQDateEdit()
         self.training_start_field.setDisplayFormat('yyyy-MMM')
         self.training_start_field.setStatusTip(
             'How much data will be used to train the models')
-        self.training_end_field = QDateEdit()
+        self.training_end_field = ZzQDateEdit()
         self.training_end_field.setDisplayFormat('yyyy-MMM')
         self.training_end_field.setStatusTip(
             'How much data will be used to train the models')
@@ -158,14 +159,14 @@ class ConfigurationEditor(QWidget):
         self.comment_field.setMaximumHeight(70)
         self.comment_field.setStatusTip('Add any comments for this configuration')
 
-        self.predictand_field = QComboBox()
-        self.predictand_method_field = QComboBox()
-        self.predictand_period_start_field = QDateEdit()
+        self.predictand_field = ZzQComboBox()
+        self.predictand_method_field = ZzQComboBox()
+        self.predictand_period_start_field = ZzQDateEdit()
         self.predictand_period_start_field.setDisplayFormat('MMM dd')
-        self.predictand_period_end_field = QDateEdit()
+        self.predictand_period_end_field = ZzQDateEdit()
         self.predictand_period_end_field.setDisplayFormat('MMM dd')
-        self.predictand_preprocessing_field = QComboBox()
-        self.predictand_unit_field = QComboBox()
+        self.predictand_preprocessing_field = ZzQComboBox()
+        self.predictand_unit_field = ZzQComboBox()
         self.view_predictand_data_button = QPushButton('View/Edit Target Data')
         self.view_predictand_data_button.setStatusTip(
             'Open the forecast target data in a new window for viewing/editing')
@@ -280,9 +281,9 @@ class ConfigurationEditor(QWidget):
             l.clear()
         for d in self.findChildren(QTextEdit):
             d.clear()
-        for c in self.findChildren(QComboBox):
+        for c in self.findChildren(ZzQComboBox):
             c.setCurrentIndex(0)
-        for e in self.findChildren(QDateEdit):
+        for e in self.findChildren(ZzQDateEdit):
             e.setDate(QDate(2000, 1, 1))
         for b in self.findChildren(QCheckBox):
             b.setChecked(False)

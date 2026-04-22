@@ -171,7 +171,11 @@ class Units(QAbstractTableModel):
             app.settings['user_units'].append(new_unit.to_dict())
 
         # Update any views
-        self.dataChanged.emit(self.index(0, 0), self.index(self.rowCount(), 6))
+        self.dataChanged.emit(
+            self.index(0, 0),
+            self.index(self.rowCount(),
+                       6)
+        )
 
         return
 
@@ -195,7 +199,11 @@ class Units(QAbstractTableModel):
             if unit.id == user_unit['id']:
                 removed_unit = app.settings['user_units'].pop(i)
 
-        self.dataChanged.emit(self.index(0, 0), self.index(self.rowCount(), 6))
+        self.dataChanged.emit(
+            self.index(0, 0),
+            self.index(self.rowCount(),
+                       6)
+        )
 
         return
 
@@ -217,7 +225,11 @@ class Units(QAbstractTableModel):
     # Magic functions
     def __setitme__(self, index, unit):
         self.units[index] = unit
-        self.dataChanged.emit(self.index(0, 0), self.index(self.rowCount(), 6))
+        self.dataChanged.emit(
+            self.index(0, 0),
+            self.index(self.rowCount(),
+                       6)
+        )
 
     def __getitem__(self, index):
         return self.units[index]

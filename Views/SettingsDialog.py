@@ -1,8 +1,10 @@
 from datetime import datetime
 
 from PySide6.QtCore import QStringListModel, QDate
-from PySide6.QtWidgets import (QApplication, QDialog, QDateEdit, QSpinBox, QComboBox,
+from PySide6.QtWidgets import (QApplication, QDialog, QSpinBox,
                                QDoubleSpinBox, QFormLayout, QLabel, QFrame)
+
+from Utilities.ZzQWidgets import ZzQDateEdit, ZzQComboBox
 
 # Get the global application
 app = QApplication.instance()
@@ -14,7 +16,7 @@ class SettingsDialog(QDialog):
         self.setWindowTitle('Application Settings')
         self.setWindowIcon(app.icon)
 
-        self.download_start_setting = QDateEdit()
+        self.download_start_setting = ZzQDateEdit()
         self.download_start_setting.setStatusTip(
             'Choosing the "Download All" button will download data from this '
             'date until now')
@@ -26,10 +28,10 @@ class SettingsDialog(QDialog):
         self.download_recent_lookback_setting.setSuffix(' Days')
         self.model_training_duration_setting = QSpinBox()
         self.model_training_duration_setting.setSuffix(' Years')
-        self.default_cross_validation_setting = QComboBox()
+        self.default_cross_validation_setting = ZzQComboBox()
         self.default_cross_validation_setting.setModel(
             QStringListModel(list(app.cross_validation.keys())))
-        self.default_feature_selection = QComboBox()
+        self.default_feature_selection = ZzQComboBox()
         self.default_feature_selection.setModel(
             QStringListModel(list(app.feature_selection.keys())))
         self.brute_force_under_setting = QSpinBox()

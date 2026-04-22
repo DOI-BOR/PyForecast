@@ -2,9 +2,10 @@ import pyqtgraph as pg
 from PySide6.QtCore import QDate
 from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout,
                                QTabWidget, QPushButton, QSpinBox, QPlainTextEdit,
-                               QLabel, QDateEdit)
+                               QLabel)
 
 from Utilities import TimeSeriesPlot, ColorCycler
+from Utilities.ZzQWidgets import ZzQDateEdit
 
 app = QApplication.instance()
 
@@ -40,10 +41,10 @@ class ExperimentalFeatures(QWidget):
         forecastUpdateTab.setLayout(d)
 
         self.disagg_year_select = QSpinBox()
-        self.disagg_start_edit = QDateEdit()
+        self.disagg_start_edit = ZzQDateEdit()
         self.disagg_start_edit.setDate(QDate(2020, 4, 1))
         self.disagg_start_edit.setDisplayFormat('MMMM dd')
-        self.disagg_end_edit = QDateEdit()
+        self.disagg_end_edit = ZzQDateEdit()
         self.disagg_end_edit.setDate(QDate(2020, 7, 31))
         self.disagg_end_edit.setDisplayFormat('MMMM dd')
         self.disagg_start_btn = QPushButton('Disaggregate')

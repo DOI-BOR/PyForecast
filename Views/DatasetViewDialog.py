@@ -3,11 +3,12 @@ from copy import deepcopy
 from operator import attrgetter
 
 from PySide6.QtCore import Qt, QStringListModel, QSortFilterProxyModel, QModelIndex
-from PySide6.QtWidgets import (QApplication, QDialog, QLineEdit, QComboBox, QCheckBox,
+from PySide6.QtWidgets import (QApplication, QDialog, QLineEdit, QCheckBox,
                                QPushButton, QStyle, QLabel, QFrame, QVBoxLayout,
                                QHBoxLayout, QFormLayout, QFileDialog, QMessageBox)
 
 from Utilities.ToolTipLabel import ToolTipLabel
+from Utilities.ZzQWidgets import ZzQComboBox
 
 app = QApplication.instance()
 
@@ -52,15 +53,15 @@ class DatasetViewer(QDialog):
         self.agency_field = QLineEdit()
         self.parameter_field = QLineEdit()
         self.param_code_field = QLineEdit()
-        self.unit_field = QComboBox()
+        self.unit_field = ZzQComboBox()
         self.unit_field.setModel(self.app.units)
         self.unit_field.setModelColumn(6)
-        self.display_unit_field = QComboBox()
+        self.display_unit_field = ZzQComboBox()
         self.unitFilterModel = UnitFilterModel()
         self.unitFilterModel.setSourceModel(app.units)
         self.display_unit_field.setModel(self.unitFilterModel)
         self.display_unit_field.setModelColumn(6)
-        self.dataloader_field = QComboBox()
+        self.dataloader_field = ZzQComboBox()
         self.dataloader_field.setModel(
             QStringListModel(list(self.app.dataloaders.keys()))
         )

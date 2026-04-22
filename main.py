@@ -6,10 +6,10 @@ import time
 import traceback
 from pathlib import Path
 
-from PySide6.QtCore import qVersion, QEvent, Signal, QObject
+from PySide6.QtCore import qVersion, Signal, QObject
 from PySide6.QtGui import QIcon
 from PySide6.QtQuick import QQuickWindow, QSGRendererInterface
-from PySide6.QtWidgets import QApplication, QComboBox, QDateEdit
+from PySide6.QtWidgets import QApplication
 
 from Utilities.JsonHooks import DatetimeParser
 
@@ -108,7 +108,6 @@ class PyForecast(QApplication):
         self.log_message = ''
         self.current_user = os.getlogin()
         self.pid = os.getpid()
-        self.installEventFilter(self)
         sys.stdout.new_log_message.connect(self.append_log_message)
         stylesheet = self.base_dir.joinpath(
             'Resources', 'Stylesheets', 'application_style.qss')
@@ -217,13 +216,6 @@ class PyForecast(QApplication):
         self.log_message += msg
         self.new_log_message.emit()
 
-    def eventFilter(self, filter_object, filter_event):
-
-        if filter_event.type() == QEvent.Type.Wheel:
-            if isinstance(filter_object, (QComboBox, QDateEdit)):
-                return True
-
-        return QObject.eventFilter(self, filter_object, filter_event)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
