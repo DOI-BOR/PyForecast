@@ -14,8 +14,8 @@ app = QApplication.instance()
 
 class ModelingTab(QWidget):
 
-    def __init__(self):
-        QWidget.__init__(self)
+    def __init__(self, parent=None):
+        super().__init__(parent)
 
         # Create the model configuration list
         self.add_conf_button = QPushButton('Add Configuration')
@@ -55,9 +55,9 @@ class ModelingTab(QWidget):
 
 class ConfigurationList(QListView):
 
-    def __init__(self):
+    def __init__(self, parent=None):
 
-        QListView.__init__(self)
+        super().__init__(parent)
         self.setMinimumWidth(300)
         self.setItemDelegate(RichTextDelegate.HTMLDelegate())
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -112,9 +112,9 @@ class ConfigurationList(QListView):
 
 class ConfigurationEditor(QWidget):
 
-    def __init__(self):
+    def __init__(self, parent=None):
 
-        QWidget.__init__(self)
+        super().__init__(parent)
         sa = QScrollArea()
         widg = QWidget()
         self.save_button = QPushButton('Apply')
@@ -194,6 +194,7 @@ class ConfigurationEditor(QWidget):
         self.regressor_add_button.setStatusTip(
             'Open the Regressor Dialog to add or remove regressors')
 
+
         # layout the form
         layout = QFormLayout()
         label = QLabel('<strong>Model Information</strong>')
@@ -215,10 +216,10 @@ class ConfigurationEditor(QWidget):
         hlayout.addWidget(self.exclude_years_field)
         layout.addRow(hlayout)
         layout.addRow('Model Comments', self.comment_field)
-        frame = QFrame()
-        frame.setFrameShape(QFrame.Shape.HLine)
-        frame.setLineWidth(2)
-        layout.addRow(frame)
+        hline = QFrame()
+        hline.setFrameShape(QFrame.Shape.HLine)
+        hline.setLineWidth(2)
+        layout.addRow(hline)
 
         label = QLabel('<strong>Forecast Target Information</strong>')
         label.setObjectName('HeaderLabel')
@@ -238,10 +239,10 @@ class ConfigurationEditor(QWidget):
         hlayout.addStretch(1)
         hlayout.addWidget(self.view_predictand_data_button)
         layout.addRow(hlayout)
-        frame = QFrame()
-        frame.setFrameShape(QFrame.Shape.HLine)
-        frame.setLineWidth(2)
-        layout.addRow(frame)
+        hline = QFrame()
+        hline.setFrameShape(QFrame.Shape.HLine)
+        hline.setLineWidth(2)
+        layout.addRow(hline)
 
         label = QLabel('<strong>Predictors</strong>')
         label.setObjectName('HeaderLabel')
@@ -253,10 +254,10 @@ class ConfigurationEditor(QWidget):
         hlayout.addWidget(self.predictor_add_button)
         layout.addRow(hlayout)
         layout.addRow(self.predictor_list)
-        frame = QFrame()
-        frame.setFrameShape(QFrame.Shape.HLine)
-        frame.setLineWidth(2)
-        layout.addRow(frame)
+        hline = QFrame()
+        hline.setFrameShape(QFrame.Shape.HLine)
+        hline.setLineWidth(2)
+        layout.addRow(hline)
 
         label = QLabel('<strong>Regressors</strong>')
         label.setObjectName('HeaderLabel')

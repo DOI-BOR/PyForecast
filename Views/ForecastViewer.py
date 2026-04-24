@@ -5,7 +5,7 @@ from inspect import signature
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
-from PySide6.QtCore import Qt, QDate, QRectF
+from PySide6.QtCore import Qt, QDate, QRectF, QModelIndex
 from PySide6.QtGui import QPicture, QPainter
 from PySide6.QtWidgets import (QApplication, QLineEdit, QTextEdit, QSizePolicy,
                                QDialog, QWidget, QTableWidgetItem, QTabWidget,
@@ -21,8 +21,8 @@ app = QApplication.instance()
 
 
 class readOnlyLineEdit(QLineEdit):
-    def __init__(self):
-        QLineEdit.__init__(self)
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.setReadOnly(True)
 
     def setText(self, a0):
@@ -31,8 +31,8 @@ class readOnlyLineEdit(QLineEdit):
 
 
 class resizingTextEdit(QTextEdit):
-    def __init__(self):
-        QTextEdit.__init__(self)
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
 
     def setText(self, a0):
@@ -41,9 +41,9 @@ class resizingTextEdit(QTextEdit):
 
 class ForecastViewer(QDialog):
 
-    def __init__(self, fcst_idx):
+    def __init__(self, parent=None, fcst_idx=QModelIndex()):
 
-        QDialog.__init__(self)
+        super().__init__(parent)
         self.setWindowTitle('Forecast Viewer')
         self.setWindowIcon(app.icon)
         self.fcst_idx = fcst_idx
@@ -129,7 +129,7 @@ class ForecastViewer(QDialog):
         year = self.forecast_year_select.value()
         if year in forecasts.forecasts.index.get_level_values(0):
             values = forecasts.forecasts.loc[(year), 'Value']
-            e = ExceedanceViewer.ExceedanceViewer(values)
+            e = ExceedanceViewer.ExceedanceViewer(self.forecastsTab, values)
             e.exec()
 
     def plot_forecast_for_view(self, year):
@@ -291,14 +291,14 @@ class ForecastViewer(QDialog):
 
         self.tw = QTabWidget()
 
-        overviewTab = QWidget()
-        targetPredictorsTab = QWidget()
-        forecastsTab = QWidget()
-        self.experimentalTab = ForecastExperimentalFeatures.ExperimentalFeatures()
+        self.overviewTab = QWidget()
+        self.targetPredictorsTab = QWidget()
+        self.forecastsTab = QWidget()
+        self.experimentalTab = ForecastExperimentalFeatures.ExperimentalFeatures(self)
 
-        self.tw.addTab(overviewTab, 'Overview')
-        self.tw.addTab(targetPredictorsTab, 'Target and Predictors')
-        self.tw.addTab(forecastsTab, 'Forecasts')
+        self.tw.addTab(self.overviewTab, 'Overview')
+        self.tw.addTab(self.targetPredictorsTab, 'Target and Predictors')
+        self.tw.addTab(self.forecastsTab, 'Forecasts')
         self.tw.addTab(self.experimentalTab, 'Experimental')
 
         ll = QVBoxLayout()
@@ -365,7 +365,7 @@ class ForecastViewer(QDialog):
         hlayout.addWidget(self.save_button)
         layout.addLayout(hlayout, 2, 0, 1, 2)
 
-        overviewTab.setLayout(layout)
+        self.overviewTab.setLayout(layout)
 
         # TARGET AND PREDICTOR TAB
         self.target_name_line_2 = readOnlyLineEdit()
@@ -405,14 +405,17 @@ class ForecastViewer(QDialog):
         vlayout2.addWidget(QLabel("Predictors"))
         vlayout2.addWidget(self.predictor_area)
         layout2.addLayout(vlayout2, 1, 1)
-        targetPredictorsTab.setLayout(layout2)
+        self.targetPredictorsTab.setLayout(layout2)
 
         # FORECASTS TAB
         self.model_fit_table = QTableWidget()
-        self.model_fit_table.setSizePolicy(QSizePolicy.Policy.Expanding,
-                                           QSizePolicy.Policy.Expanding)
+        self.model_fit_table.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Expanding
+        )
         self.model_fit_table.setSelectionBehavior(
-            QAbstractItemView.SelectionBehavior.SelectRows)
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
         self.model_plots_ft = ModelPlots()
         self.view_exceedance_button = QPushButton("View Forecast Exceedance")
         self.forecast_year_select = QSpinBox()
@@ -467,13 +470,13 @@ class ForecastViewer(QDialog):
         splitter.addWidget(w2)
         layout3.addWidget(splitter)
 
-        forecastsTab.setLayout(layout3)
+        self.forecastsTab.setLayout(layout3)
 
 
 class ModelPlots(pg.GraphicsLayoutWidget):
 
-    def __init__(self):
-        pg.GraphicsLayoutWidget.__init__(self)
+    def __init__(self, parent=None, **kwargs):
+        super().__init__(parent, **kwargs)
         self.sp = Scatterplot.ScatterPlot()
         self.ep = Scatterplot.ScatterPlot()
         self.tp = Scatterplot.ScatterPlot2(line=True)
@@ -573,18 +576,27 @@ class ModelPlots(pg.GraphicsLayoutWidget):
 
         self.ep.plot([years[0] - 1, years[-1] + 1], [0, 0],
                      pen=pg.mkPen({'color': '#FF0000', "width": 2.5}))
-        self.ep.setRange(xRange=(years[0] - 1, years[-1] + 1),
-                         yRange=(-1.1 * np.max(np.abs(actual - predicted)),
-                                 1.1 * np.max(np.abs(actual - predicted))))
+        self.ep.getViewBox().setRange(
+            xRange=(years[0] - 1, years[-1] + 1),
+            yRange=(
+                -1.1 * np.max(np.abs(actual - predicted)),
+                1.1 * np.max(np.abs(actual - predicted))
+            )
+        )
 
-        self.tp.plot_data(x=years, y=actual, y2=predicted, name='Actual',
-                          name2='Predicted')
+        self.tp.plot_data(
+            x=years,
+            y=actual,
+            y2=predicted,
+            name='Actual',
+            name2='Predicted'
+        )
         self.tp.setLabel('left', f'Forecast [{units}]')
 
 
 class RectItem(pg.GraphicsObject):
-    def __init__(self, topLeft, bottomRight):
-        pg.GraphicsObject.__init__(self)
+    def __init__(self, topLeft=None, bottomRight=None, *args):
+        super().__init__(*args)
         self.topLeft = topLeft
         self.bottomRight = bottomRight
         self.setZValue(8)
@@ -606,7 +618,7 @@ class RectItem(pg.GraphicsObject):
         p.drawPicture(0, 0, self.picture)
 
     def boundingRect(self):
-        ## boundingRect _must_ indicate the entire area that will be drawn on
-        ## or else we will get artifacts and possibly crashing.
-        ## (in this case, QPicture does all the work of computing the bouning rect for us)
+        # boundingRect _must_ indicate the entire area that will be drawn on
+        # or else we will get artifacts and possibly crashing.
+        # (in this case, QPicture does all the work to compute the bounding rect)
         return QRectF(self.picture.boundingRect())

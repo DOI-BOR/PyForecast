@@ -20,7 +20,7 @@ class DateAxisItem(AxisItem):
     _epoch = datetime.fromtimestamp(0)
 
     def __init__(self, *args, **kwargs):
-        AxisItem.__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._oldAxis = None
         self.setPen(mkPen('#292929'))
         self.setTextPen(mkPen('#292929'))
@@ -152,6 +152,7 @@ class DateAxisItem(AxisItem):
 
     def attachToPlotItem(self, plotItem):
         """Add this axis to the given PlotItem
+
         :param plotItem: (PlotItem)
         """
         self.setParentItem(plotItem)
@@ -165,7 +166,5 @@ class DateAxisItem(AxisItem):
         self.setZValue(-1000)
 
     def detachFromPlotItem(self):
-        """Remove this axis from its attached PlotItem
-        (not yet implemented)
-        """
+        """Remove this axis from its attached PlotItem (not yet implemented)."""
         raise NotImplementedError()  # TODO

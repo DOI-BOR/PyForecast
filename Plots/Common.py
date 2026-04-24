@@ -18,15 +18,15 @@ pg.setConfigOptions(
 
 class CurveItem(pg.PlotCurveItem):
 
-    def __init__(self, color=pg.mkColor('k'), **kwargs):
-        pg.PlotCurveItem.__init__(self, **kwargs)
+    def __init__(self, color=pg.mkColor('k'), *args, **kwargs):
+        super().__init__(color=color, *args, **kwargs)
 
         self.opts['antialias'] = True
         self.opts['strpMode'] = 'left'
         self.opts['fillLevel'] = kwargs['fillLevel'] if 'fillLevel' in kwargs else 0
 
         self.color = QColor(color)
-        self.brush_color = QColor(self.color)
+        self.brush_color = self.color
         self.brush_color.setAlpha(185)
         self.shadow_color = self.color.darker(250)
 
@@ -41,11 +41,11 @@ class CurveItem(pg.PlotCurveItem):
 
 class BarItem(pg.BarGraphItem):
 
-    def __init__(self, color=pg.mkColor('k'), **kwargs):
-        pg.BarGraphItem.__init__(self, **kwargs)
+    def __init__(self, color=pg.mkColor('k'), **opts):
+        super().__init__(color=color, **opts)
 
         self.color = QColor(color)
-        self.brush_color = QColor(self.color)
+        self.brush_color = self.color
         self.brush_color.setAlpha(185)
         self.shadow_color = self.color.darker(250)
 
@@ -60,11 +60,11 @@ class BarItem(pg.BarGraphItem):
 
 class ScatterItem(pg.ScatterPlotItem):
 
-    def __init__(self, color=pg.mkColor('k'), **kwargs):
-        pg.ScatterPlotItem.__init__(self, **kwargs)
+    def __init__(self, color=pg.mkColor('k'), *args, **kwargs):
+        super().__init__(color=color, *args, **kwargs)
 
         self.color = QColor(color)
-        self.brush_color = QColor(self.color)
+        self.brush_color = self.color
         self.brush_color.setAlpha(185)
 
         self.pen_ = pg.mkPen(self.color, width=1.5)
@@ -85,10 +85,10 @@ class TimeSeriesLegend(pg.LegendItem):
     resize capability on label changes)
     """
 
-    def __init__(self, size=None, offset=None):
+    def __init__(self, brush=(200, 200, 200, 140), **kwargs):
 
         # Instantiate the legend Item
-        pg.LegendItem.__init__(self, size, offset, brush=(200, 200, 200, 140))
+        super().__init__(brush=brush, **kwargs)
 
     def addItem(self, item, name):
 

@@ -64,8 +64,9 @@ def condenseUnits(unitList):
                 j += 1
         unitList.pop(0)
     maxCountIdx = counts.index(max(counts))
-    condensedList = [condensedList[maxCountIdx]] + condensedList[
-        :maxCountIdx] + condensedList[maxCountIdx + 1:]
+    condensedList = ([condensedList[maxCountIdx]]
+                     + condensedList[:maxCountIdx]
+                     + condensedList[maxCountIdx + 1:])
     return condensedList
 
 
@@ -98,27 +99,27 @@ class TimeSeriesLegend(pg.LegendItem):
     resize capability on label changes)
     """
 
-    def __init__(self, size=None, offset=None):
+    def __init__(self, brush=(200, 200, 200, 140), **kwargs):
 
         # Instantiate the legend Item
-        pg.LegendItem.__init__(self, size, offset, brush=(200, 200, 200, 140))
+        super().__init__(brush=brush, **kwargs)
         self.legFont = QFont('Segoe UI')
 
     def addItem(self, item, name):
 
         # Instantiate a Label Item using the supplied Name
-        label = pg.graphicsItems.LegendItem.LabelItem(name, justify='left', size='12pt')
+        label = pg.LabelItem(name, justify='left', size='12pt')
         label.item.setFont(self.legFont)
 
         # Create the sample image to place next to the legend Item
-        if isinstance(item, pg.graphicsItems.LegendItem.ItemSample):
+        if isinstance(item, pg.ItemSample):
             sample = item
             sample.setFixedWidth(20)
         elif isinstance(item, pg.BarGraphItem):
             sample = barGraphSample(item)
             sample.setFixedWidth(20)
         else:
-            sample = pg.graphicsItems.LegendItem.ItemSample(item)
+            sample = pg.ItemSample(item)
             sample.setFixedWidth(20)
 
         # Add the item to the legend and update the size
@@ -137,7 +138,7 @@ class TimeSeriesLegend(pg.LegendItem):
         width = 0
 
         for sample, label in self.items:
-            height += max(sample.boundingRect().height(), label.height()) + 3
+            height += max(int(sample.boundingRect().height()), label.height()) + 3
             width = max(width, sample.boundingRect().width() + label.width())
 
         self.setGeometry(0, 0, width + 60, height)
@@ -145,8 +146,8 @@ class TimeSeriesLegend(pg.LegendItem):
 
 class barGraphSample(pg.GraphicsWidget):
 
-    def __init__(self, item):
-        pg.GraphicsWidget.__init__(self)
+    def __init__(self, item, parent=None, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
         self.item = item
 
     def boundingRect(self):

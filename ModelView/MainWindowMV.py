@@ -20,7 +20,6 @@ class MainWindowModelView:
     """
 
     def __init__(self):
-        """Constructor"""
 
         # Reference to the main window GUI
         self.mw = app.gui
@@ -45,10 +44,13 @@ class MainWindowModelView:
         self.ChangeFont(app.settings['application_font_size'])
 
         # Set the current file name in the status bar
-        app.gui.current_file_widg.setText(f'<strong>File</strong>: {app.current_file}')
+        app.gui.current_file_widg.setText(
+            f'<strong>File</strong>: {app.current_file}'
+        )
 
     def NewFile(self, _, Prompt=True):
-        """Prompts the user if they want to save the current file, and opens a new
+        """
+        Prompts the user if they want to save the current file, and opens a new
         file (using the default new file name). Clears all the application models and
         top level widgets.
         """
@@ -65,8 +67,13 @@ class MainWindowModelView:
         # Clear all the models
         self.clear_models()
 
-        app.current_file = Path(app.settings['last_dir']).joinpath(app.settings['new_filename'])
-        app.gui.current_file_widg.setText(f'<strong>File</strong>: {app.current_file}')
+        app.current_file = Path().joinpath(
+            app.settings['last_dir'],
+            app.settings['new_filename']
+        )
+        app.gui.current_file_widg.setText(
+            f'<strong>File</strong>: {app.current_file}'
+        )
 
         # Redraw the entire app
         for w in app.topLevelWidgets():
@@ -76,8 +83,9 @@ class MainWindowModelView:
         return
 
     def OpenFile(self, _, filename=None):
-        """Opens the filename specified by 'filename', or if 'filename' is none, opens
-        the file specified by the user from the QFileDialog.
+        """
+        Opens the filename specified by 'filename', or if 'filename' is
+        none, opens the file specified by the user from the QFileDialog.
         """
 
         # Open a QFIleDialog if the there is no filename specified
@@ -100,7 +108,8 @@ class MainWindowModelView:
             # print(f"Opened the sqlite forecast in {end - start:.2f} seconds.")
 
             start = time.perf_counter()
-            # Open the file and use the file-loader function to read the data into the application
+            # Open the file and use the file-loader function to read the data
+            # into the application
             with open(str(filename), 'rb') as read_file:
               FileLoaderSaver.load_file(read_file)
             end = time.perf_counter()
@@ -108,14 +117,16 @@ class MainWindowModelView:
 
             # Update the application configuration and current file name
             app.current_file = Path(filename)
-            app.gui.current_file_widg.setText(f'<strong>File</strong>: {app.current_file}')
+            app.gui.current_file_widg.setText(
+                f'<strong>File</strong>: {app.current_file}'
+            )
             app.settings['last_dir'] = os.path.dirname(app.current_file)
             print(f"Successfully opened the file: {app.current_file}")
 
         return
 
     def SaveFile(self, _=None):
-        """Saves the forecast to the forecast file (set in app.current_file)"""
+        """Saves the forecast to the forecast file (set in app.current_file)."""
 
         # If the filename is the 'default' file name from app.settings, we should
         # ask the user if they want to specify a file name first.
@@ -138,15 +149,19 @@ class MainWindowModelView:
 
         # Update the application with the file name and update the config.
         app.gui.status_bar.showMessage(
-            f'File [{app.current_file}] saved successfully!', 3000)
-        app.gui.current_file_widg.setText(f'<strong>File</strong>: {app.current_file}')
+            f'File [{app.current_file}] saved successfully!', 3000
+        )
+        app.gui.current_file_widg.setText(
+            f'<strong>File</strong>: {app.current_file}'
+        )
         app.settings['last_dir'] = os.path.dirname(app.current_file)
         print(f"Successfully saved the file: {app.current_file}")
 
         return
 
     def SaveFileAs(self, _):
-        """ Prompts the user with a QFIleDialog for a filename, then uses the
+        """
+        Prompts the user with a QFIleDialog for a filename, then uses the
         SaveFile function to save the file.
         """
 
@@ -165,8 +180,7 @@ class MainWindowModelView:
         return
 
     def clear_models(self):
-        """Clears the application models.
-        """
+        """Clears the application models."""
 
         app.datasets.clear_all()
         app.model_configurations.clear_all()
@@ -175,7 +189,9 @@ class MainWindowModelView:
         return
 
     def ExportFile(self, _):
-        """Exports the forecast file to an excel spreadsheet using the ExcelExporter Module
+        """
+        Exports the forecast file to an Excel spreadsheet using the
+        ExcelExporter Module.
         """
 
         # Create an instance of the ExcelExporter writer
@@ -192,7 +208,7 @@ class MainWindowModelView:
         app.gui.status_bar.showMessage('')
         app.processEvents()
 
-        # Prompt the user to see if they want to open the excel file
+        # Prompt the user to see if they want to open the Excel file
         ret = QMessageBox.question(
             app.gui,
             'Export successful',
@@ -204,7 +220,9 @@ class MainWindowModelView:
         return
 
     def ChangeFont(self, size):
-        """Changes the application wide font size and modifies the configuration file"""
+        """
+        Changes the application wide font size and modifies the configuration file.
+        """
 
         # Change the configuration file
         app.settings['application_font_size'] = size
@@ -234,22 +252,23 @@ class MainWindowModelView:
         return
 
     def EditUnits(self, _):
-        """Opens the Unit Editor Dialog """
+        """Opens the Unit Editor Dialog."""
 
-        u = UnitsEditor.UnitsEditor()
+        u = UnitsEditor.UnitsEditor(app.gui)
+        u.exec()
 
         return
 
     def EditApplicationSettings(self, _):
-        """Opens the Application Settings Dialog"""
+        """Opens the Application Settings Dialog."""
 
-        s = SettingsDialog.SettingsDialog()
+        s = SettingsDialog.SettingsDialog(app.gui)
         s.exec()
 
         return
 
     def ShowLog(self, _):
-        """Opens the log viewer dialog"""
+        """Opens the log viewer dialog."""
 
         self.log_view = AppLogViewer.LogViewer()
         self.log_view.show()
@@ -257,17 +276,20 @@ class MainWindowModelView:
         return
 
     def OpenDocs(self, _):
-        """Opens the Github documentation page for V5"""
+        """Opens the Github documentation page for V5."""
 
-        QDesktopServices.openUrl(QUrl(
-            'https://github.com/usbr/PyForecast/tree/PyForecastV5#pyforecast-version-5-'))
+        QDesktopServices.openUrl(
+            QUrl(
+            'https://github.com/usbr/PyForecast/tree/PyForecastV5#pyforecast-version-5-'
+            )
+        )
 
         return
 
     def UpdateCheck(self, _):
-        """Opens the update check dialog box"""
+        """Opens the update check dialog box."""
 
-        self.updater = Updater.UpdaterDialog()
+        self.updater = Updater.UpdaterDialog(app.gui)
         self.updater.exec()
 
         return

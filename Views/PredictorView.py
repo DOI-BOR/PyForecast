@@ -15,8 +15,8 @@ app = QApplication.instance()
 
 class MethodFilterModel(QSortFilterProxyModel):
 
-    def __init__(self):
-        QSortFilterProxyModel.__init__(self)
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.filterString = None
 
     def setFilterString(self, dataset):
@@ -46,8 +46,8 @@ class MethodFilterModel(QSortFilterProxyModel):
 
 class UnitFilterModel(QSortFilterProxyModel):
 
-    def __init__(self):
-        QSortFilterProxyModel.__init__(self)
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.filterString = 'length'
         self.dataset = None
         self.method = ''
@@ -83,9 +83,9 @@ class UnitFilterModel(QSortFilterProxyModel):
 
 class PredictorView(QDialog):
 
-    def __init__(self, app=None, selected_configuration=None):
+    def __init__(self, parent=None, app=None, selected_configuration=None):
 
-        QDialog.__init__(self)
+        super().__init__(parent)
 
         self.method_model = QStringListModel(list(app.agg_methods.keys()))
         self.filter_method_model = MethodFilterModel()

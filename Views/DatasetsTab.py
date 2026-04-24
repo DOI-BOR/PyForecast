@@ -12,8 +12,8 @@ app = QApplication.instance()
 
 class DatasetsTab(QWidget):
 
-    def __init__(self):
-        QWidget.__init__(self)
+    def __init__(self, parent=None):
+        super().__init__(parent)
 
         # Create the Map
         self.dataset_map = DatasetMap()
@@ -51,9 +51,9 @@ class DatasetsTab(QWidget):
 
 class SelectedDatasetList(QListView):
 
-    def __init__(self):
+    def __init__(self, parent=None):
 
-        QListView.__init__(self)
+        super().__init__(parent)
         self.setMinimumWidth(300)
         self.setItemDelegate(RichTextDelegate.HTMLDelegate())
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -136,8 +136,8 @@ class SelectedDatasetList(QListView):
 
 class DatasetMap(QWebEngineView):
 
-    def __init__(self):
-        QWebEngineView.__init__(self)
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.page = WebMapPage()
         self.setPage(self.page)
         self.loadProgress.connect(
@@ -161,8 +161,8 @@ class DatasetMap(QWebEngineView):
 class WebMapPage(QWebEnginePage):
     java_msg_signal = Signal(str)
 
-    def __init__(self):
-        QWebEnginePage.__init__(self)
+    def __init__(self, parent=None):
+        super().__init__(parent)
 
         self.settings().setAttribute(
             QWebEngineSettings.WebAttribute.LocalContentCanAccessRemoteUrls,

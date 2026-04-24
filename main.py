@@ -6,8 +6,8 @@ import time
 import traceback
 from pathlib import Path
 
-from PySide6.QtCore import qVersion, Signal, QObject
-from PySide6.QtGui import QIcon
+from PySide6.QtCore import Qt, qVersion, Signal, QObject
+from PySide6.QtGui import QIcon, QGuiApplication
 from PySide6.QtQuick import QQuickWindow, QSGRendererInterface
 from PySide6.QtWidgets import QApplication
 
@@ -23,9 +23,9 @@ class Logger(QObject):
     new_log_message = Signal(str)
     base_dir = Path(__file__).parent.absolute()
 
-    def __init__(self):
+    def __init__(self, parent=None):
         """Constructor method """
-        QObject.__init__(self)
+        super().__init__(parent)
 
         # Open the log file and redirect stdout to a variable
         self.terminal = sys.stdout
@@ -65,7 +65,8 @@ class Logger(QObject):
                 self.new_log_message.emit(msg)
 
     def cleanup(self):
-        # Close the log file
+        # Close the log file and terminal
+        self.terminal.close()
         self.log.close()
 
     def flush(self):
@@ -96,7 +97,7 @@ class PyForecast(QApplication):
         """
 
         # Initialize the parent QApplication
-        QApplication.__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         # redirect stdout to log
         self.logger = Logger()
@@ -126,7 +127,6 @@ class PyForecast(QApplication):
         # Setup Application information
         self.setApplicationName(f'PyForecast v{self.PYCAST_VERSION}')
         self.setApplicationVersion(self.PYCAST_VERSION)
-        self.setApplicationDisplayName(f'PyForecast v{self.PYCAST_VERSION}')
 
         # Set window icon in the taskbar and any other windows
         self.icon= QIcon(
@@ -146,10 +146,10 @@ class PyForecast(QApplication):
 
         # Initialize the Core Models
         from Models import Datasets, ModelConfigurations, SavedModels, Units
-        self.units = Units.Units()
-        self.datasets = Datasets.Datasets()
-        self.model_configurations = ModelConfigurations.ModelConfigurations()
-        self.saved_models = SavedModels.SavedModelList()
+        self.units = Units.Units(self)
+        self.datasets = Datasets.Datasets(self)
+        self.model_configurations = ModelConfigurations.ModelConfigurations(self)
+        self.saved_models = SavedModels.SavedModelList(self)
 
         # Instantiate the Dataloaders
         from Resources import Dataloaders
@@ -179,18 +179,30 @@ class PyForecast(QApplication):
         from Resources.RegressionModels import REGRESSORS
         self.regressors = REGRESSORS
 
-        # Initialize the Views
+        # Initialize the MainWindow
         from Views import MainWindow
-        self.gui = MainWindow.MainWindow(show=True)
+        self.gui = MainWindow.MainWindow()
 
         # Instanitate the View Models
-        from ModelView import MainWindowMV, DatasetMV
-        from ModelView import DataTabMV, ModelConfigurationMV, SavedModelsMV
+        from ModelView import (MainWindowMV, DatasetMV, DataTabMV,
+                               ModelConfigurationMV, SavedModelsMV)
         self.MWMV = MainWindowMV.MainWindowModelView()
         self.DMV = DatasetMV.DatasetModelView()
         self.DTMV = DataTabMV.DataModelView()
         self.MTMV = ModelConfigurationMV.ModelConfigurationModelView()
         self.SMMV = SavedModelsMV.SavedModelsModelView()
+
+        # Show the MainWindow
+        user_screen_size = QGuiApplication.primaryScreen().size()
+        width = min(self.settings['window_width'], user_screen_size.width())
+        height = min(self.settings['window_height'], user_screen_size.height())
+
+        rec = self.gui.size()
+        if (width >= 0.95 * rec.width()) or (height >= 0.95 * rec.height()):
+            self.gui.showMaximized()
+        else:
+            self.gui.resize(width, height)
+            self.gui.show()
 
         # Open the file if there is one
         if kwargs['file']:

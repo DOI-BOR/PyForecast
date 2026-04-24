@@ -12,9 +12,10 @@ app = QApplication.instance()
 
 class UnitsEditor(QDialog):
 
-    def __init__(self):
+    def __init__(self, parent=None):
 
-        QDialog.__init__(self)
+        super().__init__(parent)
+
         self.setWindowTitle('Edit PyForecast Units')
         self.setWindowIcon(app.icon)
 
@@ -67,9 +68,9 @@ class UnitsEditor(QDialog):
         layout2 = QHBoxLayout()
         self.save_button = QPushButton('Save')
         self.cancel_button = QPushButton('Cancel')
+        layout2.addStretch(1)
         layout2.addWidget(self.save_button)
         layout2.addWidget(self.cancel_button)
-        layout2.addStretch(1)
         layout.addLayout(layout2, 1)
 
         self.setLayout(layout)
@@ -84,8 +85,6 @@ class UnitsEditor(QDialog):
         self.off_edit.setValidator(dval)
         self.scale_edit.setText('1.0')
         self.off_edit.setText('0.0')
-
-        self.exec()
 
     def closeEvent(self, event):
         new = [u.id for u in app.units.units]

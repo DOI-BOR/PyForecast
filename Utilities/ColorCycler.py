@@ -1,10 +1,12 @@
-"""ColorCycler.py contains a class that cycles through a list of different colors
+"""
+ColorCycler.py contains a class that cycles through a list of different colors.
 """
 from pyqtgraph import mkColor
 
 
 class ColorCycler:
-    """The ColorCycler class contains a list of colors and returns the colors as
+    """
+    The ColorCycler class contains a list of colors and returns the colors as
     requested with the 'next()' function.
     """
 
@@ -15,7 +17,6 @@ class ColorCycler:
     ]
 
     def __init__(self):
-        """Constructor"""
 
         self.index = 0  # Keeps track of which color we last returned
         self.col = self.COLOR_CYCLER[self.index]

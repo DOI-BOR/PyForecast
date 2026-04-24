@@ -116,7 +116,7 @@ class DatasetModelView:
 
         idx = self.dt.dataset_list.selectedIndexes()[0]
         dataset = app.datasets[idx.row()]
-        DatasetViewDialog.DatasetViewer(app, dataset.guid)
+        DatasetViewDialog.DatasetViewer(self.dt, app, dataset.guid)
 
         return
 
@@ -131,6 +131,6 @@ class DatasetModelView:
     def add_blank_dataset(self):
 
         new_dataset = app.datasets.add_dataset()
-        DatasetViewDialog.DatasetViewer(app, new_dataset.guid, new=True)
+        DatasetViewDialog.DatasetViewer(self.dt, app, new_dataset.guid, new=True)
 
         return

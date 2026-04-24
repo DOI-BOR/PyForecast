@@ -82,12 +82,12 @@ class Units(QAbstractTableModel):
     for QTableViews and QComboBox's where necessary.
     """
 
-    def __init__(self):
+    def __init__(self, parent=None):
         """Constructor"""
 
         # Instantiate the QAbstractTableModel and create a list
         # data structure to store the application units
-        QAbstractTableModel.__init__(self)
+        super().__init__(parent)
 
         self.units = []
         self.attrs = ['id', 'name', 'si_id', 'si_scale', 'si_offset', 'type']
@@ -99,7 +99,7 @@ class Units(QAbstractTableModel):
         for unit in app.settings['user_units']:
             self.add_unit(False, **unit)
 
-    def data(self, index, role):
+    def data(self, index=None, role=None):
         """ Gets information for a specific unit in the units list
         corresponding to the index and role provided.
         """
@@ -136,7 +136,7 @@ class Units(QAbstractTableModel):
         return 7
 
     # returns the header data for views that require a header
-    def headerData(self, section, orientation, role):
+    def headerData(self, section=None, orientation=None, role=None):
         if role == Qt.ItemDataRole.DisplayRole:
             if orientation == Qt.Orientation.Horizontal:
                 return [
@@ -172,9 +172,7 @@ class Units(QAbstractTableModel):
 
         # Update any views
         self.dataChanged.emit(
-            self.index(0, 0),
-            self.index(self.rowCount(),
-                       6)
+            self.index(0, 0), self.index(self.rowCount(), 6)
         )
 
         return
@@ -200,9 +198,7 @@ class Units(QAbstractTableModel):
                 removed_unit = app.settings['user_units'].pop(i)
 
         self.dataChanged.emit(
-            self.index(0, 0),
-            self.index(self.rowCount(),
-                       6)
+            self.index(0, 0), self.index(self.rowCount(), 6)
         )
 
         return
@@ -226,9 +222,7 @@ class Units(QAbstractTableModel):
     def __setitme__(self, index, unit):
         self.units[index] = unit
         self.dataChanged.emit(
-            self.index(0, 0),
-            self.index(self.rowCount(),
-                       6)
+            self.index(0, 0), self.index(self.rowCount(), 6)
         )
 
     def __getitem__(self, index):

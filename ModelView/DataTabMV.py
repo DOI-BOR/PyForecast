@@ -137,7 +137,7 @@ class DataModelView:
             if ret == buttonN:
                 selection = None
 
-        DataDownloaderDialog(all_data=False, selection=selection)
+        DataDownloaderDialog(self.dt, all_data=False, selection=selection)
 
     def download_all(self):
         """
@@ -171,4 +171,4 @@ class DataModelView:
             ret = msgbox.clickedButton()
             if ret == buttonN:
                 selection = None
-        DataDownloaderDialog(all_data=True, selection=selection)
+        DataDownloaderDialog(self.dt, all_data=True, selection=selection)

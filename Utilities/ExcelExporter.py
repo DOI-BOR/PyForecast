@@ -29,7 +29,7 @@ class Exporter:
         return
 
     def export(self) -> Path:
-        """export() constructs and opens the excel spreadsheet representation
+        """export() constructs and opens the Excel spreadsheet representation
         of the forecast file."""
 
         # Open a workbook in the same directory as the forecast file

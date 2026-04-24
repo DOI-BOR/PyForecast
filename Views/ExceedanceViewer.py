@@ -9,8 +9,11 @@ app = QApplication.instance()
 
 class ExceedanceViewer(QDialog):
 
-    def __init__(self, exceedances):
-        QDialog.__init__(self)
+    def __init__(self, parent=None, exceedances=None):
+
+        super().__init__(parent)
+
+        self.setWindowTitle('View Exceedance')
         self.exceedances = exceedances
         self.setUI()
         self.excButton.pressed.connect(self.open_in_excel)

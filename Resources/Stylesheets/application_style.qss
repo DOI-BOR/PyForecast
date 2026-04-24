@@ -1,4 +1,3 @@
-
 /* Sets widgets on the status bar to have a right and left margin */
 QStatusBar QWidget {
     margin-right: 10px;
@@ -9,23 +8,23 @@ QStatusBar QWidget {
 QListView::item {
     border: 2px solid black;
     border-radius: 8px;
-    background: #ffffff;
+    background-color: #ffffff;
     margin: 4px;
 }
 
 QListView {
-    background: #efefef;
+    background-color: #efefef;
 }
 
 /* Changes the color of hovered-over list items */
 QListView::item:hover {
-    background: #adffe4;
+    background-color: #adffe4;
 }
 
 /* changes the color of selected list items */
 QListView::item:selected:active {
     color: black;
-    background: #ffe7b0;
+    background-color: #ffe7b0;
 }
 
 QWidget#monospace {
@@ -33,10 +32,39 @@ QWidget#monospace {
 }
 
 QTableView::item:hover {
-    background: #adffe4;
+    background-color: #adffe4;
 }
 
 QTableView::item:selected:active {
     color: black;
-    background: #ffe7b0;
+    background-color: #ffe7b0;
+}
+
+QProgressBar {
+    border: 2px solid #2196F3;
+    border-radius: 8px;
+    text-align: center;
+}
+
+QProgressBar::chunk {
+    width: 20px;
+    background-color: #2196F3;
+}
+
+QPushButton {
+    border: 1px solid #2196F3;
+    border-radius: 8px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    padding-left: 10px;
+    padding-right: 10px;
+    min-width: 80px;
+}
+
+QPushButton:hover {
+    background-color: aliceblue;
+}
+
+QDialog {
+    background-color: white;
 }

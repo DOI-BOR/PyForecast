@@ -8,10 +8,10 @@ from Utilities import DateAxis, PlotUtils
 
 class TimeSeriesPlot(pg.PlotItem):
 
-    def __init__(self, parent=None, datetimeAxis=True):
+    def __init__(self, parent, datetimeAxis=True, **kwargs):
 
-        self.parent = parent
-        pg.PlotItem.__init__(self)
+        super().__init__(parent, **kwargs)
+
         self.no_dots = True
         self.no_hover = True
         self.no_legend = True
@@ -24,23 +24,23 @@ class TimeSeriesPlot(pg.PlotItem):
 
         self.showAxis("right")
         self.viewbox_axis_2 = pg.ViewBox()
-        self.parent.scene().addItem(self.viewbox_axis_2)
         self.getAxis("right").linkToView(self.viewbox_axis_2)
         self.viewbox_axis_2.setXLink(self)
+        parent.scene().addItem(self.viewbox_axis_2)
 
         self.getAxis('right').setZValue(0)
         self.getAxis('left').setZValue(0)
 
-        self.legend = PlotUtils.TimeSeriesLegend(size=None, offset=(30, 30))
-        self.legend.setParentItem(self.vb)
-        self.showGrid(True, True, 0.85)
+        self.legend = PlotUtils.TimeSeriesLegend(offset=(30, 30))
+        self.legend.setParentItem(parent)
+        self.showGrid(True, True, 0.25)
 
         self.plot_assignments = []
         self.hoverPoints = []
 
         self.updateViews()
         self.vb.sigResized.connect(self.updateViews)
-        self.parent.scene().sigMouseMoved.connect(self.mouseMoved)
+        parent.scene().sigMouseMoved.connect(self.mouseMoved)
 
     def mouseMoved(self, event):
         if self.no_hover:

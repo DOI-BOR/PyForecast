@@ -7,17 +7,16 @@ from Utilities import DateAxis
 
 class TimeSliderPlot(pg.PlotItem):
 
-    def __init__(self, parent=None):
+    def __init__(self, parent, **kwargs):
 
-        self.parent = parent
-        pg.PlotItem.__init__(self)
+        super().__init__(parent, **kwargs)
         self.setMenuEnabled(False)
         self.getViewBox().setMouseEnabled(x=False, y=False)
 
         b_axis = DateAxis.DateAxisItem(orientation='bottom')
         b_axis.attachToPlotItem(self)
 
-        self.region = pg.LinearRegionItem(brush=pg.mkBrush(100, 100, 100, 50))
+        self.region = pg.LinearRegionItem(brush=pg.mkBrush(100, 100, 100, 30))
         self.region.setZValue(10)
         self.addItem(self.region)
 
@@ -44,8 +43,13 @@ class TimeSliderPlot(pg.PlotItem):
 
         # Plot the data
         for i, col in enumerate(dataframe.columns):
-            pg.PlotItem.plot(self, x=x, y=dataframe[col].values,
-                             clear=True if i == 0 else False, pen=pg.mkPen(colors[i]))
+            pg.PlotItem.plot(
+                self,
+                x=x,
+                y=dataframe[col].values,
+                clear=True if i == 0 else False,
+                pen=pg.mkPen(colors[i])
+            )
 
         self.getViewBox().setLimits(
             xMin=np.nanmin(x),

@@ -11,9 +11,9 @@ app = QApplication.instance()
 
 class DataViewer(QDialog):
 
-    def __init__(self, configuration_idx=None, dataset_idx=None):
+    def __init__(self, parent=None, configuration_idx=None, dataset_idx=None):
 
-        QDialog.__init__(self)
+        super().__init__(parent)
 
         self.configuration = app.model_configurations[configuration_idx]
         if dataset_idx == -1:

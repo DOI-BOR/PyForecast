@@ -14,8 +14,8 @@ app = QApplication.instance()
 
 
 def ordinaltg(n):
-    return str(n) + {1: 'st', 2: 'nd', 3: 'rd'}.get(4 if 10 <= n % 100 < 20 else n % 10,
-                                                    "th")
+    return str(n) + {1: 'st', 2: 'nd', 3: 'rd'}.get(
+        4 if 10 <= n % 100 < 20 else n % 10, "th")
 
 
 class ResampledDataset:
@@ -239,12 +239,12 @@ class ModelConfiguration:
 
 class Regressors(QAbstractTableModel):
 
-    def __init__(self):
+    def __init__(self, parent=None):
 
-        QAbstractTableModel.__init__(self)
+        super().__init__(parent)
         self.regressors = []
 
-    def headerData(self, section, orientation, role):
+    def headerData(self, section=None, orientation=None, role=None):
         if section >= 0:
             if (orientation == Qt.Orientation.Horizontal
                     and role == Qt.ItemDataRole.DisplayRole):
@@ -253,7 +253,7 @@ class Regressors(QAbstractTableModel):
                 if section == 1:
                     return "Scoring Metrics"
 
-    def data(self, index, role):
+    def data(self, index=None, role=None):
         if role == Qt.ItemDataRole.DisplayRole:
             row = index.row()
             column = index.column()
@@ -306,12 +306,12 @@ class Regressors(QAbstractTableModel):
 
 class PredictorPool(QAbstractTableModel):
 
-    def __init__(self):
+    def __init__(self, parent=None):
 
-        QAbstractTableModel.__init__(self)
+        super().__init__(parent)
         self.predictors = []
 
-    def headerData(self, section, orientation, role):
+    def headerData(self, section=None, orientation=None, role=None):
         if section >= 0:
             if (orientation == Qt.Orientation.Horizontal
                     and role == Qt.ItemDataRole.DisplayRole):
@@ -412,9 +412,9 @@ class ModelConfigurations(QAbstractListModel):
     rich_text_role = Qt.ItemDataRole.UserRole + 3
     simple_str_role = Qt.ItemDataRole.UserRole + 4
 
-    def __init__(self):
+    def __init__(self, parent=None):
 
-        QAbstractListModel.__init__(self)
+        super().__init__(parent)
         self.configurations = []
 
         return

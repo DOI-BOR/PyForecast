@@ -208,9 +208,9 @@ class Datasets(QAbstractListModel):
     obj_role = Qt.ItemDataRole.UserRole + 2  # Returns the dataset object
     rich_text_role = Qt.ItemDataRole.UserRole + 3
 
-    def __init__(self):
+    def __init__(self, parent=None):
 
-        QAbstractListModel.__init__(self)
+        super().__init__(parent)
         self.datasets = []  # Stores datasets in an internal list
 
         return

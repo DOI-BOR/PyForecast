@@ -15,8 +15,8 @@ app = QApplication.instance()
 
 class UnitFilterModel(QSortFilterProxyModel):
 
-    def __init__(self):
-        QSortFilterProxyModel.__init__(self)
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.filterString = 'length'
 
     def setFilterString(self, text):
@@ -35,9 +35,10 @@ class UnitFilterModel(QSortFilterProxyModel):
 
 class DatasetViewer(QDialog):
 
-    def __init__(self, app=None, dataset_guid=None, new=False):
+    def __init__(self, parent=None, app=None, dataset_guid=None, new=False):
 
-        QDialog.__init__(self)
+        super().__init__(parent)
+
         self.setWindowTitle('View Dataset')
         self.setWindowIcon(app.icon)
         self.app = app
@@ -97,6 +98,7 @@ class DatasetViewer(QDialog):
         layout2.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
         layout2.addRow(
             ToolTipLabel(
+                self,
                 'GUID',
                 'Internal identifier for this dataset'
             ),
@@ -104,6 +106,7 @@ class DatasetViewer(QDialog):
         )
         layout2.addRow(
             ToolTipLabel(
+                self,
                 'ID',
                 "This dataset's <strong>ID</strong>. Dataloaders use this"
                 " to find and download data"
@@ -114,6 +117,7 @@ class DatasetViewer(QDialog):
         layout2.addRow('Parameter', self.parameter_field)
         layout2.addRow(
             ToolTipLabel(
+                self,
                 'Parameter Code',
                 'This code is used by dataloaders when downloading data'
             ),
@@ -121,6 +125,7 @@ class DatasetViewer(QDialog):
         )
         layout2.addRow(
             ToolTipLabel(
+                self,
                 'Raw Units',
                 'Data is returned from the dataloader in this unit'
             ),
@@ -128,6 +133,7 @@ class DatasetViewer(QDialog):
         )
         layout2.addRow(
             ToolTipLabel(
+                self,
                 'Display Units',
                 'PyForecast converts the raw units to this unit for'
                 ' display and processing'
@@ -140,6 +146,7 @@ class DatasetViewer(QDialog):
         layout2.addWidget(line2)
         layout2.addRow(
             ToolTipLabel(
+                self,
                 'Flat-file source?',
                 "Check this box if you're importing data from a file"
             ),
@@ -169,7 +176,7 @@ class DatasetViewer(QDialog):
         # Load the dataset
         self.load_dataset()
 
-        self.exec_()
+        self.exec()
 
     def updateUnits(self, idx):
         new_unit = app.units[idx]
@@ -294,6 +301,6 @@ class DatasetViewer(QDialog):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    mw = DatasetViewer(app)
+    mw = DatasetViewer()
     mw.show()
     sys.exit(app.exec())

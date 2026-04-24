@@ -1,5 +1,6 @@
 import numpy as np
 import pyqtgraph as pg
+from PySide6 import QtGui
 from PySide6.QtGui import QAction, QPainter
 from PySide6.QtCore import Qt, QPoint
 from PySide6.QtWidgets import (QApplication, QWidget, QPushButton, QSplitter,
@@ -18,8 +19,8 @@ app = QApplication.instance()
 
 class DataTab(QWidget):
 
-    def __init__(self):
-        QWidget.__init__(self)
+    def __init__(self, parent=None):
+        super().__init__(parent)
 
         self.data_all_button = QPushButton('Download all data')
         self.data_all_button.setStatusTip(
@@ -68,9 +69,9 @@ class DataTab(QWidget):
 
 class DataViewer(pg.GraphicsLayoutWidget):
 
-    def __init__(self):
+    def __init__(self, parent=None, **kwargs):
 
-        pg.GraphicsLayoutWidget.__init__(self)
+        super().__init__(parent, **kwargs)
         self.color_cycler = ColorCycler.ColorCycler()
         self.setMinimumWidth(500)
 
@@ -78,8 +79,8 @@ class DataViewer(pg.GraphicsLayoutWidget):
         [self.ci.layout.setRowMinimumHeight(i, 30) for i in range(9)]
 
         # initialize the plots
-        self.timeseriesplot = TimeSeriesPlot.TimeSeriesPlot(self)
-        self.timesliderplot = TimeSeriesSlider.TimeSliderPlot(self)
+        self.timeseriesplot = TimeSeriesPlot.TimeSeriesPlot(self.ci)
+        self.timesliderplot = TimeSeriesSlider.TimeSliderPlot(self.ci)
 
         self.addItem(self.timeseriesplot, row=0, col=0, rowspan=7)
         self.addItem(self.timesliderplot, row=7, col=0, rowspan=2)
@@ -124,9 +125,9 @@ class DataViewer(pg.GraphicsLayoutWidget):
 
 class SelectedDatasetList(QListView):
 
-    def __init__(self):
+    def __init__(self, parent=None):
 
-        QListView.__init__(self)
+        super().__init__(parent)
         self.setMinimumWidth(300)
         self.setItemDelegate(RichTextDelegate.HTMLDelegate())
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)

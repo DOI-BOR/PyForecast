@@ -6,9 +6,9 @@ from Utilities.ColorCycler import ColorCycler
 
 class Plot(pg.GraphicsLayoutWidget):
 
-    def __init__(self):
+    def __init__(self, parent=None, **kwargs):
 
-        pg.GraphicsLayoutWidget.__init__(self)
+        super().__init__(parent, **kwargs)
 
         # Initialize the upper and lower plots
         self.upper_plot = self.ci.addPlot(row=0, col=0, rowspan=3, colspan=2)

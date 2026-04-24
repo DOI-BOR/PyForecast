@@ -70,7 +70,7 @@ class Model:
         self.issue_date = None
         self.name = ""
         self.comment = ""
-        self.forecasts = ForecastList(self)
+        self.forecasts = ForecastList()
 
         # Load in all args and kwargs into the dataset definition
         self.guid = str(uuid.uuid4())
@@ -117,7 +117,7 @@ class Model:
 
 class ForecastList(object):
 
-    def __init__(self, model=None):
+    def __init__(self):
 
         self.forecasts = pd.DataFrame(
             index=pd.MultiIndex(
@@ -173,8 +173,8 @@ class SavedModelList(QAbstractListModel):
     filterRole = Qt.ItemDataRole.UserRole + 2
     richTextRole = Qt.ItemDataRole.UserRole + 3
 
-    def __init__(self):
-        QAbstractListModel.__init__(self)
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.saved_models = []
 
     def rowCount(self, parent=QModelIndex):

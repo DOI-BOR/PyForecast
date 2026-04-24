@@ -112,13 +112,13 @@ class SavedModelsModelView:
 
     def view_exceedances(self):
         if not self.grouped.empty:
-            e = ExceedanceViewer.ExceedanceViewer(self.grouped)
+            e = ExceedanceViewer.ExceedanceViewer(self.sm, self.grouped)
             e.exec()
 
     def open_model(self, _=None):
         selection = self.sm.model_list.selectionModel().selectedRows()[0]
         real_idx = self.forecast_proxy_model.mapToSource(selection)
-        f = ForecastViewer.ForecastViewer(real_idx)
+        f = ForecastViewer.ForecastViewer(self.sm, real_idx)
         f.exec()
         return
 
@@ -191,10 +191,16 @@ class SavedModelsModelView:
         idx = self.sm.model_list.selectionModel().selectedRows()
         real_idx = [self.forecast_proxy_model.mapToSource(i) for i in idx]
 
-        self.gen_for_dialog = genModelDialog(real_idx)
+        self.gen_for_dialog = genModelDialog(self.sm, real_idx)
         self.gen_for_dialog.last_year.connect(self.sm.year_select.setValue)
-        self.gen_for_dialog.finished.connect(lambda _: self.plot_forecast(None, None))
-        self.gen_for_dialog.finished.connect(lambda _: self.sm.updateListSize())
+        self.gen_for_dialog.finished.connect(
+            lambda:
+            self.plot_forecast(None, None)
+        )
+        self.gen_for_dialog.finished.connect(
+            lambda:
+            self.sm.updateListSize()
+        )
         self.gen_for_dialog.show()
 
     def remove_model(self):
@@ -244,9 +250,9 @@ class SavedModelsModelView:
 class genModelDialog(QDialog):
     last_year = Signal(int)
 
-    def __init__(self, idx_list):
+    def __init__(self, parent=None, idx_list=None):
 
-        QDialog.__init__(self)
+        super().__init__(parent)
         self.setModal(True)
 
         self.idx_list = list(set(idx_list))
@@ -419,7 +425,7 @@ class genModelDialog(QDialog):
         l = QVBoxLayout()
         for i, idx in enumerate(self.idx_list):
             model = app.saved_models[idx.row()]
-            label = ForecastGenLabel(model.name)
+            label = ForecastGenLabel(self, model.name)
             self.labels.append(label)
             l.addWidget(label)
         w.setLayout(l)
@@ -436,8 +442,8 @@ class genModelDialog(QDialog):
 
 class ForecastGenLabel(QLabel):
 
-    def __init__(self, modelName):
-        QLabel.__init__(self)
+    def __init__(self, parent=None, modelName=''):
+        super().__init__(parent)
         self.setStyleSheet('border: 1px solid black')
         self.prog = 0.002
         self.setProgress(self.prog)
@@ -455,8 +461,10 @@ class ForecastGenLabel(QLabel):
         if prog <= 0.002:
             prog = 0.002
         self.prog = prog
-        self.setStyleSheet(f"""border: 1px solid black; padding: 10px;
-    background: qlineargradient( x1:0 y1:0, x2:1 y2:0, stop:0 #9deb9d, stop:{self.prog - 0.001} #9deb9d, stop:{self.prog} white, stop:1 white)
-    """)
+        self.setStyleSheet(
+            f"""border: 1px solid black; padding: 10px;
+            background: qlineargradient(x1:0 y1:0, x2:1 y2:0, stop:0 #2196F3,
+             stop:{self.prog - 0.001} #2196F3, stop:{self.prog} white, stop:1 white)"""
+        )
         self.update()
         app.processEvents()

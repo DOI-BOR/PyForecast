@@ -6,8 +6,8 @@ app = QApplication.instance()
 
 class LogViewer(QDialog):
 
-    def __init__(self):
-        QDialog.__init__(self)
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.setModal(False)
         self.setWindowTitle('Application Log')
         self.setWindowIcon(app.icon)

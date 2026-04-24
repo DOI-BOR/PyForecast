@@ -16,8 +16,8 @@ app = QApplication.instance()
 
 class SavedModelsTab(QWidget):
 
-    def __init__(self):
-        QWidget.__init__(self)
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.setUI()
         self.year_select.setMinimum(1900)
         cwt = datetime.now()
@@ -35,7 +35,7 @@ class SavedModelsTab(QWidget):
         self.issue_combo = ZzQComboBox()
         self.model_list = ModelList()
         self.year_select = QSpinBox()
-        self.plot_select = ToggleSwitch.Switch(thumb_radius=11, track_radius=8)
+        self.plot_select = ToggleSwitch.Switch(self, thumb_radius=11, track_radius=8)
         self.prob_plot = ProbabilityPlots()
         self._10_value = valueLabel()
         self._30_value = valueLabel()
@@ -98,9 +98,9 @@ class SavedModelsTab(QWidget):
 
 class ModelList(QListView):
 
-    def __init__(self):
+    def __init__(self, parent=None):
 
-        QListView.__init__(self)
+        super().__init__(parent)
         self.setMinimumWidth(300)
         self.setItemDelegate(RichTextDelegate.HTMLDelegate())
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -157,20 +157,20 @@ class ModelList(QListView):
 
 
 class valueLabel(QLineEdit):
-    def __init__(self):
-        QLineEdit.__init__(self)
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.setReadOnly(True)
 
-    def setText(self, value, units):
+    def setText(self, value=None, units=None):
         label = f'{value:.2f} {units}'
         QLineEdit.setText(self, label)
 
 
 class ProbabilityPlots(pg.PlotWidget):
-    def __init__(self):
-        pg.PlotWidget.__init__(self)
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.addLegend()
-        self.showGrid(True, False, 0.85)
+        self.showGrid(True, False, 0.25)
         self.getAxis('bottom').setLabel('Target Value')
         self.hideAxis('left')
 
@@ -225,8 +225,13 @@ class ProbabilityPlots(pg.PlotWidget):
         textItem2.setPos(max_, 0)
 
     def plot_data(self, x, y, color, width=1.5, label=None):
-        i = self.plot(x, y, pen=pg.mkPen({'color': color, "width": width}), name=label,
-                      antialias=True)
+        i = self.plot(
+            x,
+            y,
+            pen=pg.mkPen({'color': color, "width": width}),
+            name=label,
+            antialias=True
+        )
         i.setZValue(30)
 
     def plot_vlines(self, values):

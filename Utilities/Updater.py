@@ -11,15 +11,18 @@ app = QApplication.instance()
 
 class UpdaterDialog(QDialog):
 
-    def __init__(self):
+    def __init__(self, parent=None):
 
-        QDialog.__init__(self)
+        super().__init__(parent)
         self.setUI()
         self.update_button.setEnabled(False)
         self.update_button.pressed.connect(self.update_software)
         self.progress_text.append('Looking for updates...')
-        releases = requests.get('https://api.github.com/repos/usbr/PyForecast/releases',
-                                verify=False).json()
+        releases = requests.get(
+            'https://api.github.com/repos/usbr/PyForecast/releases',
+            verify=False
+        ).json()
+
         self.newest_release = None
         for release in releases:
             if release['tag_name'].startswith('5.'):

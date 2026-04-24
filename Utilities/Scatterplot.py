@@ -3,14 +3,14 @@ import pyqtgraph as pg
 
 class ScatterPlot(pg.PlotItem):
 
-    def __init__(self, line=False):
+    def __init__(self, parent=None, line=False, enableMenu=False, **kwargs):
 
-        pg.PlotItem.__init__(self, enableMenu=False)
+        super().__init__(parent, enableMenu=enableMenu, **kwargs)
         self.sp = pg.ScatterPlotItem()
         self.line = line
         if self.line:
             self.lineItem = pg.PlotCurveItem()
-        self.showGrid(True, True, 0.85)
+        self.showGrid(True, True, 0.25)
         return
 
     def plot_data(self, x, y, data=None, name=None):
@@ -50,15 +50,15 @@ class ScatterPlot(pg.PlotItem):
 
 class ScatterPlot2(pg.PlotItem):
 
-    def __init__(self, line=False):
-        pg.PlotItem.__init__(self, enableMenu=False)
+    def __init__(self, parent=None, line=False, enableMenu=False, **kwargs):
+        super().__init__(parent, enableMenu=enableMenu, **kwargs)
         self.sp = pg.ScatterPlotItem()
         self.sp2 = pg.ScatterPlotItem()
         self.line = line
         if self.line:
             self.lineItem = pg.PlotCurveItem()
             self.lineItem2 = pg.PlotCurveItem()
-        self.showGrid(True, True, 0.85)
+        self.showGrid(True, True, 0.25)
         return
 
     def plot_data(self, x, y, y2, data=None, data2=None, name=None, name2=None):

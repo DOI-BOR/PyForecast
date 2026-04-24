@@ -12,8 +12,8 @@ app = QApplication.instance()
 
 class ExperimentalFeatures(QWidget):
 
-    def __init__(self):
-        QWidget.__init__(self)
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.setUI()
 
     def setUI(self):
@@ -49,7 +49,7 @@ class ExperimentalFeatures(QWidget):
         self.disagg_end_edit.setDisplayFormat('MMMM dd')
         self.disagg_start_btn = QPushButton('Disaggregate')
         self.disagg_table_view_btn = QPushButton('Export to Excel')
-        self.disagg_plot_view = DataViewer()
+        self.disagg_plot_view = DataViewer(self)
 
         dlayout = QVBoxLayout()
         h = QHBoxLayout()
@@ -74,13 +74,13 @@ class ExperimentalFeatures(QWidget):
 
 class DataViewer(pg.GraphicsLayoutWidget):
 
-    def __init__(self):
-        pg.GraphicsLayoutWidget.__init__(self)
+    def __init__(self, parent=None, **kwargs):
+        super().__init__(parent, **kwargs)
         self.color_cycler = ColorCycler.ColorCycler()
         self.setMinimumWidth(500)
 
         # initialize the plots
-        self.timeseriesplot = TimeSeriesPlot.TimeSeriesPlot(self)
+        self.timeseriesplot = TimeSeriesPlot.TimeSeriesPlot(self.ci)
         self.addItem(self.timeseriesplot, row=0, col=0)
 
         return

@@ -1,7 +1,6 @@
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QGuiApplication, QFont, QAction, QIcon
-from PySide6.QtWidgets import (QMainWindow, QApplication, QTabWidget, QLabel,
-                               QMenu)
+from PySide6.QtGui import QFont, QAction, QIcon
+from PySide6.QtWidgets import QMainWindow, QApplication, QTabWidget, QLabel, QMenu
 
 from . import DatasetsTab, DataTab, ModelingTab, SavedModelsTab
 
@@ -10,19 +9,19 @@ app = QApplication.instance()
 
 class MainWindow(QMainWindow):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
 
-        QMainWindow.__init__(self, *args)
+        super().__init__()
 
         # Main window properties
         self.setWindowTitle(f'PyForecast v{app.PYCAST_VERSION}')
         self.setWindowIcon(app.icon)
 
         # Initialize the Views
-        self.DatasetsTab = DatasetsTab.DatasetsTab()
-        self.DataTab = DataTab.DataTab()
-        self.ModelingTab = ModelingTab.ModelingTab()
-        self.SavedModelsTab = SavedModelsTab.SavedModelsTab()
+        self.DatasetsTab = DatasetsTab.DatasetsTab(self)
+        self.DataTab = DataTab.DataTab(self)
+        self.ModelingTab = ModelingTab.ModelingTab(self)
+        self.SavedModelsTab = SavedModelsTab.SavedModelsTab(self)
 
         # Create the Tab Widget
         tab_widget = QTabWidget(self)
@@ -158,32 +157,16 @@ class MainWindow(QMainWindow):
         # Layout and show the Main Window
         self.setCentralWidget(tab_widget)
 
-        user_screen_size = QGuiApplication.primaryScreen().size()
-        width = min(app.settings['window_width'], user_screen_size.width())
-        height = min(app.settings['window_height'], user_screen_size.height())
-
-        rec = self.size()
-        if kwargs.get('show'):
-            if (width >= 0.95 * rec.width()) or (height >= 0.95 * rec.height()):
-                self.showMaximized()
-            else:
-                self.resize(width, height)
-                self.show()
-
     def resizeEvent(self, event):
+
         s = event.size()
         app.settings['window_width'] = s.width()
         app.settings['window_height'] = s.height()
         super().resizeEvent(event)
 
     def closeEvent(self, event):
-        app.removeEventFilter(self)
 
         print('Exiting PyForecast')
-
-        # close app windows if they are open
-        if app.MWMV.log_view:
-            app.MWMV.log_view.close()
 
         # delete all temporary files from the current directory
         app.delete_temp_files()
@@ -193,6 +176,11 @@ class MainWindow(QMainWindow):
 
         # cleanup logging messages
         app.logger.cleanup()
+
+        # close log viewer, this it intentional, so that it shows as an
+        # independent dialog without a parent
+        if app.MWMV.log_view:
+            app.MWMV.log_view.close()
 
         # accept closeEvent passing it to Qt
         event.accept()

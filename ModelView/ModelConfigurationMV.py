@@ -12,8 +12,8 @@ app = QApplication.instance()
 
 class MethodFilterModel(QSortFilterProxyModel):
 
-    def __init__(self):
-        QSortFilterProxyModel.__init__(self)
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.filterString = None
 
     def setFilterString(self, dataset):
@@ -43,8 +43,8 @@ class MethodFilterModel(QSortFilterProxyModel):
 
 class UnitFilterModel(QSortFilterProxyModel):
 
-    def __init__(self):
-        QSortFilterProxyModel.__init__(self)
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.filterString = 'length'
         self.dataset = None
         self.method = ''
@@ -97,8 +97,9 @@ class ModelConfigurationModelView:
         # Connect views with models
         self.mt.config_editor.predictand_method_field.setModel(self.filter_method_model)
         self.mt.config_editor.predictand_preprocessing_field.setModel(
-            QStringListModel(list(filter(lambda x: not x.startswith('INV_'),
-                                         app.preprocessing_methods.keys())))
+            QStringListModel(list(filter(
+                lambda x: not x.startswith('INV_'), app.preprocessing_methods.keys()))
+            )
         )
         self.mt.config_editor.predictand_field.setModel(app.datasets)
 
@@ -367,7 +368,7 @@ class ModelConfigurationModelView:
 
         configuration_idx = self.mt.config_list.selectionModel().selectedRows()[0].row()
         config = app.model_configurations[configuration_idx]
-        GenModelDialog.GenModelDialog(config, self.mt)
+        GenModelDialog.GenModelDialog(self.mt, config)
 
     def open_view_data(self, dataset_idx=None):
 
@@ -380,17 +381,17 @@ class ModelConfigurationModelView:
                 dataset_idx = sel.row()
             else:
                 dataset_idx = 0
-        dv = ResampledDataViewer.DataViewer(configuration_idx, dataset_idx)
+        dv = ResampledDataViewer.DataViewer(self.mt, configuration_idx, dataset_idx)
         dv.exec()
 
     def open_predictor_view(self):
         conf = self.mt.config_list.selectionModel().currentIndex().row()
         conf_id = app.model_configurations[conf].guid
-        pv = PredictorView.PredictorView(app, conf_id)
+        pv = PredictorView.PredictorView(self.mt, app, conf_id)
         pv.exec()
 
     def open_regressor_view(self):
         conf = self.mt.config_list.selectionModel().currentIndex().row()
         conf_id = app.model_configurations[conf].guid
-        rv = RegressorView.RegressorView(conf_id)
+        rv = RegressorView.RegressorView(self.mt, conf_id)
         rv.exec()

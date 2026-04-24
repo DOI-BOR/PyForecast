@@ -11,7 +11,7 @@ from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (QApplication, QDialog, QProgressDialog, QStatusBar,
                                QTableView, QAbstractItemView, QTextEdit, QLabel,
                                QProgressBar, QPushButton, QVBoxLayout, QHBoxLayout,
-                               QSplitter)
+                               QSplitter, QMessageBox)
 from jinja2 import Environment, FileSystemLoader
 
 from Models.SavedModels import Model
@@ -24,16 +24,16 @@ app = QApplication.instance()
 
 class PossibleModels(QAbstractTableModel):
 
-    def __init__(self, scorers=None):
+    def __init__(self, parent=None, scorers=None):
 
-        QAbstractTableModel.__init__(self)
+        super().__init__(parent)
         self.models = []
         self.scorers = scorers
         self.ins_buf = []
         self.buf_cnt = 0
         self.font_ = QFont('Consolas')
 
-    def headerData(self, section, orientation, role):
+    def headerData(self, section=None, orientation=None, role=None):
         if (role == Qt.ItemDataRole.DisplayRole
                 and orientation == Qt.Orientation.Horizontal):
             if section == 0:
@@ -43,7 +43,7 @@ class PossibleModels(QAbstractTableModel):
             if section > 1:
                 return f'Score ({self.scorers[section - 2]})'
 
-    def data(self, index, role):
+    def data(self, index=None, role=None):
         model = self.models[index.row()]
         if role == Qt.ItemDataRole.DisplayRole:
             if index.column() == 0:
@@ -70,8 +70,6 @@ class PossibleModels(QAbstractTableModel):
                     return model.score
                 else:
                     return np.nan
-
-        return QAbstractTableModel.data(self, index, role)
 
     def rowCount(self, parent=QModelIndex()):
         return len(self)
@@ -111,8 +109,8 @@ class PossibleModels(QAbstractTableModel):
 
 class FilterTable(QSortFilterProxyModel):
 
-    def __init__(self):
-        QSortFilterProxyModel.__init__(self)
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.setSortRole(Qt.ItemDataRole.UserRole + 1)
 
     def lessThan(self, left, right):
@@ -125,19 +123,19 @@ class FilterTable(QSortFilterProxyModel):
 
 class GenModelDialog(QDialog):
 
-    def __init__(self, config=None, parent=None):
+    def __init__(self, parent=None, config=None):
 
-        QDialog.__init__(self)
+        super().__init__(parent)
+
         self.setUI()
         self.config = config
-        self.parent_ = parent
         # Get unique scorers
         scorers = []
         for r in self.config.regressors.regressors:
             if r.scoring_metric not in scorers:
                 scorers.append(r.scoring_metric)
 
-        self.possible_models = PossibleModels(scorers=scorers)
+        self.possible_models = PossibleModels(self, scorers=scorers)
         self.model_list_p = FilterTable()
         self.model_list_p.setSourceModel(self.possible_models)
         self.model_list.setModel(self.model_list_p)
@@ -145,15 +143,15 @@ class GenModelDialog(QDialog):
         self.model_list.selectionModel().currentRowChanged.connect(self.set_model)
 
         # Create progress dialog
-        self.pd = QProgressDialog("", "Cancel", 0, 100, self.parent_)
-        self.pd.setWindowModality(Qt.WindowModality.WindowModal)
+        self.pd = QProgressDialog("", "Cancel", 0, 100, parent)
+        self.pd.setWindowModality(Qt.WindowModality.ApplicationModal)
         self.pd.setWindowTitle('Generating Models')
         self.pd.setStyleSheet("""QLabel {font-family: Consolas, monospace}""")
         self.pd.setValue(0)
 
         self.pd.show()
 
-        self.mg = ModelGenerator(self.config)
+        self.mg = ModelGenerator(self, selected_configuration=self.config)
         self.thread_ = QThread()
         self.thread_.setObjectName('thread_model_gen')
         self.mg.moveToThread(self.thread_)
@@ -189,14 +187,13 @@ class GenModelDialog(QDialog):
 
     def model_search_finished(self):
         print("Finished model search")
+        self.prog_text.setText(self.pd.labelText())
         self.model_progress_bar.setValue(100)
+        self.model_progress_bar.setFormat('%p%')
         self.possible_models.refresh()
-        self.model_progress_bar.setFormat('100%')
         self.model_list.resizeColumnsToContents()
         self.model_list.horizontalHeader().setStretchLastSection(True)
         self.sensible_sort_button.setEnabled(True)
-
-    # def sensible_sort(self):
 
     def save_model(self):
         row = self.model_list.selectionModel().selectedIndexes()[0]
@@ -216,6 +213,12 @@ class GenModelDialog(QDialog):
         )
         app.saved_models.append(saved_model)
 
+        QMessageBox.information(
+            self,
+            "Saved",
+            f"Model Saved: {saved_model.name}"
+        )
+
     def setUI(self):
 
         self.setWindowTitle('Generated Models')
@@ -234,9 +237,8 @@ class GenModelDialog(QDialog):
         label = QLabel()
         label.setObjectName('monospace')
         self.prog_text = QLabel(label)
-        self.model_progress_bar = QProgressBar()
+        self.model_progress_bar = QProgressBar(self)
         self.model_progress_bar.setFormat("Finding models...")
-        self.model_progress_bar.setMaximum(100)
         self.save_button = QPushButton('Save Model')
         self.sensible_sort_button = QPushButton('Sensible Sort')
         self.sensible_sort_button.setEnabled(False)
@@ -330,8 +332,8 @@ class GenModelDialog(QDialog):
 
 class ModelPlots(pg.GraphicsLayoutWidget):
 
-    def __init__(self):
-        pg.GraphicsLayoutWidget.__init__(self)
+    def __init__(self, parent=None, **kwargs):
+        super().__init__(parent, **kwargs)
         self.sp = ScatterPlot()
         self.ep = ScatterPlot()
         [self.ci.layout.setRowMinimumHeight(i, 30) for i in range(3)]

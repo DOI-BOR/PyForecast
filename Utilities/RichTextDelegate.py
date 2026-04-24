@@ -8,7 +8,7 @@ app = QApplication.instance()
 
 class HTMLDelegate(QStyledItemDelegate):
     def __init__(self, parent=None):
-        QStyledItemDelegate.__init__(self)
+        super().__init__(parent)
         self.doc = QTextDocument(self)
         self.w = None
 

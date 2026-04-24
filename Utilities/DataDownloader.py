@@ -12,7 +12,7 @@ app = QApplication.instance()
 
 class DataDownloaderDialog(QDialog):
 
-    def __init__(self, all_data=True, selection=None):
+    def __init__(self, parent=None, all_data=True, selection=None):
         """Constructor
 
         args:
@@ -21,7 +21,7 @@ class DataDownloaderDialog(QDialog):
           selection (`list`) - list of datasets to download data for
         """
 
-        QDialog.__init__(self)
+        super().__init__(parent)
         self.setWindowTitle('Downloading datasets')
 
         # Determine the start date based on the all_data parameter
@@ -51,7 +51,7 @@ class DataDownloaderDialog(QDialog):
         self.setLayout(layout)
 
         # Initialte the runnable
-        self.runnable = DownloadRunner(self.startDate, datasets)
+        self.runnable = DownloadRunner(self, self.startDate, datasets)
 
         # Runnable functionality
         self.runnable.update_prog_bar.connect(self.updateProgBar)
@@ -88,7 +88,7 @@ class DownloadRunner(QThread):
     update_prog_bar = Signal(float)
     update_prog_text = Signal(str)
 
-    def __init__(self, start_time=None, datasets=None):
+    def __init__(self, parent=None, start_time=None, datasets=None):
         """Constructor
 
         params:
@@ -101,7 +101,7 @@ class DownloadRunner(QThread):
           datasets (`list`) - list of datasets to download data for.
         """
 
-        QThread.__init__(self)
+        super().__init__(parent)
         self.threadactive = True
         self.datasets = datasets
         self.start_time = start_time

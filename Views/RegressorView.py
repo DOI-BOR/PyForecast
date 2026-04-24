@@ -11,8 +11,8 @@ app = QApplication.instance()
 
 class RegressorView(QDialog):
 
-    def __init__(self, selected_configuration=None):
-        QDialog.__init__(self)
+    def __init__(self, parent=None, selected_configuration=None):
+        super().__init__(parent)
         self.selected_configuration = selected_configuration
         self.configuration = (
             app.model_configurations.get_by_id(self.selected_configuration)

@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from PySide6.QtCore import Qt, QPoint
+from PySide6.QtGui import QColor
 
 from Plots.Common import pg, CurveItem, ScatterItem, TimeSeriesLegend, takeClosest
 from Utilities import DateAxis
@@ -9,9 +10,9 @@ from Utilities.ColorCycler import ColorCycler
 
 class Plot(pg.GraphicsLayoutWidget):
 
-    def __init__(self):
+    def __init__(self, parent=None, **kwargs):
 
-        pg.GraphicsLayoutWidget.__init__(self)
+        super().__init__(parent, **kwargs)
 
         # Initialize the upper and lower plots
         self.upper_plot = self.ci.addPlot(row=0, col=0, rowspan=8, colspan=1)
@@ -30,7 +31,7 @@ class Plot(pg.GraphicsLayoutWidget):
 
         # Set up draggable slider region
         self.region = pg.LinearRegionItem(
-            brush=pg.mkBrush(100, 100, 100, 25)
+            brush=pg.mkBrush(100, 100, 100, 30)
         )
         self.region.setCursor(Qt.CursorShape.PointingHandCursor)
         for line in self.region.lines:
@@ -51,7 +52,7 @@ class Plot(pg.GraphicsLayoutWidget):
         _ = [self.ci.layout.setRowMinimumHeight(i, 30) for i in range(9)]
 
         # Legend
-        self.legend = TimeSeriesLegend(size=None, offset=(30, 30))
+        self.legend = TimeSeriesLegend(offset=(30, 30))
         self.legend.setParentItem(self.upper_plot.vb)
 
         self.region.sigRegionChanged.connect(self.updatePlot)

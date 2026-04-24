@@ -4,29 +4,30 @@ import qtawesome as qta
 from PySide6.QtCore import QSize
 from PySide6.QtWidgets import (QApplication, QWidget, QLabel, QHBoxLayout,
                                QProxyStyle, QStyle)
+from pyqtgraph.examples.MultiDataPlot import widget
 
 app = QApplication.instance()
 
 class ToolTipLabel(QLabel):
 
-    def __init__(self, text='', tip=''):
+    def __init__(self, parent=None, text='', tip=''):
         text = f"""<html>
         &#9432;&nbsp;&nbsp;{text}</html>
         """
 
-        QLabel.__init__(self, text)
+        super().__init__(parent, text=text)
         self.setToolTip(tip)
 
 
 class ToolTipLabel2(QWidget):
 
-    def __init__(self, text="", tip=""):
+    def __init__(self, parent=None, text='', tip=''):
+        super().__init__(parent)
+
         IconSize = QSize(16, 16)
         HorizontalSpacing = 2
 
-        QWidget.__init__(self)
-
-        self.setStyle(proxyStyle(self.style()))
+        self.setStyle(proxyStyle())
 
         hlayout = QHBoxLayout()
         hlayout.setContentsMargins(0, 0, 0, 0)
@@ -42,18 +43,18 @@ class ToolTipLabel2(QWidget):
 
 class proxyStyle(QProxyStyle):
 
-    def __init__(self, style):
-        QProxyStyle.__init__(self, style)
+    def __init__(self, parent=None):
+        super().__init__(parent)
 
-    def styleHint(self, hint, option, widget, returnData):
-        if (hint == QStyle.SH_ToolTip_WakeUpDelay):
+    def styleHint(self, hint, option=None, widget=None, returnData=None):
+        if hint == QStyle.StyleHint.SH_ToolTip_WakeUpDelay:
             return 0
-        return QProxyStyle.styleHint(self, hint, option, widget, returnData)
+        return super().styleHint(hint, option, widget, returnData)
 
 
 if __name__ == '__main__':
     app.setStyleSheet("""QLabel {font-size: 24px}""")
 
-    w = ToolTipLabel('Hello World', '<strong>This</strong> is an example')
+    w = ToolTipLabel(None, 'Hello World', '<strong>This</strong> is an example')
     w.show()
     sys.exit(app.exec())
