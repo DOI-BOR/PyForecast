@@ -33,10 +33,10 @@ class SavedModelsTab(QWidget):
         hlayout2 = QHBoxLayout()
 
         self.issue_combo = ZzQComboBox()
-        self.model_list = ModelList()
+        self.model_list = ModelList(self)
         self.year_select = QSpinBox()
         self.plot_select = ToggleSwitch.Switch(self, thumb_radius=11, track_radius=8)
-        self.prob_plot = ProbabilityPlots()
+        self.prob_plot = ProbabilityPlots(self)
         self._10_value = valueLabel()
         self._30_value = valueLabel()
         self._50_value = valueLabel()
@@ -82,11 +82,13 @@ class SavedModelsTab(QWidget):
         self.splitter.addWidget(widg)
         self.splitter.setCollapsible(0, False)
         self.splitter.setCollapsible(1, False)
+        self.splitter.setStretchFactor(0, 1)
+        self.splitter.setStretchFactor(1, 2)
 
         self.layout.addWidget(self.splitter)
         self.setLayout(self.layout)
 
-        self.splitter.splitterMoved.connect(lambda pos, idx: self.updateListSize())
+        self.splitter.splitterMoved.connect(lambda: self.updateListSize())
 
     def updateListSize(self):
         app.saved_models.dataChanged.emit(

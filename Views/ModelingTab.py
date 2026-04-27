@@ -22,10 +22,10 @@ class ModelingTab(QWidget):
         self.add_conf_button.setStatusTip(
             "Add a new configuration to this file. PyForecast uses "
             "configurations to search for viable models")
-        self.config_list = ConfigurationList()
+        self.config_list = ConfigurationList(self)
 
         # Create the configuration editor
-        self.config_editor = ConfigurationEditor()
+        self.config_editor = ConfigurationEditor(self)
 
         # Layout the tab
         layout = QHBoxLayout()
@@ -39,6 +39,8 @@ class ModelingTab(QWidget):
         self.splitter.addWidget(self.config_editor)
         self.splitter.setCollapsible(0, False)
         self.splitter.setCollapsible(1, False)
+        self.splitter.setStretchFactor(0, 1)
+        self.splitter.setStretchFactor(1, 1)
 
         layout.addWidget(self.splitter)
         self.setLayout(layout)
@@ -62,6 +64,7 @@ class ConfigurationList(QListView):
         self.setItemDelegate(RichTextDelegate.HTMLDelegate())
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setSizeAdjustPolicy(QListView.SizeAdjustPolicy.AdjustToContents)
         self.customContextMenuRequested.connect(self.customMenu)
 
@@ -269,9 +272,10 @@ class ConfigurationEditor(QWidget):
         layout.addRow(hlayout)
         layout.addRow(self.regressor_list)
 
-        widg.setLayout(layout)
         sa.setWidget(widg)
         sa.setWidgetResizable(True)
+
+        widg.setLayout(layout)
 
     def deselect_all(self):
         for l in self.findChildren(QLineEdit):

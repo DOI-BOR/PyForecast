@@ -16,10 +16,10 @@ class DatasetsTab(QWidget):
         super().__init__(parent)
 
         # Create the Map
-        self.dataset_map = DatasetMap()
+        self.dataset_map = DatasetMap(self)
 
         # Create the dataset list
-        self.dataset_list = SelectedDatasetList()
+        self.dataset_list = SelectedDatasetList(self)
 
         # Layout the Tab
         layout = QHBoxLayout()
@@ -36,9 +36,11 @@ class DatasetsTab(QWidget):
         self.splitter.addWidget(self.widg)
         self.splitter.setCollapsible(0, False)
         self.splitter.setCollapsible(1, False)
+        self.splitter.setStretchFactor(0, 10)
+        self.splitter.setStretchFactor(1, 1)
 
         layout.addWidget(self.splitter)
-        QWidget.setLayout(self, layout)
+        self.setLayout(layout)
 
         self.splitter.splitterMoved.connect(lambda: self.updateListSize())
 
@@ -137,8 +139,10 @@ class SelectedDatasetList(QListView):
 class DatasetMap(QWebEngineView):
 
     def __init__(self, parent=None):
+
         super().__init__(parent)
-        self.page = WebMapPage()
+
+        self.page = WebMapPage(self)
         self.setPage(self.page)
         self.loadProgress.connect(
             lambda x:
@@ -155,13 +159,12 @@ class DatasetMap(QWebEngineView):
         )
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
         self.setMinimumSize(300, 300)
-        self.layout()
-
 
 class WebMapPage(QWebEnginePage):
     java_msg_signal = Signal(str)
 
     def __init__(self, parent=None):
+
         super().__init__(parent)
 
         self.settings().setAttribute(

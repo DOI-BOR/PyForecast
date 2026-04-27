@@ -44,28 +44,28 @@ class MainWindow(QMainWindow):
         menu_bar = self.menuBar()
 
         # Set up the File menu
-        file_menu = QMenu('File', self)
+        file_menu = QMenu('File')
 
-        self.new_option = QAction("New", self)
+        self.new_option = QAction("New")
         self.new_option.setShortcut('Ctrl+N')
         self.new_option.setStatusTip('Create a new forecast from scratch')
         self.new_option.setIcon(QIcon.fromTheme('document-new'))
         file_menu.addAction(self.new_option)
 
-        self.file_open_option = QAction('Open', self)
+        self.file_open_option = QAction('Open')
         self.file_open_option.setShortcut('Ctrl+O')
         self.file_open_option.setStatusTip('Select and open a forecast file')
         self.file_open_option.setIcon(QIcon.fromTheme('document-open'))
         file_menu.addAction(self.file_open_option)
 
-        self.file_save_option = QAction('Save', self)
+        self.file_save_option = QAction('Save')
         self.file_save_option.setShortcut('Ctrl+S')
         self.file_save_option.setStatusTip(
             'Saves the current forecast file with the same filename')
         self.file_save_option.setIcon(QIcon.fromTheme('document-save'))
         file_menu.addAction(self.file_save_option)
 
-        self.file_save_as_option = QAction('Save As', self)
+        self.file_save_as_option = QAction('Save As')
         self.file_save_as_option.setShortcut('Ctrl+Shift+S')
         self.file_save_as_option.setStatusTip(
             'Saves the current forecast file with a new filename')
@@ -74,75 +74,75 @@ class MainWindow(QMainWindow):
 
         file_menu.addSeparator()
 
-        self.export_option = QAction('Export to Excel', self)
+        self.export_option = QAction('Export to Excel')
         self.export_option.setStatusTip(
             'Exports the current forecast file to an Excel spreadsheet')
         self.export_option.setIcon(QIcon.fromTheme('application-x-executable'))
         file_menu.addAction(self.export_option)
 
         # Set up the View menu
-        view_menu = QMenu('View', self)
+        view_menu = QMenu('View')
 
-        toggle_font_option = QMenu('Adjust font size', self, toolTipsVisible=True)
+        toggle_font_option = QMenu('Adjust font size', toolTipsVisible=True)
         toggle_font_option.setStatusTip('Changes the application font size')
         toggle_font_option.setIcon(QIcon.fromTheme('preferences-desktop-font'))
-        self.toggle_font_small = QAction('Small', self)
+        self.toggle_font_small = QAction('Small')
         self.toggle_font_small.setStatusTip(
             'Changes the application font size to "small"')
         toggle_font_option.addAction(self.toggle_font_small)
 
-        self.toggle_font_medium = QAction('Medium', self)
+        self.toggle_font_medium = QAction('Medium')
         self.toggle_font_medium.setStatusTip(
             'Changes the application font size to "medium"')
         toggle_font_option.addAction(self.toggle_font_medium)
 
-        self.toggle_font_large = QAction('Large', self)
+        self.toggle_font_large = QAction('Large')
         self.toggle_font_large.setStatusTip(
             'Changes the application font size to "large"')
         toggle_font_option.addAction(self.toggle_font_large)
 
         view_menu.addMenu(toggle_font_option)
 
-        self.show_log_option = QAction('Show application log', self)
+        self.show_log_option = QAction('Show application log')
         self.show_log_option.setStatusTip(
             'Open a textbox that views the application log')
         self.show_log_option.setIcon(QIcon.fromTheme('system-file-manager'))
         view_menu.addAction(self.show_log_option)
 
         # Set up the Settings menu
-        settings_menu = QMenu('Settings', self)
+        settings_menu = QMenu('Settings')
 
-        self.edit_units_option = QAction('Edit application units', self)
+        self.edit_units_option = QAction('Edit application units')
         self.edit_units_option.setStatusTip(
             'View, add, and edit the measurement units that PyForecast has access to')
         self.edit_units_option.setIcon(QIcon.fromTheme('applications-system'))
         settings_menu.addAction(self.edit_units_option)
 
-        self.edit_settings_option = QAction('Edit application settings', self)
+        self.edit_settings_option = QAction('Edit application settings')
         self.edit_settings_option.setStatusTip(
             'Edit the application-wide settings and configuration')
         self.edit_settings_option.setIcon(QIcon.fromTheme('applications-system'))
         settings_menu.addAction(self.edit_settings_option)
 
         # Set up the Tools menu
-        tools_menu = QMenu('Tools', self)
+        tools_menu = QMenu('Tools')
 
-        self.reload_points_option = QAction('Reload Point Datasets', self)
+        self.reload_points_option = QAction('Reload Point Datasets')
         self.reload_points_option.setStatusTip(
             'Add new point datasets that PyForecast has access to')
         self.reload_points_option.setIcon(QIcon.fromTheme('view-refresh'))
         tools_menu.addAction(self.reload_points_option)
 
         # Set up the Help menu
-        help_menu = QMenu('Help', self)
+        help_menu = QMenu('Help')
 
-        self.documentation_option = QAction('PyForecast documentation', self)
+        self.documentation_option = QAction('PyForecast documentation')
         self.documentation_option.setStatusTip(
             'Opens the PyForecast documentation in a separate window')
         self.documentation_option.setIcon(QIcon.fromTheme('system-help'))
         help_menu.addAction(self.documentation_option)
 
-        self.check_updates_option = QAction('Check for updates', self)
+        self.check_updates_option = QAction('Check for updates')
         self.check_updates_option.setStatusTip(
             'Check the github repository for any software updates')
         self.check_updates_option.setIcon(QIcon.fromTheme('system-software-update'))
@@ -153,6 +153,7 @@ class MainWindow(QMainWindow):
         menu_bar.addMenu(settings_menu)
         menu_bar.addMenu(tools_menu)
         menu_bar.addMenu(help_menu)
+        self.setMenuBar(menu_bar)
 
         # Layout and show the Main Window
         self.setCentralWidget(tab_widget)
@@ -168,17 +169,17 @@ class MainWindow(QMainWindow):
 
         print('Exiting PyForecast')
 
-        # delete all temporary files from the current directory
+        # Delete all temporary files from the current directory.
         app.delete_temp_files()
 
-        # write out settings
+        # Write out settings.
         app.write_settings()
 
-        # cleanup logging messages
+        # Cleanup logging messages.
         app.logger.cleanup()
 
-        # close log viewer, this it intentional, so that it shows as an
-        # independent dialog without a parent
+        # Close log viewer, this it intentional, so that it shows as an
+        # independent dialog without a parent.
         if app.MWMV.log_view:
             app.MWMV.log_view.close()
 

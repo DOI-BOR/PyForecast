@@ -1,11 +1,9 @@
 import numpy as np
 import pyqtgraph as pg
-from PySide6 import QtGui
 from PySide6.QtGui import QAction, QPainter
-from PySide6.QtCore import Qt, QPoint
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QApplication, QWidget, QPushButton, QSplitter,
-                               QHBoxLayout, QVBoxLayout, QListView, QAbstractItemView,
-                               QMenu)
+                               QHBoxLayout, QVBoxLayout, QListView, QAbstractItemView)
 
 from Plots import DataTab as DTP
 from Utilities import RichTextDelegate, ColorCycler, TimeSeriesPlot, TimeSeriesSlider
@@ -34,10 +32,10 @@ class DataTab(QWidget):
             'Open the selected datasets for editing in Excel')
 
         # Create the dataset list
-        self.dataset_list = SelectedDatasetList()
+        self.dataset_list = SelectedDatasetList(self)
 
         # Create the data viewer
-        self.data_viewer = DTP.Plot()
+        self.data_viewer = DTP.Plot(self)
 
         # Layout the Tab
         layout = QHBoxLayout()
@@ -54,6 +52,8 @@ class DataTab(QWidget):
         self.splitter.addWidget(self.data_viewer)
         self.splitter.setCollapsible(0, False)
         self.splitter.setCollapsible(1, False)
+        self.splitter.setStretchFactor(0, 1)
+        self.splitter.setStretchFactor(1, 10)
 
         layout.addWidget(self.splitter)
         self.setLayout(layout)
