@@ -79,6 +79,7 @@ class DatasetViewer(QDialog):
             ''
         )
         self.file_select_button.setEnabled(False)
+        self.file_select_button.setObjectName('dataset_viewer_file_select_button')
         self.file_validation_label = QLabel()
 
         # Save/cancel buttons

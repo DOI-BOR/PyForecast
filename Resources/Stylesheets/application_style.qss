@@ -65,6 +65,14 @@ QPushButton:hover {
     background-color: aliceblue;
 }
 
+QPushButton#dataset_viewer_file_select_button {
+    min-width: 0px;
+}
+
+QPushButton#dataset_viewer_file_select_button:disabled {
+    border: none;
+}
+
 QDialog {
     background-color: white;
 }
