@@ -97,8 +97,8 @@ class ModelConfigurationModelView:
         # Connect views with models
         self.mt.config_editor.predictand_method_field.setModel(self.filter_method_model)
         self.mt.config_editor.predictand_preprocessing_field.setModel(
-            QStringListModel(list(filter(
-                lambda x: not x.startswith('INV_'), app.preprocessing_methods.keys()))
+            QStringListModel(
+                [x for x in app.preprocessing_methods.keys() if not x.startswith('INV_')]
             )
         )
         self.mt.config_editor.predictand_field.setModel(app.datasets)

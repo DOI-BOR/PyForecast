@@ -241,7 +241,6 @@ if __name__ == '__main__':
 
     # Create the application
     QQuickWindow.setGraphicsApi(QSGRendererInterface.GraphicsApi.Software)
-    QApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
     app = PyForecast(sys.argv, file=params.file)
 
     # Run the application
