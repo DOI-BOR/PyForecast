@@ -88,7 +88,7 @@ class ModelConfigurationModelView:
 
         # set the models
         self.mt.config_list.setModel(app.model_configurations)
-        self.method_model = QStringListModel(list(app.agg_methods.keys()))
+        self.method_model = QStringListModel(app.agg_methods.keys())
         self.filter_method_model = MethodFilterModel()
         self.filter_method_model.setSourceModel(self.method_model)
         self.filter_units_model = UnitFilterModel()

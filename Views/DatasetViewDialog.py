@@ -64,7 +64,7 @@ class DatasetViewer(QDialog):
         self.display_unit_field.setModelColumn(6)
         self.dataloader_field = ZzQComboBox()
         self.dataloader_field.setModel(
-            QStringListModel(list(self.app.dataloaders.keys()))
+            QStringListModel(self.app.dataloaders.keys())
         )
 
         self.unit_field.currentIndexChanged.connect(self.updateUnits)

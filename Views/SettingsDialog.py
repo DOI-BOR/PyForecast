@@ -32,10 +32,10 @@ class SettingsDialog(QDialog):
         self.model_training_duration_setting.setSuffix(' Years')
         self.default_cross_validation_setting = ZzQComboBox()
         self.default_cross_validation_setting.setModel(
-            QStringListModel(list(app.cross_validation.keys())))
+            QStringListModel(app.cross_validation.keys()))
         self.default_feature_selection = ZzQComboBox()
         self.default_feature_selection.setModel(
-            QStringListModel(list(app.feature_selection.keys())))
+            QStringListModel(app.feature_selection.keys()))
         self.brute_force_under_setting = ZzQSpinBox()
         self.brute_force_under_setting.setSuffix(' Predictors')
         self.search_time_limit_setting = ZzQSpinBox()

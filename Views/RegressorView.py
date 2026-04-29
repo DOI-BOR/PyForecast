@@ -19,8 +19,8 @@ class RegressorView(QDialog):
         )
         self.current_idx = -1
         self.setUI()
-        self.regressor_select.setModel(QStringListModel(list(app.regressors.keys())))
-        self.scoring_metric.setModel(QStringListModel(list(app.scorers.keys())))
+        self.regressor_select.setModel(QStringListModel(app.regressors.keys()))
+        self.scoring_metric.setModel(QStringListModel(app.scorers.keys()))
         self.regressor_grid.setModel(self.configuration.regressors)
         self.new_button.pressed.connect(self.add_regressor)
         self.delete_button.pressed.connect(self.delRegressor)

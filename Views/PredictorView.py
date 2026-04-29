@@ -87,7 +87,7 @@ class PredictorView(QDialog):
 
         super().__init__(parent)
 
-        self.method_model = QStringListModel(list(app.agg_methods.keys()))
+        self.method_model = QStringListModel(app.agg_methods.keys())
         self.filter_method_model = MethodFilterModel()
         self.filter_method_model.setSourceModel(self.method_model)
         self.filter_units_model = UnitFilterModel()
@@ -314,8 +314,9 @@ class PredictorView(QDialog):
         self.predictor_period_end_field.setDisplayFormat('MMM dd')
         self.predictor_preprocessing_field = ZzQComboBox()
         self.predictor_preprocessing_field.setModel(
-            QStringListModel(list(filter(lambda i: not i.startswith('INV'),
-                                         app.preprocessing_methods.keys())))
+            QStringListModel(
+                [x for x in app.preprocessing_methods.keys() if not x.startswith('INV_')]
+            )
         )
         self.predictor_unit_field = ZzQComboBox()
         self.predictor_unit_field.setModel(self.filter_units_model)
