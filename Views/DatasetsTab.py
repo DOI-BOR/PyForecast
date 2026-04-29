@@ -144,6 +144,12 @@ class DatasetMap(QWebEngineView):
 
         self.page = WebMapPage(self)
         self.setPage(self.page)
+
+        self.settings().setAttribute(
+            QWebEngineSettings.WebAttribute.LocalContentCanAccessRemoteUrls,
+            True
+        )
+
         self.loadProgress.connect(
             lambda x:
             print(f'Loading basemap ... {x:}%')
@@ -152,11 +158,13 @@ class DatasetMap(QWebEngineView):
             lambda ok:
             print(f"Loading basemap ... {'Success' if {ok} else 'Failed'}")
         )
-        self.load(
+
+        self.setUrl(
             QUrl.fromLocalFile(
                 app.base_dir.joinpath('Resources', 'WebMap', 'WebMap.html')
             )
         )
+
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
         self.setMinimumSize(300, 300)
 
@@ -166,11 +174,6 @@ class WebMapPage(QWebEnginePage):
     def __init__(self, parent=None):
 
         super().__init__(parent)
-
-        self.settings().setAttribute(
-            QWebEngineSettings.WebAttribute.LocalContentCanAccessRemoteUrls,
-            True
-        )
 
     def acceptNavigationRequest(self, url, _type, isMainFrame):
         if _type == QWebEnginePage.NavigationType.NavigationTypeLinkClicked:

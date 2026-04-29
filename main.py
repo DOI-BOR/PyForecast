@@ -6,7 +6,7 @@ import time
 import traceback
 from pathlib import Path
 
-from PySide6.QtCore import Qt, qVersion, Signal, QObject
+from PySide6.QtCore import qVersion, Signal, QObject
 from PySide6.QtGui import QIcon, QGuiApplication
 from PySide6.QtQuick import QQuickWindow, QSGRendererInterface
 from PySide6.QtWidgets import QApplication
@@ -240,7 +240,7 @@ if __name__ == '__main__':
     params = parser.parse_args()
 
     # Create the application
-    QQuickWindow.setGraphicsApi(QSGRendererInterface.GraphicsApi.Software)
+    QQuickWindow.setGraphicsApi(QSGRendererInterface.GraphicsApi.OpenGL)
     app = PyForecast(sys.argv, file=params.file)
 
     # Run the application

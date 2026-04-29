@@ -39,7 +39,6 @@ class DataDownloaderDialog(QDialog):
         # Layout the dialog
         self.cancel_button = QPushButton('Cancel')
         self.prog_bar = QProgressBar()
-        self.prog_bar.setRange(0, 100)
         self.prog_text = QPlainTextEdit()
         self.prog_text.setReadOnly(True)
 
@@ -116,8 +115,8 @@ class DownloadRunner(QThread):
 
             # set the start time for 'get recent' downloads
             if not self.start_time:
-                start = dataset.data.index[-1] \
-                        - pd.DateOffset(days=app.settings['default_recent_data_lookback'])
+                offset = app.settings['default_recent_data_lookback']
+                start = dataset.data.index[-1] - pd.DateOffset(days=offset)
                 self.recent = True
             else:
                 start = self.start_time
@@ -126,10 +125,12 @@ class DownloadRunner(QThread):
             # If we're only getting recent data, just append to existing data
             # Otherwise, overwrite existing data
             if self.recent:
-                dataset.data = pd.concat([
-                    dataset.data,
-                    dataset.dataloader.load(dataset, start, datetime.now())
-                ], axis=0
+                dataset.data = pd.concat(
+                    [
+                        dataset.data,
+                        dataset.dataloader.load(dataset, start, datetime.now())
+                    ],
+                    axis=0
                 )
                 dataset.data = dataset.data[~dataset.data.index.duplicated(keep='last')]
             else:

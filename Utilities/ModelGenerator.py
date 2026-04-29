@@ -3,7 +3,7 @@ from itertools import compress
 
 import numpy as np
 import pandas as pd
-from PySide6.QtCore import QObject, Signal, QThread
+from PySide6.QtCore import QObject, Signal
 from PySide6.QtWidgets import QApplication
 
 from Models.SavedModels import Model
