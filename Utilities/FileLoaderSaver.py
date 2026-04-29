@@ -284,6 +284,7 @@ def load_file(f):
             name = pickle.load(f)
             comment = pickle.load(f)
             forecasts = pickle.load(f)
+            forecasts.index.names = ['Year', 'Exceedance']
             forecast_obj = ForecastList()
             forecast_obj.forecasts = forecasts
             app.saved_models.add_model(
