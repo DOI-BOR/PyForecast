@@ -31,13 +31,11 @@ class Logger(QObject):
         self.terminal = sys.stdout
         self.log = open(self.base_dir.joinpath('app_log.txt'), 'w', encoding='utf-8')
 
-        self.write('Starting PyForecast')
-
     def logger_excepthook(self, etype, evalue, tb):
         s = list(traceback.format_tb(sys.last_traceback))
         for ss in s:
-            self.write(ss)
-        self.write(f"Uncaught exception: {etype}: {evalue} \n \n {tb}")
+            self.log.write(ss)
+        self.log.write(f"Uncaught exception: {etype}: {evalue} \n \n {tb}")
 
     def write(self, msg):
         """Writes the message (message redirected from print(...)) to the
@@ -65,9 +63,10 @@ class Logger(QObject):
                 self.new_log_message.emit(msg)
 
     def cleanup(self):
-        # Close the log file and terminal
-        self.terminal.close()
+        # Close the log file and reset sys.stdout and sys.excepthook
         self.log.close()
+        sys.stdout = sys.__stdout__
+        sys.excepthook = sys.__excepthook__
 
     def flush(self):
         # This function is needed for logger to function.
@@ -100,16 +99,15 @@ class PyForecast(QApplication):
         super().__init__(*args, **kwargs)
 
         # redirect stdout to log
+        self.log_message = ''
         self.logger = Logger()
+        self.logger.new_log_message.connect(self.append_log_message)
         sys.stdout = self.logger
         sys.excepthook = self.logger.logger_excepthook
+        print('Starting PyForecast')
 
-        # Initialize the application. Reads the version file,
-        # the current user, the stylesheet, and initializes the application
-        self.log_message = ''
+        # Gets the current user and sets the stylesheet
         self.current_user = os.getlogin()
-        self.pid = os.getpid()
-        sys.stdout.new_log_message.connect(self.append_log_message)
         stylesheet = self.base_dir.joinpath(
             'Resources', 'Stylesheets', 'application_style.qss')
         with open(stylesheet, 'r') as s:
