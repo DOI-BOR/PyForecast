@@ -7,10 +7,11 @@ import traceback
 from pathlib import Path
 
 from PySide6.QtCore import qVersion, Signal, QObject
-from PySide6.QtGui import QIcon, QGuiApplication
+from PySide6.QtGui import QIcon, QGuiApplication, QPixmap
 from PySide6.QtQuick import QQuickWindow, QSGRendererInterface
 from PySide6.QtWidgets import QApplication
 
+from Resources import resources
 from Utilities.JsonHooks import DatetimeParser
 
 
@@ -127,8 +128,8 @@ class PyForecast(QApplication):
         self.setApplicationVersion(self.PYCAST_VERSION)
 
         # Set window icon in the taskbar and any other windows
-        self.icon= QIcon(
-            str(self.base_dir.joinpath('Resources', 'Icons', 'AppIcon.ico')))
+        resources.qInitResources()
+        self.icon = QIcon(QPixmap(':/Icons/AppIcon.ico'))
         self.setWindowIcon(self.icon)
 
         # Read the application configuration and load into the application
