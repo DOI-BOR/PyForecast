@@ -1,5 +1,5 @@
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont, QAction, QIcon
+from PySide6.QtGui import QFont, QAction, QIcon, QActionGroup
 from PySide6.QtWidgets import QMainWindow, QApplication, QTabWidget, QLabel, QMenu
 
 from . import DatasetsTab, DataTab, ModelingTab, SavedModelsTab
@@ -86,20 +86,15 @@ class MainWindow(QMainWindow):
         toggle_font_option = QMenu('Adjust font size', toolTipsVisible=True)
         toggle_font_option.setStatusTip('Changes the application font size')
         toggle_font_option.setIcon(QIcon.fromTheme('preferences-desktop-font'))
-        self.toggle_font_small = QAction('Small')
-        self.toggle_font_small.setStatusTip(
-            'Changes the application font size to "small"')
-        toggle_font_option.addAction(self.toggle_font_small)
-
-        self.toggle_font_medium = QAction('Medium')
-        self.toggle_font_medium.setStatusTip(
-            'Changes the application font size to "medium"')
-        toggle_font_option.addAction(self.toggle_font_medium)
-
-        self.toggle_font_large = QAction('Large')
-        self.toggle_font_large.setStatusTip(
-            'Changes the application font size to "large"')
-        toggle_font_option.addAction(self.toggle_font_large)
+        self.font_toggles = QActionGroup(toggle_font_option)
+        self.font_toggles.setExclusive(True)
+        options = ['Small', 'Medium', 'Large']
+        for option in options:
+            action = QAction(option, self.font_toggles)
+            action.setObjectName(option)
+            action.setCheckable(True)
+            action.setStatusTip(f'Changes the application font size to "{option}"')
+        toggle_font_option.addActions(self.font_toggles.actions())
 
         view_menu.addMenu(toggle_font_option)
 

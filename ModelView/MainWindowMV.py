@@ -3,7 +3,7 @@ import time
 from pathlib import Path
 
 from PySide6.QtCore import QCoreApplication, QUrl
-from PySide6.QtGui import QDesktopServices
+from PySide6.QtGui import QDesktopServices, QAction
 from PySide6.QtWidgets import QApplication, QMessageBox, QFileDialog
 
 from Utilities import ExcelExporter, Updater, FileLoaderSaver
@@ -31,9 +31,7 @@ class MainWindowModelView:
         self.mw.file_save_option.triggered.connect(self.SaveFile)
         self.mw.file_save_as_option.triggered.connect(self.SaveFileAs)
         self.mw.export_option.triggered.connect(self.ExportFile)
-        self.mw.toggle_font_small.triggered.connect(lambda: self.ChangeFont('small'))
-        self.mw.toggle_font_medium.triggered.connect(lambda: self.ChangeFont('medium'))
-        self.mw.toggle_font_large.triggered.connect(lambda: self.ChangeFont('large'))
+        self.mw.font_toggles.triggered.connect(self.ChangeFont)
         self.mw.edit_units_option.triggered.connect(self.EditUnits)
         self.mw.edit_settings_option.triggered.connect(self.EditApplicationSettings)
         self.mw.documentation_option.triggered.connect(self.OpenDocs)
@@ -41,7 +39,15 @@ class MainWindowModelView:
         self.mw.show_log_option.triggered.connect(self.ShowLog)
 
         # initialize the application font-size from the configuration file
-        self.ChangeFont(app.settings['application_font_size'])
+        font_action = self.mw.font_toggles.findChild(
+            QAction, name=app.settings['application_font_size']
+        )
+        if font_action is None:
+            font_actions = self.mw.font_toggles.actions()
+            middle_action = int(len(font_actions) / 2)
+            font_action = font_actions.__getitem__(middle_action)
+        font_action.setChecked(True)
+        self.ChangeFont(font_action)
 
         # Set the current file name in the status bar
         app.gui.current_file_widg.setText(
@@ -219,30 +225,32 @@ class MainWindowModelView:
 
         return
 
-    def ChangeFont(self, size):
+    def ChangeFont(self, action: QAction):
         """
         Changes the application wide font size and modifies the configuration file.
         """
+
+        size = action.text()
 
         # Change the configuration file
         app.settings['application_font_size'] = size
 
         # Set the application stylesheet based on the selected size
-        if size == 'small':
+        if size == 'Small':
 
             app.setStyleSheet(
                 app.styleSheet() + 'QWidget {font-size:9pt; font-family:"Arial"}'
                                    ' QWidget#HeaderLabel {font-size:12pt}'
             )
 
-        elif size == 'medium':
+        elif size == 'Medium':
 
             app.setStyleSheet(
                 app.styleSheet() + 'QWidget {font-size:12pt; font-family:"Arial"}'
                                    ' QWidget#HeaderLabel {font-size:15pt}'
             )
 
-        elif size == 'large':
+        elif size == 'Large':
 
             app.setStyleSheet(
                 app.styleSheet() + 'QWidget {font-size:15pt; font-family:"Arial"}'
