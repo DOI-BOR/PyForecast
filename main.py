@@ -240,6 +240,7 @@ if __name__ == '__main__':
 
     # Create the application
     QQuickWindow.setGraphicsApi(QSGRendererInterface.GraphicsApi.OpenGL)
+    QApplication.setStyle('fusion')
     app = PyForecast(sys.argv, file=params.file)
 
     # Run the application
