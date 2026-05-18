@@ -6,7 +6,7 @@ import time
 import traceback
 from pathlib import Path
 
-from PySide6.QtCore import qVersion, Signal, QObject
+from PySide6.QtCore import qVersion, Signal, QObject, QFile, QTextStream
 from PySide6.QtGui import QIcon, QGuiApplication, QPixmap
 from PySide6.QtQuick import QQuickWindow, QSGRendererInterface
 from PySide6.QtWidgets import QApplication
@@ -107,12 +107,8 @@ class PyForecast(QApplication):
         sys.excepthook = self.logger.logger_excepthook
         print('Starting PyForecast')
 
-        # Gets the current user and sets the stylesheet
+        # Gets the current user
         self.current_user = os.getlogin()
-        stylesheet = self.base_dir.joinpath(
-            'Resources', 'Stylesheets', 'application_style.qss')
-        with open(stylesheet, 'r') as s:
-            self.setStyleSheet(self.styleSheet() + (s.read()))
 
         # Print out the various versions of installed software
         pyversion = sys.version_info
@@ -127,8 +123,15 @@ class PyForecast(QApplication):
         self.setApplicationName(f'PyForecast v{self.PYCAST_VERSION}')
         self.setApplicationVersion(self.PYCAST_VERSION)
 
+        # Init Resources/resources.py
+        # Set application_style
         # Set window icon in the taskbar and any other windows
         resources.qInitResources()
+        file = QFile(':/Stylesheets/application_style.qss')
+        if file.open(QFile.OpenModeFlag.ReadOnly):
+            stream = QTextStream(file)
+            self.setStyleSheet(self.styleSheet() + (stream.readAll()))
+            file.close()
         self.icon = QIcon(QPixmap(':/Icons/AppIcon.ico'))
         self.setWindowIcon(self.icon)
 
