@@ -14,7 +14,7 @@ class TimeSliderPlot(pg.PlotItem):
         self.getViewBox().setMouseEnabled(x=False, y=False)
 
         b_axis = DateAxis.DateAxisItem(orientation='bottom')
-        b_axis.attachToPlotItem(self)
+        self.setAxisItems(axisItems={'bottom': b_axis})
 
         self.region = pg.LinearRegionItem(brush=pg.mkBrush(100, 100, 100, 30))
         self.region.setZValue(10)

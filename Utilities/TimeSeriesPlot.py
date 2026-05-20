@@ -19,7 +19,7 @@ class TimeSeriesPlot(pg.PlotItem):
         self.setMenuEnabled(False)
         if datetimeAxis:
             b_axis = DateAxis.DateAxisItem(orientation='bottom')
-            b_axis.attachToPlotItem(self)
+            self.setAxisItems(axisItems={'bottom': b_axis})
             b_axis.setZValue(0)
 
         self.showAxis("right")

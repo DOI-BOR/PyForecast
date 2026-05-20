@@ -22,12 +22,11 @@ class Plot(pg.GraphicsLayoutWidget):
         self.lower_plot.setMenuEnabled(False)
         self.lower_plot.setMouseEnabled(x=False, y=False)
 
-
         # Set up Axes
-        self.upper_x_axis = DateAxis.DateAxisItem(orientation='bottom')
-        self.upper_x_axis.attachToPlotItem(self.upper_plot)
-        self.lower_x_axis = DateAxis.DateAxisItem(orientation='bottom')
-        self.lower_x_axis.attachToPlotItem(self.lower_plot)
+        upper_plot_date_axis = DateAxis.DateAxisItem(orientation='bottom')
+        lower_plot_date_axis = DateAxis.DateAxisItem(orientation='bottom')
+        self.upper_plot.setAxisItems(axisItems={'bottom': upper_plot_date_axis})
+        self.lower_plot.setAxisItems(axisItems={'bottom': lower_plot_date_axis})
 
         # Set up draggable slider region
         self.region = pg.LinearRegionItem(
