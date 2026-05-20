@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (QApplication, QWidget, QPushButton, QHBoxLayout,
                                QVBoxLayout, QGridLayout, QSplitter, QListView,
                                QAbstractItemView, QMenu, QScrollArea, QLabel,
                                QLineEdit, QCheckBox, QTextEdit, QTableView,
-                               QFormLayout, QFrame)
+                               QFormLayout, QFrame, QSizePolicy)
 
 from Utilities import RichTextDelegate
 from Utilities.ZzQWidgets import ZzQDateEdit, ZzQComboBox
@@ -19,6 +19,9 @@ class ModelingTab(QWidget):
 
         # Create the model configuration list
         self.add_conf_button = QPushButton('Add Configuration')
+        self.add_conf_button.setSizePolicy(
+            QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum
+        )
         self.add_conf_button.setStatusTip(
             "Add a new configuration to this file. PyForecast uses "
             "configurations to search for viable models")
@@ -31,8 +34,8 @@ class ModelingTab(QWidget):
         layout = QHBoxLayout()
         self.widg = QWidget()
         vlayout = QGridLayout()
-        vlayout.addWidget(self.add_conf_button, 0, 0, 1, 1)
-        vlayout.addWidget(self.config_list, 1, 0, 1, 4)
+        vlayout.addWidget(self.add_conf_button, 0, 0)
+        vlayout.addWidget(self.config_list, 1, 0, 1, -1)
         self.widg.setLayout(vlayout)
         self.splitter = QSplitter()
         self.splitter.addWidget(self.widg)

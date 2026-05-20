@@ -45,8 +45,9 @@ class DataViewer(QDialog):
         layout = QGridLayout()
 
         self.load_button = QPushButton('Load')
-        self.load_button.setSizePolicy(QSizePolicy.Policy.Maximum,
-                                       QSizePolicy.Policy.Maximum)
+        self.load_button.setSizePolicy(
+            QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum
+        )
         self.combo_select = ZzQComboBox()
         self.combo_select.setModel(
             QStringListModel([d.__list_form__() for d in self.datasets])
@@ -55,12 +56,12 @@ class DataViewer(QDialog):
 
         self.data_plot = Plot()
 
-        layout.addWidget(self.combo_select, 0, 0, 1, 3)
-        layout.addWidget(self.load_button, 0, 3, 1, 1)
+        layout.addWidget(self.combo_select, 0, 0)
+        layout.addWidget(self.load_button, 0, 1)
         splitter = QSplitter()
         splitter.addWidget(self.data_plot)
         splitter.addWidget(self.data_grid)
-        layout.addWidget(splitter, 1, 0, 1, 5)
+        layout.addWidget(splitter, 1, 0, -1, -1)
 
         self.setLayout(layout)
 

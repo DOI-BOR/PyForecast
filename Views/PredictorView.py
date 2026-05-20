@@ -3,7 +3,8 @@ import sys
 from PySide6.QtCore import Qt, QDate, QStringListModel, QModelIndex, QSortFilterProxyModel
 from PySide6.QtWidgets import (QApplication, QDialog, QAbstractItemView, QMessageBox,
                                QPushButton, QSizePolicy, QTableView, QCheckBox, QFrame,
-                               QFormLayout, QLabel, QHBoxLayout, QGridLayout)
+                               QFormLayout, QLabel, QHBoxLayout, QGridLayout,
+                               QHeaderView)
 from pandas import DateOffset
 
 from Models.ModelConfigurations import ResampledDataset
@@ -283,16 +284,22 @@ class PredictorView(QDialog):
         self.setWindowIcon(app.icon)
 
         self.auto_gen_button = QPushButton("Auto Generate")
-        self.auto_gen_button.setSizePolicy(QSizePolicy.Policy.Maximum,
-                                           QSizePolicy.Policy.Maximum)
+        self.auto_gen_button.setSizePolicy(
+            QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum
+        )
         self.delete_button = QPushButton('Delete Selected')
-        self.delete_button.setSizePolicy(QSizePolicy.Policy.Maximum,
-                                         QSizePolicy.Policy.Maximum)
+        self.delete_button.setSizePolicy(
+            QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum
+        )
         self.delete_all_button = QPushButton('Delete All')
-        self.delete_all_button.setSizePolicy(QSizePolicy.Policy.Maximum,
-                                             QSizePolicy.Policy.Maximum)
+        self.delete_all_button.setSizePolicy(
+            QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum
+        )
         self.predictor_grid = QTableView()
         self.predictor_grid.horizontalHeader().setVisible(True)
+        self.predictor_grid.horizontalHeader().setSectionResizeMode(
+            QHeaderView.ResizeMode.Stretch
+        )
         self.predictor_grid.setSelectionBehavior(
             QAbstractItemView.SelectionBehavior.SelectRows
         )
@@ -301,8 +308,9 @@ class PredictorView(QDialog):
         )
 
         self.new_button = QPushButton("Add new predictor")
-        self.new_button.setSizePolicy(QSizePolicy.Policy.Maximum,
-                                      QSizePolicy.Policy.Maximum)
+        self.new_button.setSizePolicy(
+            QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum
+        )
 
         self.predictor_field = ZzQComboBox()
         self.predictor_field.setModel(app.datasets)
@@ -355,12 +363,12 @@ class PredictorView(QDialog):
         self.predictor_widg.setEnabled(False)
 
         layout = QGridLayout()
-        layout.addWidget(self.auto_gen_button, 0, 0, 1, 1)
-        layout.addWidget(self.new_button, 0, 2, 1, 1)
-        layout.addWidget(self.delete_button, 0, 3, 1, 1)
-        layout.addWidget(self.delete_all_button, 0, 4, 1, 1)
-        layout.addWidget(self.predictor_grid, 1, 0, 1, 5)
-        layout.addWidget(self.predictor_widg, 2, 0, 1, 5)
+        layout.addWidget(self.auto_gen_button, 0, 0)
+        layout.addWidget(self.new_button, 0, 2)
+        layout.addWidget(self.delete_button, 0, 3)
+        layout.addWidget(self.delete_all_button, 0, 4)
+        layout.addWidget(self.predictor_grid, 1, 0, 1, -1)
+        layout.addWidget(self.predictor_widg, 2, 0, 1, -1)
 
         self.setLayout(layout)
 

@@ -82,8 +82,8 @@ class DataViewer(pg.GraphicsLayoutWidget):
         self.timeseriesplot = TimeSeriesPlot.TimeSeriesPlot(self.ci)
         self.timesliderplot = TimeSeriesSlider.TimeSliderPlot(self.ci)
 
-        self.addItem(self.timeseriesplot, row=0, col=0, rowspan=7)
-        self.addItem(self.timesliderplot, row=7, col=0, rowspan=2)
+        self.ci.addItem(self.timeseriesplot, row=0, col=0, rowspan=7)
+        self.ci.addItem(self.timesliderplot, row=7, col=0, rowspan=2)
 
         self.timesliderplot.region.sigRegionChanged.connect(self.updatePlot)
         self.timeseriesplot.sigRangeChanged.connect(self.updateRegion)

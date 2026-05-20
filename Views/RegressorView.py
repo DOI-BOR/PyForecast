@@ -1,7 +1,7 @@
 from PySide6.QtCore import QStringListModel, Qt
 from PySide6.QtWidgets import (QApplication, QDialog, QPushButton, QTableView,
                                QAbstractItemView, QFrame, QFormLayout, QLabel,
-                               QHBoxLayout, QGridLayout)
+                               QHBoxLayout, QGridLayout, QHeaderView, QSizePolicy)
 
 from Models.ModelConfigurations import Regressor
 from Utilities.ZzQWidgets import ZzQComboBox
@@ -57,9 +57,19 @@ class RegressorView(QDialog):
         self.setWindowIcon(app.icon)
 
         self.delete_all_button = QPushButton('Delete All')
+        self.delete_all_button.setSizePolicy(
+            QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum
+        )
+
         self.delete_button = QPushButton("Delete Selected")
+        self.delete_button.setSizePolicy(
+            QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum
+        )
         self.regressor_grid = QTableView()
         self.regressor_grid.horizontalHeader().setVisible(True)
+        self.regressor_grid.horizontalHeader().setSectionResizeMode(
+            QHeaderView.ResizeMode.Stretch
+        )
         self.regressor_grid.setSelectionBehavior(
             QAbstractItemView.SelectionBehavior.SelectRows
         )
@@ -68,11 +78,17 @@ class RegressorView(QDialog):
         )
 
         self.new_button = QPushButton("Add new Regressor")
+        self.new_button.setSizePolicy(
+            QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum
+        )
 
         self.regressor_select = ZzQComboBox()
         self.scoring_metric = ZzQComboBox()
 
         self.regressor_save_btn = QPushButton("Save")
+        self.regressor_save_btn.setSizePolicy(
+            QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum
+        )
 
         self.regressor_widg = QFrame()
         self.regressor_widg.setFrameStyle(QFrame.Shape.Box)
@@ -90,11 +106,11 @@ class RegressorView(QDialog):
         self.regressor_widg.setEnabled(False)
 
         layout = QGridLayout()
-        layout.addWidget(self.new_button, 0, 2, 1, 1)
-        layout.addWidget(self.delete_button, 0, 3, 1, 1)
-        layout.addWidget(self.delete_all_button, 0, 4, 1, 1)
-        layout.addWidget(self.regressor_grid, 1, 0, 1, 5)
-        layout.addWidget(self.regressor_widg, 2, 0, 1, 5)
+        layout.addWidget(self.new_button, 0, 1)
+        layout.addWidget(self.delete_button, 0, 2)
+        layout.addWidget(self.delete_all_button, 0, 3)
+        layout.addWidget(self.regressor_grid, 1, 0, 1, -1)
+        layout.addWidget(self.regressor_widg, 2, 0, 1, -1)
 
         self.setLayout(layout)
 

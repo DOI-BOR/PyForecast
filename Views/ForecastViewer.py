@@ -294,7 +294,7 @@ class ForecastViewer(QDialog):
         self.overviewTab = QWidget()
         self.targetPredictorsTab = QWidget()
         self.forecastsTab = QWidget()
-        self.experimentalTab = ForecastExperimentalFeatures.ExperimentalFeatures(self)
+        self.experimentalTab = ForecastExperimentalFeatures.ExperimentalFeatures()
 
         self.tw.addTab(self.overviewTab, 'Overview')
         self.tw.addTab(self.targetPredictorsTab, 'Target and Predictors')
@@ -331,7 +331,7 @@ class ForecastViewer(QDialog):
 
         label = QLabel("Model Overview")
         label.setObjectName('HeaderLabel')
-        layout.addWidget(label, 0, 0, 1, 2)
+        layout.addWidget(label, 0, 0, 1, -1)
         flayout = QFormLayout()
         flayout.addRow('Name', self.name_edit)
         flayout.addRow('Comments', self.comment_edit)
@@ -358,12 +358,12 @@ class ForecastViewer(QDialog):
         for scorer, widg in self.scorers.items():
             flayout.addRow(scorer, widg)
 
-        layout.addLayout(flayout, 1, 0, 1, 1)
-        layout.addWidget(self.model_plots, 1, 1, 1, 1)
+        layout.addLayout(flayout, 1, 0)
+        layout.addWidget(self.model_plots, 1, 1)
         hlayout = QHBoxLayout()
         hlayout.addStretch(1)
         hlayout.addWidget(self.save_button)
-        layout.addLayout(hlayout, 2, 0, 1, 2)
+        layout.addLayout(hlayout, 2, 0, 1, -1)
 
         self.overviewTab.setLayout(layout)
 
@@ -385,7 +385,7 @@ class ForecastViewer(QDialog):
         layout2 = QGridLayout()
         label = QLabel('Forecast Target and Predictors')
         label.setObjectName('HeaderLabel')
-        layout2.addWidget(label, 0, 0, 1,2)
+        layout2.addWidget(label, 0, 0, 1, -1)
         flayout2 = QFormLayout()
         flayout2.addRow(QLabel('Target Info'))
         flayout2.addRow(QLabel("Dataset"), self.target_name_line_2)
@@ -410,8 +410,7 @@ class ForecastViewer(QDialog):
         # FORECASTS TAB
         self.model_fit_table = QTableWidget()
         self.model_fit_table.setSizePolicy(
-            QSizePolicy.Policy.Expanding,
-            QSizePolicy.Policy.Expanding
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
         self.model_fit_table.setSelectionBehavior(
             QAbstractItemView.SelectionBehavior.SelectRows
@@ -481,9 +480,9 @@ class ModelPlots(pg.GraphicsLayoutWidget):
         self.ep = Scatterplot.ScatterPlot()
         self.tp = Scatterplot.ScatterPlot2(line=True)
         [self.ci.layout.setRowMinimumHeight(i, 30) for i in range(4)]
-        self.addItem(self.sp, row=0, col=0, rowspan=2)
-        self.addItem(self.ep, row=2, col=0)
-        self.addItem(self.tp, row=3, col=0)
+        self.ci.addItem(self.sp, row=0, col=0, rowspan=2)
+        self.ci.addItem(self.ep, row=2, col=0)
+        self.ci.addItem(self.tp, row=3, col=0)
 
         self.sp.sp.sigHovered.connect(
             lambda points, ev: self.hoverConnect(points, ev, 'sp'))

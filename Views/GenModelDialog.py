@@ -337,8 +337,8 @@ class ModelPlots(pg.GraphicsLayoutWidget):
         self.sp = ScatterPlot()
         self.ep = ScatterPlot()
         [self.ci.layout.setRowMinimumHeight(i, 30) for i in range(3)]
-        self.addItem(self.sp, row=0, col=0, rowspan=2)
-        self.addItem(self.ep, row=2, col=0)
+        self.ci.addItem(self.sp, row=0, col=0, rowspan=2)
+        self.ci.addItem(self.ep, row=2, col=0)
 
         self.sp.sp.sigHovered.connect(
             lambda points, ev: self.hoverConnect(points, ev, 'sp'))

@@ -81,7 +81,7 @@ class DataViewer(pg.GraphicsLayoutWidget):
 
         # initialize the plots
         self.timeseriesplot = TimeSeriesPlot.TimeSeriesPlot(self.ci)
-        self.addItem(self.timeseriesplot, row=0, col=0)
+        self.ci.addItem(self.timeseriesplot, row=0, col=0)
 
         return
 
