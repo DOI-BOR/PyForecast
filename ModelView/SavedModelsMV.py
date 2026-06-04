@@ -158,8 +158,8 @@ class SavedModelsModelView:
                     self.sm.prob_plot.plot_data(
                         xs, spl(xs), color=cc.next(), label=model.name)
 
-        grouped = df.mean(axis=1)
-        if not grouped.empty:
+        if df is not None:
+            grouped = df.mean(axis=1)
             if len(real_idx) > 1:
                 spl = InterpolatedUnivariateSpline(
                     grouped.values, list(grouped.index), k=3)
@@ -181,11 +181,11 @@ class SavedModelsModelView:
             self.sm._90_value.setText(vals[4], model.predictand.unit.id)
             self.sm.prob_plot.plot_vlines(vals)
 
-        self.sm.prob_plot.reframe_to_min_max_normal(
-            model.predictand.data.min(),
-            model.predictand.data.max(),
-            model.normal
-        )
+            self.sm.prob_plot.reframe_to_min_max_normal(
+                model.predictand.data.min(),
+                model.predictand.data.max(),
+                model.normal if hasattr(model, 'normal') else vals[2]
+            )
 
     def gen_forecast(self):
         idx = self.sm.model_list.selectionModel().selectedRows()
@@ -223,8 +223,6 @@ class SavedModelsModelView:
             if currentData:
                 self.forecast_proxy_model.setFilterFixedString(
                     currentData.strftime('%B %d'))
-            else:
-                print()
 
     def update_combo_box(self, idx0, idx1):
         current_text = self.sm.issue_combo.currentText()
