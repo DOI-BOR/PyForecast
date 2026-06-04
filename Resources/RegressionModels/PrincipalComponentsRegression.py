@@ -1,12 +1,10 @@
+import numpy as np
 from collections import OrderedDict
 from sys import float_info
 
-import numpy as np
 from PySide6.QtWidgets import QApplication
-from numba import jit
 
 app = QApplication.instance()
-finfo = float_info.epsilon
 
 
 class Regressor:
@@ -48,7 +46,6 @@ class Regressor:
                 continue
 
     @staticmethod
-    @jit(nopython=True, cache=True)
     def to_princ_comps(data):
 
         # Compute the covariance matrix
@@ -111,13 +108,12 @@ class Regressor:
         return y_p, y_a
 
     @staticmethod
-    @jit(nopython=True, cache=True)
     def train_model(x, y, evecs, n_pcs, std, mean):
 
         n_row = len(y)
         ones = np.ones(n_row, dtype=np.float64)
         mX = np.column_stack((ones, x))
-        if np.linalg.cond(mX) < 1 / finfo:
+        if np.linalg.cond(mX) < 1 / float_info.epsilon:
             beta = np.linalg.pinv(mX.T.dot(mX)).dot(mX.T).dot(y)
         else:
             beta = np.full(mX.shape[1], np.nan)

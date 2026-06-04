@@ -1,9 +1,7 @@
-from numba import jit
 from numpy import full, cumsum
 
 
 # 5-FOLD CROSS VALIDATION, repeated 10 times
-@jit(nopython=True)
 def yield_samples(total):
     ret = []
 

@@ -1,8 +1,8 @@
 # SEQUENTIAL MIXED FLOATING SELECTION
 # ITERATES BETWEEN FORWARD AND BACKWARD FLOATING SELECTION
-from PySide6.QtWidgets import QApplication
-from numba import jit
 from numpy import inf
+
+from PySide6.QtWidgets import QApplication
 
 app = QApplication.instance()
 
@@ -36,7 +36,6 @@ class BruteForce:
         self.running = False
 
     @staticmethod
-    @jit(nopython=True, cache=True)
     def convert_int_to_array(num, num_p):
         return list([bool(num & (1 << n)) for n in range(num_p)])[::-1]
 

@@ -1,11 +1,8 @@
+import numpy as np
 from collections import OrderedDict
 from sys import float_info
 
-import numpy as np
 from PySide6.QtWidgets import QApplication
-from numba import jit
-
-finfo = float_info.epsilon
 
 app = QApplication.instance()
 
@@ -69,14 +66,13 @@ class Regressor:
         return y_p, y_a
 
     @staticmethod
-    @jit(nopython=True)
     def train_model(x, y):
 
         n_row = len(y)
 
         mX = np.column_stack((np.ones(n_row, dtype=np.float64), x))
 
-        if np.linalg.cond(mX) < 1 / finfo:
+        if np.linalg.cond(mX) < 1 / float_info.epsilon:
             a = mX.T.dot(mX)
             beta = np.linalg.pinv(a).dot(mX.T).dot(y)
         else:

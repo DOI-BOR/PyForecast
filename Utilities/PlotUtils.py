@@ -1,10 +1,9 @@
-from bisect import bisect_left
-
 import numpy as np
 import pyqtgraph as pg
+from bisect import bisect_left
+
 from PySide6.QtCore import QRectF
 from PySide6.QtGui import QFont
-from numba import jit
 
 EQUIVALENCY_LISTS = [
     ["INCHES", "INCH", "IN", "IN.", '"'],
@@ -70,7 +69,6 @@ def condenseUnits(unitList):
     return condensedList
 
 
-@jit(nopython=True)
 def takeClosest(myList, myNumber):
     """
     Assumes myList is sorted. Returns closest value to myNumber.

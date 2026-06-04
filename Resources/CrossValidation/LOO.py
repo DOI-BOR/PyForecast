@@ -1,9 +1,7 @@
-from numba import jit
 from numpy import full, cumsum
 
 
 # LEAVE ONE OUT CROSS VALIDATION, repeated 1 times
-@jit(nopython=True)
 def yield_samples(total):
     ret = []
     indices = list(range(total))
