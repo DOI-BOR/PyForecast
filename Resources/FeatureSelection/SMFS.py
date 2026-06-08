@@ -1,6 +1,7 @@
 # SEQUENTIAL MIXED FLOATING SELECTION
 # ITERATES BETWEEN FORWARD AND BACKWARD FLOATING SELECTION
 import copy
+import logging
 from time import time
 from numpy import inf, random, int64
 
@@ -55,7 +56,7 @@ class SMFS:
 
         num_evaluated = len(self.completed)
 
-        print(f"Evaluated {num_evaluated} out of {self.num_possible} possible models")
+        logging.info(f"Evaluated {num_evaluated} out of {self.num_possible} possible models")
         self.running = False
 
     def randomize(self):
@@ -81,14 +82,14 @@ class SMFS:
         if not self.rec_cnt:
             self.rec_cnt = 0
         if self.rec_cnt > self.num_predictors:
-            # print('recursion count exceeded')
+            # logging.info('recursion count exceeded')
             self.randomize()
             self.rec_cnt = 0
             return -1
 
         # initialize the features selector with a start time.
         if not self.running:
-            print(f'Feature Selector: STARTING TIMER for {self.timeout_seconds} seconds')
+            logging.info(f'Feature Selector: STARTING TIMER for {self.timeout_seconds} seconds')
             self.time = time()
             self.running = True
             if score_type == 0:
@@ -108,7 +109,7 @@ class SMFS:
         if len(self.timer_incs) > 0:
             if (elapsed > self.timer_incs[0]):
                 self.timer_incs.pop(0)
-                print(f'Feature Selector: {int(elapsed)} seconds have elapsed')
+                logging.info(f'Feature Selector: {int(elapsed)} seconds have elapsed')
         remaining = self.timeout_seconds - elapsed
         self.progress = min(100, int(100 * (elapsed / self.timeout_seconds)))
 

@@ -3,6 +3,7 @@ from datetime import datetime
 
 import numpy as np
 import pandas as pd
+import logging
 from PySide6.QtWidgets import QApplication
 
 app = QApplication.instance()
@@ -133,7 +134,7 @@ class ForecastDisaggregator(object):
                             'weight': analog_year_weight,
                             'trace': trace
                         }
-        print()
+        logging.info('')
         df = pd.DataFrame()
         labels = []
         for exc in self.traces[year]:

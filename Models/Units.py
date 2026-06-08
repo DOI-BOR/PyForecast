@@ -1,5 +1,6 @@
 """
 """
+import logging
 
 from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex
 from PySide6.QtWidgets import QApplication
@@ -160,7 +161,7 @@ class Units(QAbstractTableModel):
 
         # Check if unit already in list
         if any(unit for unit in self.units if unit.id == new_unit.id):
-            print(f"unit {new_unit} already exists")
+            logging.info(f"unit {new_unit} already exists")
             return
 
         # Add new unit to list

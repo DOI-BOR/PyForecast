@@ -1,5 +1,6 @@
 # SEQUENTIAL MIXED FLOATING SELECTION
 # ITERATES BETWEEN FORWARD AND BACKWARD FLOATING SELECTION
+import logging
 from numpy import inf
 
 from PySide6.QtWidgets import QApplication
@@ -31,7 +32,7 @@ class BruteForce:
 
         num_evaluated = len(self.completed)
 
-        print(
+        logging.info(
             f"Evaluated {num_evaluated} out of {self.num_possible + 1} possible models")
         self.running = False
 

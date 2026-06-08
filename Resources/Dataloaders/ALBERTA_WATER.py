@@ -1,5 +1,5 @@
 #### IN PROGRESS PENDING API INFORMATION FROM NATHALIE
-
+import logging
 import numpy as np
 import pandas as pd
 
@@ -15,7 +15,7 @@ class Dataloader(object):
         data = pd.Series()
 
         url = f"https://environment.alberta.ca/apps/Basins/data/porExtracts/porExtract_AB_{dataset.external_id}_{dataset.param_code}_Cmd.Merged-NRT.Public.csv"
-        print(url)
+        logging.info(url)
         df = pd.read_csv(url, skiprows=23, encoding_errors='ignore')
         df['dt'] = pd.to_datetime(df['Date'] + ' ' + df['Time'])
         df = df.set_index(df['dt'])

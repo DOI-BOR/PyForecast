@@ -1,3 +1,4 @@
+import logging
 import time
 from datetime import datetime
 
@@ -140,7 +141,7 @@ class DownloadRunner(QThread):
             self.update_prog_text.emit(
                 f'Downloaded {dataset.external_id} {dataset.parameter}')
             self.update_prog_bar.emit((i + 1) / len(self.datasets))
-            print(f"Downloaded data for {dataset}")
+            logging.info(f"Downloaded data for {dataset}")
 
     def stop(self):
         """Stops the download thread and returns to application"""

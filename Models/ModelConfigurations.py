@@ -1,4 +1,5 @@
 import pickle
+import logging
 from inspect import signature
 from uuid import uuid4
 
@@ -109,7 +110,7 @@ class ResampledDataset:
 
             return
         else:
-            print("did not resample")
+            logging.info("did not resample")
 
     def preprocess(self):
         if not self.data.empty:

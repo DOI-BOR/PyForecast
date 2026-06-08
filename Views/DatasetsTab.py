@@ -1,3 +1,5 @@
+import logging
+
 from PySide6.QtGui import QAction, QPainter, QDesktopServices
 from PySide6.QtCore import Qt, Signal, QUrl, QPoint
 from PySide6.QtWebEngineWidgets import QWebEngineView
@@ -152,11 +154,11 @@ class DatasetMap(QWebEngineView):
 
         self.loadProgress.connect(
             lambda x:
-            print(f'Loading basemap ... {x:}%')
+            logging.info(f'Loading basemap ... {x:}%')
         )
         self.loadFinished.connect(
             lambda ok:
-            print(f"Loading basemap ... {'Success' if {ok} else 'Failed'}")
+            logging.info(f"Loading basemap ... {'Success' if {ok} else 'Failed'}")
         )
 
         self.setUrl(

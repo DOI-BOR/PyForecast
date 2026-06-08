@@ -1,3 +1,5 @@
+import logging
+
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QAction, QIcon, QActionGroup
 from PySide6.QtWidgets import QMainWindow, QApplication, QTabWidget, QLabel, QMenu
@@ -162,16 +164,13 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):
 
-        print('Exiting PyForecast')
+        logging.info('Exiting PyForecast')
 
         # Delete all temporary files from the current directory.
         app.delete_temp_files()
 
         # Write out settings.
         app.write_settings()
-
-        # Cleanup logging messages.
-        app.logger.cleanup()
 
         # Close log viewer, this it intentional, so that it shows as an
         # independent dialog without a parent.

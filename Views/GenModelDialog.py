@@ -1,3 +1,4 @@
+import logging
 import sys
 from datetime import datetime
 from inspect import signature
@@ -5,8 +6,7 @@ from inspect import signature
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
-from PySide6.QtCore import (Qt, QModelIndex, QSortFilterProxyModel,
-                            QAbstractTableModel, QThread)
+from PySide6.QtCore import Qt, QModelIndex, QSortFilterProxyModel, QAbstractTableModel
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (QApplication, QDialog, QProgressDialog, QStatusBar,
                                QTableView, QAbstractItemView, QTextEdit, QLabel,
@@ -100,6 +100,13 @@ class PossibleModels(QAbstractTableModel):
                               self.index(len(self) - 1, self.columnCount()))
         app.processEvents()
 
+    def clear(self):
+        self.beginResetModel()
+        self.models.clear()
+        self.ins_buf.clear()
+        self.buf_cnt = 0
+        self.endResetModel()
+
     def __len__(self):
         return len(self.models)
 
@@ -129,6 +136,7 @@ class GenModelDialog(QDialog):
 
         self.setUI()
         self.config = config
+
         # Get unique scorers
         scorers = []
         for r in self.config.regressors.regressors:
@@ -143,7 +151,10 @@ class GenModelDialog(QDialog):
         self.model_list.selectionModel().currentRowChanged.connect(self.set_model)
 
         # Create progress dialog
-        self.pd = QProgressDialog("", "Cancel", 0, 100, parent)
+        self.pd = QProgressDialog("", "", 0, 100, parent)
+        self.pd.abort_button = QPushButton('Abort')
+        self.pd.abort_button.clicked.connect(self.abort)
+        self.pd.setCancelButton(self.pd.abort_button)
         self.pd.setWindowModality(Qt.WindowModality.ApplicationModal)
         self.pd.setWindowTitle('Generating Models')
         self.pd.setStyleSheet("""QLabel {font-family: Consolas, monospace}""")
@@ -151,42 +162,37 @@ class GenModelDialog(QDialog):
 
         self.pd.show()
 
-        self.mg = ModelGenerator(self, selected_configuration=self.config)
-        self.thread_ = QThread()
-        self.thread_.setObjectName('thread_model_gen')
-        self.mg.moveToThread(self.thread_)
-        self.mg.updateTextSignal.connect(self.pd.setLabelText)
-        self.mg.updateProgSignal.connect(self.pd.setValue)
-        self.mg.newModelSignal.connect(self.possible_models.append)
-        self.mg.sig_done.connect(self.stopThread)
-
-        self.pd.canceled.connect(self.mg.abort)
-        self.thread_.finished.connect(self.model_search_finished)
+        self.mg = ModelGenerator(selected_configuration=self.config)
+        self.mg.signals.updateTextSignal.connect(self.pd.setLabelText)
+        self.mg.signals.updateProgSignal.connect(self.pd.setValue)
+        self.mg.signals.newModelSignal.connect(self.possible_models.append)
+        self.mg.signals.finished.connect(self.model_search_finished)
 
         self.save_button.pressed.connect(self.save_model)
-        self.thread_.started.connect(self.mg.work)
 
-        self.mg.sig_done.connect(
+        self.mg.signals.sig_done.connect(
             lambda:
             self.prog_text.setText(self.pd.labelText())
         )
-        self.mg.sig_done.connect(
-            lambda:
-            self.pd.close()
-        )
-        self.thread_.start()
+        self.mg.signals.sig_done.connect(self.pd.close)
 
-    def stopThread(self):
-        self.thread_.quit()
-        self.thread_.wait()
+        app.threadpool.start(self.mg)
+
+    def abort(self):
+        self.mg.abort()
+        self.prog_text.setText(self.pd.labelText())
+        self.model_progress_bar.setFormat('%p%')
+        self.possible_models.clear()
+        self.model_list.setModel(None)
+        self.save_button.setDisabled(True)
         self.exec()
 
     def closeEvent(self, event):
-        self.mg.abort()
+        app.threadpool.waitForDone()
         event.accept()
 
     def model_search_finished(self):
-        print("Finished model search")
+        logging.info("Finished model search")
         self.prog_text.setText(self.pd.labelText())
         self.model_progress_bar.setValue(100)
         self.model_progress_bar.setFormat('%p%')
@@ -194,8 +200,11 @@ class GenModelDialog(QDialog):
         self.model_list.resizeColumnsToContents()
         self.model_list.horizontalHeader().setStretchLastSection(True)
         self.sensible_sort_button.setEnabled(True)
+        self.exec()
 
     def save_model(self):
+        if len(self.model_list.selectionModel().selectedIndexes()) == 0:
+            return
         row = self.model_list.selectionModel().selectedIndexes()[0]
         row = self.model_list_p.mapToSource(row)
         model = self.possible_models[row.row()]

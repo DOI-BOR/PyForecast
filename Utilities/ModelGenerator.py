@@ -3,7 +3,9 @@ from itertools import compress
 
 import numpy as np
 import pandas as pd
-from PySide6.QtCore import QObject, Signal
+import  logging
+
+from PySide6.QtCore import QObject, Signal, QRunnable, Slot
 from PySide6.QtWidgets import QApplication
 
 from Models.SavedModels import Model
@@ -14,34 +16,43 @@ app = QApplication.instance()
 
 
 def trap_exc_during_debug(*args):
-    print(args)
+    logging.error(args)
 
 
-class ModelGenerator(QObject):
+class ModelGeneratorSignals(QObject):
+    '''Signals available from running ModelGenerator'''
+    finished = Signal()
     updateProgSignal = Signal(int)
     updateTextSignal = Signal(str)
     newModelSignal = Signal(object)
-    sig_done = Signal(bool)
+    sig_done = Signal()
 
-    def __init__(self, parent=None, selected_configuration=None,
-                 external_list=None, id=None):
 
-        super().__init__(parent)
+class ModelGenerator(QRunnable):
+
+    '''Worker thread to generate forecast models'''
+    def __init__(self, selected_configuration=None, external_list=None, id=None):
+
+        super().__init__()
+
+        self.signals = ModelGeneratorSignals()
         self.__id = id
         self.__abort = False
         self.config = selected_configuration
         self.use_list = False
+
         if external_list is not None:
             self.external_list = external_list
             self.use_list = True
 
-    def work(self):
+    @Slot()
+    def run(self):
 
         # Check for any predictors that must be postively correlated
         positive_corr = np.array(
             [p.mustBePositive for p in self.config.predictor_pool.predictors])
 
-        self.updateTextSignal.emit('Generating predictor and predictand data')
+        self.signals.updateTextSignal.emit('Generating predictor and predictand data')
         for predictor in self.config.predictor_pool.predictors:
             predictor.resample()
             if not predictor.data.empty:
@@ -78,7 +89,11 @@ class ModelGenerator(QObject):
         # Iterate over the regression methods
         for rr, regressor in enumerate(self.config.regressors):
 
-            print("Beginning model search for regressor:"
+            if self.__abort:
+                self.aborted()
+                return
+
+            logging.info("Beginning model search for regressor:"
                   f" {regressor.regression_model} / {regressor.scoring_metric}")
 
             regression_algorithm = app.regressors[regressor.regression_model](
@@ -91,7 +106,7 @@ class ModelGenerator(QObject):
             if (len(self.config.predictor_pool) - num_forced - num_empty
                     <= app.settings['brute_force_under_no']):
                 bruteforce = True
-                self.updateTextSignal.emit(
+                self.signals.updateTextSignal.emit(
                     'Small number of predictors.'
                     ' Using <strong>Brute Force</strong> Feature Selection'
                 )
@@ -106,7 +121,7 @@ class ModelGenerator(QObject):
                 num_predictors=len(self.config.predictor_pool) - num_forced - num_empty
             )
 
-            print('Starting feature selection with feature selector:'
+            logging.info('Starting feature selection with feature selector:'
                   f' {feature_selector_name}')
             count = 0
             score_type = 1 if regressor.scoring_metric in ['R2', 'ADJ R2'] else 0
@@ -114,15 +129,14 @@ class ModelGenerator(QObject):
             while feature_selector.running or count == 0:
 
                 if self.__abort:
-                    self.stop()
+                    self.aborted()
                     return
 
                 predictors = feature_selector.next(score, score_type)
                 past_prog = rr * (100 / len(self.config.regressors))
-                self.updateProgSignal.emit(
-                    int((past_prog + feature_selector.progress)
-                        / len(self.config.regressors))
-                )
+                curr_prog = feature_selector.progress / len(self.config.regressors)
+                self.signals.updateProgSignal.emit(int(past_prog + curr_prog))
+
                 if predictors <= 0:
                     continue
                 bool_index = feature_selector.convert_int_to_array(
@@ -189,29 +203,31 @@ class ModelGenerator(QObject):
                     scorer=regressor.scoring_metric
                 )
 
-                self.updateTextSignal.emit(
+                fs_total = feature_selector.num_possible
+                self.signals.updateTextSignal.emit(
                     f'<b>{regressor.regression_model}</b><br>{genome}'
                     f' Scorer ({regressor.scoring_metric}):'
                     f' {score:+12.5f}'
-                    f' ({len(feature_selector.completed):>12}/{feature_selector.num_possible})')
+                    f' ({len(feature_selector.completed):>{fs_total}}/{fs_total})')
 
                 app.processEvents()
                 if self.use_list:
                     self.external_list.append(model)
                 else:
-                    self.newModelSignal.emit(model)
+                    self.signals.newModelSignal.emit(model)
                 count += 1
 
-        self.stop()
+        self.finish()
 
     def abort(self):
         self.__abort = True
-        self.error()
+        self.aborted()
 
-    def stop(self):
-        self.updateTextSignal.emit("Finished")
-        self.sig_done.emit(True)
+    def finish(self):
+        self.signals.updateTextSignal.emit("Finished")
+        self.signals.sig_done.emit()
+        self.signals.finished.emit()
 
-    def error(self):
-        self.updateTextSignal.emit("Model Generator Aborted")
-        self.sig_done.emit(True)
+    def aborted(self):
+        self.signals.updateTextSignal.emit("Model Generator Aborted")
+        self.signals.sig_done.emit()

@@ -69,6 +69,7 @@ class Dataloader(object):
 
 if __name__ == '__main__':
     dl = Dataloader()
+    import logging
     from datetime import datetime
 
 
@@ -80,4 +81,4 @@ if __name__ == '__main__':
 
     dataset = Dataset()
     data = dl.load(dataset, datetime(2010, 10, 1), datetime.now())
-    print(data)
+    logging.info(data)

@@ -3,5 +3,7 @@
     <qresource>
         <file>Icons/AppIcon.ico</file>
         <file>Stylesheets/application_style.qss</file>
+        <file>../version.txt</file>
+        <file>../settings.conf</file>
     </qresource>
 </RCC>

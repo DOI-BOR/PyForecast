@@ -1,5 +1,6 @@
 import os
 import time
+import logging
 from pathlib import Path
 
 from PySide6.QtCore import QCoreApplication, QUrl
@@ -108,18 +109,18 @@ class MainWindowModelView:
             self.clear_models()
             app.processEvents()
 
-            # start = time.perf_counter()
-            # FileLoaderSaver.sqlite_load_forecast(Path(filename))
-            # end = time.perf_counter()
-            # print(f"Opened the sqlite forecast in {end - start:.2f} seconds.")
-
             start = time.perf_counter()
-            # Open the file and use the file-loader function to read the data
-            # into the application
-            with open(str(filename), 'rb') as read_file:
-              FileLoaderSaver.load_file(read_file)
+            FileLoaderSaver.sqlite_load_forecast(Path(filename))
             end = time.perf_counter()
-            print(f"Opened the pickle forecast in {end - start:.2f} seconds.")
+            logging.info(f"Opened the SQLite forecast in {end - start:.2f} seconds.")
+
+            # start = time.perf_counter()
+            # # Open the file and use the file-loader function to read the data
+            # # into the application
+            # with open(str(filename), 'rb') as read_file:
+            #   FileLoaderSaver.load_file(read_file)
+            # end = time.perf_counter()
+            # logging.info(f"Opened the pickle forecast in {end - start:.2f} seconds.")
 
             # Update the application configuration and current file name
             app.current_file = Path(filename)
@@ -127,7 +128,7 @@ class MainWindowModelView:
                 f'<strong>File</strong>: {app.current_file}'
             )
             app.settings['last_dir'] = os.path.dirname(app.current_file)
-            print(f"Successfully opened the file: {app.current_file}")
+            logging.info(f"Successfully opened the file: {app.current_file}")
 
         return
 
@@ -144,14 +145,14 @@ class MainWindowModelView:
         start = time.perf_counter()
         FileLoaderSaver.sqlite_save_forecast(app.current_file)
         end = time.perf_counter()
-        print(f"Saved the sqlite forecast in {end - start:.2f} seconds.")
+        logging.info(f"Saved the sqlite forecast in {end - start:.2f} seconds.")
 
         start = time.perf_counter()
         # Save the file using the file-loader-saver module
         with open(app.current_file, 'wb') as write_file:
             FileLoaderSaver.save_to_file(write_file)
         end = time.perf_counter()
-        print(f"Saved the pickle forecast in {end - start:.2f} seconds.")
+        logging.info(f"Saved the pickle forecast in {end - start:.2f} seconds.")
 
         # Update the application with the file name and update the config.
         app.gui.status_bar.showMessage(
@@ -161,7 +162,7 @@ class MainWindowModelView:
             f'<strong>File</strong>: {app.current_file}'
         )
         app.settings['last_dir'] = os.path.dirname(app.current_file)
-        print(f"Successfully saved the file: {app.current_file}")
+        logging.info(f"Successfully saved the file: {app.current_file}")
 
         return
 

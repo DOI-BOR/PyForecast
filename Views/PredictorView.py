@@ -1,3 +1,4 @@
+import logging
 import sys
 
 from PySide6.QtCore import Qt, QDate, QStringListModel, QModelIndex, QSortFilterProxyModel
@@ -151,7 +152,7 @@ class PredictorView(QDialog):
 
         # Iterate over the datasets in the file
         for dataset in app.datasets.datasets:
-            print(f'on dataset: {dataset.name}')
+            logging.info(f'on dataset: {dataset.name}')
             day_minus_one = self.configuration.issue_date - DateOffset(days=1)
             # Correct leap day bug
             if (day_minus_one.month == 2) and (day_minus_one.day == 29):

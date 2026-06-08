@@ -12,6 +12,7 @@ dataset (in this case, a pandas series object containing the data.)
 displays those datasets in lists and drop-down views.
 """
 
+import logging
 from uuid import uuid4
 
 import pandas as pd
@@ -271,7 +272,7 @@ class Datasets(QAbstractListModel):
             if dataset.guid == guid:
                 self.datasets[i] = new_dataset
                 self.dataChanged.emit(self.index(i), self.index(i))
-                print(f'Updated Dataset: {new_dataset}')
+                logging.info(f'Updated Dataset: {new_dataset}')
                 return
 
     def update_dataset_display_units(self, dataset, new_units):
@@ -298,7 +299,7 @@ class Datasets(QAbstractListModel):
         self.insertRow(self.rowCount())
 
         self.dataChanged.emit(self.index(0), self.index(self.rowCount()))
-        print(f'Added dataset: {dataset}')
+        logging.info(f'Added dataset: {dataset}')
         return dataset
 
     def remove_dataset(self, *args, **kwargs):
@@ -324,7 +325,7 @@ class Datasets(QAbstractListModel):
             dataset = self.datasets.pop(idx)
             self.removeRow(idx)
             self.endRemoveRows()
-            print(f'Removed Dataset: {dataset}')
+            logging.info(f'Removed Dataset: {dataset}')
 
         elif isinstance(args[0], int):
 
@@ -333,7 +334,7 @@ class Datasets(QAbstractListModel):
             dataset = self.datasets.pop(idx)
             self.removeRow(idx)
             self.endRemoveRows()
-            print(f'Removed Dataset: {dataset}')
+            logging.info(f'Removed Dataset: {dataset}')
 
         self.dataChanged.emit(self.index(0), self.index(self.rowCount()))
 

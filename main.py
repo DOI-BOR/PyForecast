@@ -1,111 +1,67 @@
 import argparse
-import json
 import os
 import sys
-import time
-import traceback
+import logging
+import ctypes
 from pathlib import Path
 
-from PySide6.QtCore import qVersion, Signal, QObject, QFile, QTextStream
+from PySide6.QtCore import (qVersion, Signal, QObject, QFile, QTextStream,
+                            QJsonDocument, Slot, Qt, QThreadPool)
 from PySide6.QtGui import QIcon, QGuiApplication, QPixmap
 from PySide6.QtQuick import QQuickWindow, QSGRendererInterface
 from PySide6.QtWidgets import QApplication
 
 from Resources import resources
 from Utilities.JsonHooks import DatetimeParser
+from Utilities.LineWrappingFormatter import LineWrappingFormatter
 
 
-class Logger(QObject):
-    """This is a simple logger class that redirects print statements and
-    error messages to the file 'app_log.txt'. It also prints those
-    messages to the terminal.
-    """
-
+class LogSignaler(QObject):
+    """Emits log records safely across threads"""
     new_log_message = Signal(str)
-    base_dir = Path(__file__).parent.absolute()
 
-    def __init__(self, parent=None):
-        """Constructor method """
-        super().__init__(parent)
+class QSignalingHandler(logging.Handler):
+    """Custom Python logging handler that bridges events to a QObject signal."""
+    def __init__(self):
+        super().__init__()
+        self.signaler = LogSignaler()
 
-        # Open the log file and redirect stdout to a variable
-        self.terminal = sys.stdout
-        self.log = open(self.base_dir.joinpath('app_log.txt'), 'w', encoding='utf-8')
+    def emit(self, record):
+        # Format the log record into a string
+        msg = self.format(record)
 
-    def logger_excepthook(self, etype, evalue, tb):
-        s = list(traceback.format_tb(sys.last_traceback))
-        for ss in s:
-            self.log.write(ss)
-        self.log.write(f"Uncaught exception: {etype}: {evalue} \n \n {tb}")
-
-    def write(self, msg):
-        """Writes the message (message redirected from print(...)) to the
-        log file and also prints it to the terminal
-        """
-
-        # Write printable messages to the terminal
-        if msg.isprintable():
-            # Split up messages longer than 80 characters into multiple lines
-            if len(msg) > 80:
-                c = 0
-                while c < len(msg):
-                    c += 80
-                    if c == 80:
-                        m = f"[ {time.ctime()} ]{''.ljust(4)}{msg:<80.80}·\n"
-                    else:
-                        m = f"{''.rjust(32)}{msg[c - 80:c]:<80}·\n"
-                    self.terminal.write(m)
-                    self.log.write(m)
-                    self.new_log_message.emit(m)
-            else:
-                msg = f"[ {time.ctime()} ]{''.ljust(4)}{msg:<80}·\n"
-                self.terminal.write(msg)
-                self.log.write(msg)
-                self.new_log_message.emit(msg)
-
-    def cleanup(self):
-        # Close the log file and reset sys.stdout and sys.excepthook
-        self.log.close()
-        sys.stdout = sys.__stdout__
-        sys.excepthook = sys.__excepthook__
-
-    def flush(self):
-        # This function is needed for logger to function.
-        pass
+        # Emit the message through the QObject signal
+        self.signaler.new_log_message.emit(msg)
 
 
 class PyForecast(QApplication):
     """The main application for PyForecast. Extends the QApplication class
     and contains a number of application wide members including configuration
-    settings, stylesheets, version number, current user and filename,
-    as well as all the models, and regression methods."""
+    settings, stylesheets, version number, current user and filename."""
 
-    # Void signal emitted when a new message is added to the log
-    new_log_message = Signal()
-
-    # path to folder where the PyForecast.exe file lives
+    # Path to folder where the PyForecast.exe file lives from PyInstaller or
+    # the current Python code start location where main.py is
     base_dir = Path(__file__).parent.absolute()
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        base_dir = Path(sys._MEIPASS)
 
     # icon used in the application
     icon = ''
 
     def __init__(self, *args, **kwargs):
-        """Constructor
-
-        :arguments
-          file (`str`) - filename to open with the application
-        """
 
         # Initialize the parent QApplication
         super().__init__(*args, **kwargs)
 
-        # redirect stdout to log
-        self.log_message = ''
-        self.logger = Logger()
-        self.logger.new_log_message.connect(self.append_log_message)
-        sys.stdout = self.logger
-        sys.excepthook = self.logger.logger_excepthook
-        print('Starting PyForecast')
+        # Manager for QThreads to run processes outside the main gui thread
+        self.threadpool = QThreadPool()
+
+        # Init Resources/resources.py
+        resources.qInitResources()
+
+        # Setup logging
+        self.setup_logger()
+        logging.info('Starting PyForecast')
 
         # Gets the current user
         self.current_user = os.getlogin()
@@ -113,22 +69,28 @@ class PyForecast(QApplication):
         # Print out the various versions of installed software
         pyversion = sys.version_info
         self.PYTHON_VERSION = f'{pyversion.major}.{pyversion.minor}.{pyversion.micro}'
-        with open('version.txt', 'r') as readfile:
-            self.PYCAST_VERSION = readfile.read().strip()
-        print(f'{'Using Python Version'.ljust(50)}{self.PYTHON_VERSION:<10}')
-        print(f'{'Using PySide Qt Version'.ljust(50)}{qVersion():<10}')
-        print(f'{'Using PyForecast Version'.ljust(50)}{self.PYCAST_VERSION:<10}')
+        file = QFile(':/version.txt')
+        if file.open(QFile.OpenModeFlag.Text.ReadOnly):
+            stream = QTextStream(file)
+            self.PYCAST_VERSION = stream.readLine()
+            file.close()
+        logging.info(f'Using Python Version ... {self.PYTHON_VERSION}')
+        logging.info(f'Using PySide Qt Version ... {qVersion()}')
+        logging.info(f'Using PyForecast Version ... {self.PYCAST_VERSION}')
 
         # Setup Application information
         self.setApplicationName(f'PyForecast v{self.PYCAST_VERSION}')
         self.setApplicationVersion(self.PYCAST_VERSION)
 
-        # Init Resources/resources.py
-        # Set application_style
-        # Set window icon in the taskbar and any other windows
-        resources.qInitResources()
+        # Windows specific commands to properly identify PyForecast and
+        # show its icon in the taskbar
+        myappid = f'Reclamation.PyForecast.{self.PYCAST_VERSION}'
+        if os.name == 'nt':
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+
+        # Set application_style and window icon
         file = QFile(':/Stylesheets/application_style.qss')
-        if file.open(QFile.OpenModeFlag.ReadOnly):
+        if file.open(QFile.OpenModeFlag.Text.ReadOnly):
             stream = QTextStream(file)
             self.setStyleSheet(self.styleSheet() + (stream.readAll()))
             file.close()
@@ -136,15 +98,70 @@ class PyForecast(QApplication):
         self.setWindowIcon(self.icon)
 
         # Read the application configuration and load into the application
-        with open(self.base_dir.joinpath('settings.conf'), 'r') as settings:
-            settings = json.load(settings, object_hook=DatetimeParser)
+        file = QFile(':/settings.conf')
+        if file.open(QFile.OpenModeFlag.Text.ReadOnly):
+            self.settings = DatetimeParser(
+                QJsonDocument.fromJson(file.readAll()).toVariant()
+            )
+            file.close()
 
-        # Set up the current settings and file name
-        self.settings = settings
-        self.current_file = Path().joinpath(
-            self.settings['last_dir'],
-            self.settings['new_filename']
+        # Set up the current file name
+        if self.settings is not None:
+            self.current_file = Path().joinpath(
+                self.settings['last_dir'],
+                self.settings['new_filename']
+            )
+
+    def write_settings(self):
+        # Copy the contents of the application configuration into the settings file
+        file = QFile(':/settings.conf')
+        if file.open(QFile.OpenModeFlag.Text.WriteOnly):
+            fmt = QJsonDocument.JsonFormat.Indented
+            file.write(QJsonDocument(self.settings).toJson(format=fmt))
+            file.close()
+
+    @staticmethod
+    def delete_temp_files():
+
+        # delete all temporary files from the current directory
+        for fn in os.listdir():
+            if 'temp_' in fn and '.xlsx' in fn:
+                os.remove(fn)
+
+    @Slot(str)
+    def append_log_message(self, msg):
+
+        # Appends the new log message to the application log-variable
+        self.log_message += f'{msg}\n'
+
+    def setup_logger(self):
+        # String to load in AppLogViewer
+        self.log_message = ''
+
+        # Instantiate our signaling handler
+        self.log_handler = QSignalingHandler()
+
+        # Format log representation
+        formatter = LineWrappingFormatter(
+            "[%(asctime)s] %(levelname)s: %(message)s",
+            "%I:%M:%S %p",
+            width=120
         )
+        self.log_handler.setFormatter(formatter)
+
+        # Connect the QObject signal to the UI updater slot
+        self.log_handler.signaler.new_log_message.connect(self.append_log_message)
+
+        # Configure the root logger
+        root_logger = logging.getLogger()
+        root_logger.setLevel(logging.DEBUG)
+        root_logger.addHandler(self.log_handler)
+
+    def load_ui(self, **kwargs):
+        '''
+        :arguments
+          file (`str`) - filename to open with the application
+        '''
 
         # Initialize the Core Models
         from Models import Datasets, ModelConfigurations, SavedModels, Units
@@ -210,26 +227,6 @@ class PyForecast(QApplication):
         if kwargs['file']:
             self.MWMV.OpenFile(None, filename=kwargs['file'])
 
-    def write_settings(self):
-        # Copy the contents of the application configuration into the settings file
-        with open(self.base_dir.joinpath('settings.conf'), 'w') as settings:
-            json.dump(self.settings, settings, indent=4, default=str)
-
-    @staticmethod
-    def delete_temp_files():
-
-        # delete all temporary files from the current directory
-        for fn in os.listdir():
-            if 'temp_' in fn and '.xlsx' in fn:
-                os.remove(fn)
-
-    def append_log_message(self, msg):
-
-        # Appends the new log message to the application log-variable and updates
-        # The gui log-dialog (if it's open).
-        self.log_message += msg
-        self.new_log_message.emit()
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -242,9 +239,16 @@ if __name__ == '__main__':
     params = parser.parse_args()
 
     # Create the application
-    QQuickWindow.setGraphicsApi(QSGRendererInterface.GraphicsApi.OpenGL)
+    QQuickWindow.setGraphicsApi(QSGRendererInterface.GraphicsApi.Software)
+    QApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
     QApplication.setStyle('fusion')
-    app = PyForecast(sys.argv, file=params.file)
+    app = PyForecast(sys.argv)
+    app.load_ui(file=params.file)
+
+    # If app is running as a compiled bundle, close splash screen
+    if getattr(sys, 'frozen', False):
+        import pyi_splash
+        pyi_splash.close()
 
     # Run the application
     sys.exit(app.exec())

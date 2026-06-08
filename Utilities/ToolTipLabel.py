@@ -4,7 +4,6 @@ import qtawesome as qta
 from PySide6.QtCore import QSize
 from PySide6.QtWidgets import (QApplication, QWidget, QLabel, QHBoxLayout,
                                QProxyStyle, QStyle)
-from pyqtgraph.examples.MultiDataPlot import widget
 
 app = QApplication.instance()
 

@@ -43,7 +43,6 @@ dependencies:
   - markupsafe=3.0.3=py314h2359020_1
   - mdurl=0.1.2=pyhd8ed1ab_1
   - mkl=2025.3.1=hac47afa_11
-  - numba=0.65.0=py314h36f8cf2_1
   - numpy=2.4.3=py314h02f10f6_0
   - nvidia-ml-py=13.595.45=pyhd8ed1ab_1
   - openpyxl=3.1.5=py314hccc76fc_3

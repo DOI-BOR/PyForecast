@@ -1,3 +1,4 @@
+import logging
 import pickle
 import sqlite3
 import uuid
@@ -24,8 +25,7 @@ def file_version_less_than(v_file, v_check):
 def sqlite_load_forecast(db: Path):
     db = db.with_suffix('.sqlite')
     if not db.is_file():
-        print('Error: Forecast database not found:')
-        print(f'{db}')
+        logging.error(f'Error: Forecast database not found: {db}')
         return
 
     con = None
@@ -50,8 +50,7 @@ def sqlite_load_forecast(db: Path):
         sqlite_load_saved_models(cur)
 
     except Exception as e:
-        print('Error reading forecast from SQLite database:')
-        print(f'{repr(e)}')
+        logging.error(f'Error reading forecast from SQLite database: {repr(e)}')
 
     finally:
         if con:
@@ -210,7 +209,7 @@ def load_file(f):
     # Load the file version
     f_version = pickle.load(f)
 
-    print(f"File version is {f_version}")
+    logging.info(f"File version is {f_version}")
 
     if file_version_less_than(f_version, '5.0.9'):
 
@@ -228,7 +227,7 @@ def load_file(f):
 
         for dataset in datasets:
             app.datasets.datasets.append(dataset)
-            print(f'Added Dataset: {dataset}')
+            logging.info(f'Added Dataset: {dataset}')
             app.datasets.insertRow(app.datasets.rowCount())
         app.datasets.dataChanged.emit(app.datasets.index(0),
                                       app.datasets.index(app.datasets.rowCount()))
@@ -344,8 +343,7 @@ def sqlite_save_forecast(db: Path):
         db_backup.unlink(missing_ok=True)
 
     except Exception as e:
-        print('Error saving forecast to an SQLite database:')
-        print(f'{repr(e)}')
+        logging.error(f'Error saving forecast to an SQLite database: {repr(e)}')
 
     finally:
         # close in-memory connection if it exists
