@@ -41,9 +41,11 @@ class PyForecast(QApplication):
 
     # Path to folder where the PyForecast.exe file lives from PyInstaller or
     # the current Python code start location where main.py is
-    base_dir = Path(__file__).parent.absolute()
-    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-        base_dir = Path(sys._MEIPASS)
+    base_dir = (
+        Path(sys._MEIPASS)
+        if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS")
+        else Path(__file__).parent.absolute()
+    )
 
     # icon used in the application
     icon = ''

@@ -96,9 +96,11 @@ class PossibleModels(QAbstractTableModel):
         # add in any buffered rows
         self.models = self.models + self.ins_buf
         self.insertRows(len(self) - len(self.ins_buf), len(self.ins_buf))
-        self.dataChanged.emit(self.index(0, 0),
-                              self.index(len(self) - 1, self.columnCount()))
-        app.processEvents()
+        self.dataChanged.emit(
+            self.index(0, 0),
+            self.index(len(self) - 1, self.columnCount())
+        )
+        self.layoutChanged.emit()
 
     def clear(self):
         self.beginResetModel()

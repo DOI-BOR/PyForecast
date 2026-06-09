@@ -208,7 +208,7 @@ class ModelGenerator(QRunnable):
                     f'<b>{regressor.regression_model}</b><br>{genome}'
                     f' Scorer ({regressor.scoring_metric}):'
                     f' {score:+12.5f}'
-                    f' ({len(feature_selector.completed):>{fs_total}}/{fs_total})')
+                    f' ({len(feature_selector.completed):>{fs_total-1}}/{fs_total})')
 
                 app.processEvents()
                 if self.use_list:

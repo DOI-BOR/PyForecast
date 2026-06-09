@@ -173,9 +173,9 @@ class ConfigurationEditor(QWidget):
         self.predictand_period_end_field.setDisplayFormat('MMM dd')
         self.predictand_preprocessing_field = ZzQComboBox()
         self.predictand_unit_field = ZzQComboBox()
-        self.view_predictand_data_button = QPushButton('View/Edit Target Data')
+        self.view_predictand_data_button = QPushButton('View Target Data')
         self.view_predictand_data_button.setStatusTip(
-            'Open the forecast target data in a new window for viewing/editing')
+            'Open the forecast target data in a new window for viewing')
 
         self.predictor_list = QTableView()
         self.predictor_list.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
@@ -183,12 +183,12 @@ class ConfigurationEditor(QWidget):
         self.predictor_list.horizontalHeader().setVisible(True)
         self.predictor_count = QLabel(
             'There are <strong>0</strong> predictors in this configuration')
-        self.predictor_add_button = QPushButton('Add/Remove Predictors')
+        self.predictor_add_button = QPushButton('Edit Predictors')
         self.predictor_add_button.setStatusTip(
             'Open the Predictor Dialog to add or remove predictors')
-        self.view_predictor_data_button = QPushButton("View/Edit Predictor Data")
+        self.view_predictor_data_button = QPushButton("View Predictor Data")
         self.view_predictor_data_button.setStatusTip(
-            'Open the predictor data in a new window for viewing/editing')
+            'Open the predictor data in a new window for viewing')
 
         self.regressor_list = QTableView()
         self.regressor_list.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
@@ -196,7 +196,7 @@ class ConfigurationEditor(QWidget):
         self.regressor_list.horizontalHeader().setVisible(True)
         self.regressor_count = QLabel(
             'There are <strong>0</strong> regressors in this configuration')
-        self.regressor_add_button = QPushButton('Add/Remove Regressor')
+        self.regressor_add_button = QPushButton('Edit Regressors')
         self.regressor_add_button.setStatusTip(
             'Open the Regressor Dialog to add or remove regressors')
 

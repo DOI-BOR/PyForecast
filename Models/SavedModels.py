@@ -288,6 +288,7 @@ class SavedModelList(QAbstractListModel):
             self.endRemoveRows()
 
         self.dataChanged.emit(self.index(0), self.index(self.rowCount()))
+        self.layoutChanged.emit()
         app.SMMV.update_combo_box(None, None)
 
     def clear_all(self):
@@ -305,10 +306,12 @@ class SavedModelList(QAbstractListModel):
         self.saved_models.append(model)
         self.dataChanged.emit(self.index(0), self.index(self.rowCount()))
         app.SMMV.update_combo_box(None, None)
+        self.layoutChanged.emit()
 
     def insertRows(self, position, rows, parent=QModelIndex()):
         self.beginInsertRows(parent, position, position + rows - 1)
         self.endInsertRows()
+        self.layoutChanged.emit()
         return True
 
     def __len__(self):
@@ -319,3 +322,4 @@ class SavedModelList(QAbstractListModel):
 
     def __setitem__(self, idx, data):
         self.saved_models[idx] = data
+        self.layoutChanged.emit()

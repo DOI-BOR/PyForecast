@@ -286,17 +286,20 @@ class Regressors(QAbstractTableModel):
     def insertRows(self, position, rows, parent=QModelIndex()):
         self.beginInsertRows(parent, position, position + rows - 1)
         self.endInsertRows()
+        self.layoutChanged.emit()
         return True
 
     def removeRows(self, position, rows, parent=QModelIndex()):
         self.beginRemoveRows(parent, position, position + rows - 1)
         self.endRemoveRows()
+        self.layoutChanged.emit()
         return True
 
     def __setitem__(self, idx, regressor):
         self.regressors[idx] = regressor
         self.dataChanged.emit(self.index(0, 0),
                               self.index(self.rowCount(), self.columnCount()))
+        self.layoutChanged.emit()
 
     def __getitem__(self, idx):
         return self.regressors[idx]
@@ -382,11 +385,13 @@ class PredictorPool(QAbstractTableModel):
     def insertRows(self, position, rows, parent=QModelIndex()):
         self.beginInsertRows(parent, position, position + rows - 1)
         self.endInsertRows()
+        self.layoutChanged.emit()
         return True
 
     def removeRows(self, position, rows, parent=QModelIndex()):
         self.beginRemoveRows(parent, position, position + rows - 1)
         self.endRemoveRows()
+        self.layoutChanged.emit()
         return True
 
     def __setitem__(self, idx, predictor):
@@ -395,6 +400,7 @@ class PredictorPool(QAbstractTableModel):
             self.index(0, 0),
             self.index(self.rowCount(), self.columnCount())
         )
+        self.layoutChanged.emit()
 
     def __getitem__(self, idx):
         return self.predictors[idx]
@@ -459,7 +465,7 @@ class ModelConfigurations(QAbstractListModel):
         self.removeRow(idx)
         self.endRemoveRows()
         self.dataChanged.emit(self.index(0), self.index(self.rowCount()))
-
+        self.layoutChanged.emit()
         return
 
     def clear_all(self):
@@ -539,6 +545,7 @@ class ModelConfigurations(QAbstractListModel):
     def __setitem__(self, index, config):
         self.configurations[index] = config
         self.dataChanged.emit(self.index(0), self.index(self.rowCount()))
+        self.layoutChanged.emit()
 
     def __len__(self):
         return len(self.configurations)
