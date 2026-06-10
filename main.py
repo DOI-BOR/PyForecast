@@ -225,6 +225,15 @@ class PyForecast(QApplication):
             self.gui.resize(width, height)
             self.gui.show()
 
+        # Bring gui to foreground, request OS focus
+        self.gui.setWindowState(
+            self.gui.windowState()
+            & ~Qt.WindowState.WindowMinimized
+            | Qt.WindowState.WindowActive
+        )
+        self.gui.raise_()
+        self.gui.activateWindow()
+
         # Open the file if there is one
         if kwargs['file']:
             self.MWMV.OpenFile(None, filename=kwargs['file'])
