@@ -152,8 +152,14 @@ class GenModelDialog(QDialog):
         self.model_list.setSortingEnabled(True)
         self.model_list.selectionModel().currentRowChanged.connect(self.set_model)
 
-        # Create progress dialog
+        # Create progress dialog, without a close button
         self.pd = QProgressDialog("", "", 0, 100, parent)
+        flags = (
+                Qt.WindowType.Window
+                | Qt.WindowType.WindowTitleHint
+                | Qt.WindowType.CustomizeWindowHint
+        )
+        self.pd.setWindowFlags(flags)
         self.pd.abort_button = QPushButton('Abort')
         self.pd.abort_button.clicked.connect(self.abort)
         self.pd.setCancelButton(self.pd.abort_button)
