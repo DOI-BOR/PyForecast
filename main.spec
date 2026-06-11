@@ -1,5 +1,11 @@
 # -*- mode: python ; coding: utf-8 -*-
+import os
 
+
+# Specific Analysis.datas files to exclude in dist
+blocklist = {
+    'material-design-icons-4.0.0.tar.gz',
+}
 
 a = Analysis(
     ['main.py'],
@@ -20,6 +26,8 @@ a = Analysis(
     noarchive=False,
     optimize=0,
 )
+a.datas = [item for item in a.datas if os.path.basename(item[0]) not in blocklist]
+
 pyz = PYZ(a.pure)
 
 splash = Splash(
@@ -53,6 +61,7 @@ exe = EXE(
     entitlements_file=None,
     icon=['Resources/Icons/AppIcon.ico'],
 )
+
 coll = COLLECT(
     exe,
     splash.binaries,
