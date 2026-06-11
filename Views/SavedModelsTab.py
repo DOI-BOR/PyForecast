@@ -96,6 +96,7 @@ class SavedModelsTab(QWidget):
             app.saved_models.index(app.saved_models.rowCount())
         )
         app.gui.SavedModelsTab.widg.update()
+        app.gui.SavedModelsTab.model_list.update()
 
 
 class ModelList(QListView):

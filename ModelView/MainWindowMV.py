@@ -36,7 +36,7 @@ class MainWindowModelView:
         self.mw.edit_units_option.triggered.connect(self.EditUnits)
         self.mw.edit_settings_option.triggered.connect(self.EditApplicationSettings)
         self.mw.documentation_option.triggered.connect(self.OpenDocs)
-        self.mw.check_updates_option.triggered.connect(self.UpdateCheck)
+        # self.mw.check_updates_option.triggered.connect(self.UpdateCheck)
         self.mw.show_log_option.triggered.connect(self.ShowLog)
 
         # initialize the application font-size from the configuration file
@@ -289,7 +289,7 @@ class MainWindowModelView:
 
         QDesktopServices.openUrl(
             QUrl(
-            'https://github.com/usbr/PyForecast/tree/PyForecastV5#pyforecast-version-5-'
+            'https://github.com/DOI-BOR/PyForecast/wiki'
             )
         )
 

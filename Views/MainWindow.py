@@ -51,27 +51,27 @@ class MainWindow(QMainWindow):
         self.new_option = QAction("New")
         self.new_option.setShortcut('Ctrl+N')
         self.new_option.setStatusTip('Create a new forecast from scratch')
-        self.new_option.setIcon(QIcon.fromTheme('document-new'))
+        self.new_option.setIcon(QIcon(':/Icons/src-content-add.svg'))
         file_menu.addAction(self.new_option)
 
-        self.file_open_option = QAction('Open')
+        self.file_open_option = QAction('Open...')
         self.file_open_option.setShortcut('Ctrl+O')
         self.file_open_option.setStatusTip('Select and open a forecast file')
-        self.file_open_option.setIcon(QIcon.fromTheme('document-open'))
+        self.file_open_option.setIcon(QIcon(':/Icons/src-content-file-open.svg'))
         file_menu.addAction(self.file_open_option)
 
         self.file_save_option = QAction('Save')
         self.file_save_option.setShortcut('Ctrl+S')
         self.file_save_option.setStatusTip(
             'Saves the current forecast file with the same filename')
-        self.file_save_option.setIcon(QIcon.fromTheme('document-save'))
+        self.file_save_option.setIcon(QIcon(':/Icons/src-content-save.svg'))
         file_menu.addAction(self.file_save_option)
 
-        self.file_save_as_option = QAction('Save As')
+        self.file_save_as_option = QAction('Save As...')
         self.file_save_as_option.setShortcut('Ctrl+Shift+S')
         self.file_save_as_option.setStatusTip(
             'Saves the current forecast file with a new filename')
-        self.file_save_as_option.setIcon(QIcon.fromTheme('document-save-as'))
+        self.file_save_as_option.setIcon(QIcon(':/Icons/src-content-save-as.svg'))
         file_menu.addAction(self.file_save_as_option)
 
         file_menu.addSeparator()
@@ -79,15 +79,15 @@ class MainWindow(QMainWindow):
         self.export_option = QAction('Export to Excel')
         self.export_option.setStatusTip(
             'Exports the current forecast file to an Excel spreadsheet')
-        self.export_option.setIcon(QIcon.fromTheme('application-x-executable'))
+        self.export_option.setIcon(QIcon(':/Icons/src-navigation-arrow-downward.svg'))
         file_menu.addAction(self.export_option)
 
         # Set up the View menu
         view_menu = QMenu('View')
 
-        toggle_font_option = QMenu('Adjust font size', toolTipsVisible=True)
+        toggle_font_option = QMenu('Adjust Font Size', toolTipsVisible=True)
         toggle_font_option.setStatusTip('Changes the application font size')
-        toggle_font_option.setIcon(QIcon.fromTheme('preferences-desktop-font'))
+        toggle_font_option.setIcon(QIcon(':/Icons/src-editor-format-size.svg'))
         self.font_toggles = QActionGroup(toggle_font_option)
         self.font_toggles.setExclusive(True)
         options = ['Small', 'Medium', 'Large']
@@ -100,50 +100,56 @@ class MainWindow(QMainWindow):
 
         view_menu.addMenu(toggle_font_option)
 
-        self.show_log_option = QAction('Show application log')
+        self.show_log_option = QAction('Show Application Log...')
         self.show_log_option.setStatusTip(
             'Open a textbox that views the application log')
-        self.show_log_option.setIcon(QIcon.fromTheme('system-file-manager'))
+        self.show_log_option.setIcon(QIcon(':/Icons/src-file-text-snippet.svg'))
         view_menu.addAction(self.show_log_option)
 
         # Set up the Settings menu
         settings_menu = QMenu('Settings')
 
-        self.edit_units_option = QAction('Edit application units')
+        self.edit_units_option = QAction('Edit Application Units...')
         self.edit_units_option.setStatusTip(
             'View, add, and edit the measurement units that PyForecast has access to')
-        self.edit_units_option.setIcon(QIcon.fromTheme('applications-system'))
+        self.edit_units_option.setIcon(QIcon(':/Icons/src-image-straighten.svg'))
         settings_menu.addAction(self.edit_units_option)
 
-        self.edit_settings_option = QAction('Edit application settings')
+        self.edit_settings_option = QAction('Edit Application Settings...')
         self.edit_settings_option.setStatusTip(
             'Edit the application-wide settings and configuration')
-        self.edit_settings_option.setIcon(QIcon.fromTheme('applications-system'))
+        self.edit_settings_option.setIcon(QIcon(':/Icons/src-action-settings.svg'))
         settings_menu.addAction(self.edit_settings_option)
 
         # Set up the Tools menu
         tools_menu = QMenu('Tools')
 
-        self.reload_points_option = QAction('Reload Point Datasets')
+        self.reload_points_option = QAction('Reload Point Datasets...')
         self.reload_points_option.setStatusTip(
             'Add new point datasets that PyForecast has access to')
-        self.reload_points_option.setIcon(QIcon.fromTheme('view-refresh'))
+        self.reload_points_option.setIcon(QIcon(':/Icons/src-navigation-refresh.svg'))
         tools_menu.addAction(self.reload_points_option)
 
         # Set up the Help menu
         help_menu = QMenu('Help')
 
-        self.documentation_option = QAction('PyForecast documentation')
+        self.documentation_option = QAction('Documentation...')
         self.documentation_option.setStatusTip(
             'Opens the PyForecast documentation in a separate window')
-        self.documentation_option.setIcon(QIcon.fromTheme('system-help'))
+        self.documentation_option.setIcon(QIcon(':/Icons/src-action-help.svg'))
         help_menu.addAction(self.documentation_option)
 
-        self.check_updates_option = QAction('Check for updates')
-        self.check_updates_option.setStatusTip(
-            'Check the github repository for any software updates')
-        self.check_updates_option.setIcon(QIcon.fromTheme('system-software-update'))
-        help_menu.addAction(self.check_updates_option)
+        # self.check_updates_option = QAction('Check for Updates')
+        # self.check_updates_option.setStatusTip(
+        #     'Check the GitHub repository for any software updates')
+        # self.check_updates_option.setIcon(QIcon.fromTheme('system-software-update'))
+        # help_menu.addAction(self.check_updates_option)
+
+        self.about_option = QAction('About PyForecast...')
+        self.about_option.setStatusTip(
+            'Displays a dialog of information about PyForecast')
+        self.about_option.setIcon(QIcon(':/Icons/src-action-info.svg'))
+        help_menu.addAction(self.about_option)
 
         menu_bar.addMenu(file_menu)
         menu_bar.addMenu(view_menu)

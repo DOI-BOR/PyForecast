@@ -2,6 +2,18 @@
 <RCC version="1.0">
     <qresource>
         <file>Icons/AppIcon.ico</file>
+        <file>Icons/src-content-add.svg</file>
+        <file>Icons/src-content-file-open.svg</file>
+        <file>Icons/src-content-save.svg</file>
+        <file>Icons/src-content-save-as.svg</file>
+        <file>Icons/src-navigation-arrow-downward.svg</file>
+        <file>Icons/src-editor-format-size.svg</file>
+        <file>Icons/src-file-text-snippet.svg</file>
+        <file>Icons/src-image-straighten.svg</file>
+        <file>Icons/src-action-settings.svg</file>
+        <file>Icons/src-navigation-refresh.svg</file>
+        <file>Icons/src-action-help.svg</file>
+        <file>Icons/src-action-info.svg</file>
         <file>Stylesheets/application_style.qss</file>
         <file>../version.txt</file>
         <file>../settings.conf</file>

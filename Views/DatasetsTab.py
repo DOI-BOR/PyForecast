@@ -47,8 +47,10 @@ class DatasetsTab(QWidget):
         self.splitter.splitterMoved.connect(lambda: self.updateListSize())
 
     def updateListSize(self):
-        app.datasets.dataChanged.emit(app.datasets.index(0),
-                                      app.datasets.index(app.datasets.rowCount()))
+        app.datasets.dataChanged.emit(
+            app.datasets.index(0),
+            app.datasets.index(app.datasets.rowCount())
+        )
         app.gui.DatasetsTab.widg.update()
         app.gui.DatasetsTab.dataset_list.update()
 

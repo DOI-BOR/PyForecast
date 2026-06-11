@@ -63,7 +63,6 @@ class PyForecast(QApplication):
 
         # Setup logging
         self.setup_logger()
-        logging.info('Starting PyForecast')
 
         # Gets the current user
         self.current_user = os.getlogin()
@@ -76,9 +75,9 @@ class PyForecast(QApplication):
             stream = QTextStream(file)
             self.PYCAST_VERSION = stream.readLine()
             file.close()
+        logging.info(f'Starting PyForecast Version ... {self.PYCAST_VERSION}')
         logging.info(f'Using Python Version ... {self.PYTHON_VERSION}')
         logging.info(f'Using PySide Qt Version ... {qVersion()}')
-        logging.info(f'Using PyForecast Version ... {self.PYCAST_VERSION}')
 
         # Setup Application information
         self.setApplicationName(f'PyForecast v{self.PYCAST_VERSION}')
