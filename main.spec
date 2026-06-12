@@ -5,6 +5,8 @@ import os
 # Specific Analysis.datas files to exclude in dist
 blocklist = {
     'material-design-icons-4.0.0.tar.gz',
+    'map_data_old.geojson',
+    'HUC8_WGS84.json',
 }
 
 a = Analysis(
