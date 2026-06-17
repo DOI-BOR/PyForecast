@@ -1,0 +1,42 @@
+Tried using pyside6-deploy (the "official" tool to bundle PySide6 applications
+into standalone executable files). Created a pyside6deploy.spec file that on
+the backend uses Nuitka, but kept having issues with a ctypes error that I
+could not figure out. Tried directly running Nuitka, with the commands below
+to specifically include 'ctypes', still didn't work. So, I pivoted to
+PyInstaller.
+
+    Past notes on Nuitka attempts provided anyway:
+        Call Nuitka from a Visual Studio Developer Command Prompt:
+        (Note: Desktop development with C++ is needed from the Visual Studio
+        Installer or maybe some other method to get the C++ toolchain)
+
+        Build command:
+        C:\Users\BLounsbury\source\repos\PyForecast>C:\Users\BLounsbury\AppData\
+        Local\miniforge3\envs\pyforecast6.0.0\python.exe -m nuitka --standalone
+        --plugin-enable=pyside6 --include-module=ctypes --follow-imports
+        --output-filename=PyForecast main.py
+
+
+PyInstaller seems to be working after some Python code changes, specifically
+replacing the Logger(QObject) class with a LogSignaler(QObject) class and a
+QSignalingHandler(logging.Handler) class using python logging, removing the
+Numba package with associated JIT decorations, and altering the model generator
+to use a QRunnable rather than a QThread. These items did not function with the
+PyInstaller generated PyForecast.exe (how a functional PyForecast.exe was
+previously generated for V5 is unknown and no documentation or code structure
+was found in the repository when I started on the project). In addition, pickled
+forecasts that successfully function in my development environment continue to
+fail with PyForecast.exe (additional reasoning to continue the move to SQLite
+to store forecast information and wipe pickle from the project).
+
+To build PyForecast:
+There are likely details that need to be added here to point to a Python
+virtual environment. I use PyCharm and set the interpreter to my virtual
+environment and things just work.
+
+At some point, clear development/deployment instructions should be generated
+either here or on GitHub as the project is moved to uv
+(https://docs.astral.sh/uv/) to handle python package management.
+
+(pyforecast6.0.0) PS C:\Users\BLounsbury\source\repos\PyForecast>
+pyinstaller --clean --noconfirm .\main.spec

@@ -1,0 +1,134 @@
+To-Do prior to v6 release:
+
+Step 1: put all these to-do tasks into GitHub issues with a milestone to
+be done prior to the next release. If anyone else is available to assist
+with this project, they can start with any of these items.
+
+* Update to most recent Python, and upgrade all packages. Use uv, next
+    bullet point. I had downgraded Python to 3.13 when I was trying to
+    bundle the program using Nuitka because that is all it supported.
+    PyInstaller does not have this limitation.
+
+* Setup uv (https://docs.astral.sh/uv/) to manage the Python environment. 
+    This tool will simplify the entire python package management system 
+    and provide a uv.lock file that contains the exact resolved versions 
+    that are installed in the project environment, allowing for consistent 
+    and reproducible installations across machines. It also ensures that 
+    when deploying the project as an application that the exact set of used 
+    package versions is known.
+
+* Complete any desired changes to app logging. Do we want an app_log.txt that
+    includes all messages? Do we want to get sys.stdout into the application 
+    log view? Personally, I would ignore having an app_log.txt and write all
+    messages to the application log. I doubt most users even look at the log
+    file unless there is an issue. So, if there is an issue, the application
+    log window should show what the issue is.
+
+* Move DataDownloader.py DownloadRunner(QThread) to use the QThreadPool manager
+    rather than trying to manually manage the thread. Transition code/method to 
+    a QRunnable worker. May also want to track all QRunnable workers in main.py 
+    to ensure they are all shutdown properly in case of program crashes, etc.
+    Could also move the SavedModelsMV.py genModelDialog->generate_forecasts to
+    a separate QRunnable worker instead of the main GUI thread.
+
+* Finish SQLite setup. Ideally ... prior to releasing we would setup SQLAlchemy
+    to programmatically handle Object Relational Mapping from python classes to
+    the database schema. Ensure classes Predictand, Predictors, Regressor have 
+    a 'guid' to properly find information within the database.
+
+* Remove all python pickle package stuff. I don't even want to get into all of
+    the issues I've encountered with the python pickle package. It is simply
+    not meant for long-term storage of forecast information. Implement separate
+    V4 conversion tool to convert all of CPNs "pickled" forecast files to an 
+    SQLite database.
+
+* Implement logic to call existing function to reload PointDatasets. Also, need
+    to figure out how to apply the "monthly2daily" option, it got lost from V4
+    to V5, but is critical to the CPN forecasting workflow.
+
+* Ensure that all Dataloaders are functioning to download data. In particular,
+    the USGS API has changed and needs a thorough review.
+
+* Implement a Help->About dialog. Maybe put a QTextEdit with the license
+    information in there, contributors, tools used to build PyForecast, etc.
+
+* Lots of work needs done at: https://github.com/DOI-BOR/PyForecast/wiki, the
+    title is referencing V2 and needs revamped. Should this be the official 
+    "documentation" for PyForecast? Should an html document be started to
+    provide official documentation?
+
+* Implement V4 code to retrain/rerun forecasts programmatically. This is a
+    highly critical piece of functionality relied on in CPN for monthly 
+    operational forecasts.
+
+
+Good to-do, but not essential (maybe):
+
+* From my reading/understanding the code is not emitting changes correctly to
+    to the QAbstractListModel(s)/QAbstractTableModel(s). When data within an 
+    item in the list is changed then list.dataChanged.emit() should be called. 
+    When items are added or removed from the list, 
+    list.beginInsertRows()/list.endInsertRows() should be called. Currently, 
+    list.dataChanged.emit() is being called on essentially every change. 
+    
+    For example, SavedModels.py->SavedModelList(QAbstractListModel) calls
+    its "append(self, model)" function which calls insertRow() which from
+    my quick google may not call beginInsertRows/endInsertRows (despite the
+    fact that SavedModelList overrides insertRows, then it
+    calls dataChanged.emit() which again from my quick google is unnecessary
+    because existing data is not changing, a Row is simply being inserted.
+    
+    I would think that "append(self, model)" would call insertRows with the
+    row index rather than calling insertRow separately.
+
+* The code really really really really really needs unit tests. See GitHub
+    issue #2 (https://github.com/DOI-BOR/PyForecast/issues/2). 
+    There should be unit tests to ensure, at minimum:
+        - that reading/writing of forecasts functions
+        - web requests function to download data (USGS, NRCS, Hydromet, etc)
+        - regression outputs replicate when code is changed
+        - forecast outputs replicate when code is changed
+        - other critical outputs replicate when code is changed
+        - etc...
+
+* More of a periphery comment, but I have seen very few checks/validations
+    within functions that they have the data they expect to have to 
+    function correctly. Or that while functions execute, calculations are
+    executing correctly. This can and will lead to unexpected application
+    behavior and application crashes. Both the model generator and generate
+    forecast functions should be parsed into smaller functions that do small
+    and specific tasks. If there is an error with a task, log it, and inform
+    the user as needed.
+    
+    For example, outside of the 2 try/except/finally
+    blocks I implemented to load/save an SQLite forecast, there is 1 
+    try/except for plot tick formatting, in the entire codebase!
+    
+    Another example, once the model generator finishes and shows the models,
+    clicking the 'Save' button caused an exception because the code did not
+    check if an actual row (model) was selected to save, so index error in code.
+
+* On the other end of the spectrum. Personally, I do not think that Python
+    is the proper tool for a full-fledged desktop application. Python packages
+    are constantly changing with API breakages, combined with the inherent
+    difficulty of packaging a Python application (e.g., PyInstaller, etc.). I
+    have PyInstaller functioning, but it required:
+        - modifying the Logger class because it was assigning sys.stdout to
+            the Logger QObject and calling the classes 'write' function and 
+            the PyInstaller generated PyForecast.exe failed stating that the
+            object had no 'write' method, I presume because sys.stdout indeed
+            has no 'write' method.
+        - modifying the model generator to use a QRunnable rather than manually
+           managing a QThread. The PyInstaller generated PyForecast.exe would
+           simply freeze when trying to run the model generator.
+        - loading a V5 pickled forecast works in my development environment, 
+            but fails with the PyInstaller generated PyForecast.exe. SQLite
+            functions correctly in both environments.
+        - Numba JIT usage was causing errors, so it was removed.
+    This inconsistency in application behavior in a development environment vs 
+    the bundled application is extremely worrisome to the long-term use of the 
+    program. My preference would be to move the entire codebase into a compiled 
+    language like C# where "bundling" the application is simply "compile", and
+    consistency between a development build and release build is guaranteed.
+    A framework like Avalonia or Uno could provide a truly cross-platform 
+    desktop application and provide long-term program stability.
