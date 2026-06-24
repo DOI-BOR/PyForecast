@@ -4,19 +4,6 @@ Step 1: put all these to-do tasks into GitHub issues with a milestone to
 be done prior to the next release. If anyone else is available to assist
 with this project, they can start with any of these items.
 
-* Update to most recent Python, and upgrade all packages. Use uv, next
-    bullet point. I had downgraded Python to 3.13 when I was trying to
-    bundle the program using Nuitka because that is all it supported.
-    PyInstaller does not have this limitation.
-
-* Setup uv (https://docs.astral.sh/uv/) to manage the Python environment. 
-    This tool will simplify the entire python package management system 
-    and provide a uv.lock file that contains the exact resolved versions 
-    that are installed in the project environment, allowing for consistent 
-    and reproducible installations across machines. It also ensures that 
-    when deploying the project as an application that the exact set of used 
-    package versions is known.
-
 * Complete any desired changes to app logging. Do we want an app_log.txt that
     includes all messages? Do we want to get sys.stdout into the application 
     log view? Personally, I would ignore having an app_log.txt and write all
