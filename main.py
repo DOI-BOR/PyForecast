@@ -11,7 +11,6 @@ from PySide6.QtCore import (qVersion, Signal, QObject, QFile, QTextStream,
 from PySide6.QtGui import QIcon, QGuiApplication, QPixmap
 from PySide6.QtQuick import QQuickWindow, QSGRendererInterface
 from PySide6.QtWidgets import QApplication
-from pandas.io.parsers import base_parser
 
 from Resources import resources
 from Utilities.JsonHooks import DatetimeParser

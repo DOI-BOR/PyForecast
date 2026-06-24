@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (QApplication, QWidget, QPushButton, QHBoxLayout,
                                QVBoxLayout, QGridLayout, QSplitter, QListView,
                                QAbstractItemView, QMenu, QScrollArea, QLabel,
                                QLineEdit, QCheckBox, QTextEdit, QTableView,
-                               QFormLayout, QFrame, QSizePolicy)
+                               QFormLayout, QFrame, QSizePolicy, QSpacerItem)
 
 from Utilities import RichTextDelegate
 from Utilities.ZzQWidgets import ZzQDateEdit, ZzQComboBox
@@ -227,9 +227,21 @@ class ConfigurationEditor(QWidget):
         hline.setLineWidth(2)
         layout.addRow(hline)
 
-        label = QLabel('<strong>Forecast Target Information</strong>')
+        label = QLabel('<strong>Target</strong>')
         label.setObjectName('HeaderLabel')
-        layout.addRow(label)
+        hlayout = QHBoxLayout()
+        hlayout.addWidget(label)
+        hlayout.addStretch(1)
+        hlayout.addWidget(self.view_predictand_data_button)
+        layout.addRow(hlayout)
+        layout.addItem(
+            QSpacerItem(
+                20,
+                20,
+                QSizePolicy.Policy.Expanding,
+                QSizePolicy.Policy.Expanding
+            )
+        )
         layout.addRow("Target Dataset", self.predictand_field)
         layout.addRow("Target Aggregation Method", self.predictand_method_field)
         hlayout = QHBoxLayout()
@@ -241,10 +253,6 @@ class ConfigurationEditor(QWidget):
         layout.addRow(hlayout)
         layout.addRow("Target Preprocessing", self.predictand_preprocessing_field)
         layout.addRow("Target Unit", self.predictand_unit_field)
-        hlayout = QHBoxLayout()
-        hlayout.addStretch(1)
-        hlayout.addWidget(self.view_predictand_data_button)
-        layout.addRow(hlayout)
         hline = QFrame()
         hline.setFrameShape(QFrame.Shape.HLine)
         hline.setLineWidth(2)
@@ -252,11 +260,14 @@ class ConfigurationEditor(QWidget):
 
         label = QLabel('<strong>Predictors</strong>')
         label.setObjectName('HeaderLabel')
-        layout.addRow(label)
+        hlayout = QHBoxLayout()
+        hlayout.addWidget(label)
+        hlayout.addStretch(1)
+        hlayout.addWidget(self.view_predictor_data_button)
+        layout.addRow(hlayout)
         hlayout = QHBoxLayout()
         hlayout.addWidget(self.predictor_count)
         hlayout.addStretch(1)
-        hlayout.addWidget(self.view_predictor_data_button)
         hlayout.addWidget(self.predictor_add_button)
         layout.addRow(hlayout)
         layout.addRow(self.predictor_list)
