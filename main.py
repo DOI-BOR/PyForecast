@@ -3,6 +3,7 @@ import os
 import sys
 import logging
 import ctypes
+import tomllib
 from pathlib import Path
 
 from PySide6.QtCore import (qVersion, Signal, QObject, QFile, QTextStream,
@@ -10,6 +11,7 @@ from PySide6.QtCore import (qVersion, Signal, QObject, QFile, QTextStream,
 from PySide6.QtGui import QIcon, QGuiApplication, QPixmap
 from PySide6.QtQuick import QQuickWindow, QSGRendererInterface
 from PySide6.QtWidgets import QApplication
+from pandas.io.parsers import base_parser
 
 from Resources import resources
 from Utilities.JsonHooks import DatetimeParser
@@ -44,7 +46,7 @@ class PyForecast(QApplication):
     base_dir = (
         Path(sys._MEIPASS)
         if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS")
-        else Path(__file__).parent.absolute()
+        else Path(__file__).parent.resolve()
     )
 
     # icon used in the application
@@ -70,11 +72,10 @@ class PyForecast(QApplication):
         # Print out the various versions of installed software
         pyversion = sys.version_info
         self.PYTHON_VERSION = f'{pyversion.major}.{pyversion.minor}.{pyversion.micro}'
-        file = QFile(':/version.txt')
-        if file.open(QFile.OpenModeFlag.Text.ReadOnly):
-            stream = QTextStream(file)
-            self.PYCAST_VERSION = stream.readLine()
-            file.close()
+        file = self.base_dir.joinpath('pyproject.toml')
+        with open(file, 'rb') as f:
+            pyproject = tomllib.load(f)
+            self.PYCAST_VERSION = pyproject['project']['version']
         logging.info(f'Starting PyForecast Version ... {self.PYCAST_VERSION}')
         logging.info(f'Using Python Version ... {self.PYTHON_VERSION}')
         logging.info(f'Using PySide Qt Version ... {qVersion()}')

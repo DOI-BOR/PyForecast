@@ -15,7 +15,6 @@
         <file>Icons/src-action-help.svg</file>
         <file>Icons/src-action-info.svg</file>
         <file>Stylesheets/application_style.qss</file>
-        <file>../version.txt</file>
         <file>../settings.conf</file>
     </qresource>
 </RCC>

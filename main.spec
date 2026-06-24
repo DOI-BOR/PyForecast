@@ -17,6 +17,7 @@ a = Analysis(
         ('Resources/WebMap', 'Resources/WebMap'),
         ('Resources/Icons', 'Resources/Icons'),
         ('Resources/templates', 'Resources/templates'),
+        ('pyproject.toml', '.')
     ],
     hiddenimports=[],
     hookspath=[],
