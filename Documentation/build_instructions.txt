@@ -38,5 +38,14 @@ At some point, clear development/deployment instructions should be generated
 either here or on GitHub as the project is moved to uv
 (https://docs.astral.sh/uv/) to handle python package management.
 
+First, download UPX (https://github.com/upx/upx/releases). We will then tell
+PyInstaller where the tool is to compress binaries and dlls. For example, copy
+the folder to your local PyForecast repository folder.
+
+PyInstaller:
+    --clean = removes 'build' data
+    --noconfirm = removes 'dist' data without confirmation
+    --upx-dir = path to upx.exe
+
 (pyforecast6.0.0) PS C:\Users\BLounsbury\source\repos\PyForecast>
-pyinstaller --clean --noconfirm .\main.spec
+pyinstaller --clean --noconfirm --upx-dir=upx-5.2.0-win64 .\main.spec
