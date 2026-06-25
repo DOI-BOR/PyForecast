@@ -114,37 +114,52 @@ class SettingsDialog(QDialog):
 
     def load_settings(self):
         self.download_start_setting.setDate(
-            QDate(app.settings['default_data_download_start']))
+            QDate(app.settings['default_data_download_start'])
+        )
         self.download_recent_lookback_setting.setValue(
-            app.settings['default_recent_data_lookback'])
+            app.settings['default_recent_data_lookback']
+        )
         self.model_training_duration_setting.setValue(
-            app.settings['default_model_training_duration'])
+            app.settings['default_model_training_duration']
+        )
         self.default_cross_validation_setting.setCurrentText(
-            app.settings['default_cross_validation'])
+            app.settings['default_cross_validation']
+        )
         self.default_feature_selection.setCurrentText(
-            app.settings['default_feature_selector'])
+            app.settings['default_feature_selector']
+        )
         self.brute_force_under_setting.setValue(
-            app.settings['brute_force_under_no'])
+            app.settings['brute_force_under_no']
+        )
         self.search_time_limit_setting.setValue(
-            app.settings['model_search_time_limit'])
+            app.settings['model_search_time_limit']
+        )
         self.max_pc_modes_setting.setValue(
-            app.settings['max_pc_mode_variance'])
+            app.settings['max_pc_mode_variance']
+        )
 
     def store_settings(self):
-        date = self.download_start_setting.date().toPython()
         app.settings['default_data_download_start'] = (
-            datetime(date.year, date.month, date.day))
+            self.download_start_setting.dateTime().toPython()
+        )
         app.settings['default_recent_data_lookback'] = (
-            self.download_recent_lookback_setting.value())
+            self.download_recent_lookback_setting.value()
+        )
         app.settings['default_model_training_duration'] = (
-            self.model_training_duration_setting.value())
+            self.model_training_duration_setting.value()
+        )
         app.settings['default_cross_validation'] = (
-            self.default_cross_validation_setting.currentText())
+            self.default_cross_validation_setting.currentText()
+        )
         app.settings['default_feature_selector'] = (
-            self.default_feature_selection.currentText())
+            self.default_feature_selection.currentText()
+        )
         app.settings['brute_force_under_no'] = (
-            self.brute_force_under_setting.value())
+            self.brute_force_under_setting.value()
+        )
         app.settings['model_search_time_limit'] = (
-            self.search_time_limit_setting.value())
+            self.search_time_limit_setting.value()
+        )
         app.settings['max_pc_mode_variance'] = (
-            self.max_pc_modes_setting.value())
+            self.max_pc_modes_setting.value()
+        )

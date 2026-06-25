@@ -327,16 +327,15 @@ class ModelConfigurationModelView:
         # Store the metadata
         config.name = self.ce.name_field.text()
         config.comment = self.ce.comment_field.toPlainText()
-        config.issue_date = self.ce.issue_date_field.date().toPython()
-        config.training_start_date = self.ce.training_start_field.date().toPython()
-        config.training_end_date = self.ce.training_end_field.date().toPython()
+        config.issue_date = self.ce.issue_date_field.dateTime().toPython()
+        config.training_start_date = self.ce.training_start_field.dateTime().toPython()
+        config.training_end_date = self.ce.training_end_field.dateTime().toPython()
+        config.training_exclude_dates = []
         if self.ce.exclude_check.isChecked():
             config.training_exclude_dates = (
                 list(map(lambda y: int(y.strip()),
                          self.ce.exclude_years_field.text().split(',')))
             )
-        else:
-            config.training_exclude_dates = []
 
         # Predictand
         idx = self.ce.predictand_field.currentIndex()
@@ -350,10 +349,10 @@ class ModelConfigurationModelView:
             self.ce.predictand_method_field.currentText()
         )
         config.predictand.period_start = (
-            self.ce.predictand_period_start_field.date().toPython()
+            self.ce.predictand_period_start_field.dateTime().toPython()
         )
         config.predictand.period_end = (
-            self.ce.predictand_period_end_field.date().toPython()
+            self.ce.predictand_period_end_field.dateTime().toPython()
         )
         idx = self.ce.predictand_unit_field.currentIndex()
         idx = self.filter_units_model.mapToSource(

@@ -388,8 +388,8 @@ class PredictorView(QDialog):
 
         predictor = ResampledDataset(
             dataset_guid=app.datasets[self.predictor_field.currentIndex()].guid,
-            period_start=self.predictor_period_start_field.date().toPython(),
-            period_end=self.predictor_period_end_field.date().toPython(),
+            period_start=self.predictor_period_start_field.dateTime().toPython(),
+            period_end=self.predictor_period_end_field.dateTime().toPython(),
             preprocessing=self.predictor_preprocessing_field.currentText(),
             unit=app.units[idx.row()],
             agg_method=self.predictor_method_field.currentText(),

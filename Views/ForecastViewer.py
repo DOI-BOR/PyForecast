@@ -100,10 +100,10 @@ class ForecastViewer(QDialog):
         e = self.experimentalTab
         F = ForecastDisaggregator.ForecastDisaggregator(self.model)
         syear = e.disagg_year_select.value()
-        smnth = e.disagg_start_edit.date().month()
-        emnth = e.disagg_end_edit.date().month()
-        sdy = e.disagg_start_edit.date().day()
-        edy = e.disagg_end_edit.date().day()
+        smnth = e.disagg_start_edit.dateTime().month()
+        emnth = e.disagg_end_edit.dateTime().month()
+        sdy = e.disagg_start_edit.dateTime().day()
+        edy = e.disagg_end_edit.dateTime().day()
         self.traces = F.Disaggregate(
             syear,
             datetime(1900, smnth, sdy),
