@@ -48,6 +48,8 @@ with this project, they can start with any of these items.
     highly critical piece of functionality relied on in CPN for monthly 
     operational forecasts.
 
+* Fix crash if a saved model is added, then File->New is executed.
+
 
 Good to-do, but not essential (maybe):
 
