@@ -85,6 +85,15 @@ wheels = [
 ]
 
 [[package]]
+name = "geojson"
+version = "3.3.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/13/a9/bd61eee2c7904947094b74866b569f3fd5a8d6ac907ecdfecef74b19d459/geojson-3.3.0.tar.gz", hash = "sha256:92e83b9cb378a450b42f1207bb9b2a031f9fc89185f335153c44369b8b8b71fd", size = 25141, upload-time = "2026-05-28T21:48:08.214Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/aa/5e/fdd72167b57158d743353f71d453200719744d1e75f18b1c8230508db370/geojson-3.3.0-py3-none-any.whl", hash = "sha256:a2d885187eeaa8b357600b3fcc9d963cb4300d1694196636dbd7eddc82fd0825", size = 15181, upload-time = "2026-05-28T21:48:06.648Z" },
+]
+
+[[package]]
 name = "idna"
 version = "3.18"
 source = { registry = "https://pypi.org/simple" }
@@ -230,6 +239,33 @@ wheels = [
 ]
 
 [[package]]
+name = "numpy-typing-compat"
+version = "20260602.2.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/08/db/5cd1d99caea4bf39fd477686ded4b9b70dff3c7673b5d84ef2d96a4f5aab/numpy_typing_compat-20260602.2.5.tar.gz", hash = "sha256:1885a678e9a24564839ed5d1711c0031735fb7de7f0b5ed88d550e5d45a8d4f9", size = 4593, upload-time = "2026-06-02T15:52:39.331Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b1/a4/9376b38b7387a0296b1f626b966e5503578625c9673777db1b45bf70acb0/numpy_typing_compat-20260602.2.5-py3-none-any.whl", hash = "sha256:21ba7757c8924d359a9ed3ab2163c282a70983ae64498fdba6d1892a6641c8b1", size = 5881, upload-time = "2026-06-02T15:52:34.167Z" },
+]
+
+[[package]]
+name = "optype"
+version = "0.18.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/99/51/51dc9b1009e020f44703933d4d1ee3429c647c026ce7806b37ee2b257998/optype-0.18.0.tar.gz", hash = "sha256:ea10dee61b15ca299ed0d97025d362585c4dfc5481159bb999a1d0d414bbcb04", size = 59967, upload-time = "2026-06-07T22:13:17.534Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5b/91/2b064a117cb2593bc3eb04ee994134ca2a6bf2162c92961769947e3258cc/optype-0.18.0-py3-none-any.whl", hash = "sha256:91822ed8516e7a4f225ba53d30f291776c35f31553fb952d7cda98286679c5a6", size = 73410, upload-time = "2026-06-07T22:13:16.324Z" },
+]
+
+[package.optional-dependencies]
+numpy = [
+    { name = "numpy" },
+    { name = "numpy-typing-compat" },
+]
+
+[[package]]
 name = "packaging"
 version = "26.2"
 source = { registry = "https://pypi.org/simple" }
@@ -265,6 +301,18 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/31/89/8fc1c268969fac43688d65fd92e67df24bd128d53cb4d2eee534cd307399/pandas-3.0.3-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:9c39be2d709d01fa972a0cabc522389fceca4f3969332ba25a7d6c5802cf976a", size = 11828897, upload-time = "2026-05-11T18:54:17.146Z" },
     { url = "https://files.pythonhosted.org/packages/56/3b/e7d20dea247a3e6dc0bd8a6953854afbedc03951def4e7371e05e7263e25/pandas-3.0.3-cp314-cp314t-win_amd64.whl", hash = "sha256:4db8c527972a821cf5286b40ccc57642a39bc62e62022b42f99f8a67fca8c3a1", size = 10900855, upload-time = "2026-05-11T18:54:19.72Z" },
     { url = "https://files.pythonhosted.org/packages/0f/54/68a0978d1ef8502b8492099beaa6e7a0c1b32e3b5d4f677f5810cb08711c/pandas-3.0.3-cp314-cp314t-win_arm64.whl", hash = "sha256:b2c95f8bfc1ee412bf482605d7bfd30c12d1d26bd59fdd91efeef1d4718decb1", size = 9466464, upload-time = "2026-05-11T18:54:22.754Z" },
+]
+
+[[package]]
+name = "pandas-stubs"
+version = "3.0.3.260530"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/3d/aa/c41a8a0ff86fd85dbb3ec0c1f3fa488ca64a8b5f82654ae1b07d84acefe5/pandas_stubs-3.0.3.260530.tar.gz", hash = "sha256:d1efe47b2e5a312c047d7feabec5cb7a55365747983420077e9fcbe9ab74f714", size = 113183, upload-time = "2026-05-30T17:47:40.34Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0b/e0/99ec5b02203c4e9ce878bc63d8caa06ac1f891e4d63bded9a5ced70fcb4f/pandas_stubs-3.0.3.260530-py3-none-any.whl", hash = "sha256:a6277eb1c8cebf48d9b2413fcd2e9a6b4ff479c934a223c29eacbc3058c4cb55", size = 173780, upload-time = "2026-05-30T17:47:39.13Z" },
 ]
 
 [[package]]
@@ -323,29 +371,35 @@ name = "pyforecast"
 version = "6.0.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "geojson" },
     { name = "jinja2" },
     { name = "numpy" },
     { name = "pandas" },
+    { name = "pandas-stubs" },
     { name = "pillow" },
     { name = "pyinstaller" },
     { name = "pyqtgraph" },
     { name = "pyside6" },
     { name = "qtawesome" },
     { name = "scipy" },
+    { name = "scipy-stubs" },
     { name = "zeep" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "geojson", specifier = ">=3.3.0" },
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "numpy", specifier = ">=2.5.0" },
     { name = "pandas", specifier = ">=3.0.3" },
+    { name = "pandas-stubs", specifier = ">=3.0.3.260530" },
     { name = "pillow", specifier = ">=12.2.0" },
     { name = "pyinstaller", specifier = ">=6.21.0" },
     { name = "pyqtgraph", specifier = ">=0.14.0" },
     { name = "pyside6", specifier = ">=6.11.1" },
     { name = "qtawesome", specifier = ">=1.4.2" },
     { name = "scipy", specifier = ">=1.18.0" },
+    { name = "scipy-stubs", specifier = ">=1.18.0.0" },
     { name = "zeep", specifier = ">=4.3.3" },
 ]
 
@@ -562,6 +616,18 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/f7/86/5185061a1fcc41d18c5dc2463969b3a3964b31d9ac67b2fb05d4c7ff7670/scipy-1.18.0-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:9aac6192fac56bf2ca534389d24623f07b39ff83317d58287285e7fbd622ff76", size = 37472480, upload-time = "2026-06-19T15:01:35.136Z" },
     { url = "https://files.pythonhosted.org/packages/31/8e/f04c68e39919a010d34f2ee1367fd705b0a25a02f609d755f0bfbc0a15fc/scipy-1.18.0-cp314-cp314t-win_amd64.whl", hash = "sha256:e40baea28ae7f5475c779741e2d90b1247c78531207b49c7030e698ff81cee3f", size = 37365390, upload-time = "2026-06-19T15:01:38.091Z" },
     { url = "https://files.pythonhosted.org/packages/d5/19/969dc072906c84dd0a3b05dcf57ea750936087d7873549e408b35cfc3f97/scipy-1.18.0-cp314-cp314t-win_arm64.whl", hash = "sha256:368e0a705903c466aa5f08eefb39e6b1b6b2d659e7352a31fd9e2438365be0f8", size = 25279661, upload-time = "2026-06-19T15:01:40.817Z" },
+]
+
+[[package]]
+name = "scipy-stubs"
+version = "1.18.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "optype", extra = ["numpy"] },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e5/9b/6cb11393563241c79b74e035c1d697329d1dce1635565e40b0085d56a2fe/scipy_stubs-1.18.0.0.tar.gz", hash = "sha256:a1fc917da66e4d338998839170e218754a669f6455c24243890a1e572bde98f6", size = 402538, upload-time = "2026-06-19T10:56:39.57Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e9/b4/82d4de656500722dea533151b88f926672341b46289cc31eb2e2c1c7c1d7/scipy_stubs-1.18.0.0-py3-none-any.whl", hash = "sha256:872ec1066a75feb5c5d8451231e8f7826d08d53fb806c526abd5f97bb1ba29fb", size = 608175, upload-time = "2026-06-19T10:56:37.905Z" },
 ]
 
 [[package]]

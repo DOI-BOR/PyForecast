@@ -5,14 +5,17 @@ description = "Develop and analyze high-performing seasonal streamflow forecasts
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "geojson>=3.3.0",
     "jinja2>=3.1.6",
     "numpy>=2.5.0",
     "pandas>=3.0.3",
+    "pandas-stubs>=3.0.3.260530",
     "pillow>=12.2.0",
     "pyinstaller>=6.21.0",
     "pyqtgraph>=0.14.0",
     "pyside6>=6.11.1",
     "qtawesome>=1.4.2",
     "scipy>=1.18.0",
+    "scipy-stubs>=1.18.0.0",
     "zeep>=4.3.3",
 ]
